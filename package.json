@@ -16,6 +16,8 @@
     "dev": "next dev --turbopack",
     "build": "next build --turbopack",
     "start": "next start",
+    "package": "bash scripts/package.sh",
+    "deploy": "bash scripts/deploy.sh",
     "lint": "eslint",
     "format": "prettier --write .",
     "format:check": "prettier --check .",
@@ -24,7 +26,7 @@
     "test:watch": "vitest",
     "test:coverage": "vitest run --coverage",
     "db:generate": "drizzle-kit generate",
-    "db:migrate": "tsx db/migrate.ts",
+    "db:migrate": "node db/migrate.mjs",
     "db:seed": "tsx db/seed.ts",
     "db:studio": "drizzle-kit studio"
   },

@@ -26,6 +26,7 @@
 
 # production
 /build
+/dist
 
 # misc
 .DS_Store
@@ -37,9 +38,11 @@ yarn-debug.log*
 yarn-error.log*
 .pnpm-debug.log*
 
-# local env files (commit .env.example instead)
+# local/production env files (commit the *.example templates instead)
 .env
 .env.local
+.env.development
+.env.production
 .env.*.local
 
 # vercel

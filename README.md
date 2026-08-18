@@ -54,13 +54,20 @@ DATABASE_URL=./data/offy.db
 
 ## 部署
 
-- **Vercel**（推荐）：直接导入本仓库即可，无需额外配置。
-- **Docker / 自托管**：项目已含多阶段 [`Dockerfile`](./Dockerfile)（`output: "standalone"`）：
+三种方式，详见 [`docs/deployment.md`](./docs/deployment.md)：
 
-```bash
-docker build -t offy .
-docker run --rm -p 3000:3000 offy
-```
+- **云服务器一键（Docker，推荐）**：把源码同步到服务器并在服务器上构建/启动，原生模块按 Linux 编译：
+
+  ```bash
+  DEPLOY_SERVER=root@你的IP DEPLOY_DIR=/opt/offy \
+    DEPLOY_ENV_FILE=.env.production pnpm deploy
+  ```
+
+- **自包含打包**：`pnpm package` 生成 `dist/offy-<版本>.tar.gz`，解包后 `./start.sh` 即跑（含自动迁移）。
+- **Vercel**：直接导入仓库即可。
+
+> 跨平台注意：`better-sqlite3` 是原生模块，macOS 本地打包的产物不能直接用于 Linux 服务器，
+> 请用 Docker 路径或在服务器上执行 `pnpm package`。
 
 ## 目录结构
 

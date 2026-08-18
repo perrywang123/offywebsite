@@ -1,0 +1,26 @@
+# systemd unit for the bare-Node (non-Docker) standalone deployment.
+# Copy to /etc/systemd/system/offy.service, then:
+#   sudo useradd -r -s /usr/sbin/nologin offy
+#   sudo mkdir -p /opt/offy /var/lib/offy && sudo chown -R offy:offy /opt/offy /var/lib/offy
+#   sudo systemctl daemon-reload && sudo systemctl enable --now offy
+
+[Unit]
+Description=Offy brand site (standalone Node.js)
+After=network.target
+
+[Service]
+Type=simple
+User=offy
+Group=offy
+WorkingDirectory=/opt/offy
+EnvironmentFile=/opt/offy/.env
+# Apply DB migrations before serving.
+ExecStartPre=/usr/bin/node /opt/offy/db/migrate.mjs
+ExecStart=/usr/bin/node /opt/offy/server.js
+Restart=always
+RestartSec=3
+NoNewPrivileges=true
+PrivateTmp=true
+
+[Install]
+WantedBy=multi-user.target

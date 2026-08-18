@@ -1,0 +1,41 @@
+# Production compose file. Brings up the app with a persistent SQLite volume
+# and auto-restart. Values use `${VAR:-default}` substitution, driven by a
+# `.env` file in this directory (see .env.production.example).
+#
+#   cp .env.production.example .env
+#   docker compose -f docker-compose.prod.yml up -d --build
+#
+# The app binds to 127.0.0.1:3000 — put nginx/caddy in front for TLS
+# (see deploy/nginx.conf). To expose it directly instead, change the port
+# mapping to "3000:3000".
+services:
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    restart: always
+    ports:
+      - "127.0.0.1:3000:3000"
+    environment:
+      NODE_ENV: production
+      DATABASE_PROVIDER: sqlite
+      DATABASE_URL: "${DATABASE_URL:-/data/offy.db}"
+      NEXT_PUBLIC_SITE_NAME: "${NEXT_PUBLIC_SITE_NAME:-Offy}"
+      NEXT_PUBLIC_SITE_URL: "${NEXT_PUBLIC_SITE_URL:-https://offy.example.com}"
+    volumes:
+      - offy-data:/data
+    healthcheck:
+      test:
+        [
+          "CMD",
+          "node",
+          "-e",
+          "fetch('http://127.0.0.1:3000/api/health').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))",
+        ]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 15s
+
+volumes:
+  offy-data:
