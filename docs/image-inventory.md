@@ -48,5 +48,5 @@ ins	assets/ins/i16.jpg	lookbook-0723（EN-ins）_画板 1 副本 12.jpg
 ins	assets/ins/i17.jpg	lookbook-0723（EN-ins）_画板 1 副本 16.jpg
 ins	assets/ins/i18.jpg	lookbook-0723（EN-ins）_画板 1 副本 17.jpg
 ins	assets/ins/i19.jpg	lookbook-0723（EN-ins）_画板 1 副本 18.jpg
-ins	assets/ins/i20.jpg	lookbook-0723（EN-ins）_画板 1 副本 19.jpg
-ins	assets/ins/i21.jpg	lookbook-0723（EN-ins）_画板 1 副本 7.jpg
+ins	assets/ins/i20.jpg	lookbook-0723（EN-ins）_画板 1 副本 7.jpg
+ins	assets/ins/i21.jpg	lookbook-0723（EN-ins）_画板 1 副本 19.jpg

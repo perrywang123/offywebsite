@@ -10,7 +10,12 @@ const EXT = new Set([".png", ".jpg", ".jpeg", ".webp"]);
 function images(dir) {
   return readdirSync(dir)
     .filter((f) => EXT.has(extname(f).toLowerCase()))
-    .sort((a, b) => statSync(join(dir, a)).mtimeMs - statSync(join(dir, b)).mtimeMs);
+    .sort((a, b) => {
+      const delta = statSync(join(dir, a)).mtimeMs - statSync(join(dir, b)).mtimeMs;
+      // Tie-break by filename so equal mtimes (e.g. freshly unzipped sets) still
+      // yield a deterministic order.
+      return delta !== 0 ? delta : a.localeCompare(b, "zh-CN", { numeric: true });
+    });
 }
 
 function sync(sourceDir, targetDir, prefix) {
