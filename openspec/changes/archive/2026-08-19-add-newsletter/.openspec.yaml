@@ -1,0 +1,9 @@
+schema: spec-driven
+created: 2026-08-19
+goal: Add a newsletter subscription capability with validation and persistence.
+affected_areas:
+  - src/lib/validation
+  - src/server/newsletter
+  - src/server/db
+  - src/app/api/newsletter
+  - src/components/newsletter-form

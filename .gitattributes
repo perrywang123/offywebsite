@@ -1,0 +1,16 @@
+# Normalize line endings and mark generated/binary files.
+* text=auto eol=lf
+
+*.png binary
+*.jpg binary
+*.jpeg binary
+*.gif binary
+*.webp binary
+*.ico binary
+*.woff binary
+*.woff2 binary
+*.lockfile binary
+
+# Collapse generated files in diffs.
+*.lock linguist-generated=true
+pnpm-lock.yaml linguist-generated=true

@@ -1,0 +1,16 @@
+node_modules
+.next
+.git
+.gitignore
+.pnpm-store
+.pnpm-cache
+.npm-cache
+.home
+.env
+.env.*.local
+data
+db/*.db
+coverage
+Dockerfile
+.dockerignore
+*.md

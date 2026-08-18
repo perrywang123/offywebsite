@@ -1,0 +1,33 @@
+schema: spec-driven
+
+# Project context — shown to AI when creating or editing artifacts.
+context: |
+  Tech stack: Next.js 15 (App Router), TypeScript, React 19, Tailwind CSS v4,
+  Drizzle ORM, SQLite (local dev) / PostgreSQL (production, reserved), zod.
+  Package manager: pnpm. Tests: Vitest + Testing Library (TDD).
+  Project: Offy — a brand-marketing site that will later sell products.
+  Conventions:
+    - Conventional Commits (feat/fix/refactor/test/docs/chore).
+    - Spec-first: every behavior change starts as an OpenSpec change proposal.
+    - TDD: write a failing test first, then implement, then refactor.
+    - Server-only code reads env via src/lib/env.ts; never read process.env in client code.
+  Domain: brand content + newsletter subscriptions today; commerce
+  (products / cart / orders / payment) is reserved for a later milestone.
+
+rules:
+  proposal:
+    - Keep proposals focused on one capability or one coherent behavior change.
+    - Always fill the "Impact" section with the affected code paths.
+  tasks:
+    - Break tasks into chunks of at most 2 hours.
+    - Any task that changes behavior ends with a passing test.
+
+operations:
+  apply:
+    guidance:
+      - Implement in red-green-refactor order: failing test → minimal code → refactor.
+      - Run `pnpm test` after each step and keep the suite green before committing.
+  archive:
+    guidance:
+      - Merge the delta into the main spec under openspec/specs/.
+      - Verify `pnpm test`, `pnpm typecheck`, and `pnpm lint` pass before archiving.
