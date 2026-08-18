@@ -1,0 +1,108 @@
+{
+  "common": {
+    "brand": "PLAYCORE 凭空幻想",
+    "brandShort": "Offy",
+    "tagline": "让想象落地，让陪伴发生",
+    "taglineEn": "Imagine with Love. Create with Companion.",
+    "nav": {
+      "home": "首页",
+      "shop": "商店",
+      "collections": "系列",
+      "about": "品牌故事"
+    },
+    "actions": {
+      "addToCart": "加入购物车",
+      "buyNow": "立即购买",
+      "checkout": "去结算",
+      "viewAll": "查看全部",
+      "continueShopping": "继续逛逛",
+      "back": "返回",
+      "learnMore": "了解更多"
+    },
+    "cart": {
+      "title": "购物袋",
+      "empty": "购物袋还空着",
+      "emptyHint": "去挑选一个与你共鸣的她吧",
+      "subtotal": "小计",
+      "total": "合计",
+      "quantity": "数量",
+      "remove": "移除",
+      "added": "已加入购物袋"
+    },
+    "footer": {
+      "rights": "保留所有权利",
+      "contact": "联系我们",
+      "newsletter": "订阅品牌动态",
+      "newsletterHint": "第一时间获取新品与品牌故事"
+    },
+    "language": "语言"
+  },
+  "home": {
+    "eyebrow": "PLAYCORETOYS · 2026",
+    "heroTitle1": "把情绪",
+    "heroTitle2": "穿在身上",
+    "heroSub": "Offy 是住在城市里的小精灵——把内心情绪直接穿在身上，每一套穿搭都源于那一刻的心境。",
+    "shopCta": "逛全部形象",
+    "aboutCta": "了解品牌故事",
+    "featuredTitle": "热门形象",
+    "featuredSub": "挑选与你共鸣的她",
+    "seriesTitle": "按系列探索",
+    "storyTitle": "你挑选的不只是一只玩偶",
+    "storyBody": "而是与你共鸣的她。Offy 从自然获取力量，任性、倔强，脑子里全是古怪想法——她把内心穿在外面，随心搭配。",
+    "storyQuote": "让想象落地，让陪伴发生。",
+    "lookbookTitle": "Lookbook",
+    "lookbookSub": "Offy 的生活方式与穿搭情绪",
+    "newsletterTitle": "加入 Offy 的陪伴",
+    "newsletterSub": "订阅获取新品、限定与品牌故事。"
+  },
+  "product": {
+    "series": "系列",
+    "dimensions": "尺寸规格",
+    "emotion": "情绪标签",
+    "description": "关于这款形象",
+    "outOfStock": "暂时售罄",
+    "related": "你可能也会喜欢",
+    "sku": "产品编号",
+    "dimension": { "height": "高度", "length": "长度", "head": "头围", "arm": "手臂", "leg": "腿部", "cm": "cm" }
+  },
+  "catalog": {
+    "title": "全部形象",
+    "subtitle": "每一个 Offy 都是一个独立的她",
+    "filterAll": "全部",
+    "filter": "按系列筛选"
+  },
+  "checkout": {
+    "title": "结算",
+    "contact": "联系方式",
+    "email": "邮箱",
+    "emailPlaceholder": "you@example.com",
+    "submit": "前往支付",
+    "summary": "订单摘要",
+    "items": "商品",
+    "successTitle": "支付成功，感谢有你",
+    "successBody": "我们会尽快为你准备这只与你共鸣的 Offy。",
+    "successOrder": "订单号",
+    "cancelTitle": "支付已取消",
+    "cancelBody": "购物袋里的商品为你保留着。",
+    "pendingTitle": "正在确认订单…",
+    "pendingBody": "请稍候，我们正在确认你的支付。"
+  },
+  "about": {
+    "title": "让想象落地，让陪伴发生",
+    "storyHeading": "品牌故事",
+    "storyP1": "作为塞尔达死忠粉，我们想把「呀哈哈」带进现实——一个藏在城市喧嚣里、从自然获取力量的小精灵。",
+    "storyP2": "但 Offy 不只是温柔可爱，她还是个任性、倔强、脑子里全是古怪想法的小女孩。她把内心情绪直接穿在身上。",
+    "storyP3": "你挑选的不只是一只玩偶，而是与你共鸣的她。",
+    "teamHeading": "创作团队",
+    "teamJie": "概念与 IP 设计师｜常驻曼谷的波普艺术家",
+    "teamTaozi": "概念与 IP 设计师｜常驻上海的广告插画艺术家",
+    "retailHeading": "零售网络",
+    "retail1": "中国 · 上海 TX 淮海",
+    "retail2": "中国 · 杭州 银泰 in77",
+    "retail3": "泰国 · 曼谷 Warehouse30_6 vintage",
+    "futureHeading": "未来 IP",
+    "futureSub": "更多住在城市里的小精灵，即将登场",
+    "customHeading": "定制与联名",
+    "customBody": "以上款式支持定制及品牌联名合作挑选，欢迎联系我们。"
+  }
+}

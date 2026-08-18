@@ -57,3 +57,6 @@ next-env.d.ts
 *.db-journal
 *.db-wal
 *.db-shm
+
+# raw source material (large, local-only). Curated site assets live in public/assets/.
+/resources/

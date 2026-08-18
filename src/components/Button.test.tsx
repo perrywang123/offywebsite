@@ -11,12 +11,12 @@ describe("Button", () => {
 
   it("applies the primary variant by default", () => {
     render(<Button>Go</Button>);
-    expect(screen.getByRole("button", { name: "Go" })).toHaveClass("bg-slate-900");
+    expect(screen.getByRole("button", { name: "Go" })).toHaveClass("bg-ink-900");
   });
 
   it("applies the secondary variant when requested", () => {
     render(<Button variant="secondary">Cancel</Button>);
-    expect(screen.getByRole("button", { name: "Cancel" })).toHaveClass("border-slate-300");
+    expect(screen.getByRole("button", { name: "Cancel" })).toHaveClass("border-sand-200");
   });
 
   it("calls onClick when clicked", async () => {

@@ -1,0 +1,1 @@
+ALTER TABLE `checkout_sessions` ADD `line_items_json` text;

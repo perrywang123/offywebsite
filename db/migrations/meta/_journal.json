@@ -8,6 +8,20 @@
       "when": 1787076667865,
       "tag": "0000_amusing_puck",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "6",
+      "when": 1787080577305,
+      "tag": "0001_faithful_metal_master",
+      "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "6",
+      "when": 1787081017417,
+      "tag": "0002_amazing_taskmaster",
+      "breakpoints": true
     }
   ]
 }
