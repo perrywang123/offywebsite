@@ -5,11 +5,12 @@ Superpowers 的 `test-driven-development` / `writing-plans` 技能）。
 
 ## 项目速览
 
-Offy 是一个品牌宣传 + 电商独立站。当前里程碑只做品牌展示与订阅；商城 / 支付为
-预留能力（见 `openspec/specs/commerce/spec.md`）。
+Offy 是一个品牌宣传 + 电商独立站（中英双语）。已实现：品牌展示、订阅、商品目录、
+购物车、Stripe 结算（测试模式）。商品目录用静态数据源 `src/lib/catalog/`；订单/结算
+会话走数据库（`src/server/db/schema.ts`）。
 
 技术栈：Next.js 15 (App Router) + TypeScript + React 19 + Tailwind CSS v4 +
-Drizzle ORM（本地 SQLite / 生产 PostgreSQL 预留）+ zod + Vitest。
+next-intl + Drizzle ORM（本地 SQLite / 生产 PostgreSQL 预留）+ Stripe + zod + Vitest。
 
 ## 常用命令
 
@@ -59,7 +60,8 @@ Drizzle ORM（本地 SQLite / 生产 PostgreSQL 预留）+ zod + Vitest。
 - 提交信息用 Conventional Commits：`feat` / `fix` / `refactor` / `test` / `docs` / `chore`。
 - 环境变量只在服务端读取，统一经 `src/lib/env.ts`（zod 校验）。客户端只用 `NEXT_PUBLIC_*`。
 - 数据库 schema 只写在 `src/server/db/schema.ts`；`db/migrations/` 提交进仓库。
-- 商城 / 支付属预留能力，实现前必须先写 spec delta，不要直接堆代码。
+- 商品名/价格/图↔编码映射目前是**占位值**，只改 `src/lib/catalog/products.ts` 一处。
+- 库存 / 管理后台 / 真实支付联调属后续里程碑，实现前先写 spec delta，不要直接堆代码。
 - 数据访问层隔离在 `src/server/db/client.ts`，切 PostgreSQL 只改这一处。
 
 ## 关键目录

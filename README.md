@@ -1,9 +1,26 @@
 # Offy
 
-品牌宣传 + 电商独立站。当前里程碑提供品牌展示与订阅能力，商城 / 支付为预留能力。
+PLAYCORE 凭空幻想（is.offy）品牌电商独立站：中英双语、品牌形象展示、商品目录、
+Casetify 式「选款 → 购物车 → Stripe 支付」全流程。
 
 技术栈：**Next.js 15 (App Router) · TypeScript · React 19 · Tailwind CSS v4 ·
-Drizzle ORM · SQLite（本地）/ PostgreSQL（生产预留）· Vitest**。
+next-intl（中英可扩展）· Drizzle ORM（SQLite/PostgreSQL 预留）· Stripe · Vitest**。
+
+## 功能
+
+| 能力 | 路由 |
+| --- | --- |
+| 品牌首页（hero/热门形象/系列/Lookbook/订阅） | `/zh` `/en` |
+| 商品目录（29 形象 · 9 系列 · 筛选） | `/products` |
+| 商品详情（大图/尺寸/情绪标签/形象选择器） | `/products/[code]` |
+| 系列页 | `/collections/[series]` |
+| 购物车（抽屉 + 独立页，localStorage 持久化） | `/cart` |
+| 结算（Stripe Checkout，USD，服务端计价） | `/checkout` |
+| 品牌宣传页（故事/团队/门店/未来 IP） | `/about` |
+
+> ⚠️ 商品名 / 价格 / 图↔编码映射当前为**占位值**（源自品牌手册 PDF 提取，见
+> [`docs/brand-brief.md`](./docs/brand-brief.md) §9）。修正只需改
+> [`src/lib/catalog/products.ts`](./src/lib/catalog/products.ts) 一处。
 
 ## 快速开始
 
@@ -31,6 +48,7 @@ pnpm dev                      # 打开 http://localhost:3000
 | `pnpm typecheck` | 类型检查 |
 | `pnpm lint` / `pnpm format` | ESLint / Prettier |
 | `pnpm db:generate` / `db:migrate` / `db:seed` / `db:studio` | Drizzle 迁移与工具 |
+| `pnpm sync:assets` | 从 `resources/` 同步图片到 `public/assets/` |
 
 ## 开发流程：spec-first + TDD
 
@@ -47,6 +65,8 @@ pnpm dev                      # 打开 http://localhost:3000
 ```env
 DATABASE_PROVIDER=sqlite
 DATABASE_URL=./data/offy.db
+STRIPE_SECRET_KEY=REPLACE_WITH_STRIPE_SECRET_KEY          # 换成你的 Stripe 测试 key 才能走通支付
+NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY=REPLACE_WITH_STRIPE_PUBLISHABLE_KEY
 ```
 
 切换生产 PostgreSQL 时，改 `DATABASE_PROVIDER=postgres` 并设置 `DATABASE_URL`，

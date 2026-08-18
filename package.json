@@ -28,7 +28,8 @@
     "db:generate": "drizzle-kit generate",
     "db:migrate": "node db/migrate.mjs",
     "db:seed": "tsx db/seed.ts",
-    "db:studio": "drizzle-kit studio"
+    "db:studio": "drizzle-kit studio",
+    "sync:assets": "node scripts/sync-assets.mjs"
   },
   "dependencies": {
     "@formatjs/intl-localematcher": "^0.8.13",
