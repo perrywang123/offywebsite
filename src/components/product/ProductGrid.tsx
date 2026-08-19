@@ -2,15 +2,34 @@ import type { Product } from "@/lib/catalog";
 import { Reveal } from "@/components/Reveal";
 import { ProductCard } from "./ProductCard";
 
-export function ProductGrid({ products, locale }: { products: Product[]; locale: string }) {
+export function ProductGrid({
+  products,
+  locale,
+  density = "catalog",
+}: {
+  products: Product[];
+  locale: string;
+  density?: "catalog" | "series";
+}) {
   if (products.length === 0) {
     return <p className="py-16 text-center text-ink-muted">No products found.</p>;
   }
+
+  const gridCls =
+    density === "series"
+      ? "grid grid-cols-2 gap-x-4 gap-y-12 sm:gap-x-8 lg:grid-cols-2 lg:gap-x-12 xl:gap-x-16"
+      : "grid grid-cols-2 gap-x-4 gap-y-10 sm:gap-x-6 lg:grid-cols-3 lg:gap-x-8 xl:gap-x-12";
+
+  const sizes =
+    density === "series"
+      ? "(max-width: 768px) 50vw, 50vw"
+      : "(max-width: 768px) 50vw, 33vw";
+
   return (
-    <div className="grid grid-cols-2 gap-4 sm:gap-6 lg:grid-cols-3 xl:grid-cols-4">
+    <div className={gridCls}>
       {products.map((product, i) => (
-        <Reveal key={product.code} delay={Math.min(i, 7) * 60}>
-          <ProductCard product={product} locale={locale} />
+        <Reveal key={product.code} delay={Math.min(i, 5) * 60}>
+          <ProductCard product={product} locale={locale} sizes={sizes} />
         </Reveal>
       ))}
     </div>
