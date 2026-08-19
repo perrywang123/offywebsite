@@ -5,7 +5,12 @@
     "brandZh": "凭空幻想",
     "tagline": "让想象落地，让陪伴发生",
     "taglineEn": "Imagine with Love. Create with Companion.",
-    "nav": { "home": "首页", "shop": "商店", "collections": "系列", "about": "品牌故事" },
+    "nav": {
+      "home": "首页",
+      "shop": "商店",
+      "collections": "系列",
+      "about": "品牌故事"
+    },
     "actions": {
       "addToCart": "加入购物车",
       "buyNow": "立即购买",
@@ -25,7 +30,11 @@
       "remove": "移除",
       "added": "已加入购物袋"
     },
-    "footer": { "rights": "保留所有权利", "contact": "联系我们", "social": "小红书 @is.offy" },
+    "footer": {
+      "rights": "保留所有权利",
+      "contact": "联系我们",
+      "social": "小红书 @is.offy"
+    },
     "language": "语言"
   },
   "home": {
@@ -52,7 +61,11 @@
     "collabSub": "已有 14 款品牌联名定制形象（OF 系列）。我们为品牌与创作者开放定制——把你的故事，穿到 Offy 身上。",
     "collabCta": "联名 / 定制合作 →",
     "subscribeTitle": "别错过下一个她",
-    "subscribeSub": "订阅获取新品、限定与品牌故事。"
+    "subscribeSub": "订阅获取新品、限定与品牌故事。",
+    "categoryTitle": "按分类选购",
+    "categorySub": "为你的她，挑一个系列",
+    "discoverTitle": "最新揭晓",
+    "discoverSub": "新近揭晓的造型"
   },
   "product": {
     "series": "系列",
@@ -62,7 +75,14 @@
     "outOfStock": "暂时售罄",
     "related": "同系列其他形象",
     "sku": "产品编号",
-    "dimension": { "height": "高度", "length": "长度", "head": "头围", "arm": "手臂", "leg": "腿部", "cm": "cm" }
+    "dimension": {
+      "height": "高度",
+      "length": "长度",
+      "head": "头围",
+      "arm": "手臂",
+      "leg": "腿部",
+      "cm": "cm"
+    }
   },
   "catalog": {
     "title": "全部形象",

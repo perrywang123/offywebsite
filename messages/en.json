@@ -5,7 +5,12 @@
     "brandZh": "凭空幻想",
     "tagline": "Imagine with Love. Create with Companion.",
     "taglineEn": "Imagine with Love. Create with Companion.",
-    "nav": { "home": "Home", "shop": "Shop", "collections": "Collections", "about": "Our Story" },
+    "nav": {
+      "home": "Home",
+      "shop": "Shop",
+      "collections": "Collections",
+      "about": "Our Story"
+    },
     "actions": {
       "addToCart": "Add to Bag",
       "buyNow": "Buy Now",
@@ -25,7 +30,11 @@
       "remove": "Remove",
       "added": "Added to bag"
     },
-    "footer": { "rights": "All rights reserved", "contact": "Contact", "social": "Xiaohongshu @is.offy" },
+    "footer": {
+      "rights": "All rights reserved",
+      "contact": "Contact",
+      "social": "Xiaohongshu @is.offy"
+    },
     "language": "Language"
   },
   "home": {
@@ -52,7 +61,11 @@
     "collabSub": "14 collaboration looks already exist (OF series). We open custom & collab to brands and creators — put your story on Offy.",
     "collabCta": "Start a collab →",
     "subscribeTitle": "Never Miss Her",
-    "subscribeSub": "Subscribe for new drops, exclusives, and stories."
+    "subscribeSub": "Subscribe for new drops, exclusives, and stories.",
+    "categoryTitle": "Shop by Category",
+    "categorySub": "Pick a series for her",
+    "discoverTitle": "Discover the Latest",
+    "discoverSub": "The newest revealed looks"
   },
   "product": {
     "series": "Series",
@@ -62,7 +75,14 @@
     "outOfStock": "Sold out",
     "related": "More from this series",
     "sku": "Product code",
-    "dimension": { "height": "Height", "length": "Length", "head": "Head", "arm": "Arm", "leg": "Leg", "cm": "cm" }
+    "dimension": {
+      "height": "Height",
+      "length": "Length",
+      "head": "Head",
+      "arm": "Arm",
+      "leg": "Leg",
+      "cm": "cm"
+    }
   },
   "catalog": {
     "title": "All Looks",
