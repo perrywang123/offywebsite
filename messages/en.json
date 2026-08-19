@@ -65,7 +65,10 @@
     "categoryTitle": "Shop by Category",
     "categorySub": "Pick a series for her",
     "discoverTitle": "Discover the Latest",
-    "discoverSub": "The newest revealed looks"
+    "discoverSub": "The newest revealed looks",
+    "originTitle": "The Origin",
+    "originSub": "Her truest form — where it all begins",
+    "looksTitle": "Signature Looks"
   },
   "product": {
     "series": "Series",
