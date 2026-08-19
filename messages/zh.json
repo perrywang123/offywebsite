@@ -1,15 +1,11 @@
 {
   "common": {
     "brand": "PLAYCORE 凭空幻想",
-    "brandShort": "Offy",
+    "brandLatin": "PLAYCORE",
+    "brandZh": "凭空幻想",
     "tagline": "让想象落地，让陪伴发生",
     "taglineEn": "Imagine with Love. Create with Companion.",
-    "nav": {
-      "home": "首页",
-      "shop": "商店",
-      "collections": "系列",
-      "about": "品牌故事"
-    },
+    "nav": { "home": "首页", "shop": "商店", "collections": "系列", "about": "品牌故事" },
     "actions": {
       "addToCart": "加入购物车",
       "buyNow": "立即购买",
@@ -29,31 +25,34 @@
       "remove": "移除",
       "added": "已加入购物袋"
     },
-    "footer": {
-      "rights": "保留所有权利",
-      "contact": "联系我们",
-      "newsletter": "订阅品牌动态",
-      "newsletterHint": "第一时间获取新品与品牌故事"
-    },
+    "footer": { "rights": "保留所有权利", "contact": "联系我们", "social": "小红书 @is.offy" },
     "language": "语言"
   },
   "home": {
     "eyebrow": "PLAYCORETOYS · 2026",
-    "heroTitle1": "把情绪",
-    "heroTitle2": "穿在身上",
-    "heroSub": "Offy 是住在城市里的小精灵——把内心情绪直接穿在身上，每一套穿搭都源于那一刻的心境。",
+    "heroTitle1": "PLAYCORE 凭空幻想",
+    "heroTitle2": "让想象落地，让陪伴发生",
+    "heroTitle2Sub": "Imagine with Love. Create with Companion.",
+    "heroSub": "Offy 是我们创造的第一个小精灵——从自然汲取力量，把情绪穿在身上的黑肤色卡通 IP。你挑选的，是与自己共鸣的那个她。",
     "shopCta": "逛全部形象",
-    "aboutCta": "了解品牌故事",
-    "featuredTitle": "热门形象",
-    "featuredSub": "挑选与你共鸣的她",
-    "seriesTitle": "按系列探索",
-    "storyTitle": "你挑选的不只是一只玩偶",
-    "storyBody": "而是与你共鸣的她。Offy 从自然获取力量，任性、倔强，脑子里全是古怪想法——她把内心穿在外面，随心搭配。",
-    "storyQuote": "让想象落地，让陪伴发生。",
-    "lookbookTitle": "Lookbook",
-    "lookbookSub": "Offy 的生活方式与穿搭情绪",
-    "newsletterTitle": "加入 Offy 的陪伴",
-    "newsletterSub": "订阅获取新品、限定与品牌故事。"
+    "aboutCta": "认识 Offy",
+    "manifesto1": "我们相信，想象是温柔的勇气，陪伴是落地后的爱。",
+    "manifesto2": "于是我们创造了 Offy——一个任性、倔强、满脑子古怪想法的小精灵，把内心穿在身上，把情绪变成造型。",
+    "manifesto3": "她不是一只玩偶，而是与你共鸣的那个「她」。",
+    "manifestoSign": "让想象落地，让陪伴发生",
+    "castTitle": "她的每个样子",
+    "castSub": "一个 Offy，29 个化身",
+    "castChapter": "按情绪找她",
+    "castIndex": "全员名册",
+    "castViewAll": "查看全部 29 个形象 →",
+    "revealing": "待揭晓",
+    "comingTitle": "接下来，还有她们",
+    "comingSub": "更多住在城市里的小精灵，即将登场",
+    "collabTitle": "把 Offy 变成你的品牌",
+    "collabSub": "已有 14 款品牌联名定制形象（OF 系列）。我们为品牌与创作者开放定制——把你的故事，穿到 Offy 身上。",
+    "collabCta": "联名 / 定制合作 →",
+    "subscribeTitle": "别错过下一个她",
+    "subscribeSub": "订阅获取新品、限定与品牌故事。"
   },
   "product": {
     "series": "系列",
@@ -61,7 +60,7 @@
     "emotion": "情绪标签",
     "description": "关于这款形象",
     "outOfStock": "暂时售罄",
-    "related": "你可能也会喜欢",
+    "related": "同系列其他形象",
     "sku": "产品编号",
     "dimension": { "height": "高度", "length": "长度", "head": "头围", "arm": "手臂", "leg": "腿部", "cm": "cm" }
   },
@@ -89,7 +88,7 @@
   },
   "about": {
     "title": "让想象落地，让陪伴发生",
-    "storyHeading": "品牌故事",
+    "storyHeading": "她从哪里来",
     "storyP1": "作为塞尔达死忠粉，我们想把「呀哈哈」带进现实——一个藏在城市喧嚣里、从自然获取力量的小精灵。",
     "storyP2": "但 Offy 不只是温柔可爱，她还是个任性、倔强、脑子里全是古怪想法的小女孩。她把内心情绪直接穿在身上。",
     "storyP3": "你挑选的不只是一只玩偶，而是与你共鸣的她。",
@@ -100,7 +99,7 @@
     "retail1": "中国 · 上海 TX 淮海",
     "retail2": "中国 · 杭州 银泰 in77",
     "retail3": "泰国 · 曼谷 Warehouse30_6 vintage",
-    "futureHeading": "未来 IP",
+    "futureHeading": "接下来，还有她们",
     "futureSub": "更多住在城市里的小精灵，即将登场",
     "customHeading": "定制与联名",
     "customBody": "以上款式支持定制及品牌联名合作挑选，欢迎联系我们。"

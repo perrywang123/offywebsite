@@ -50,24 +50,24 @@ export default function CheckoutPage() {
 
   return (
     <div className="mx-auto max-w-5xl px-6 py-12 lg:px-8">
-      <h1 className="mb-8 font-display text-4xl font-black">{t("title")}</h1>
+      <h1 className="mb-8 font-display text-4xl font-semibold">{t("title")}</h1>
 
       {items.length === 0 ? (
-        <p className="text-ink-500">No items to check out.</p>
+        <p className="text-ink-muted">No items to check out.</p>
       ) : (
         <div className="grid gap-10 lg:grid-cols-[2fr_1fr]">
           <form onSubmit={handleSubmit} className="space-y-6">
             <fieldset className="rounded-2xl bg-paper p-6">
               <legend className="mb-4 font-semibold">{t("contact")}</legend>
               <label className="block">
-                <span className="mb-2 block text-sm text-ink-700">{t("email")}</span>
+                <span className="mb-2 block text-sm text-ink-soft">{t("email")}</span>
                 <input
                   type="email"
                   required
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   placeholder={t("emailPlaceholder")}
-                  className="h-12 w-full rounded-xl border border-sand-200 bg-paper px-4 outline-none focus:border-ink-900"
+                  className="h-12 w-full rounded-xl border border-sand bg-paper px-4 outline-none focus:border-ink"
                 />
               </label>
             </fieldset>
@@ -77,11 +77,11 @@ export default function CheckoutPage() {
             <button
               type="submit"
               disabled={submitting}
-              className="h-12 w-full rounded-full bg-pop-coral text-sm font-medium text-paper disabled:opacity-50"
+              className="h-12 w-full rounded-full bg-accent text-sm font-medium text-paper disabled:opacity-50"
             >
               {submitting ? "…" : t("submit")}
             </button>
-            <p className="text-center text-xs text-ink-500">
+            <p className="text-center text-xs text-ink-muted">
               Test mode · USD · Stripe Checkout
             </p>
           </form>
@@ -98,7 +98,7 @@ export default function CheckoutPage() {
                 </li>
               ))}
             </ul>
-            <div className="mt-4 flex justify-between border-t border-sand-200 pt-4 font-medium">
+            <div className="mt-4 flex justify-between border-t border-sand pt-4 font-medium">
               <span>{t("summary")}</span>
               <span>{formatUsdCents(subtotal, locale)}</span>
             </div>

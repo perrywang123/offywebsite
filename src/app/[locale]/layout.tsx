@@ -26,8 +26,11 @@ export default async function LocaleLayout({
   const messages = (await import(`../../../messages/${locale}.json`)).default;
 
   return (
-    <html lang={locale}>
-      <body className="min-h-screen bg-cream-50 font-sans text-ink-900 antialiased">
+    <html lang={locale} suppressHydrationWarning>
+      <body className="min-h-screen bg-cream font-sans text-ink antialiased">
+        <script
+          dangerouslySetInnerHTML={{ __html: "document.documentElement.classList.add('js')" }}
+        />
         <NextIntlClientProvider messages={messages}>
           <CartProvider>
             <Header />

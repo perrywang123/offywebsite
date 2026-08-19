@@ -1,31 +1,29 @@
 "use client";
 
-import { useTranslations } from "next-intl";
+import { useState } from "react";
+import { useLocale } from "next-intl";
 import { useCart } from "./CartProvider";
 
-export function AddToCartButton({
-  code,
-  className = "",
-  accent = false,
-}: {
-  code: string;
-  className?: string;
-  accent?: boolean;
-}) {
-  const t = useTranslations("common.actions");
+export function AddToCartButton({ code, className = "" }: { code: string; className?: string }) {
+  const [added, setAdded] = useState(false);
+  const locale = useLocale();
   const { add } = useCart();
+
+  function handleClick() {
+    add(code, 1);
+    setAdded(true);
+    setTimeout(() => setAdded(false), 1200);
+  }
 
   return (
     <button
       type="button"
-      onClick={() => add(code, 1)}
-      className={`inline-flex h-12 items-center justify-center rounded-full px-6 text-sm font-medium transition-all duration-200 ease-out ${
-        accent
-          ? "bg-pop-coral text-paper hover:bg-[#e63d20]"
-          : "bg-ink-900 text-paper hover:bg-cocoa-600"
+      onClick={handleClick}
+      className={`inline-flex h-12 items-center justify-center rounded-full px-6 text-sm font-medium transition-colors duration-200 ${
+        added ? "bg-leaf text-cream" : "bg-accent text-cream hover:bg-accent-deep"
       } ${className}`}
     >
-      {t("addToCart")}
+      {added ? (locale === "zh" ? "已加入 ✓" : "Added ✓") : locale === "zh" ? "加入购物袋" : "Add to Bag"}
     </button>
   );
 }

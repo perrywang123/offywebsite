@@ -9,6 +9,7 @@ interface CartContextValue {
   lines: CartState;
   count: number;
   isOpen: boolean;
+  mounted: boolean;
   add: (code: string, qty?: number) => void;
   remove: (code: string) => void;
   setQty: (code: string, qty: number) => void;
@@ -21,23 +22,21 @@ const CartContext = createContext<CartContextValue | null>(null);
 export function CartProvider({ children }: { children: React.ReactNode }) {
   const [lines, setLines] = useState<CartState>([]);
   const [isOpen, setIsOpen] = useState(false);
+  const [mounted, setMounted] = useState(false);
   const [hydrated, setHydrated] = useState(false);
 
-  // Hydrate from localStorage after mount (avoid SSR/hydration mismatch).
   useEffect(() => {
     try {
       const raw = localStorage.getItem(STORAGE_KEY);
       if (raw) setLines(JSON.parse(raw) as CartState);
     } catch {
-      /* ignore corrupt storage */
+      /* ignore */
     }
     setHydrated(true);
   }, []);
 
   useEffect(() => {
-    if (hydrated) {
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(lines));
-    }
+    if (hydrated) localStorage.setItem(STORAGE_KEY, JSON.stringify(lines));
   }, [lines, hydrated]);
 
   const value = useMemo<CartContextValue>(
@@ -45,16 +44,24 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
       lines,
       count: cartCount(lines),
       isOpen,
+      mounted,
       add: (code, qty = 1) => {
         setLines((prev) => addLine(prev, code, qty));
+        setMounted(true);
         setIsOpen(true);
       },
       remove: (code) => setLines((prev) => removeLine(prev, code)),
       setQty: (code, qty) => setLines((prev) => setQuantity(prev, code, qty)),
-      open: () => setIsOpen(true),
-      close: () => setIsOpen(false),
+      open: () => {
+        setMounted(true);
+        setIsOpen(true);
+      },
+      close: () => {
+        setIsOpen(false);
+        setTimeout(() => setMounted(false), 360);
+      },
     }),
-    [lines, isOpen],
+    [lines, isOpen, mounted],
   );
 
   return <CartContext.Provider value={value}>{children}</CartContext.Provider>;

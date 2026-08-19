@@ -20,7 +20,7 @@ export function LanguageSwitcher() {
     <button
       type="button"
       onClick={toggle}
-      className="inline-flex h-10 items-center rounded-full border border-sand-200 bg-paper px-3 text-xs font-semibold text-ink-700 transition-colors hover:border-ink-900"
+      className="inline-flex h-10 items-center rounded-full border border-sand bg-paper px-3 text-xs font-semibold text-ink-soft transition-colors hover:border-ink"
     >
       {locale === "zh" ? "EN" : "中文"}
     </button>

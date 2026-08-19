@@ -7,22 +7,25 @@ export async function Header() {
   const t = await getTranslations("common");
 
   return (
-    <header className="sticky top-0 z-40 border-b border-sand-200 bg-cream-50/90 backdrop-blur">
+    <header className="sticky top-0 z-40 border-b border-cream-line bg-cream/85 backdrop-blur">
       <div className="mx-auto flex max-w-7xl items-center justify-between px-4 py-4 sm:px-6 lg:px-8">
-        <Link href="/" className="font-display text-xl font-black tracking-tight text-ink-900">
-          {t("brandShort")}
+        <Link href="/" className="flex items-baseline gap-2">
+          <span className="font-display text-lg font-semibold tracking-tight text-ink">
+            {t("brandLatin")}
+          </span>
+          <span className="text-sm font-medium text-ink-soft">{t("brandZh")}</span>
         </Link>
-        <nav className="hidden gap-8 text-sm text-ink-700 md:flex">
-          <Link href="/" className="hover:text-ink-900">
+        <nav className="hidden items-center gap-8 text-xs uppercase tracking-[0.14em] text-ink-soft md:flex">
+          <Link href="/" className="link-line hover:text-ink">
             {t("nav.home")}
           </Link>
-          <Link href="/products" className="hover:text-ink-900">
+          <Link href="/products" className="link-line hover:text-ink">
             {t("nav.shop")}
           </Link>
-          <Link href="/collections" className="hover:text-ink-900">
+          <Link href="/collections" className="link-line hover:text-ink">
             {t("nav.collections")}
           </Link>
-          <Link href="/about" className="hover:text-ink-900">
+          <Link href="/about" className="link-line hover:text-ink">
             {t("nav.about")}
           </Link>
         </nav>

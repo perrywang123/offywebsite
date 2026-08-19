@@ -5,6 +5,7 @@ import { Link } from "@/i18n/navigation";
 import { getProductByCode, getProductsBySeries, getSeries } from "@/lib/catalog";
 import { formatUsdCents } from "@/lib/pricing";
 import { AddToCartButton } from "@/components/cart/AddToCartButton";
+import { Reveal } from "@/components/Reveal";
 
 export default async function ProductDetailPage({
   params,
@@ -21,53 +22,71 @@ export default async function ProductDetailPage({
 
   return (
     <div className="mx-auto max-w-7xl px-6 py-12 lg:px-8">
-      <nav className="mb-6 text-sm text-ink-500">
-        <Link href="/products" className="hover:text-ink-900">
-          {locale === "zh" ? "商店" : "Shop"}
-        </Link>
+      <nav className="mb-6 text-sm text-ink-muted">
+        <Link href="/products" className="link-line">{locale === "zh" ? "商店" : "Shop"}</Link>
         {" / "}
-        <Link href={`/collections/${product.series}`} className="hover:text-ink-900">
+        <Link href={`/collections/${product.series}`} className="link-line">
           {series ? (locale === "zh" ? series.name.zh : series.name.en) : product.series}
         </Link>
       </nav>
 
-      <div className="grid gap-10 lg:grid-cols-[7fr_5fr]">
-        {/* Image */}
-        <div className="overflow-hidden rounded-2xl bg-paper">
-          <div className="relative aspect-[3/4]">
-            <Image
-              src={product.images[0]}
-              alt={locale === "zh" ? product.name.zh : product.name.en}
-              fill
-              priority
-              sizes="(max-width: 1024px) 100vw, 60vw"
-              className="object-cover"
-            />
+      <div className="grid gap-12 lg:grid-cols-[6fr_5fr]">
+        {/* 图区 */}
+        <div className="lg:sticky lg:top-24 lg:self-start">
+          <div className="overflow-hidden rounded-card bg-paper p-2 shadow-soft">
+            <div className="relative aspect-[3/4] overflow-hidden rounded-[calc(var(--radius-card)-8px)] bg-cream-deep">
+              <Image
+                src={product.images[0]}
+                alt={locale === "zh" ? product.name.zh : product.name.en}
+                fill
+                priority
+                sizes="(max-width:1024px) 100vw, 55vw"
+                className="object-contain"
+              />
+            </div>
           </div>
+
+          {/* 形象选择器（3:4 小卡） */}
+          {siblings.length > 0 && (
+            <div className="mt-4 flex gap-2.5 overflow-x-auto pb-2">
+              {siblings.slice(0, 6).map((sibling) => (
+                <Link
+                  key={sibling.code}
+                  href={`/products/${sibling.code}`}
+                  title={locale === "zh" ? sibling.name.zh : sibling.name.en}
+                  className="relative h-20 w-14 shrink-0 overflow-hidden rounded-soft border border-sand transition-colors hover:border-brown-500"
+                >
+                  <Image src={sibling.images[0]} alt={sibling.name.en} fill sizes="56px" className="object-cover" />
+                </Link>
+              ))}
+            </div>
+          )}
         </div>
 
-        {/* Info */}
+        {/* 信息区 */}
         <div>
-          <span className="rounded-full bg-pop-yellow px-3 py-1 text-xs font-semibold text-ink-900">
-            {series ? (locale === "zh" ? series.name.zh : series.name.en) : product.series}
-          </span>
-          <h1 className="mt-4 font-display text-3xl font-black md:text-4xl">
+          <p className="kicker mb-3">{series ? (locale === "zh" ? series.name.zh : series.name.en) : product.series}</p>
+          <h1 className="font-display text-3xl font-semibold tracking-tight md:text-4xl">
             {locale === "zh" ? product.name.zh : product.name.en}
           </h1>
-          <p className="mt-3 font-display text-2xl font-bold text-ink-900 tabular-nums">
-            {formatUsdCents(product.priceCents, locale)}
-          </p>
+          {product.isUpcoming ? (
+            <p className="mt-3 text-sm font-medium uppercase tracking-[0.14em] text-brown-600">
+              {locale === "zh" ? "待揭晓" : "Revealing soon"}
+            </p>
+          ) : (
+            <p className="mt-3 font-display text-2xl font-medium text-ink tabular-nums md:text-3xl">
+              {formatUsdCents(product.priceCents, locale)}
+            </p>
+          )}
 
-          <p className="mt-4 text-sm text-ink-500">
-            {t("sku")}: {product.code}
-          </p>
+          <p className="mt-3 text-xs text-ink-muted">{t("sku")}: {product.code}</p>
 
           {product.emotionTags.zh.length > 0 && (
             <div className="mt-6">
-              <p className="mb-2 text-sm font-semibold text-ink-700">{t("emotion")}</p>
+              <p className="mb-2 text-sm font-medium text-ink-soft">{t("emotion")}</p>
               <div className="flex flex-wrap gap-2">
                 {(locale === "zh" ? product.emotionTags.zh : product.emotionTags.en).map((tag) => (
-                  <span key={tag} className="rounded-full bg-cream-100 px-3 py-1 text-xs text-ink-700">
+                  <span key={tag} className="rounded-full border border-sand px-3 py-1 text-xs text-ink-soft">
                     {tag}
                   </span>
                 ))}
@@ -76,9 +95,9 @@ export default async function ProductDetailPage({
           )}
 
           {product.dimensions && (
-            <div className="mt-6">
-              <p className="mb-2 text-sm font-semibold text-ink-700">{t("dimensions")}</p>
-              <ul className="grid grid-cols-5 gap-2 text-center text-xs text-ink-700">
+            <div className="mt-8">
+              <p className="mb-2 text-sm font-medium text-ink-soft">{t("dimensions")}</p>
+              <dl className="divide-y divide-cream-line border-y border-cream-line text-sm">
                 {(
                   [
                     ["dimension.height", product.dimensions.heightCm],
@@ -88,45 +107,46 @@ export default async function ProductDetailPage({
                     ["dimension.leg", product.dimensions.legCm],
                   ] as const
                 ).map(([key, value]) => (
-                  <li key={key} className="rounded-lg bg-cream-100 px-2 py-3">
-                    <span className="block font-semibold">{t(key)}</span>
-                    <span className="block">{value}{t("dimension.cm")}</span>
-                  </li>
+                  <div key={key} className="flex justify-between py-3">
+                    <dt className="text-ink-muted">{t(key)}</dt>
+                    <dd className="font-medium text-ink tabular-nums">{value}{t("dimension.cm")}</dd>
+                  </div>
                 ))}
-              </ul>
+              </dl>
             </div>
           )}
 
           <div className="mt-8">
-            <AddToCartButton code={product.code} accent className="w-full" />
+            {product.isUpcoming ? (
+              <p className="rounded-full bg-cream-deep px-6 py-3 text-center text-sm text-ink-muted">
+                {locale === "zh" ? "即将揭晓，敬请期待" : "Revealing soon"}
+              </p>
+            ) : (
+              <AddToCartButton code={product.code} className="w-full" />
+            )}
           </div>
-
-          {/* 形象选择器（同系列其它形象） */}
-          {siblings.length > 0 && (
-            <div className="mt-10">
-              <p className="mb-3 text-sm font-semibold text-ink-700">{t("related")}</p>
-              <div className="flex gap-3 overflow-x-auto pb-2">
-                {siblings.slice(0, 8).map((sibling) => (
-                  <Link
-                    key={sibling.code}
-                    href={`/products/${sibling.code}`}
-                    className="relative h-16 w-16 shrink-0 overflow-hidden rounded-full border-2 border-sand-200 hover:border-ink-900"
-                    title={locale === "zh" ? sibling.name.zh : sibling.name.en}
-                  >
-                    <Image
-                      src={sibling.images[0]}
-                      alt={sibling.name.en}
-                      fill
-                      sizes="64px"
-                      className="object-cover"
-                    />
-                  </Link>
-                ))}
-              </div>
-            </div>
-          )}
         </div>
       </div>
+
+      {/* 相关 */}
+      {siblings.length > 0 && (
+        <section className="mt-20">
+          <Reveal className="mb-6">
+            <p className="kicker mb-2">More</p>
+            <h2 className="font-display text-2xl font-semibold tracking-tight">{t("related")}</h2>
+          </Reveal>
+          <div className="grid grid-cols-3 gap-4 md:grid-cols-6">
+            {siblings.slice(0, 6).map((sibling) => (
+              <Link key={sibling.code} href={`/products/${sibling.code}`} className="group">
+                <div className="relative aspect-[3/4] overflow-hidden rounded-soft bg-paper">
+                  <Image src={sibling.images[0]} alt={sibling.name.en} fill sizes="(max-width:768px) 33vw, 16vw" className="object-cover transition-transform duration-300 group-hover:scale-105" />
+                </div>
+                <p className="mt-2 truncate text-xs text-ink-soft">{locale === "zh" ? sibling.name.zh : sibling.name.en}</p>
+              </Link>
+            ))}
+          </div>
+        </section>
+      )}
     </div>
   );
 }

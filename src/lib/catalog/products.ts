@@ -65,15 +65,15 @@ export const products: Product[] = [
   p("PCOF1-D1", "playful", "玩乐时刻 Offy", "Offy Playtime", 4500, img(19), ["玩乐", "搞怪"], ["play", "whimsy"], { sortOrder: 80 }),
   p("PCOF1-L0", "large-plush", "大号原皮 Offy", "Offy Original Large", 9900, img(20), ["大号", "原皮"], ["large", "original"], { featured: true, sortOrder: 90 }),
   p("PCOF1-L1", "large-plush", "泰国限定 Offy", "Offy Thailand Exclusive Large", 11900, img(21), ["泰国", "限定"], ["thailand", "exclusive"], { sortOrder: 91 }),
-  // —— 以下 8 款为「形象待定」占位（图↔编码精确映射待确认，见 brand-brief §9）——
-  p("PCOF1-P22", "signature", "Offy 形象 22（待定）", "Offy Look 22 (TBD)", 4500, img(22), ["待定"], ["tbd"], { sortOrder: 100 }),
-  p("PCOF1-P23", "signature", "Offy 形象 23（待定）", "Offy Look 23 (TBD)", 4500, img(23), ["待定"], ["tbd"], { sortOrder: 101 }),
-  p("PCOF1-P24", "signature", "Offy 形象 24（待定）", "Offy Look 24 (TBD)", 4500, img(24), ["待定"], ["tbd"], { sortOrder: 102 }),
-  p("PCOF1-P25", "signature", "Offy 形象 25（待定）", "Offy Look 25 (TBD)", 4500, img(25), ["待定"], ["tbd"], { sortOrder: 103 }),
-  p("PCOF1-P26", "signature", "Offy 形象 26（待定）", "Offy Look 26 (TBD)", 4500, img(26), ["待定"], ["tbd"], { sortOrder: 104 }),
-  p("PCOF1-P27", "signature", "Offy 形象 27（待定）", "Offy Look 27 (TBD)", 4500, img(27), ["待定"], ["tbd"], { sortOrder: 105 }),
-  p("PCOF1-P28", "signature", "Offy 形象 28（待定）", "Offy Look 28 (TBD)", 4500, img(28), ["待定"], ["tbd"], { sortOrder: 106 }),
-  p("PCOF1-P29", "signature", "Offy 形象 29（待定）", "Offy Look 29 (TBD)", 4500, img(29, "jpg"), ["待定"], ["tbd"], { sortOrder: 107 }),
+  // —— 以下 8 款为「待揭晓」占位（图↔编码精确映射待确认，见 brand-brief §9）——
+  p("PCOF1-P22", "signature", "造型 22", "Look No.22", 4500, img(22), ["待揭晓"], ["revealing"], { isUpcoming: true, isAvailable: false, sortOrder: 100 }),
+  p("PCOF1-P23", "signature", "造型 23", "Look No.23", 4500, img(23), ["待揭晓"], ["revealing"], { isUpcoming: true, isAvailable: false, sortOrder: 101 }),
+  p("PCOF1-P24", "signature", "造型 24", "Look No.24", 4500, img(24), ["待揭晓"], ["revealing"], { isUpcoming: true, isAvailable: false, sortOrder: 102 }),
+  p("PCOF1-P25", "signature", "造型 25", "Look No.25", 4500, img(25), ["待揭晓"], ["revealing"], { isUpcoming: true, isAvailable: false, sortOrder: 103 }),
+  p("PCOF1-P26", "signature", "造型 26", "Look No.26", 4500, img(26), ["待揭晓"], ["revealing"], { isUpcoming: true, isAvailable: false, sortOrder: 104 }),
+  p("PCOF1-P27", "signature", "造型 27", "Look No.27", 4500, img(27), ["待揭晓"], ["revealing"], { isUpcoming: true, isAvailable: false, sortOrder: 105 }),
+  p("PCOF1-P28", "signature", "造型 28", "Look No.28", 4500, img(28), ["待揭晓"], ["revealing"], { isUpcoming: true, isAvailable: false, sortOrder: 106 }),
+  p("PCOF1-P29", "signature", "造型 29", "Look No.29", 4500, img(29, "jpg"), ["待揭晓"], ["revealing"], { isUpcoming: true, isAvailable: false, sortOrder: 107 }),
 ];
 
 // Upcoming IP (预告，不可售) — displayed on the brand/about page, not in the shop grid.
@@ -81,11 +81,29 @@ export const upcomingIps = [
   {
     code: "MISS-KITTY",
     name: { zh: "千金猫 Miss Kitty", en: "Miss Kitty" },
-    tagline: { zh: "即将登场 · 千金猫", en: "Upcoming in-house IP" },
+    tagline: { zh: "即将登场 · 千金大小姐，傲娇但心软", en: "Coming soon · The heiress, proud but soft-hearted" },
   },
   {
     code: "PSYCHE",
     name: { zh: "灵魂与蝴蝶女神 Psyche", en: "Psyche — The Soul & Butterfly Goddess" },
-    tagline: { zh: "即将登场 · 灵魂与蝴蝶女神", en: "Upcoming" },
+    tagline: { zh: "即将登场 · 灵魂与蝴蝶女神，温柔而神秘", en: "Coming soon · Soul & Butterfly, gentle and mysterious" },
   },
+];
+
+// OF 联名/定制系列（14 款，询价不标价）—「其他形象」的简单展示，走定制咨询。
+export const collabLooks = [
+  "OF 02",
+  "OF 03",
+  "OF 2.2",
+  "OF 2.4_1",
+  "OF 2.6",
+  "OF 2.11",
+  "OF 2.12",
+  "OF 2.13",
+  "OF 2.31",
+  "OF 2.32",
+  "OF 2.42",
+  "OF 2.51",
+  "OF 2.52",
+  "OF 3.1",
 ];

@@ -1,8 +1,8 @@
-import { products, upcomingIps } from "./products";
+import { products, upcomingIps, collabLooks } from "./products";
 import { seriesList } from "./series";
 import type { Product } from "./types";
 
-export { products, upcomingIps, seriesList };
+export { products, upcomingIps, collabLooks, seriesList };
 export { getSeries, seriesMap } from "./series";
 export type { Product, Series, SeriesSlug, LocalizedString, Dimensions } from "./types";
 
