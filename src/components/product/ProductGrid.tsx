@@ -17,13 +17,10 @@ export function ProductGrid({
 
   const gridCls =
     density === "series"
-      ? "grid grid-cols-2 gap-x-4 gap-y-12 sm:gap-x-8 lg:grid-cols-2 lg:gap-x-12 xl:gap-x-16"
-      : "grid grid-cols-2 gap-x-4 gap-y-10 sm:gap-x-6 lg:grid-cols-3 lg:gap-x-8 xl:gap-x-12";
+      ? "grid grid-cols-2 gap-x-4 gap-y-10 sm:gap-x-6 md:grid-cols-3 lg:grid-cols-4 lg:gap-x-6"
+      : "grid grid-cols-2 gap-x-4 gap-y-10 sm:gap-x-5 md:grid-cols-3 lg:grid-cols-4 lg:gap-x-6";
 
-  const sizes =
-    density === "series"
-      ? "(max-width: 768px) 50vw, 50vw"
-      : "(max-width: 768px) 50vw, 33vw";
+  const sizes = "(max-width: 768px) 50vw, (max-width: 1024px) 33vw, 25vw";
 
   return (
     <div className={gridCls}>

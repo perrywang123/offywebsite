@@ -1,5 +1,10 @@
 # 生产部署指南
 
+> 想快速拿到一个**公网链接分享给同事**？先看
+> [`public-deploy.md`](./public-deploy.md)（三档方案 + 决策矩阵：Cloudflare 快速隧道 /
+> 云服务器 Docker / Fly.io·Railway 托管）。本文是选定「云服务器 + Docker/裸 Node」
+> 路线后的详细运维手册。
+
 目标环境：一台 Linux 云服务器（Ubuntu/Debian 均可），公网可达、有域名。
 
 ## 先决条件（服务器上）

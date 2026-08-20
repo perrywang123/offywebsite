@@ -1,8 +1,9 @@
 import Image from "next/image";
 import { notFound } from "next/navigation";
-import { Link } from "@/i18n/navigation";
 import { getProductsBySeries, getSeries, seriesList } from "@/lib/catalog";
 import { ProductGrid } from "@/components/product/ProductGrid";
+import { CategoryTabs } from "@/components/layout/CategoryTabs";
+import { Reveal } from "@/components/Reveal";
 
 export default async function SeriesPage({
   params,
@@ -20,62 +21,43 @@ export default async function SeriesPage({
   const tagline = locale === "zh" ? series.tagline.zh : series.tagline.en;
 
   return (
-    <div className="mx-auto max-w-7xl px-6 py-12 lg:px-8">
-      {/* 页头：左文右大图拼贴 */}
-      <header className="grid gap-10 lg:grid-cols-[5fr_7fr] lg:items-center lg:gap-16">
-        <div>
-          <nav className="mb-6 text-xs uppercase tracking-[0.14em] text-ink-muted">
-            <Link href="/collections" className="hover:text-ink">
-              All Series
-            </Link>
-            <span className="mx-2 text-sand">/</span>
-            <span className="text-ink-soft">{name}</span>
-          </nav>
-          <p className="kicker mb-3">
+    <>
+      <CategoryTabs series={seriesList} active={slug} locale={locale} />
+
+      {/* 分类大图 hero */}
+      <section className="relative flex min-h-[62vh] items-end overflow-hidden bg-ink">
+        {first && (
+          <div className="ken-burns absolute inset-0">
+            <Image
+              src={first.images[0]}
+              alt={name}
+              fill
+              priority
+              sizes="100vw"
+              className="object-cover object-center"
+            />
+          </div>
+        )}
+        <div className="absolute inset-0 bg-gradient-to-t from-ink/85 via-ink/25 to-transparent" />
+        <div className="grain absolute inset-0 opacity-[0.05]" />
+        <div className="relative z-10 mx-auto w-full max-w-7xl px-6 pb-14 lg:px-8">
+          <p className="kicker kicker--on-dark mb-3">
             Series {String(idx + 1).padStart(2, "0")} · {products.length} Looks
           </p>
-          <h1 className="font-display text-4xl font-semibold tracking-tight md:text-5xl">{name}</h1>
-          <p className="lede mt-4 max-w-md">{tagline}</p>
+          <h1 className="max-w-3xl font-display text-5xl font-semibold uppercase leading-[0.95] tracking-tight text-cream md:text-7xl">
+            {name}
+          </h1>
+          <p className="mt-4 max-w-md text-lg text-cream/80">{tagline}</p>
         </div>
-        <div className="relative" data-slot="series-hero">
-          <div className="relative aspect-[3/4] overflow-hidden rounded-block bg-paper shadow-card">
-            {first && (
-              <Image
-                src={first.images[0]}
-                alt={name}
-                fill
-                sizes="(max-width:1024px) 100vw, 50vw"
-                className="object-cover"
-              />
-            )}
-          </div>
-          {products.length >= 3 && (
-            <div className="absolute -left-6 bottom-8 hidden w-24 rotate-[-2deg] overflow-hidden rounded-soft bg-paper shadow-card md:block md:w-32">
-              <div className="relative aspect-[3/4]">
-                <Image src={products[1].images[0]} alt="" fill sizes="128px" className="object-cover" />
-              </div>
-            </div>
-          )}
-        </div>
-      </header>
-
-      {/* 编辑导语 */}
-      <section className="mt-16 border-y border-cream-line py-12 text-center md:py-16">
-        <p className="mx-auto max-w-2xl font-display text-2xl font-medium tracking-tight text-ink md:text-3xl">
-          {tagline}
-        </p>
       </section>
 
-      {/* 产品列表 */}
-      <section className="mt-16 md:mt-24">
-        <div className="mb-8 flex items-end justify-between">
-          <p className="kicker">{products.length} Looks</p>
-          <Link href="/collections" className="link-line text-xs uppercase tracking-[0.14em]">
-            All Series →
-          </Link>
-        </div>
+      {/* 产品网格 */}
+      <section className="mx-auto max-w-7xl px-6 py-16 md:py-20 lg:px-8">
+        <Reveal className="mb-8 flex items-end justify-between">
+          <p className="kicker">{products.length} {locale === "zh" ? "个形象" : "Looks"}</p>
+        </Reveal>
         <ProductGrid products={products} locale={locale} density="series" />
       </section>
-    </div>
+    </>
   );
 }

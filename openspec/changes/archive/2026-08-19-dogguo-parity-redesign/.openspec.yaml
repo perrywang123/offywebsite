@@ -1,0 +1,14 @@
+schema: spec-driven
+created: 2026-08-19
+goal: Bring the Offy site to dogguo.com-level fidelity (header sub-tabs, category part, premium core-product imagery, footer wordmark, motion system).
+affected_areas:
+  - src/components/layout/Header
+  - src/components/layout/Footer
+  - src/app/[locale]/page
+  - src/app/[locale]/collections
+  - src/app/[locale]/products
+  - src/components/product/ProductCard
+  - src/components/Reveal
+  - src/hooks/useReveal
+  - src/app/globals.css
+  - messages

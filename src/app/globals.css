@@ -82,11 +82,23 @@
     from { opacity: 0; transform: translateY(8px); }
     to { opacity: 1; transform: translateY(0); }
   }
+  /* Ken Burns：hero 大图入场，缓慢从 1.06 回落到 1（对齐 dogguo 1.5s） */
+  --animate-ken-burns: ken-burns 1.6s var(--ease-out) both;
+  @keyframes ken-burns {
+    from { transform: scale(1.06); }
+    to { transform: scale(1); }
+  }
 }
 
 :root {
   --background: #f7f2ef;
   --foreground: #1d1915;
+  /* 固定 header 高度（含 promo 条），供 sticky 子 tab 定位 */
+  --header-h: 104px;
+}
+
+@media (min-width: 768px) {
+  :root { --header-h: 112px; }
 }
 
 html { scroll-behavior: smooth; }
@@ -169,6 +181,21 @@ body {
 .js .reveal.is-in { opacity: 1; transform: none; }
 .js .reveal[data-variant="left"] { transform: translateX(-24px); }
 .js .reveal[data-variant="right"] { transform: translateX(24px); }
+.js .reveal[data-variant="clip"] {
+  opacity: 1;
+  transform: none;
+  clip-path: inset(0 0 100% 0);
+  transition: clip-path 0.9s var(--ease-editorial);
+  transition-delay: var(--reveal-delay, 0ms);
+}
+.js .reveal[data-variant="clip"].is-in { clip-path: inset(0 0 0 0); }
+
+/* 隐藏横向滚动条（子 tab 跟随滑动） */
+.no-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+.no-scrollbar::-webkit-scrollbar { display: none; }
 
 /* ============ 购物车抽屉 ============ */
 .cart-drawer { transform: translateX(100%); transition: transform 0.36s var(--ease-editorial); }

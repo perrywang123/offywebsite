@@ -6,22 +6,9 @@ export async function Footer() {
   const t = await getTranslations("common");
 
   return (
-    <footer className="mt-24 bg-ink text-cream">
-      {/* 上区：大字品牌名签名 */}
-      <div className="border-b border-cream/10 pb-12 md:pb-16">
-        <div className="mx-auto max-w-7xl px-6 lg:px-8">
-          <p className="font-display text-6xl font-semibold tracking-tight text-cream md:text-8xl lg:text-[9rem] lg:leading-none">
-            {t("brandLatin")}
-          </p>
-          <p className="kicker kicker--on-dark mt-6">{t("taglineEn")}</p>
-          <p className="mt-3 text-sm text-cream/60">
-            {t("brandZh")} · {t("tagline")}
-          </p>
-        </div>
-      </div>
-
-      {/* 中区 4 列 */}
-      <div className="mx-auto grid max-w-7xl gap-10 px-6 py-12 md:grid-cols-4 md:gap-8 lg:px-8">
+    <footer className="bg-ink text-cream">
+      {/* 链接列 */}
+      <div className="mx-auto grid max-w-7xl gap-10 px-6 py-16 md:grid-cols-4 md:gap-8 lg:px-8">
         <div>
           <p className="max-w-xs text-sm leading-relaxed text-cream/70">
             {t("tagline")} — Offy 是我们创造的第一个小精灵，把情绪穿在身上的黑肤色卡通 IP。
@@ -30,17 +17,17 @@ export async function Footer() {
         <nav>
           <p className="kicker kicker--on-dark mb-4">Menu</p>
           <div className="flex flex-col gap-3 text-xs uppercase tracking-[0.14em] text-cream/70">
-            <Link href="/" className="hover:text-paper">{t("nav.home")}</Link>
-            <Link href="/products" className="hover:text-paper">{t("nav.shop")}</Link>
-            <Link href="/collections" className="hover:text-paper">{t("nav.collections")}</Link>
-            <Link href="/about" className="hover:text-paper">{t("nav.about")}</Link>
+            <Link href="/" className="transition-colors hover:text-paper">{t("nav.home")}</Link>
+            <Link href="/products" className="transition-colors hover:text-paper">{t("nav.shop")}</Link>
+            <Link href="/collections" className="transition-colors hover:text-paper">{t("nav.collections")}</Link>
+            <Link href="/about" className="transition-colors hover:text-paper">{t("nav.about")}</Link>
           </div>
         </nav>
         <nav>
           <p className="kicker kicker--on-dark mb-4">Collections</p>
           <div className="flex flex-col gap-3 text-xs uppercase tracking-[0.1em] text-cream/70">
-            {seriesList.map((s) => (
-              <Link key={s.slug} href={`/collections/${s.slug}`} className="hover:text-paper">
+            {seriesList.slice(0, 6).map((s) => (
+              <Link key={s.slug} href={`/collections/${s.slug}`} className="transition-colors hover:text-paper">
                 {s.name.en}
               </Link>
             ))}
@@ -53,12 +40,38 @@ export async function Footer() {
         </div>
       </div>
 
-      {/* 底细条 */}
+      {/* 版权细条 */}
       <div className="border-t border-cream/10 py-6">
         <div className="mx-auto flex max-w-7xl flex-wrap items-center justify-between gap-4 px-6 text-xs text-cream/50 lg:px-8">
           <span>© {new Date().getFullYear()} {t("brand")} · {t("footer.rights")}</span>
           <span>{t("taglineEn")}</span>
         </div>
+      </div>
+
+      {/* 全宽公司名字标（截图5） */}
+      <div className="px-4 pb-6 lg:px-8">
+        <svg
+          className="w-full"
+          viewBox="0 0 1000 150"
+          role="img"
+          aria-label={t("brandLatin")}
+          preserveAspectRatio="xMidYMid meet"
+        >
+          <text
+            x="0"
+            y="120"
+            textLength="1000"
+            lengthAdjust="spacingAndGlyphs"
+            fontFamily="var(--font-display)"
+            fontSize="150"
+            fontWeight="700"
+            letterSpacing="-2"
+            fill="currentColor"
+            className="text-cream"
+          >
+            {t("brandLatin")}
+          </text>
+        </svg>
       </div>
     </footer>
   );

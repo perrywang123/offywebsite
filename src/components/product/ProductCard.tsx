@@ -12,43 +12,60 @@ export function ProductCard({
   locale: string;
   sizes?: string;
 }) {
+  const name = locale === "zh" ? product.name.zh : product.name.en;
+  const secondImage = product.images[1];
+  const revealLabel = locale === "zh" ? "待揭晓" : "Revealing soon";
+
   return (
     <div className="group">
       <Link
         href={`/products/${product.code}`}
-        className="relative block rounded-card bg-paper p-3 shadow-soft transition-[box-shadow,transform] duration-500 ease-editorial group-hover:-translate-y-1 group-hover:shadow-card-hover md:p-4"
+        className="relative block aspect-[4/5] overflow-hidden bg-cream-deep"
       >
-        <div className="relative aspect-[3/4] overflow-hidden rounded-[calc(var(--radius-card)-8px)] bg-cream-deep ring-1 ring-inset ring-cream-line">
+        {/* 主图（hover 时淡出，若有第二图） */}
+        <Image
+          src={product.images[0]}
+          alt={name}
+          fill
+          sizes={sizes}
+          className={`scale-[1.01] object-cover transition-all duration-500 ease-editorial group-hover:scale-105 ${
+            secondImage ? "group-hover:opacity-0" : ""
+          }`}
+        />
+        {/* 第二图（hover 交叉淡入） */}
+        {secondImage && (
           <Image
-            src={product.images[0]}
-            alt={locale === "zh" ? product.name.zh : product.name.en}
+            src={secondImage}
+            alt={name}
             fill
             sizes={sizes}
-            className="object-cover transition-transform duration-500 ease-editorial group-hover:scale-[1.02]"
+            className="scale-105 object-cover opacity-0 transition-opacity duration-500 ease-editorial group-hover:opacity-100"
           />
-        </div>
+        )}
+
         {product.featured && (
-          <span className="absolute left-6 top-6 rounded-full bg-brown-100 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-[0.14em] text-brown-700">
-            New
+          <span className="absolute left-0 top-0 bg-cream px-3 py-1.5 text-[10px] font-semibold uppercase tracking-[0.14em] text-ink">
+            {locale === "zh" ? "新品" : "New in"}
           </span>
         )}
-        {product.isUpcoming && (
-          <span className="absolute inset-x-6 bottom-6 rounded-full bg-ink/80 px-2 py-1 text-center text-[10px] font-semibold uppercase tracking-[0.14em] text-cream">
-            {locale === "zh" ? "待揭晓" : "Revealing soon"}
+
+        {/* hover 上滑信息条 */}
+        <div className="pointer-events-none absolute inset-x-0 bottom-0 flex translate-y-4 items-end justify-between gap-3 bg-gradient-to-t from-ink/70 to-transparent p-4 text-cream opacity-0 transition-all duration-500 ease-editorial group-hover:translate-y-0 group-hover:opacity-100">
+          <h3 className="truncate text-xs font-medium uppercase tracking-[0.06em]">{name}</h3>
+          <span className="shrink-0 text-xs tabular-nums">
+            {product.isUpcoming ? revealLabel : formatUsdCents(product.priceCents, locale)}
           </span>
-        )}
+        </div>
       </Link>
-      <div className="pt-4 md:pt-5">
-        <Link href={`/products/${product.code}`}>
-          <h3 className="line-clamp-2 text-base font-medium text-ink md:text-lg">
-            {locale === "zh" ? product.name.zh : product.name.en}
-          </h3>
+
+      {/* 常显极简信息（无 hover 设备可读） */}
+      <div className="flex items-baseline justify-between gap-3 pt-3">
+        <Link href={`/products/${product.code}`} className="min-w-0">
+          <h3 className="truncate text-sm font-medium text-ink md:text-base">{name}</h3>
         </Link>
-        <p className="mt-1 text-sm font-medium text-ink-soft tabular-nums md:mt-1.5 md:text-base">
-          {product.isUpcoming
-            ? locale === "zh" ? "待揭晓" : "Revealing soon"
-            : formatUsdCents(product.priceCents, locale)}
-        </p>
+        <span className="shrink-0 text-sm text-ink-soft tabular-nums">
+          {product.isUpcoming ? revealLabel : formatUsdCents(product.priceCents, locale)}
+        </span>
       </div>
     </div>
   );

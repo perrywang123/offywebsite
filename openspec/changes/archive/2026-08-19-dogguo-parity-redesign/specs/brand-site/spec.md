@@ -1,9 +1,4 @@
-# Brand Site Specification
-
-## Purpose
-The public marketing site for the Offy brand: a responsive homepage that communicates brand identity, product highlights, and contact information.
-
-## Requirements
+## MODIFIED Requirements
 
 ### Requirement: Homepage renders brand content
 The homepage SHALL render, in order: a full-height hero with Ken Burns image
@@ -24,12 +19,7 @@ scroll-triggered entrance animations.
 - **WHEN** the homepage renders
 - **THEN** it contains an about section, a newsletter section, and a contact footer
 
-### Requirement: Health endpoint
-The site SHALL expose a liveness endpoint for monitoring.
-
-#### Scenario: Health check
-- **WHEN** a monitor requests `/api/health`
-- **THEN** the server returns HTTP 200 with a JSON `status: "ok"` payload
+## ADDED Requirements
 
 ### Requirement: Header behavior
 The header SHALL be fixed, transparent over the hero, and slide in a solid
