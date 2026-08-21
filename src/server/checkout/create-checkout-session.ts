@@ -25,6 +25,7 @@ export async function createCheckoutSession(
   locale: string,
   stripeClient?: Stripe,
   db?: Db,
+  shipping?: import("../payments/types").ShippingInfo,
 ): Promise<CreateCheckoutResult> {
   const validItems: CheckoutItem[] = [];
   for (const item of items) {
@@ -78,6 +79,7 @@ export async function createCheckoutSession(
         clientReferenceId,
         currency: "usd",
         lineItemsJson: JSON.stringify(lineItemsSnapshot),
+        shippingJson: shipping ? JSON.stringify(shipping) : null,
       })
       .run();
 

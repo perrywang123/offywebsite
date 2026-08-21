@@ -1,5 +1,5 @@
 import { eq } from "drizzle-orm";
-import type { CompletedPayment } from "../payments/types";
+import type { CompletedPayment, ShippingInfo } from "../payments/types";
 import { checkoutSessions, orderItems, orders } from "../db/schema";
 import type { Db } from "../db/client";
 import { getDb } from "../db/client";
@@ -17,6 +17,7 @@ export interface CompletedSession {
     unitPriceCents: number;
     quantity: number;
   }>;
+  shipping?: ShippingInfo;
 }
 
 function nextOrderNumber(db: Db): string {
@@ -50,6 +51,7 @@ export function finalizeOrder(
       currency: payment.currency,
       subtotalCents: payment.amountSubtotalCents,
       totalCents: payment.amountTotalCents,
+      shippingJson: payment.shipping ? JSON.stringify(payment.shipping) : null,
       status: "paid",
       paidAt: new Date(),
     })
@@ -105,6 +107,7 @@ export function handleCheckoutCompleted(
       amountTotalCents: session.amountTotal ?? 0,
       amountSubtotalCents: session.amountSubtotal ?? session.amountTotal ?? 0,
       lineItems: session.lineItems,
+      shipping: session.shipping,
     },
     db,
   );

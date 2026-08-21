@@ -5,10 +5,22 @@ export interface CheckoutItemInput {
   quantity: number;
 }
 
+export interface ShippingInfo {
+  fullName: string;
+  phone?: string;
+  country: string;
+  state?: string;
+  city: string;
+  address1: string;
+  address2?: string;
+  postalCode: string;
+}
+
 export interface CreateCheckoutInput {
   items: CheckoutItemInput[];
   locale: "en" | "zh";
   email?: string;
+  shipping?: ShippingInfo;
 }
 
 export type CheckoutRedirect =
@@ -36,6 +48,7 @@ export interface CompletedPayment {
   amountTotalCents: number;
   amountSubtotalCents: number;
   lineItems: LineItemSnapshot[];
+  shipping?: ShippingInfo;
 }
 
 export interface CaptureRequest {

@@ -16,7 +16,7 @@ export class StripePaymentProvider implements PaymentProvider {
   }
 
   async createCheckout(input: CreateCheckoutInput): Promise<CreateCheckoutResult> {
-    const result = await createCheckoutSession(input.items, input.locale);
+    const result = await createCheckoutSession(input.items, input.locale, undefined, undefined, input.shipping);
     if (result.ok) {
       return { ok: true, provider: "stripe", redirect: { kind: "redirect", url: result.url } };
     }

@@ -14,6 +14,7 @@ import type {
   CreateCheckoutResult,
   LineItemSnapshot,
   PaymentProvider,
+  ShippingInfo,
 } from "../types";
 import { captureOrder, createOrder, getOrder, voidOrder } from "./client";
 import { amountMatches, assertCurrencyUsd, extractApproveUrl } from "./verify";
@@ -60,15 +61,26 @@ export class PayPalPaymentProvider implements PaymentProvider {
     const cancelUrl = `${env.SITE_URL}/${input.locale}/checkout?paypal=cancelled`;
 
     try {
+      const purchaseUnit: Record<string, unknown> = {
+        reference_id: `offy-${randomUUID()}`,
+        amount: { currency_code: "USD", value: centsToUsdString(subtotalCents) },
+      };
+      if (input.shipping) {
+        purchaseUnit.shipping = {
+          name: { full_name: input.shipping.fullName },
+          address: {
+            address_line_1: input.shipping.address1,
+            admin_area_2: input.shipping.city,
+            admin_area_1: input.shipping.state,
+            postal_code: input.shipping.postalCode,
+            country_code: input.shipping.country,
+          },
+        };
+      }
       const order = await createOrder(
         {
           intent: "CAPTURE",
-          purchase_units: [
-            {
-              reference_id: `offy-${randomUUID()}`,
-              amount: { currency_code: "USD", value: centsToUsdString(subtotalCents) },
-            },
-          ],
+          purchase_units: [purchaseUnit],
           application_context: {
             user_action: "PAY_NOW",
             return_url: returnUrl,
@@ -89,6 +101,7 @@ export class PayPalPaymentProvider implements PaymentProvider {
           clientReferenceId: requestId,
           currency: "usd",
           lineItemsJson: JSON.stringify(lineItems),
+          shippingJson: input.shipping ? JSON.stringify(input.shipping) : null,
           status: "pending",
         })
         .run();
@@ -123,6 +136,12 @@ export class PayPalPaymentProvider implements PaymentProvider {
       lineItems = JSON.parse(session.lineItemsJson ?? "[]") as LineItemSnapshot[];
     } catch {
       lineItems = [];
+    }
+    let shipping: ShippingInfo | undefined;
+    try {
+      shipping = session.shippingJson ? (JSON.parse(session.shippingJson) as ShippingInfo) : undefined;
+    } catch {
+      shipping = undefined;
     }
     const expectedTotal = lineItems.reduce((sum, it) => sum + it.unitPriceCents * it.quantity, 0);
     const expectedUsd = centsToUsdString(expectedTotal);
@@ -162,6 +181,7 @@ export class PayPalPaymentProvider implements PaymentProvider {
         amountTotalCents: expectedTotal,
         amountSubtotalCents: expectedTotal,
         lineItems,
+        shipping,
       };
       finalizeOrder(payment, db);
 

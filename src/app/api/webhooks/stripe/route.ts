@@ -53,6 +53,14 @@ export async function POST(request: Request) {
           lineItems = [];
         }
       }
+      let shipping;
+      if (stored?.shippingJson) {
+        try {
+          shipping = JSON.parse(stored.shippingJson);
+        } catch {
+          shipping = undefined;
+        }
+      }
 
       handleCheckoutCompleted(
         {
@@ -62,6 +70,7 @@ export async function POST(request: Request) {
           amountTotal: session.amount_total,
           amountSubtotal: session.amount_subtotal,
           lineItems,
+          shipping,
         },
         event.id,
       );

@@ -29,6 +29,8 @@ export const checkoutSessions = sqliteTable("checkout_sessions", {
   clientReferenceId: text("client_reference_id"),
   /** JSON snapshot of line items at session creation (code/name/unit price/qty). */
   lineItemsJson: text("line_items_json"),
+  /** JSON snapshot of shipping address at checkout. */
+  shippingJson: text("shipping_json"),
   createdAt: integer("created_at", { mode: "timestamp" })
     .notNull()
     .$defaultFn(() => new Date()),
@@ -47,6 +49,7 @@ export const orders = sqliteTable("orders", {
   currency: text("currency").notNull().default("usd"),
   subtotalCents: integer("subtotal_cents").notNull(),
   totalCents: integer("total_cents").notNull(),
+  shippingJson: text("shipping_json"),
   status: text("status").notNull().default("paid"), // paid | refunded | failed
   paidAt: integer("paid_at", { mode: "timestamp" }).notNull(),
   createdAt: integer("created_at", { mode: "timestamp" })

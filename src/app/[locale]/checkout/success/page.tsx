@@ -18,14 +18,20 @@ export default async function CheckoutSuccessPage({
   const t = await getTranslations("checkout");
 
   const db = getDb();
-  let order: { orderNumber: string; totalCents: number; email: string; id: number } | undefined;
+  let order: { orderNumber: string; totalCents: number; email: string; id: number; shippingJson: string | null } | undefined;
   let items: Array<{ id: number; nameZh: string; nameEn: string; quantity: number; lineTotalCents: number }> = [];
+  let shipping: { fullName: string; country: string; city: string; state?: string; address1: string; address2?: string; postalCode: string; phone?: string } | null = null;
 
   if (order_id) {
     const found = db.select().from(orders).where(eq(orders.orderNumber, order_id)).get();
     if (found) {
       order = found;
       items = db.select().from(orderItems).where(eq(orderItems.orderId, found.id)).all();
+      try {
+        shipping = found.shippingJson ? JSON.parse(found.shippingJson) : null;
+      } catch {
+        shipping = null;
+      }
     }
   }
 
@@ -56,6 +62,20 @@ export default async function CheckoutSuccessPage({
               <span className="tabular-nums">{formatUsdCents(order.totalCents, locale)}</span>
             </div>
           </div>
+          {shipping && (
+            <div className="mt-6 rounded-card bg-paper p-5 text-left text-sm">
+              <p className="kicker mb-3">{t("shipping")}</p>
+              <p className="font-medium">{shipping.fullName}</p>
+              <p className="mt-1 text-ink-soft">
+                {shipping.address1}
+                {shipping.address2 ? `, ${shipping.address2}` : ""}
+              </p>
+              <p className="text-ink-soft">
+                {shipping.city}{shipping.state ? `, ${shipping.state}` : ""} {shipping.postalCode}
+              </p>
+              <p className="text-ink-soft">{shipping.country}{shipping.phone ? ` · ${shipping.phone}` : ""}</p>
+            </div>
+          )}
           <p className="mt-4 text-sm text-ink-muted">
             {t("successEmail")} {order.email}
           </p>

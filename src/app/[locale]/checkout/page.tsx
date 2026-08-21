@@ -9,6 +9,21 @@ import { useCart } from "@/components/cart/CartProvider";
 type Provider = "paypal" | "card";
 type Notice = "cancelled" | "failed" | null;
 
+const COUNTRIES: Array<[string, string]> = [
+  ["US", "美国 / United States"],
+  ["SG", "新加坡 / Singapore"],
+  ["CN", "中国大陆 / China"],
+  ["HK", "中国香港 / Hong Kong"],
+  ["JP", "日本 / Japan"],
+  ["KR", "韩国 / South Korea"],
+  ["TW", "中国台湾 / Taiwan"],
+  ["GB", "英国 / United Kingdom"],
+  ["AU", "澳大利亚 / Australia"],
+  ["CA", "加拿大 / Canada"],
+  ["DE", "德国 / Germany"],
+  ["FR", "法国 / France"],
+];
+
 function PaymentLogo({ provider }: { provider: Provider }) {
   if (provider === "paypal") {
     return (
@@ -28,12 +43,24 @@ function PaymentLogo({ provider }: { provider: Provider }) {
   );
 }
 
+const inputCls =
+  "h-12 w-full rounded-soft border border-sand bg-paper px-4 text-base outline-none transition-colors focus:border-brown-600";
+
 export default function CheckoutPage() {
   const { lines } = useCart();
   const locale = useLocale();
   const t = useTranslations("checkout");
-  const [email, setEmail] = useState("");
+
   const [provider, setProvider] = useState<Provider>("paypal");
+  const [email, setEmail] = useState("");
+  const [fullName, setFullName] = useState("");
+  const [phone, setPhone] = useState("");
+  const [country, setCountry] = useState("US");
+  const [city, setCity] = useState("");
+  const [state, setState] = useState("");
+  const [address1, setAddress1] = useState("");
+  const [address2, setAddress2] = useState("");
+  const [postalCode, setPostalCode] = useState("");
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState("");
   const [notice, setNotice] = useState<Notice>(null);
@@ -63,6 +90,7 @@ export default function CheckoutPage() {
           items: items.map((x) => ({ code: x.line.code, quantity: x.line.quantity })),
           locale,
           email,
+          shipping: { fullName, phone, country, city, state, address1, address2, postalCode },
         }),
       });
       const data = await res.json();
@@ -100,34 +128,100 @@ export default function CheckoutPage() {
       ) : (
         <div className="grid gap-10 lg:grid-cols-[2fr_1fr]">
           <form onSubmit={handleSubmit} className="space-y-6">
+            {/* 联系方式 */}
             <fieldset className="rounded-2xl bg-paper p-6">
-              <legend className="mb-4 font-semibold">{t("contact")}</legend>
-              <label className="block">
-                <span className="mb-2 block text-sm text-ink-soft">{t("email")}</span>
-                <input
-                  type="email"
-                  required
-                  value={email}
-                  readOnly={submitting}
-                  onChange={(e) => setEmail(e.target.value)}
-                  placeholder={t("emailPlaceholder")}
-                  className="h-12 w-full rounded-soft border border-sand bg-paper px-4 outline-none focus:border-brown-600"
-                />
-              </label>
+              <legend className="kicker mb-4">{t("contact")}</legend>
+              <div className="grid gap-4 sm:grid-cols-2">
+                <label className="block">
+                  <span className="mb-2 block text-sm text-ink-soft">{t("email")}</span>
+                  <input
+                    type="email" required value={email} readOnly={submitting}
+                    onChange={(e) => setEmail(e.target.value)}
+                    placeholder={t("emailPlaceholder")} className={inputCls}
+                  />
+                </label>
+                <label className="block">
+                  <span className="mb-2 block text-sm text-ink-soft">{t("phone")}</span>
+                  <input
+                    type="tel" value={phone} readOnly={submitting}
+                    onChange={(e) => setPhone(e.target.value)}
+                    placeholder={t("phonePh")} className={inputCls}
+                  />
+                </label>
+              </div>
             </fieldset>
 
-            {/* 支付方式选择器（单选卡） */}
+            {/* 收货信息 */}
+            <fieldset className="rounded-2xl bg-paper p-6">
+              <legend className="kicker mb-4">{t("shipping")}</legend>
+              <div className="grid gap-4 sm:grid-cols-2">
+                <label className="block sm:col-span-2">
+                  <span className="mb-2 block text-sm text-ink-soft">{t("fullName")}</span>
+                  <input
+                    type="text" required value={fullName} readOnly={submitting}
+                    onChange={(e) => setFullName(e.target.value)}
+                    placeholder={t("fullNamePh")} className={inputCls}
+                  />
+                </label>
+                <label className="block">
+                  <span className="mb-2 block text-sm text-ink-soft">{t("country")}</span>
+                  <select
+                    value={country} disabled={submitting}
+                    onChange={(e) => setCountry(e.target.value)} className={inputCls}
+                  >
+                    {COUNTRIES.map(([code, label]) => (
+                      <option key={code} value={code}>{label}</option>
+                    ))}
+                  </select>
+                </label>
+                <label className="block">
+                  <span className="mb-2 block text-sm text-ink-soft">{t("postalCode")}</span>
+                  <input
+                    type="text" required value={postalCode} readOnly={submitting}
+                    onChange={(e) => setPostalCode(e.target.value)}
+                    placeholder={t("postalCodePh")} className={inputCls}
+                  />
+                </label>
+                <label className="block sm:col-span-2">
+                  <span className="mb-2 block text-sm text-ink-soft">{t("address1")}</span>
+                  <input
+                    type="text" required value={address1} readOnly={submitting}
+                    onChange={(e) => setAddress1(e.target.value)}
+                    placeholder={t("address1Ph")} className={inputCls}
+                  />
+                </label>
+                <label className="block sm:col-span-2">
+                  <span className="mb-2 block text-sm text-ink-soft">{t("address2")}</span>
+                  <input
+                    type="text" value={address2} readOnly={submitting}
+                    onChange={(e) => setAddress2(e.target.value)}
+                    placeholder={t("address2Ph")} className={inputCls}
+                  />
+                </label>
+                <label className="block">
+                  <span className="mb-2 block text-sm text-ink-soft">{t("city")}</span>
+                  <input
+                    type="text" required value={city} readOnly={submitting}
+                    onChange={(e) => setCity(e.target.value)}
+                    placeholder={t("cityPh")} className={inputCls}
+                  />
+                </label>
+                <label className="block">
+                  <span className="mb-2 block text-sm text-ink-soft">{t("state")}</span>
+                  <input
+                    type="text" value={state} readOnly={submitting}
+                    onChange={(e) => setState(e.target.value)}
+                    placeholder={t("statePh")} className={inputCls}
+                  />
+                </label>
+              </div>
+            </fieldset>
+
+            {/* 支付方式 */}
             <fieldset className="space-y-3">
               <legend className="kicker mb-2">{t("paymentTitle")}</legend>
               <label className={cardClass(provider === "paypal")}>
-                <input
-                  type="radio"
-                  name="payment"
-                  value="paypal"
-                  checked={provider === "paypal"}
-                  onChange={() => setProvider("paypal")}
-                  className="sr-only"
-                />
+                <input type="radio" name="payment" value="paypal" checked={provider === "paypal"} onChange={() => setProvider("paypal")} className="sr-only" />
                 <span className={`h-4 w-4 shrink-0 rounded-full border ${provider === "paypal" ? "border-brown-600" : "border-sand"}`}>
                   {provider === "paypal" && <span className="mx-auto mt-[3px] block h-2 w-2 rounded-full bg-brown-600" />}
                 </span>
@@ -136,19 +230,10 @@ export default function CheckoutPage() {
                   <span className="block text-base font-medium text-ink">{t("paymentPaypal")}</span>
                   <span className="mt-0.5 block text-xs text-ink-muted">{t("paymentPaypalSub")}</span>
                 </span>
-                <span className="absolute right-3 top-3 rounded-full bg-butter px-2 py-0.5 text-[10px] font-semibold uppercase tracking-[0.14em] text-ink">
-                  {t("paymentRecommended")}
-                </span>
+                <span className="absolute right-3 top-3 rounded-full bg-butter px-2 py-0.5 text-[10px] font-semibold uppercase tracking-[0.14em] text-ink">{t("paymentRecommended")}</span>
               </label>
               <label className={cardClass(provider === "card")}>
-                <input
-                  type="radio"
-                  name="payment"
-                  value="card"
-                  checked={provider === "card"}
-                  onChange={() => setProvider("card")}
-                  className="sr-only"
-                />
+                <input type="radio" name="payment" value="card" checked={provider === "card"} onChange={() => setProvider("card")} className="sr-only" />
                 <span className={`h-4 w-4 shrink-0 rounded-full border ${provider === "card" ? "border-brown-600" : "border-sand"}`}>
                   {provider === "card" && <span className="mx-auto mt-[3px] block h-2 w-2 rounded-full bg-brown-600" />}
                 </span>
@@ -163,18 +248,12 @@ export default function CheckoutPage() {
             {error && <p className="text-sm text-error">Error: {error}</p>}
 
             <button
-              type="submit"
-              disabled={submitting}
-              aria-busy={submitting}
+              type="submit" disabled={submitting} aria-busy={submitting}
               className="h-12 w-full rounded-full bg-accent text-sm font-medium text-cream transition-colors hover:bg-accent-deep disabled:opacity-70"
             >
-              {submitting
-                ? t("jumping")
-                : provider === "paypal"
-                  ? t("payWithPaypal")
-                  : t("payWithCard")}
+              {submitting ? t("jumping") : provider === "paypal" ? t("payWithPaypal") : t("payWithCard")}
             </button>
-            <p className="text-center text-xs text-ink-muted">USD · Stripe Checkout / PayPal</p>
+            <p className="text-center text-xs text-ink-muted">USD · PayPal / Stripe Checkout</p>
           </form>
 
           <aside className="h-fit rounded-card bg-paper p-6">
@@ -182,9 +261,7 @@ export default function CheckoutPage() {
             <ul className="space-y-3 text-sm">
               {items.map(({ line, product }) => (
                 <li key={line.code} className="flex justify-between">
-                  <span>
-                    {locale === "zh" ? product.name.zh : product.name.en} × {line.quantity}
-                  </span>
+                  <span>{locale === "zh" ? product.name.zh : product.name.en} × {line.quantity}</span>
                   <span>{formatUsdCents(product.priceCents * line.quantity, locale)}</span>
                 </li>
               ))}
