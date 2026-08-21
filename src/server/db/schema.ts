@@ -18,9 +18,11 @@ export const newsletterSubscribers = sqliteTable("newsletter_subscribers", {
  */
 export const checkoutSessions = sqliteTable("checkout_sessions", {
   id: integer("id").primaryKey({ autoIncrement: true }),
-  stripeSessionId: text("stripe_session_id").notNull().unique(),
+  provider: text("provider").notNull().default("stripe"), // stripe | paypal
+  stripeSessionId: text("stripe_session_id").unique(),
+  paypalOrderId: text("paypal_order_id").unique(),
   providerEventId: text("provider_event_id").unique(),
-  status: text("status").notNull().default("pending"), // pending | completed | expired
+  status: text("status").notNull().default("pending"), // pending | authorized | cancelled | failed | completed | expired
   currency: text("currency").notNull().default("usd"),
   amountTotalCents: integer("amount_total_cents"),
   customerEmail: text("customer_email"),
@@ -37,7 +39,9 @@ export const checkoutSessions = sqliteTable("checkout_sessions", {
 export const orders = sqliteTable("orders", {
   id: integer("id").primaryKey({ autoIncrement: true }),
   orderNumber: text("order_number").notNull().unique(),
-  stripeSessionId: text("stripe_session_id").notNull().unique(),
+  provider: text("provider").notNull().default("stripe"), // stripe | paypal
+  stripeSessionId: text("stripe_session_id").unique(),
+  paypalOrderId: text("paypal_order_id").unique(),
   email: text("email").notNull(),
   customerName: text("customer_name"),
   currency: text("currency").notNull().default("usd"),

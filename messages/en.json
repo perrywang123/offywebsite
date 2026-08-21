@@ -108,7 +108,21 @@
     "cancelTitle": "Payment cancelled",
     "cancelBody": "Your items are still waiting in your bag.",
     "pendingTitle": "Confirming your order…",
-    "pendingBody": "Please wait while we confirm your payment."
+    "pendingBody": "Please wait while we confirm your payment.",
+    "paymentTitle": "Payment",
+    "paymentPaypal": "PayPal",
+    "paymentPaypalSub": "Sign in to PayPal to authorize; you'll return automatically",
+    "paymentCard": "Card (credit/debit)",
+    "paymentCardSub": "Pay securely via Stripe",
+    "paymentRecommended": "Recommended",
+    "payWithPaypal": "Pay with PayPal",
+    "payWithCard": "Proceed to Payment",
+    "jumping": "Redirecting to PayPal…",
+    "cancelBanner": "Payment cancelled — your items are still in your bag",
+    "failBanner": "Payment failed — try another method",
+    "successItems": "Items",
+    "successEmail": "Confirmation sent to",
+    "continue": "Keep shopping"
   },
   "about": {
     "title": "Imagine with Love. Create with Companion.",

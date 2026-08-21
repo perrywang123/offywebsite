@@ -15,6 +15,7 @@ interface CartContextValue {
   setQty: (code: string, qty: number) => void;
   open: () => void;
   close: () => void;
+  clear: () => void;
 }
 
 const CartContext = createContext<CartContextValue | null>(null);
@@ -60,6 +61,7 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
         setIsOpen(false);
         setTimeout(() => setMounted(false), 360);
       },
+      clear: () => setLines([]),
     }),
     [lines, isOpen, mounted],
   );

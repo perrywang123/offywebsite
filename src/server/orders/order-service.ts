@@ -1,4 +1,5 @@
 import { eq } from "drizzle-orm";
+import type { CompletedPayment } from "../payments/types";
 import { checkoutSessions, orderItems, orders } from "../db/schema";
 import type { Db } from "../db/client";
 import { getDb } from "../db/client";
@@ -24,53 +25,41 @@ function nextOrderNumber(db: Db): string {
 }
 
 /**
- * Persist an order from a verified `checkout.session.completed` webhook event.
- * Idempotent: a repeated event (same stripe session id OR same provider event
- * id) never writes a second order.
+ * Persist an order from a verified payment completion. Provider-agnostic and
+ * idempotent: a repeated completion (same provider order id) never writes a
+ * second order. Amounts come from the server-side snapshot (the single source
+ * of truth) — never from the client.
  */
-export function handleCheckoutCompleted(
-  session: CompletedSession,
-  providerEventId: string,
+export function finalizeOrder(
+  payment: CompletedPayment,
   db: Db = getDb(),
-): { created: boolean } {
-  const existingOrder = db
-    .select()
-    .from(orders)
-    .where(eq(orders.stripeSessionId, session.id))
-    .get();
-  if (existingOrder) return { created: false };
+): { created: boolean; orderNumber?: string } {
+  const orderKey = payment.provider === "paypal" ? orders.paypalOrderId : orders.stripeSessionId;
 
-  const existingSession = db
-    .select()
-    .from(checkoutSessions)
-    .where(eq(checkoutSessions.stripeSessionId, session.id))
-    .get();
-  if (existingSession?.providerEventId === providerEventId) {
-    return { created: false };
-  }
-
-  const totalCents = session.amountTotal ?? 0;
-  const subtotalCents = session.amountSubtotal ?? totalCents;
+  const existing = db.select().from(orders).where(eq(orderKey, payment.providerOrderId)).get();
+  if (existing) return { created: false, orderNumber: existing.orderNumber };
 
   const inserted = db
     .insert(orders)
     .values({
       orderNumber: nextOrderNumber(db),
-      stripeSessionId: session.id,
-      email: session.customerEmail ?? "unknown@offy.dev",
-      currency: session.currency ?? "usd",
-      subtotalCents,
-      totalCents,
+      provider: payment.provider,
+      stripeSessionId: payment.provider === "stripe" ? payment.providerOrderId : null,
+      paypalOrderId: payment.provider === "paypal" ? payment.providerOrderId : null,
+      email: payment.customerEmail ?? "unknown@offy.dev",
+      currency: payment.currency,
+      subtotalCents: payment.amountSubtotalCents,
+      totalCents: payment.amountTotalCents,
       status: "paid",
       paidAt: new Date(),
     })
     .onConflictDoNothing()
-    .returning({ id: orders.id })
+    .returning({ id: orders.id, orderNumber: orders.orderNumber })
     .get();
 
   if (!inserted) return { created: false };
 
-  for (const item of session.lineItems) {
+  for (const item of payment.lineItems) {
     db.insert(orderItems)
       .values({
         orderId: inserted.id,
@@ -84,16 +73,40 @@ export function handleCheckoutCompleted(
       .run();
   }
 
+  const sessionKey =
+    payment.provider === "paypal" ? checkoutSessions.paypalOrderId : checkoutSessions.stripeSessionId;
   db.update(checkoutSessions)
     .set({
       status: "completed",
-      providerEventId,
-      amountTotalCents: totalCents,
-      customerEmail: session.customerEmail,
+      providerEventId: payment.providerEventId,
+      amountTotalCents: payment.amountTotalCents,
+      customerEmail: payment.customerEmail,
       completedAt: new Date(),
     })
-    .where(eq(checkoutSessions.stripeSessionId, session.id))
+    .where(eq(sessionKey, payment.providerOrderId))
     .run();
 
-  return { created: true };
+  return { created: true, orderNumber: inserted.orderNumber };
+}
+
+/** Stripe webhook entry — builds a CompletedPayment and delegates to finalizeOrder. */
+export function handleCheckoutCompleted(
+  session: CompletedSession,
+  providerEventId: string,
+  db: Db = getDb(),
+): { created: boolean } {
+  const result = finalizeOrder(
+    {
+      provider: "stripe",
+      providerOrderId: session.id,
+      providerEventId,
+      customerEmail: session.customerEmail,
+      currency: session.currency ?? "usd",
+      amountTotalCents: session.amountTotal ?? 0,
+      amountSubtotalCents: session.amountSubtotal ?? session.amountTotal ?? 0,
+      lineItems: session.lineItems,
+    },
+    db,
+  );
+  return { created: result.created };
 }

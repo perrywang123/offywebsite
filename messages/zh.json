@@ -108,7 +108,21 @@
     "cancelTitle": "支付已取消",
     "cancelBody": "购物袋里的商品为你保留着。",
     "pendingTitle": "正在确认订单…",
-    "pendingBody": "请稍候，我们正在确认你的支付。"
+    "pendingBody": "请稍候，我们正在确认你的支付。",
+    "paymentTitle": "支付方式",
+    "paymentPaypal": "PayPal",
+    "paymentPaypalSub": "在 PayPal 官网登录授权，完成后自动返回",
+    "paymentCard": "银行卡（卡支付）",
+    "paymentCardSub": "经 Stripe 安全支付",
+    "paymentRecommended": "推荐",
+    "payWithPaypal": "用 PayPal 支付",
+    "payWithCard": "前往安全支付",
+    "jumping": "正在前往 PayPal…",
+    "cancelBanner": "已取消支付，购物袋里的商品为你保留着",
+    "failBanner": "支付失败，请换一种方式重试",
+    "successItems": "商品",
+    "successEmail": "确认邮件已发送至",
+    "continue": "继续逛"
   },
   "about": {
     "title": "让想象落地，让陪伴发生",

@@ -1,23 +1,77 @@
+import { eq } from "drizzle-orm";
 import { getTranslations } from "next-intl/server";
 import { Link } from "@/i18n/navigation";
+import { orderItems, orders } from "@/server/db/schema";
+import { getDb } from "@/server/db/client";
+import { formatUsdCents } from "@/lib/pricing";
+import { ClearCartOnSuccess } from "@/components/cart/ClearCart";
 
-export default async function CheckoutSuccessPage() {
+export default async function CheckoutSuccessPage({
+  params,
+  searchParams,
+}: {
+  params: Promise<{ locale: string }>;
+  searchParams: Promise<{ order_id?: string }>;
+}) {
+  const { locale } = await params;
+  const { order_id } = await searchParams;
   const t = await getTranslations("checkout");
-  const ta = await getTranslations("common.actions");
+
+  const db = getDb();
+  let order: { orderNumber: string; totalCents: number; email: string; id: number } | undefined;
+  let items: Array<{ id: number; nameZh: string; nameEn: string; quantity: number; lineTotalCents: number }> = [];
+
+  if (order_id) {
+    const found = db.select().from(orders).where(eq(orders.orderNumber, order_id)).get();
+    if (found) {
+      order = found;
+      items = db.select().from(orderItems).where(eq(orderItems.orderId, found.id)).all();
+    }
+  }
 
   return (
-    <div className="mx-auto max-w-2xl px-6 py-24 text-center">
-      <div className="mx-auto mb-6 flex h-16 w-16 items-center justify-center rounded-full bg-leaf text-3xl text-paper">
-        ✓
-      </div>
-      <h1 className="font-display text-4xl font-semibold">{t("successTitle")}</h1>
-      <p className="mt-4 text-ink-soft">{t("successBody")}</p>
-      <Link
-        href="/products"
-        className="mt-8 inline-flex h-12 items-center justify-center rounded-full bg-ink px-6 text-sm font-medium text-paper"
-      >
-        {ta("continueShopping")}
-      </Link>
+    <div className="mx-auto max-w-2xl px-6 py-24">
+      <ClearCartOnSuccess />
+      {order ? (
+        <div className="text-center">
+          <div className="mx-auto mb-6 flex h-16 w-16 items-center justify-center rounded-full bg-leaf text-3xl text-cream">
+            ✓
+          </div>
+          <h1 className="font-display text-4xl font-semibold">{t("successTitle")}</h1>
+          <p className="kicker mt-6">Order</p>
+          <p className="font-mono text-xl tabular-nums">{order.orderNumber}</p>
+          <div className="mt-8 rounded-card bg-paper p-6 text-left">
+            <ul className="divide-y divide-cream-line">
+              {items.map((item) => (
+                <li key={item.id} className="flex justify-between py-3 text-sm">
+                  <span>
+                    {locale === "zh" ? item.nameZh : item.nameEn} × {item.quantity}
+                  </span>
+                  <span className="tabular-nums">{formatUsdCents(item.lineTotalCents, locale)}</span>
+                </li>
+              ))}
+            </ul>
+            <div className="mt-2 flex justify-between border-t border-cream-line pt-3 font-medium">
+              <span>{t("summary")}</span>
+              <span className="tabular-nums">{formatUsdCents(order.totalCents, locale)}</span>
+            </div>
+          </div>
+          <p className="mt-4 text-sm text-ink-muted">
+            {t("successEmail")} {order.email}
+          </p>
+          <Link
+            href="/products"
+            className="mt-8 inline-flex h-12 items-center justify-center rounded-full bg-ink px-6 text-sm font-medium text-cream"
+          >
+            {t("continue")}
+          </Link>
+        </div>
+      ) : (
+        <div className="text-center">
+          <h1 className="font-display text-3xl font-semibold">{t("pendingTitle")}</h1>
+          <p className="mt-3 text-ink-soft">{t("pendingBody")}</p>
+        </div>
+      )}
     </div>
   );
 }
