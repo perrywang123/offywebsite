@@ -30,7 +30,7 @@ function make(overrides: Partial<Product> = {}): Product {
   return {
     code: "PCOF1-A3",
     slug: "pcof1-a3",
-    series: "active-sporty",
+    series: "playful-life",
     name: { zh: "网球甜心", en: "Tennis Ace" },
     description: { zh: "", en: "" },
     priceCents: 4500,
@@ -82,5 +82,40 @@ describe("ProductCard", () => {
     render(<ProductCard product={make({ isUpcoming: true })} locale="en" />);
     expect(screen.queryByText("$45.00")).not.toBeInTheDocument();
     expect(screen.getAllByText(/revealing soon/i).length).toBeGreaterThan(0);
+  });
+});
+
+describe("ProductCard caption=code (design-draft look cards)", () => {
+  it("shows the product code instead of the name", () => {
+    render(<ProductCard product={make()} locale="en" caption="code" />);
+    expect(screen.getAllByText("PCOF1-A3").length).toBeGreaterThan(0);
+    expect(screen.queryByText("Tennis Ace")).not.toBeInTheDocument();
+  });
+
+  it("formats the price as 美元 for zh locale", () => {
+    render(<ProductCard product={make({ priceCents: 2200 })} locale="zh" caption="code" />);
+    expect(screen.getAllByText("22.00美元").length).toBeGreaterThan(0);
+  });
+
+  it("keeps the USD price format for en locale", () => {
+    render(<ProductCard product={make({ priceCents: 2200 })} locale="en" caption="code" />);
+    expect(screen.getAllByText("$22.00").length).toBeGreaterThan(0);
+  });
+});
+
+describe("ProductCard regional badge", () => {
+  it("renders the U.S. only badge", () => {
+    render(<ProductCard product={make({ badge: "US" })} locale="en" />);
+    expect(screen.getByText(/AVAILABLE IN THE U\.S\. ONLY/)).toBeInTheDocument();
+  });
+
+  it("renders the UK only badge", () => {
+    render(<ProductCard product={make({ badge: "UK" })} locale="en" />);
+    expect(screen.getByText(/AVAILABLE IN THE UK ONLY/)).toBeInTheDocument();
+  });
+
+  it("renders no badge when absent", () => {
+    render(<ProductCard product={make()} locale="en" />);
+    expect(screen.queryByText(/AVAILABLE IN THE/)).not.toBeInTheDocument();
   });
 });

@@ -1,0 +1,10 @@
+schema: spec-driven
+created: 2026-09-12
+goal: Add a Shopify Storefront-API-hosted checkout provider (cartCreate → checkoutUrl) alongside existing Stripe/PayPal.
+affected_areas:
+  - src/lib/env
+  - src/lib/catalog
+  - src/server/payments/shopify
+  - src/server/payments/registry
+  - src/app/api/payments/checkout
+  - src/app/[locale]/checkout

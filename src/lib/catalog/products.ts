@@ -1,96 +1,115 @@
 import type { Product, SeriesSlug } from "./types";
 
 /**
- * Offy product catalog (single source of truth for the storefront).
+ * is.offy product catalog —— 本地镜像 Shopify 商店(19 款已发布商品)。
  *
- * NOTE: names / prices / image↔code mapping are PROVISIONAL placeholders, as
- * flagged in docs/brand-brief.md §9. Fix them here only — the UI and checkout
- * read exclusively from this file. Prices are integer USD cents.
+ * code = Shopify handle;骨架价 = Shopify 现价快照(供 Stripe/PayPal 备用渠道);
+ * 展示字段(名/图/描/价)由 enrich 从 Shopify 实时覆盖。中文名为直译占位,
+ * 后续在 Shopify(Translate & Adapt)正式配置。系列归属与 Shopify Collections
+ * 一一对应:Lady系列 / outdoor & sporty系列 / 趣味生活系列。
+ * Shopify 改价/上下架后,本文件只需同步骨架价与成员(单点维护)。
  */
 
-const CLASSIC_DIMENSIONS = { heightCm: 18, lengthCm: 7.5, headCm: 24, armCm: 3.5, legCm: 3.5 };
+const CDN = "https://cdn.shopify.com/s/files/1/0999/4174/4929/files";
+const gid = (n: string) => `gid://shopify/ProductVariant/${n}`;
 
-function p(
-  code: string,
+const SERIES_TAGS: Record<SeriesSlug, { zh: string[]; en: string[] }> = {
+  "princess-lady": { zh: ["公主", "优雅"], en: ["princess", "elegant"] },
+  "outdoor-sporty": { zh: ["户外", "运动"], en: ["outdoor", "sporty"] },
+  "playful-life": { zh: ["日常", "可爱"], en: ["daily", "cute"] },
+};
+
+/** Shopify-mapped product: code = handle;展示字段由 enrich 实时覆盖。 */
+function sp(
+  handle: string,
   series: SeriesSlug,
   nameZh: string,
   nameEn: string,
   priceCents: number,
-  image: string,
-  emotionTagsZh: string[],
-  emotionTagsEn: string[],
+  imageFile: string,
+  variantNum: string,
   opts: Partial<Product> = {},
 ): Product {
+  const tags = SERIES_TAGS[series];
   return {
-    code,
-    slug: code.toLowerCase(),
+    code: handle,
+    slug: handle,
     series,
     name: { zh: nameZh, en: nameEn },
     description: { zh: "", en: "" },
     priceCents,
-    dimensions:
-      series === "large-plush" || series === "bag-charm" ? null : CLASSIC_DIMENSIONS,
-    images: [image],
-    emotionTags: { zh: emotionTagsZh, en: emotionTagsEn },
+    dimensions: null, // Shopify 未配尺寸;详情页尺寸区块对 null 隐藏
+    images: [`${CDN}/${imageFile}`],
+    emotionTags: { zh: tags.zh, en: tags.en },
     featured: false,
     isAvailable: true,
     isUpcoming: false,
     isQuoteOnly: false,
     sortOrder: 0,
+    shopifyHandle: handle,
+    shopifyVariantId: gid(variantNum),
     ...opts,
   };
 }
 
-const img = (n: number, ext = "png") => `/assets/products/p${String(n).padStart(2, "0")}.${ext}`;
-
 export const products: Product[] = [
-  p("PCOF1-F0", "bag-charm", "时尚包挂 Offy", "Offy Bag Charm", 2200, img(1), ["包挂", "随身", "可爱"], ["charm", "portable", "cute"], { featured: true, sortOrder: 10 }),
-  p("PCOF1-F1", "signature", "经典原皮 Offy", "Offy Signature Classic", 4500, img(2), ["原皮", "经典"], ["classic", "original"], { featured: true, sortOrder: 20 }),
-  p("PCOF1-F2", "signature", "经典暮色 Offy", "Offy Signature Dusk", 4500, img(3), ["暮色", "温柔"], ["dusk", "soft"], { sortOrder: 21 }),
-  p("PCOF1-F3", "signature", "经典花瓣 Offy", "Offy Signature Petal", 4500, img(4), ["花瓣", "甜美"], ["petal", "sweet"], { sortOrder: 22 }),
-  p("PCOF1-F4", "multi-texture", "金属质感 Offy", "Offy Metallic Edition", 4900, img(5), ["金属", "未来"], ["metallic", "futuristic"], { featured: true, sortOrder: 30 }),
-  p("PCOF1-F5", "multi-texture", "双色金属 Offy", "Offy Two-Tone Metallic", 4900, img(6), ["双色", "金属"], ["two-tone", "metallic"], { sortOrder: 31 }),
-  p("PCOF1-F6", "multi-texture", "环保再生 Offy", "Offy Recycled Edition", 4900, img(7), ["环保", "再生"], ["eco", "recycled"], { sortOrder: 32 }),
-  p("PCOF1-F7", "recycled-eco", "大地再生 Offy", "Offy Eco Earth", 5500, img(8), ["大地", "自然"], ["earth", "nature"], { sortOrder: 40 }),
-  p("PCOF1-F8", "recycled-eco", "植感再生 Offy", "Offy Eco Bloom", 5500, img(9), ["植感", "生机"], ["bloom", "organic"], { sortOrder: 41 }),
-  p("PCOF1-A3", "active-sporty", "网球甜心 Offy", "Offy Tennis Ace", 4500, img(10), ["网球", "元气"], ["tennis", "sporty"], { featured: true, sortOrder: 50 }),
-  p("PCOF1-A4", "active-sporty", "街头小子 Offy", "Offy Street Player", 4500, img(11), ["街头", "球场"], ["street", "court"], { sortOrder: 51 }),
-  p("PCOF1-B2", "outdoor-lifestyle", "野餐自然 Offy", "Offy Picnic Day", 4500, img(12), ["野餐", "自然"], ["picnic", "nature"], { sortOrder: 60 }),
-  p("PCOF1-B3", "outdoor-lifestyle", "城市漫步 Offy", "Offy City Stroll", 4500, img(13), ["城市", "漫步"], ["city", "stroll"], { sortOrder: 61 }),
-  p("PCOF1-B4", "outdoor-lifestyle", "聚会派对 Offy", "Offy Party Night", 4500, img(14), ["聚会", "派对"], ["party", "night"], { sortOrder: 62 }),
-  p("PCOF1-C2", "princess-elegance", "下午茶 Offy", "Offy Afternoon Tea", 4500, img(15, "jpg"), ["下午茶", "优雅"], ["tea", "elegant"], { sortOrder: 70 }),
-  p("PCOF1-C3", "princess-elegance", "展览缪斯 Offy", "Offy Gallery Muse", 4500, img(16), ["展览", "缪斯"], ["gallery", "muse"], { sortOrder: 71 }),
-  p("PCOF1-C4", "princess-elegance", "日常优雅 Offy", "Offy Everyday Elegance", 4500, img(17), ["日常", "优雅"], ["everyday", "elegance"], { sortOrder: 72 }),
-  p("PCOF1-C5", "princess-elegance", "优雅公主 Offy", "Offy Princess", 4500, img(18), ["公主", "精致"], ["princess", "refined"], { featured: true, sortOrder: 73 }),
-  p("PCOF1-D1", "playful", "玩乐时刻 Offy", "Offy Playtime", 4500, img(19), ["玩乐", "搞怪"], ["play", "whimsy"], { sortOrder: 80 }),
-  p("PCOF1-L0", "large-plush", "大号原皮 Offy", "Offy Original Large", 9900, img(20), ["大号", "原皮"], ["large", "original"], { featured: true, sortOrder: 90 }),
-  p("PCOF1-L1", "large-plush", "泰国限定 Offy", "Offy Thailand Exclusive Large", 11900, img(21), ["泰国", "限定"], ["thailand", "exclusive"], { sortOrder: 91 }),
-  // —— 以下 8 款为「待揭晓」占位（图↔编码精确映射待确认，见 brand-brief §9）——
-  p("PCOF1-P22", "signature", "造型 22", "Look No.22", 4500, img(22), ["待揭晓"], ["revealing"], { isUpcoming: true, isAvailable: false, sortOrder: 100 }),
-  p("PCOF1-P23", "signature", "造型 23", "Look No.23", 4500, img(23), ["待揭晓"], ["revealing"], { isUpcoming: true, isAvailable: false, sortOrder: 101 }),
-  p("PCOF1-P24", "signature", "造型 24", "Look No.24", 4500, img(24), ["待揭晓"], ["revealing"], { isUpcoming: true, isAvailable: false, sortOrder: 102 }),
-  p("PCOF1-P25", "signature", "造型 25", "Look No.25", 4500, img(25), ["待揭晓"], ["revealing"], { isUpcoming: true, isAvailable: false, sortOrder: 103 }),
-  p("PCOF1-P26", "signature", "造型 26", "Look No.26", 4500, img(26), ["待揭晓"], ["revealing"], { isUpcoming: true, isAvailable: false, sortOrder: 104 }),
-  p("PCOF1-P27", "signature", "造型 27", "Look No.27", 4500, img(27), ["待揭晓"], ["revealing"], { isUpcoming: true, isAvailable: false, sortOrder: 105 }),
-  p("PCOF1-P28", "signature", "造型 28", "Look No.28", 4500, img(28), ["待揭晓"], ["revealing"], { isUpcoming: true, isAvailable: false, sortOrder: 106 }),
-  p("PCOF1-P29", "signature", "造型 29", "Look No.29", 4500, img(29, "jpg"), ["待揭晓"], ["revealing"], { isUpcoming: true, isAvailable: false, sortOrder: 107 }),
+  // —— 公主lady系列(Lady系列,12 款;royal-grey 按图归入)——
+  sp("swan-princess", "princess-lady", "天鹅公主", "SWAN PRINCESS", 4590, "12.jpg?v=1790114599", "53547334598945", { sortOrder: 10, featured: true }),
+  sp("black-pearl", "princess-lady", "黑珍珠", "BLACK PEARL", 4590, "10.jpg?v=1790113567", "53547250549025", { sortOrder: 20, featured: true }),
+  sp("pink-mallow", "princess-lady", "粉棉花糖", "PINK MALLOW", 4590, "09.jpg?v=1790113185", "53547209720097", { sortOrder: 30, featured: true }),
+  sp("lemon-fizz", "princess-lady", "柠檬气泡", "LEMON FIZZ", 5190, "08.jpg?v=1790112061", "53547123278113", { sortOrder: 40, badge: "US" }),
+  sp("mint-breeze", "princess-lady", "薄荷微风", "MINT BREEZE", 4590, "07.jpg?v=1790111893", "53547107516705", { sortOrder: 50 }),
+  sp("warm-biscuit", "princess-lady", "暖烘饼干", "WARM BISCUIT", 4590, "06.jpg?v=1790111778", "53547101290785", { sortOrder: 60 }),
+  sp("afternoon-muse", "princess-lady", "午后缪斯", "Afternoon Muse", 4590, "05.jpg?v=1790111323", "53547045683489", { sortOrder: 70 }),
+  sp("british-noon", "princess-lady", "英伦午后", "BRITISH NOON", 4990, "04.jpg?v=1790111030", "53547009704225", { sortOrder: 80 }),
+  sp("coastal-star", "princess-lady", "海岸之星", "COASTAL STAR", 4990, "03.jpg?v=1790110860", "53547001774369", { sortOrder: 90 }),
+  sp("wild-sweetie", "princess-lady", "野性甜心", "WILD SWEETIE", 4590, "01.jpg?v=1790108803", "53546791665953", { sortOrder: 100 }),
+  sp("cold-kitten", "princess-lady", "高冷小猫", "COLD KITTEN", 5190, "02.jpg?v=1790026339", "53542214893857", { sortOrder: 110, badge: "US" }),
+  sp("royal-grey", "princess-lady", "皇家灰", "ROYAL GREY", 4590, "11.jpg?v=1790114065", "53547308122401", { sortOrder: 120 }),
+  // —— outdoor & sporty系列(1 款)——
+  sp("offy_redrush", "outdoor-sporty", "赤红冲锋", "RED RUSH", 0, "WeixinImage_20260912005511_33654_9.jpg?v=1789146147", "53491815579937", { sortOrder: 200, featured: true }),
+  // —— 趣味生活系列(6 款;gurardian-angel 归入)——
+  sp("prep-school", "playful-life", "预科少年", "PREP SCHOOL", 0, "5_33c88aeb-2ee1-44f9-a38d-285a42a73c89.jpg?v=1790116449", "53547386241313", { sortOrder: 300, featured: true }),
+  sp("country-getaway", "playful-life", "乡间逃逸", "COUNTRY GETAWAY", 0, "4_19f01c0d-2820-4d89-9415-56d57730fd4c.jpg?v=1790115935", "53547355930913", { sortOrder: 310, featured: true }),
+  sp("burger-doll", "playful-life", "汉堡娃娃", "BURGER DOLL", 0, "3_b805d6a5-ee63-4972-8ee8-af8a0808bf92.jpg?v=1790115648", "53547349573921", { sortOrder: 320 }),
+  sp("mocha-painter", "playful-life", "摩卡画家", "MOCHA PAINTER", 4590, "2_ed238046-34af-4faf-a1a2-1ed42ad15341.jpg?v=1790115489", "53547347444001", { sortOrder: 330 }),
+  sp("bunny-hug", "playful-life", "兔兔抱抱", "BUNNY HUG", 4990, "1_7fbba8f8-08d2-4291-af75-b381a7abe364.jpg?v=1790115065", "53547344232737", { sortOrder: 340 }),
+  sp("gurardian-angel", "playful-life", "守护天使", "GURARDIAN ANGEL", 0, "6.jpg?v=1790116883", "53547420877089", { sortOrder: 350 }),
 ];
 
-// Upcoming IP (预告，不可售) — displayed on the brand/about page, not in the shop grid.
+/** 更多新品,敬请期待 —— 时尚包挂系列预告(发布时间以 INS 为准)。 */
+export const teaserSeries = {
+  name: { zh: "时尚包挂系列", en: "Fashionable Bag Charm Collection" },
+  /** 详情页 hero 超大英文标题(设计稿连写两行)。 */
+  titleEn: "FASHIONABLEBAG CHARM COLLECTION",
+  note: { zh: "具体发布时间以 INS 为准", en: "Release date follows our Instagram" },
+  heroImage: "/assets/teaser/teaser-hero.jpg",
+  /** 预告详情页 6 张产品卡(编码为设计稿占位款号)。 */
+  items: [
+    { code: "WCOFFY-XXX01", image: "/assets/teaser/teaser-p01.jpg" },
+    { code: "WCOFFY-XXX02", image: "/assets/teaser/teaser-p02a.jpg" },
+    { code: "WCOFFY-XXX03", image: "/assets/teaser/teaser-p02b.jpg" },
+    { code: "WCOFFY-XXX04", image: "/assets/teaser/teaser-p02c.jpg" },
+    { code: "WCOFFY-XXX05", image: "/assets/teaser/teaser-p03.jpg" },
+    { code: "WCOFFY-XXX06", image: "/assets/teaser/teaser-p04.jpg" },
+  ],
+};
+
+// Upcoming IP (预告,不可售) — displayed on the brand/about page, not in the shop grid.
 export const upcomingIps = [
   {
     code: "MISS-KITTY",
-    name: { zh: "千金猫 Miss Kitty", en: "Miss Kitty" },
-    tagline: { zh: "即将登场 · 千金大小姐，傲娇但心软", en: "Coming soon · The heiress, proud but soft-hearted" },
+    name: { zh: "凯蒂小姐 Miss Kitty", en: "Miss Kitty" },
+    tagline: { zh: "即将登场 · 千金大小姐,傲娇但心软", en: "Coming soon · The heiress, proud but soft-hearted" },
   },
   {
     code: "PSYCHE",
-    name: { zh: "灵魂与蝴蝶女神 Psyche", en: "Psyche — The Soul & Butterfly Goddess" },
-    tagline: { zh: "即将登场 · 灵魂与蝴蝶女神，温柔而神秘", en: "Coming soon · Soul & Butterfly, gentle and mysterious" },
+    name: { zh: "普赛克 Psyche", en: "Psyche — Soul & Butterfly" },
+    tagline: { zh: "即将推出 · Soul & Butterfly,温柔而神秘", en: "Coming soon · Soul & Butterfly, gentle and mysterious" },
   },
 ];
 
-// OF 联名/定制系列（14 款，询价不标价）—「其他形象」的简单展示，走定制咨询。
+// OF 联名/定制系列(14 款,询价不标价)— 面向品牌和创作者开放定制和联名合作。
 export const collabLooks = [
   "OF 02",
   "OF 03",

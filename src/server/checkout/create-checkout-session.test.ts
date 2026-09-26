@@ -34,7 +34,7 @@ describe("createCheckoutSession", () => {
     const stripe = fakeStripe();
 
     const result = await createCheckoutSession(
-      [{ code: "PCOF1-A3", quantity: 2 }],
+      [{ code: "swan-princess", quantity: 2 }],
       "zh",
       stripe,
       db,
@@ -44,7 +44,7 @@ describe("createCheckoutSession", () => {
 
     const createArgs = (stripe.checkout.sessions.create as ReturnType<typeof vi.fn>).mock
       .calls[0][0] as { line_items: Array<{ quantity: number; price_data: { unit_amount: number } }> };
-    expect(createArgs.line_items[0].price_data.unit_amount).toBe(4500);
+    expect(createArgs.line_items[0].price_data.unit_amount).toBe(4590);
     expect(createArgs.line_items[0].quantity).toBe(2);
 
     expect(db.select().from(schema.checkoutSessions).all()).toHaveLength(1);
@@ -61,7 +61,7 @@ describe("createCheckoutSession", () => {
   });
 
   it("returns 503 when Stripe is not configured", async () => {
-    const result = await createCheckoutSession([{ code: "PCOF1-A3", quantity: 1 }], "zh");
+    const result = await createCheckoutSession([{ code: "swan-princess", quantity: 1 }], "zh");
     expect(result).toEqual({ ok: false, status: 503, error: "checkout_unavailable" });
   });
 });

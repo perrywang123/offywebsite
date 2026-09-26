@@ -21,8 +21,8 @@ vi.mock("@/i18n/navigation", () => ({
 import { CategoryTabs } from "./CategoryTabs";
 
 const series = [
-  { slug: "signature", name: { zh: "经典毛绒", en: "Signature Plush" }, tagline: { zh: "", en: "" } },
-  { slug: "bag-charm", name: { zh: "时尚包挂", en: "Bag Charm" }, tagline: { zh: "", en: "" } },
+  { slug: "princess-lady", name: { zh: "公主lady系列", en: "Princess Lady" }, tagline: { zh: "", en: "" }, heroImage: "/assets/hero/hero-01.jpg" },
+  { slug: "playful-life", name: { zh: "趣味生活系列", en: "Playful Life" }, tagline: { zh: "", en: "" }, heroImage: "/assets/hero/hero-03.jpg" },
 ] as const;
 
 describe("CategoryTabs", () => {
@@ -34,19 +34,19 @@ describe("CategoryTabs", () => {
 
   it("renders one tab per series linking to its collection", () => {
     render(<CategoryTabs series={[...series]} active={undefined} locale="en" />);
-    expect(screen.getByRole("link", { name: "Signature Plush" })).toHaveAttribute(
+    expect(screen.getByRole("link", { name: "Princess Lady" })).toHaveAttribute(
       "href",
-      "/collections/signature",
+      "/collections/princess-lady",
     );
-    expect(screen.getByRole("link", { name: "Bag Charm" })).toHaveAttribute(
+    expect(screen.getByRole("link", { name: "Playful Life" })).toHaveAttribute(
       "href",
-      "/collections/bag-charm",
+      "/collections/playful-life",
     );
   });
 
   it("marks the active tab bold and aria-current", () => {
-    render(<CategoryTabs series={[...series]} active="signature" locale="en" />);
-    const active = screen.getByRole("link", { name: "Signature Plush" });
+    render(<CategoryTabs series={[...series]} active="princess-lady" locale="en" />);
+    const active = screen.getByRole("link", { name: "Princess Lady" });
     expect(active).toHaveAttribute("aria-current", "page");
     expect(active.className).toContain("font-bold");
   });
@@ -59,7 +59,7 @@ describe("CategoryTabs", () => {
 
   it("localizes labels for zh", () => {
     render(<CategoryTabs series={[...series]} active={undefined} locale="zh" />);
-    expect(screen.getByRole("link", { name: "经典毛绒" })).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: "公主lady系列" })).toBeInTheDocument();
     expect(screen.getByRole("link", { name: "全部" })).toBeInTheDocument();
   });
 });

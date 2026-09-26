@@ -1,8 +1,8 @@
-import { products, upcomingIps, collabLooks } from "./products";
+import { products, upcomingIps, collabLooks, teaserSeries } from "./products";
 import { seriesList } from "./series";
 import type { Product } from "./types";
 
-export { products, upcomingIps, collabLooks, seriesList };
+export { products, upcomingIps, collabLooks, teaserSeries, seriesList };
 export { getSeries, seriesMap } from "./series";
 export type { Product, Series, SeriesSlug, LocalizedString, Dimensions } from "./types";
 
@@ -12,6 +12,11 @@ export function getProducts(): Product[] {
 
 export function getProductByCode(code: string): Product | undefined {
   return products.find((p) => p.code.toLowerCase() === code.toLowerCase());
+}
+
+/** Reverse lookup: find the local product mapped to a given Shopify handle. */
+export function getProductByShopifyHandle(handle: string): Product | undefined {
+  return products.find((p) => p.shopifyHandle === handle);
 }
 
 export function getProductsBySeries(slug: string): Product[] {

@@ -1,37 +1,44 @@
 import { eq } from "drizzle-orm";
 import { getTranslations } from "next-intl/server";
 import { Link } from "@/i18n/navigation";
-import { orderItems, orders } from "@/server/db/schema";
+import { orderItems } from "@/server/db/schema";
 import { getDb } from "@/server/db/client";
+import { getOrderForConfirmation } from "@/server/orders/order-service";
 import { formatUsdCents } from "@/lib/pricing";
 import { ClearCartOnSuccess } from "@/components/cart/ClearCart";
 
+/**
+ * 订单确认页 —— 只认高熵凭证(Stripe session_id / PayPal order id),
+ * 拒绝可枚举的顺序订单号(OF-YYYY-NNNNNN),防 IDOR 爬取客户 PII。
+ */
 export default async function CheckoutSuccessPage({
   params,
   searchParams,
 }: {
   params: Promise<{ locale: string }>;
-  searchParams: Promise<{ order_id?: string }>;
+  searchParams: Promise<{ session_id?: string; paypal_order_id?: string }>;
 }) {
   const { locale } = await params;
-  const { order_id } = await searchParams;
+  const { session_id, paypal_order_id } = await searchParams;
   const t = await getTranslations("checkout");
+  const tCart = await getTranslations("common");
 
   const db = getDb();
   let order: { orderNumber: string; totalCents: number; email: string; id: number; shippingJson: string | null } | undefined;
   let items: Array<{ id: number; nameZh: string; nameEn: string; quantity: number; lineTotalCents: number }> = [];
   let shipping: { fullName: string; country: string; city: string; state?: string; address1: string; address2?: string; postalCode: string; phone?: string } | null = null;
 
-  if (order_id) {
-    const found = db.select().from(orders).where(eq(orders.orderNumber, order_id)).get();
-    if (found) {
-      order = found;
-      items = db.select().from(orderItems).where(eq(orderItems.orderId, found.id)).all();
-      try {
-        shipping = found.shippingJson ? JSON.parse(found.shippingJson) : null;
-      } catch {
-        shipping = null;
-      }
+  const found = getOrderForConfirmation(
+    { stripeSessionId: session_id, paypalOrderId: paypal_order_id },
+    db,
+  );
+  if (found) {
+    order = found;
+    items = db.select().from(orderItems).where(eq(orderItems.orderId, found.id)).all();
+    try {
+      shipping = found.shippingJson ? JSON.parse(found.shippingJson) : null;
+    } catch {
+      shipping = null;
     }
   }
 
@@ -44,7 +51,7 @@ export default async function CheckoutSuccessPage({
             ✓
           </div>
           <h1 className="font-display text-4xl font-semibold">{t("successTitle")}</h1>
-          <p className="kicker mt-6">Order</p>
+          <p className="kicker mt-6">{t("successOrder")}</p>
           <p className="font-mono text-xl tabular-nums">{order.orderNumber}</p>
           <div className="mt-8 rounded-card bg-paper p-6 text-left">
             <ul className="divide-y divide-cream-line">
@@ -58,7 +65,7 @@ export default async function CheckoutSuccessPage({
               ))}
             </ul>
             <div className="mt-2 flex justify-between border-t border-cream-line pt-3 font-medium">
-              <span>{t("summary")}</span>
+              <span>{tCart("cart.total")}</span>
               <span className="tabular-nums">{formatUsdCents(order.totalCents, locale)}</span>
             </div>
           </div>

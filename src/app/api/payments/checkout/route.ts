@@ -17,10 +17,10 @@ const shippingSchema = z.object({
 });
 
 const bodySchema = z.object({
-  provider: z.enum(["stripe", "paypal"]).optional(),
+  provider: z.enum(["stripe", "paypal", "shopify"]).optional(),
   items: z.array(z.object({ code: z.string(), quantity: z.number() })).min(1).max(50),
   locale: z.string().optional(),
-  email: z.string().optional(),
+  email: z.string().email().optional(),
   shipping: shippingSchema.optional(),
 });
 

@@ -2,11 +2,12 @@
 
 import { useEffect, useState } from "react";
 import { useLocale, useTranslations } from "next-intl";
+import { Link } from "@/i18n/navigation";
 import { getProductByCode } from "@/lib/catalog";
 import { formatUsdCents } from "@/lib/pricing";
 import { useCart } from "@/components/cart/CartProvider";
 
-type Provider = "paypal" | "card";
+type Provider = "paypal" | "stripe" | "shopify";
 type Notice = "cancelled" | "failed" | null;
 
 const COUNTRIES: Array<[string, string]> = [
@@ -29,6 +30,13 @@ function PaymentLogo({ provider }: { provider: Provider }) {
     return (
       <span className="flex h-10 w-14 shrink-0 items-center justify-center rounded-soft bg-[#0070ba] text-xs font-semibold italic text-paper">
         PayPal
+      </span>
+    );
+  }
+  if (provider === "shopify") {
+    return (
+      <span className="flex h-10 w-14 shrink-0 items-center justify-center rounded-soft bg-[#5a863e] text-[10px] font-semibold text-paper">
+        Shopify
       </span>
     );
   }
@@ -124,7 +132,12 @@ export default function CheckoutPage() {
       )}
 
       {items.length === 0 ? (
-        <p className="text-ink-muted">No items to check out.</p>
+        <div className="text-center">
+          <p className="text-ink-muted">{t("empty")}</p>
+          <Link href="/products" className="link-line mt-4 inline-block text-sm">
+            {t("emptyCta")} →
+          </Link>
+        </div>
       ) : (
         <div className="grid gap-10 lg:grid-cols-[2fr_1fr]">
           <form onSubmit={handleSubmit} className="space-y-6">
@@ -232,15 +245,26 @@ export default function CheckoutPage() {
                 </span>
                 <span className="absolute right-3 top-3 rounded-full bg-butter px-2 py-0.5 text-[10px] font-semibold uppercase tracking-[0.14em] text-ink">{t("paymentRecommended")}</span>
               </label>
-              <label className={cardClass(provider === "card")}>
-                <input type="radio" name="payment" value="card" checked={provider === "card"} onChange={() => setProvider("card")} className="sr-only" />
-                <span className={`h-4 w-4 shrink-0 rounded-full border ${provider === "card" ? "border-brown-600" : "border-sand"}`}>
-                  {provider === "card" && <span className="mx-auto mt-[3px] block h-2 w-2 rounded-full bg-brown-600" />}
+              <label className={cardClass(provider === "stripe")}>
+                <input type="radio" name="payment" value="stripe" checked={provider === "stripe"} onChange={() => setProvider("stripe")} className="sr-only" />
+                <span className={`h-4 w-4 shrink-0 rounded-full border ${provider === "stripe" ? "border-brown-600" : "border-sand"}`}>
+                  {provider === "stripe" && <span className="mx-auto mt-[3px] block h-2 w-2 rounded-full bg-brown-600" />}
                 </span>
-                <PaymentLogo provider="card" />
+                <PaymentLogo provider="stripe" />
                 <span className="flex-1">
                   <span className="block text-base font-medium text-ink">{t("paymentCard")}</span>
                   <span className="mt-0.5 block text-xs text-ink-muted">{t("paymentCardSub")}</span>
+                </span>
+              </label>
+              <label className={cardClass(provider === "shopify")}>
+                <input type="radio" name="payment" value="shopify" checked={provider === "shopify"} onChange={() => setProvider("shopify")} className="sr-only" />
+                <span className={`h-4 w-4 shrink-0 rounded-full border ${provider === "shopify" ? "border-brown-600" : "border-sand"}`}>
+                  {provider === "shopify" && <span className="mx-auto mt-[3px] block h-2 w-2 rounded-full bg-brown-600" />}
+                </span>
+                <PaymentLogo provider="shopify" />
+                <span className="flex-1">
+                  <span className="block text-base font-medium text-ink">{t("paymentShopify")}</span>
+                  <span className="mt-0.5 block text-xs text-ink-muted">{t("paymentShopifySub")}</span>
                 </span>
               </label>
             </fieldset>
@@ -251,7 +275,13 @@ export default function CheckoutPage() {
               type="submit" disabled={submitting} aria-busy={submitting}
               className="h-12 w-full rounded-full bg-accent text-sm font-medium text-cream transition-colors hover:bg-accent-deep disabled:opacity-70"
             >
-              {submitting ? t("jumping") : provider === "paypal" ? t("payWithPaypal") : t("payWithCard")}
+              {submitting
+                ? t("jumping")
+                : provider === "paypal"
+                  ? t("payWithPaypal")
+                  : provider === "shopify"
+                    ? t("payWithShopify")
+                    : t("payWithCard")}
             </button>
             <p className="text-center text-xs text-ink-muted">USD · PayPal / Stripe Checkout</p>
           </form>

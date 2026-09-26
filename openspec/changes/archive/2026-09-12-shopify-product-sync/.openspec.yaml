@@ -1,0 +1,8 @@
+schema: spec-driven
+created: 2026-09-12
+goal: Enrich catalog products for display with near-real-time Shopify Storefront data (image/description/price/title), falling back to local values.
+affected_areas:
+  - next.config.ts
+  - src/server/shopify
+  - src/server/catalog
+  - src/app/[locale]

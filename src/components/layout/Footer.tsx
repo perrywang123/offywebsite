@@ -47,32 +47,6 @@ export async function Footer() {
           <span>{t("taglineEn")}</span>
         </div>
       </div>
-
-      {/* 全宽公司名字标（截图5） */}
-      <div className="px-4 pb-6 lg:px-8">
-        <svg
-          className="w-full"
-          viewBox="0 0 1000 150"
-          role="img"
-          aria-label={t("brandLatin")}
-          preserveAspectRatio="xMidYMid meet"
-        >
-          <text
-            x="0"
-            y="120"
-            textLength="1000"
-            lengthAdjust="spacingAndGlyphs"
-            fontFamily="var(--font-display)"
-            fontSize="150"
-            fontWeight="700"
-            letterSpacing="-2"
-            fill="currentColor"
-            className="text-cream"
-          >
-            {t("brandLatin")}
-          </text>
-        </svg>
-      </div>
     </footer>
   );
 }

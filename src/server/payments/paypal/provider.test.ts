@@ -38,7 +38,7 @@ describe("PayPalPaymentProvider.createCheckout", () => {
 
     const provider = new PayPalPaymentProvider(db);
     const result = await provider.createCheckout({
-      items: [{ code: "PCOF1-A3", quantity: 2 }],
+      items: [{ code: "swan-princess", quantity: 2 }],
       locale: "en",
     });
 

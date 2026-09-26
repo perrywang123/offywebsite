@@ -1,7 +1,8 @@
 "use client";
 
 import { createContext, useContext, useEffect, useMemo, useState } from "react";
-import { addLine, cartCount, removeLine, setQuantity, type CartState } from "@/lib/cart";
+import { addLine, cartCount, pruneLines, removeLine, setQuantity, type CartState } from "@/lib/cart";
+import { getProductByCode } from "@/lib/catalog";
 
 const STORAGE_KEY = "offy.cart.v1";
 
@@ -29,7 +30,12 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     try {
       const raw = localStorage.getItem(STORAGE_KEY);
-      if (raw) setLines(JSON.parse(raw) as CartState);
+      if (raw) {
+        const parsed = JSON.parse(raw) as CartState;
+        // 加载时清理失效商品行(僵尸数据):不在目录中的 code 直接移除并落盘,
+        // 保证徽标计数与渲染行一致。
+        setLines(pruneLines(parsed, (code) => Boolean(getProductByCode(code))));
+      }
     } catch {
       /* ignore */
     }

@@ -1,27 +1,19 @@
 "use client";
 
-import { useEffect, useState } from "react";
 import { useLocale, useTranslations } from "next-intl";
-import { Link, usePathname } from "@/i18n/navigation";
+import { Link } from "@/i18n/navigation";
 import { seriesList } from "@/lib/catalog";
 import { CartButton } from "@/components/cart/CartButton";
 import { LanguageSwitcher } from "./LanguageSwitcher";
+import { MobileNav } from "./MobileNav";
 
 export function Header() {
   const t = useTranslations("common");
   const locale = useLocale();
-  const pathname = usePathname();
-  const [scrolled, setScrolled] = useState(false);
 
-  useEffect(() => {
-    const onScroll = () => setScrolled(window.scrollY > 40);
-    onScroll();
-    window.addEventListener("scroll", onScroll, { passive: true });
-    return () => window.removeEventListener("scroll", onScroll);
-  }, []);
-
-  // 仅首页 hero 顶部呈透明覆盖（白字）；其余页面或滚动后为实底（黑字）。
-  const overHero = pathname === "/" && !scrolled;
+  // 头图已换为浅底素材,header 始终实底黑字(与交互稿一致);
+  // 旧深色 hero 的"透明白字覆盖 + 滚动滑入"逻辑已停用(overHero 恒 false)。
+  const overHero = false;
 
   return (
     <header className="sticky top-0 z-50">
@@ -104,8 +96,11 @@ export function Header() {
           </nav>
 
           <div className="flex items-center gap-3">
-            <LanguageSwitcher />
+            <div className="hidden md:block">
+              <LanguageSwitcher />
+            </div>
             <CartButton />
+            <MobileNav />
           </div>
         </div>
       </div>

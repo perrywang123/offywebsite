@@ -4,7 +4,7 @@ import { drizzle } from "drizzle-orm/better-sqlite3";
 import { migrate } from "drizzle-orm/better-sqlite3/migrator";
 import { describe, expect, it } from "vitest";
 import * as schema from "../db/schema";
-import { finalizeOrder, handleCheckoutCompleted } from "./order-service";
+import { finalizeOrder, getOrderForConfirmation, handleCheckoutCompleted } from "./order-service";
 
 function createDb() {
   const sqlite = new Database(":memory:");
@@ -74,5 +74,39 @@ describe("finalizeOrder (paypal)", () => {
     expect(db.select().from(schema.orders).all()).toHaveLength(1);
     expect(db.select().from(schema.orderItems).all()).toHaveLength(1);
     expect(db.select().from(schema.orders).all()[0].provider).toBe("paypal");
+  });
+});
+
+describe("getOrderForConfirmation (high-entropy credential only, IDOR-safe)", () => {
+  it("finds the order by stripe session id", () => {
+    const db = createDb();
+    handleCheckoutCompleted(session, "evt_1", db);
+    const found = getOrderForConfirmation({ stripeSessionId: "cs_test_1" }, db);
+    expect(found?.email).toBe("buyer@example.com");
+  });
+
+  it("finds the order by paypal order id", () => {
+    const db = createDb();
+    finalizeOrder(
+      {
+        provider: "paypal",
+        providerOrderId: "PAYPAL-HIGH-ENTROPY-ID",
+        providerEventId: "CAP1",
+        customerEmail: "p@example.com",
+        currency: "usd",
+        amountTotalCents: 100,
+        amountSubtotalCents: 100,
+        lineItems: [],
+      },
+      db,
+    );
+    const found = getOrderForConfirmation({ paypalOrderId: "PAYPAL-HIGH-ENTROPY-ID" }, db);
+    expect(found?.email).toBe("p@example.com");
+  });
+
+  it("returns undefined without a credential (never looks up by order number)", () => {
+    const db = createDb();
+    handleCheckoutCompleted(session, "evt_1", db);
+    expect(getOrderForConfirmation({}, db)).toBeUndefined();
   });
 });

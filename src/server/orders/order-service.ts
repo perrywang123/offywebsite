@@ -26,6 +26,25 @@ function nextOrderNumber(db: Db): string {
 }
 
 /**
+ * Look up an order for the confirmation page using a high-entropy credential
+ * (Stripe session id or PayPal order id). The enumerable order number
+ * (OF-YYYY-NNNNNN) is deliberately NOT accepted — prevents IDOR enumeration
+ * of customer PII via sequential order numbers.
+ */
+export function getOrderForConfirmation(
+  cred: { stripeSessionId?: string; paypalOrderId?: string },
+  db: Db = getDb(),
+) {
+  if (cred.stripeSessionId) {
+    return db.select().from(orders).where(eq(orders.stripeSessionId, cred.stripeSessionId)).get();
+  }
+  if (cred.paypalOrderId) {
+    return db.select().from(orders).where(eq(orders.paypalOrderId, cred.paypalOrderId)).get();
+  }
+  return undefined;
+}
+
+/**
  * Persist an order from a verified payment completion. Provider-agnostic and
  * idempotent: a repeated completion (same provider order id) never writes a
  * second order. Amounts come from the server-side snapshot (the single source

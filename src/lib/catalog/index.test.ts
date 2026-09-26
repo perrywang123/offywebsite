@@ -5,38 +5,81 @@ import {
   getProductByCode,
   getProductsBySeries,
   products,
+  seriesList,
+  teaserSeries,
   toStripeLineItems,
 } from "./index";
 
-describe("catalog data integrity", () => {
-  it("has at least one product", () => {
-    expect(products.length).toBeGreaterThan(0);
+describe("catalog data integrity (19 Shopify-mapped products)", () => {
+  it("exposes exactly 19 products, one per Shopify-published item", () => {
+    expect(products).toHaveLength(19);
   });
 
-  it("has unique codes", () => {
+  it("defines exactly 3 series aligned with Shopify Collections", () => {
+    expect(seriesList.map((s) => s.slug)).toEqual([
+      "princess-lady",
+      "outdoor-sporty",
+      "playful-life",
+    ]);
+  });
+
+  it("each series carries a dedicated hero image for the collection page hero", () => {
+    // 按图内容对应:公主lady=素材2(白底人台)、时尚=素材4(CATTLETUS)、趣味=素材3(深底)
+    expect(seriesList.map((s) => s.heroImage)).toEqual([
+      "/assets/hero/hero-02.jpg",
+      "/assets/hero/hero-04.jpg",
+      "/assets/hero/hero-03.jpg",
+    ]);
+  });
+
+  it("has unique codes equal to Shopify handles", () => {
     const codes = products.map((p) => p.code);
     expect(new Set(codes).size).toBe(codes.length);
+    for (const p of products) {
+      expect(p.shopifyHandle).toBe(p.code);
+      expect(p.shopifyVariantId).toMatch(/^gid:\/\/shopify\/ProductVariant\/\d+$/);
+    }
   });
 
-  it("every sellable product has bilingual name, positive price and an image", () => {
+  it("every product has bilingual name, non-negative price and an image", () => {
     for (const product of products) {
       expect(product.name.en.trim().length).toBeGreaterThan(0);
       expect(product.name.zh.trim().length).toBeGreaterThan(0);
-      expect(product.priceCents).toBeGreaterThan(0);
+      expect(product.priceCents).toBeGreaterThanOrEqual(0);
       expect(product.images.length).toBeGreaterThan(0);
     }
+  });
+
+  it("series membership mirrors Shopify Collections (12 / 1 / 6)", () => {
+    expect(getProductsBySeries("princess-lady")).toHaveLength(12);
+    expect(getProductsBySeries("outdoor-sporty")).toHaveLength(1);
+    expect(getProductsBySeries("playful-life")).toHaveLength(6);
+  });
+
+  it("prices mirror the Shopify store tiers", () => {
+    const byPrice = (cents: number) => products.filter((p) => p.priceCents === cents).length;
+    expect(byPrice(5190)).toBe(2);
+    expect(byPrice(4990)).toBe(3);
+    expect(byPrice(4590)).toBe(9);
+    expect(byPrice(0)).toBe(5);
+  });
+
+  it("marks regional-exclusive products (cold-kitten/lemon-fizz US)", () => {
+    expect(getProductByCode("cold-kitten")?.badge).toBe("US");
+    expect(getProductByCode("lemon-fizz")?.badge).toBe("US");
+    expect(getProductByCode("swan-princess")?.badge).toBeUndefined();
+  });
+
+  it("marks 6 featured products for the homepage looks grid", () => {
+    const featured = products.filter((p) => p.featured);
+    expect(featured).toHaveLength(6);
   });
 });
 
 describe("catalog queries", () => {
   it("getProductByCode is case-insensitive", () => {
-    expect(getProductByCode("pcof1-a3")?.code).toBe("PCOF1-A3");
-  });
-
-  it("getProductsBySeries filters", () => {
-    const result = getProductsBySeries("active-sporty");
-    expect(result.length).toBeGreaterThan(0);
-    expect(result.every((p) => p.series === "active-sporty")).toBe(true);
+    expect(getProductByCode("SWAN-PRINCESS")?.code).toBe("swan-princess");
+    expect(getProductByCode("offy_redrush")?.code).toBe("offy_redrush");
   });
 
   it("getFeaturedProducts returns featured items", () => {
@@ -48,8 +91,8 @@ describe("catalog queries", () => {
 
 describe("toStripeLineItems", () => {
   it("uses server-side catalog price (ignores any client price)", () => {
-    const [line] = toStripeLineItems([{ code: "PCOF1-A3", quantity: 2 }]);
-    expect(line.price_data.unit_amount).toBe(4500);
+    const [line] = toStripeLineItems([{ code: "swan-princess", quantity: 2 }]);
+    expect(line.price_data.unit_amount).toBe(4590);
     expect(line.quantity).toBe(2);
   });
 
@@ -62,9 +105,24 @@ describe("computeSubtotalCents", () => {
   it("computes server-authoritative subtotal", () => {
     expect(
       computeSubtotalCents([
-        { code: "PCOF1-A3", quantity: 2 },
-        { code: "PCOF1-B2", quantity: 1 },
+        { code: "swan-princess", quantity: 2 },
+        { code: "bunny-hug", quantity: 1 },
       ]),
-    ).toBe(4500 * 2 + 4500);
+    ).toBe(4590 * 2 + 4990);
+  });
+});
+
+describe("teaserSeries (fashionable bag charm, upcoming)", () => {
+  it("exposes hero image + English display title", () => {
+    expect(teaserSeries.heroImage).toBeTruthy();
+    expect(teaserSeries.titleEn).toBe("FASHIONABLEBAG CHARM COLLECTION");
+  });
+
+  it("exposes 6 teaser items coded WCOFFY-XXX01..06 with images", () => {
+    expect(teaserSeries.items).toHaveLength(6);
+    teaserSeries.items.forEach((item, i) => {
+      expect(item.code).toBe(`WCOFFY-XXX0${i + 1}`);
+      expect(item.image).toMatch(/^\/assets\/teaser\//);
+    });
   });
 });

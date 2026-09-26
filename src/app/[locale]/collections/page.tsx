@@ -11,7 +11,7 @@ export default async function CollectionsPage({ params }: { params: Promise<{ lo
   const series = seriesList.map((s) => ({
     ...s,
     count: getProductsBySeries(s.slug).length,
-    image: getProductsBySeries(s.slug)[0]?.images[0] ?? "/assets/products/p01.png",
+    image: getProductsBySeries(s.slug)[0]?.images[0] ?? "/assets/hero/hero-01.jpg",
   }));
 
   return (

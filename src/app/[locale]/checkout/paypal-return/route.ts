@@ -22,7 +22,8 @@ export async function GET(
   });
 
   if (result.ok) {
-    redirect(`/${locale}/checkout/success?order_id=${encodeURIComponent(result.order.orderNumber)}`);
+    // 用 PayPal 高熵 order id 作确认凭证,不暴露可枚举的顺序订单号(IDOR 防护)。
+    redirect(`/${locale}/checkout/success?paypal_order_id=${encodeURIComponent(orderId)}`);
   }
   redirect(`/${locale}/checkout?paypal=failed&reason=${encodeURIComponent(result.error)}`);
 }

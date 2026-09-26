@@ -1,0 +1,7 @@
+schema: spec-driven
+created: 2026-09-13
+goal: Source the product list page from Shopify (published products, market currency), with local fallback. Phase 1 minimal slice.
+affected_areas:
+  - src/server/shopify
+  - src/lib/catalog
+  - src/app/[locale]/products

@@ -7,14 +7,22 @@ export function ProductCard({
   product,
   locale,
   sizes = "(max-width: 768px) 50vw, 33vw",
+  caption = "name",
 }: {
   product: Product;
   locale: string;
   sizes?: string;
+  /** name: 显示产品名(默认);code: 按设计稿显示款号(首页曝光造型卡)。 */
+  caption?: "name" | "code";
 }) {
-  const name = locale === "zh" ? product.name.zh : product.name.en;
+  const localizedName = locale === "zh" ? product.name.zh : product.name.en;
+  const name = caption === "code" ? product.code : localizedName;
   const secondImage = product.images[1];
   const revealLabel = locale === "zh" ? "待揭晓" : "Revealing soon";
+  const price =
+    caption === "code" && locale === "zh"
+      ? `${(product.priceCents / 100).toFixed(2)}美元`
+      : formatUsdCents(product.priceCents, locale);
 
   return (
     <div className="group">
@@ -49,11 +57,19 @@ export function ProductCard({
           </span>
         )}
 
+        {/* 区域限定徽章(设计稿:红底,右上) */}
+        {product.badge && (
+          <span className="absolute right-2 top-2 flex items-center gap-1 bg-[#c8102e] px-2 py-1 text-[9px] font-bold uppercase tracking-wide text-white">
+            <span aria-hidden>{product.badge === "US" ? "🇺🇸" : "🇬🇧"}</span>
+            {product.badge === "US" ? "AVAILABLE IN THE U.S. ONLY" : "AVAILABLE IN THE UK ONLY"}
+          </span>
+        )}
+
         {/* hover 上滑信息条 */}
         <div className="pointer-events-none absolute inset-x-0 bottom-0 flex translate-y-4 items-end justify-between gap-3 bg-gradient-to-t from-ink/70 to-transparent p-4 text-cream opacity-0 transition-all duration-500 ease-editorial group-hover:translate-y-0 group-hover:opacity-100">
           <h3 className="truncate text-xs font-medium uppercase tracking-[0.06em]">{name}</h3>
           <span className="shrink-0 text-xs tabular-nums">
-            {product.isUpcoming ? revealLabel : formatUsdCents(product.priceCents, locale)}
+            {product.isUpcoming ? revealLabel : price}
           </span>
         </div>
       </Link>
@@ -64,7 +80,7 @@ export function ProductCard({
           <h3 className="truncate text-sm font-medium text-ink md:text-base">{name}</h3>
         </Link>
         <span className="shrink-0 text-sm text-ink-soft tabular-nums">
-          {product.isUpcoming ? revealLabel : formatUsdCents(product.priceCents, locale)}
+          {product.isUpcoming ? revealLabel : price}
         </span>
       </div>
     </div>

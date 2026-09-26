@@ -1,13 +1,4 @@
-export type SeriesSlug =
-  | "bag-charm"
-  | "signature"
-  | "multi-texture"
-  | "recycled-eco"
-  | "active-sporty"
-  | "outdoor-lifestyle"
-  | "princess-elegance"
-  | "playful"
-  | "large-plush";
+export type SeriesSlug = "princess-lady" | "outdoor-sporty" | "playful-life";
 
 export interface LocalizedString {
   en: string;
@@ -43,10 +34,18 @@ export interface Product {
   isUpcoming: boolean;
   isQuoteOnly: boolean;
   sortOrder: number;
+  /** Optional badge rendered on the card, e.g. "区域限定" (regional exclusive). */
+  badge?: string;
+  /** Shopify Storefront variant GID for hosted checkout, e.g. "gid://shopify/ProductVariant/123". */
+  shopifyVariantId?: string;
+  /** Shopify product handle for enrichment reads (stable across variant edits). */
+  shopifyHandle?: string;
 }
 
 export interface Series {
   slug: SeriesSlug;
   name: LocalizedString;
   tagline: LocalizedString;
+  /** 系列页顶部 hero 图(头图素材,与首页轮播图对应)。 */
+  heroImage: string;
 }

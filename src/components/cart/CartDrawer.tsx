@@ -1,5 +1,6 @@
 "use client";
 
+import { useEffect, useRef } from "react";
 import Image from "next/image";
 import { useLocale, useTranslations } from "next-intl";
 import { Link } from "@/i18n/navigation";
@@ -12,6 +13,18 @@ export function CartDrawer() {
   const locale = useLocale();
   const t = useTranslations("common.cart");
   const ta = useTranslations("common.actions");
+  const closeRef = useRef<HTMLButtonElement>(null);
+
+  // 打开时焦点移入抽屉(关闭按钮),Escape 关闭 —— WAI-ARIA Dialog 规范。
+  useEffect(() => {
+    if (!isOpen) return;
+    closeRef.current?.focus();
+    const onKeyDown = (e: KeyboardEvent) => {
+      if (e.key === "Escape") close();
+    };
+    document.addEventListener("keydown", onKeyDown);
+    return () => document.removeEventListener("keydown", onKeyDown);
+  }, [isOpen, close]);
 
   const items = lines
     .map((line) => ({ line, product: getProductByCode(line.code) }))
@@ -29,12 +42,14 @@ export function CartDrawer() {
         data-open={isOpen}
         role="dialog"
         aria-modal="true"
+        aria-label={t("title")}
       >
         <header className="flex items-center justify-between border-b border-cream-line px-6 py-4">
           <h2 className="text-base font-semibold uppercase tracking-[0.14em]">
             {t("title")} ({lines.length})
           </h2>
           <button
+            ref={closeRef}
             type="button"
             onClick={close}
             aria-label="Close"

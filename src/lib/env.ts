@@ -15,6 +15,13 @@ const envSchema = z.object({
   PAYPAL_MODE: z.enum(["sandbox", "live"]).default("sandbox"),
   PAYPAL_CLIENT_ID: z.string().optional(),
   PAYPAL_CLIENT_SECRET: z.string().optional(),
+  SHOPIFY_STORE_DOMAIN: z.string().optional(),
+  SHOPIFY_STOREFRONT_TOKEN: z.string().optional(),
+  SHOPIFY_ADMIN_TOKEN: z.string().optional(),
+  SHOPIFY_API_VERSION: z.string().default("2026-07"),
+  // 用于 Shopify Markets 多币种的 presentment 市场。默认 US → 美国用户看/付 USD，
+  // 结算到账仍是店铺的 payout 币种（HKD）由收单方换汇。
+  SHOPIFY_MARKET_COUNTRY: z.string().default("US"),
 });
 
 export const env = envSchema.parse(process.env);
@@ -32,4 +39,9 @@ export function isStripeConfigured(): boolean {
 /** True when real PayPal credentials are configured (not placeholders). */
 export function isPayPalConfigured(): boolean {
   return isRealSecret(env.PAYPAL_CLIENT_ID) && isRealSecret(env.PAYPAL_CLIENT_SECRET);
+}
+
+/** True when a real Shopify store domain + Storefront token are configured. */
+export function isShopifyConfigured(): boolean {
+  return isRealSecret(env.SHOPIFY_STORE_DOMAIN) && isRealSecret(env.SHOPIFY_STOREFRONT_TOKEN);
 }

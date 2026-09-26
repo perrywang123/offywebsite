@@ -24,11 +24,11 @@ export default async function AboutPage({ params }: { params: Promise<{ locale: 
         <Reveal variant="left">
           <div className="relative mx-auto aspect-[3/4] w-full max-w-sm" data-slot="story-image">
             <div className="absolute inset-0 overflow-hidden rounded-card bg-paper shadow-card">
-              <Image src="/assets/products/p01.png" alt="Offy" fill sizes="(max-width:768px) 90vw, 40vw" className="object-cover" />
+              <Image src="/assets/news/news-01.jpg" alt="is.offy" fill sizes="(max-width:768px) 90vw, 40vw" className="object-cover" />
             </div>
             <div className="absolute -bottom-4 -right-4 w-2/5 overflow-hidden rounded-soft bg-paper shadow-card">
               <div className="relative aspect-[3/4]">
-                <Image src="/assets/products/p02.png" alt="Offy" fill sizes="20vw" className="object-cover" />
+                <Image src="/assets/news/news-05.jpg" alt="is.offy" fill sizes="20vw" className="object-cover" />
               </div>
             </div>
           </div>

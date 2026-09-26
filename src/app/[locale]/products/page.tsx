@@ -1,17 +1,25 @@
 import { getTranslations } from "next-intl/server";
 import { getProducts, seriesList } from "@/lib/catalog";
+import { enrichProducts } from "@/server/catalog/enrich";
 import { ProductGrid } from "@/components/product/ProductGrid";
 import { CategoryTabs } from "@/components/layout/CategoryTabs";
 
-export default async function ProductsPage({
-  params,
-}: {
-  params: Promise<{ locale: string }>;
-}) {
+export const revalidate = 60;
+
+/**
+ * Product list driven by the local catalog (38 SKUs). Shopify enrichment applies
+ * per product when a `shopifyHandle` is mapped (currently only offy_redrush);
+ * unmapped products render local values and trigger no Shopify request.
+ */
+async function resolveProducts() {
+  return enrichProducts(getProducts());
+}
+
+export default async function ProductsPage({ params }: { params: Promise<{ locale: string }> }) {
   const { locale } = await params;
   const t = await getTranslations("catalog");
 
-  const products = getProducts();
+  const products = await resolveProducts();
 
   return (
     <>

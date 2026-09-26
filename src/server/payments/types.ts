@@ -1,4 +1,4 @@
-export type ProviderName = "stripe" | "paypal";
+export type ProviderName = "stripe" | "paypal" | "shopify";
 
 export interface CheckoutItemInput {
   code: string;
