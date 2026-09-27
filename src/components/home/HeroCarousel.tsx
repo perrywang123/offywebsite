@@ -10,12 +10,14 @@ export type HeroSlide = HeroSlideData;
 const SWIPE_THRESHOLD = 40;
 
 /**
- * 首页头图轮播(设计稿版式):整图 object-contain 居中(不截断,补图边缘底色)。
- * 屏 1:is.offy 手写体字标(顶部居中)+ 两行 slogan「让想象发生/让陪伴发生」;
- * 屏 2:PSD「头图-活动奖励」合成屏(白底 + 左玩偶 + 右 2×2 包包图 + 左下文案 PNG);
- * 屏 3-5:系列整图 + 顶部居中「OFFY+系列名」标题 PNG,整图可点跳对应系列页;
- * 底部居中横线指示条 + 右下角 ←/→ 深色箭头;自动播放 + 交叉淡入 + 触摸滑动。
- * 所有文字层 top ≥ 128px,避开 sticky header(112px)遮挡。
+ * 首页头图轮播(设计稿精确还原,5 屏)。
+ * 布局基准:图片区 = 视口去掉 sticky header(112px)后的区域,
+ * 文字位置全部以图片区百分比定位(与设计稿实测一致):
+ * - 屏 1:is.offy 字标顶 15% 图区(高 8%),slogan 两行顶 30%/41%(字高 6.4%);
+ * - 屏 2:促销合成屏 —— 玩偶 x12-45%/y15-75%,包包 2×2 x55-95%/y20-70%,
+ *   文案 PNG 底部 y82%;
+ * - 屏 3-5:系列图(PSD 头图区合成,玩偶垂直居中)+ 标题 PNG 顶 23% 图区。
+ * 底部横线指示条 + 右下角 ←/→ 箭头;自动播放 + 交叉淡入 + 触摸滑动。
  */
 export function HeroCarousel({
   slides,
@@ -37,43 +39,41 @@ export function HeroCarousel({
     return () => clearInterval(id);
   }, [slides.length, intervalMs]);
 
-  /** 屏 2:PSD「头图-活动奖励」合成屏(白底 + 左玩偶 + 右 2×2 包包图 + 文案 PNG)。 */
+  /** 屏 2:促销合成屏(白底 + 左大玩偶 + 右 2×2 包包 + 底部文案 PNG)。 */
   const renderPromo = (s: HeroSlide) => (
     <div className="absolute inset-0 bg-white">
-      <div className="relative mx-auto flex h-full max-w-7xl items-center justify-center gap-8 px-6 md:gap-16 lg:px-8">
-        {/* 左:玩偶图(PSD offy_middle_character) */}
-        <div className="relative h-[70%] w-[46%] max-w-2xl">
-          <Image
-            src={s.promo!.doll}
-            alt=""
-            fill
-            priority
-            sizes="(max-width: 768px) 46vw, 40vw"
-            className="object-contain object-center"
-          />
-        </div>
-        {/* 右:2×2 包包图(PSD offy包电商图1-4) */}
-        <div className="grid w-[34%] max-w-md grid-cols-2 gap-3 md:gap-5">
-          {s.promo!.bags.map((bag) => (
-            <div key={bag} className="relative aspect-square">
-              <Image
-                src={bag}
-                alt=""
-                fill
-                sizes="(max-width: 768px) 17vw, 12vw"
-                className="object-contain object-center"
-              />
-            </div>
-          ))}
-        </div>
+      {/* 玩偶(PSD 布局: 宽 63% 视口,贴底;本体已裁切) */}
+      <div className="absolute left-[-5%] top-[10%] h-[70%] w-[60%]">
+        <Image
+          src={s.promo!.doll}
+          alt=""
+          fill
+          priority
+          sizes="60vw"
+          className="object-contain object-bottom"
+        />
       </div>
-      {/* 左下:促销文案 PNG(PSD 文字层导出,精确字体) */}
-      <div className="absolute bottom-[10%] left-6 md:left-12">
+      {/* 包包 2×2: x 50-95%, y 15-75%(设计稿) */}
+      <div className="absolute right-[5%] top-[15%] grid w-[45%] grid-cols-2 gap-4 md:gap-6">
+        {s.promo!.bags.map((bag) => (
+          <div key={bag} className="relative aspect-square">
+            <Image
+              src={bag}
+              alt=""
+              fill
+              sizes="20vw"
+              className="object-contain object-center"
+            />
+          </div>
+        ))}
+      </div>
+      {/* 文案 PNG: 左下(设计稿 y 72-92%,x 12% 起) */}
+      <div className="absolute bottom-[8%] left-[12%]">
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img
           src={s.promo!.text}
           alt={locale === "zh" ? "即日起，任意购买三个公仔以上，送offy包包" : "Buy any 3 plush dolls, get an Offy bag free"}
-          className="w-[46vw] max-w-xl md:w-[30vw]"
+          className="w-[52vw] max-w-3xl"
         />
       </div>
     </div>
@@ -81,28 +81,33 @@ export function HeroCarousel({
 
   const renderOverlay = (s: HeroSlide) => (
     <>
-      {/* 屏 1:is.offy 手写体字标(顶部居中,PSD LOGO 图层)+ 两行 slogan */}
+      {/* 屏 1:is.offy 字标(顶 15.3% 图区)+ 两行 slogan(顶 30.7% 图区)。
+          定位基准:图片区 = 视口 - header(112px),top = header + pct*87.6vh。 */}
       {s.wordmark && (
-        <div className="absolute inset-x-0 top-[15%] flex flex-col items-center gap-4 md:top-[16%] md:gap-6">
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img
-            src="/assets/brand/is-offy-wordmark.png"
-            alt="is.offy"
-            className="w-[34%] max-w-md md:w-[22%]"
-          />
-          <p className="whitespace-pre-line text-center text-lg font-bold leading-relaxed tracking-[0.2em] text-ink md:text-2xl">
-            {locale === "zh" ? s.text!.zh : s.text!.en}
-          </p>
-        </div>
+        <>
+          <div className="absolute inset-x-0 top-[calc(var(--header-h)+13.4vh)] flex justify-center">
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
+              src="/assets/brand/is-offy-wordmark.png"
+              alt="is.offy"
+              className="h-[7.6vh] w-auto max-w-none"
+            />
+          </div>
+          <div className="absolute inset-x-0 top-[calc(var(--header-h)+24.5vh)] px-6 text-center">
+            <p className="whitespace-pre-line text-[5.6vh] font-bold leading-[1.65] tracking-[0.15em] text-ink">
+              {locale === "zh" ? s.text!.zh : s.text!.en}
+            </p>
+          </div>
+        </>
       )}
-      {/* 屏 3-5:「OFFY + 系列名」标题 PNG(PSD 文字层导出,顶部居中) */}
+      {/* 屏 3-5:标题 PNG(顶 23.4% 图区) */}
       {s.titleImage && (
-        <div className="absolute inset-x-0 top-[15%] flex justify-center px-6 md:top-[16%]">
+        <div className="absolute inset-x-0 top-[calc(var(--header-h)+20.5vh)] flex justify-center px-6">
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img
             src={s.titleImage}
             alt={locale === "zh" ? "OFFY 系列头图" : "OFFY series hero"}
-            className="w-[42%] max-w-lg md:w-[28%]"
+            className="w-[42%] max-w-xl md:w-[38%]"
           />
         </div>
       )}

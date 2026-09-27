@@ -23,7 +23,7 @@ export const newsItems: NewsItem[] = [
 /**
  * 首页头图轮播(设计稿精确还原):5 屏。
  * 屏 1 品牌全员图(hero-01):顶部居中 is.offy 手写体字标(PSD LOGO 图层)
- *   + 两行 slogan「让想象发生 / 让陪伴发生」,不可点击;
+ *   + 两行 slogan「让想象落地 / 让陪伴发生」,不可点击;
  * 屏 2 促销合成屏(PSD「头图-活动奖励」组):白底 + 左玩偶图 + 右 2×2 包包图
  *   + 左下促销文案 PNG(PSD 文字层导出,精确字体),不可点击;
  * 屏 3-5 系列图(hero-02 公主lady / hero-04 时尚潮流生活 / hero-03 趣味生活):
@@ -52,7 +52,7 @@ export const heroSlides: HeroSlideData[] = [
     image: "/assets/hero/hero-01.jpg",
     bg: "#babbb9",
     wordmark: true,
-    text: { zh: "让想象发生\n让陪伴发生", en: "Let imagination happen\nLet companionship happen" },
+    text: { zh: "让想象落地\n让陪伴发生", en: "Let imagination land\nLet companionship happen" },
   },
   {
     image: "/assets/hero/promo/doll.png",

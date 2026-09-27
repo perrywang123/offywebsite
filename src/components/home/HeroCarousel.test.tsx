@@ -30,7 +30,7 @@ const slides: HeroSlide[] = [
     image: "/assets/hero/hero-01.jpg",
     bg: "#babbb9",
     wordmark: true,
-    text: { zh: "让想象发生\n让陪伴发生", en: "Let imagination happen\nLet companionship happen" },
+    text: { zh: "让想象落地\n让陪伴发生", en: "Let imagination land\nLet companionship happen" },
   },
   {
     image: "/assets/hero/promo/doll.png",
@@ -89,7 +89,7 @@ describe("HeroCarousel", () => {
   it("renders the slide-1 two-line slogan", () => {
     render(<HeroCarousel slides={slides} locale="zh" />);
     // whitespace-pre-line 下 DOM 文本含换行,用正则匹配两行内容
-    expect(screen.getByText(/让想象发生/)).toBeInTheDocument();
+    expect(screen.getByText(/让想象落地/)).toBeInTheDocument();
     expect(screen.getByText(/让陪伴发生/)).toBeInTheDocument();
   });
 
@@ -126,7 +126,7 @@ describe("HeroCarousel", () => {
 
   it("localizes overlay text for en", () => {
     render(<HeroCarousel slides={slides} locale="en" />);
-    expect(screen.getByText(/Let imagination happen/)).toBeInTheDocument();
+    expect(screen.getByText(/Let imagination land/)).toBeInTheDocument();
   });
 
   it("advances on next arrow and goes back on prev arrow", () => {
