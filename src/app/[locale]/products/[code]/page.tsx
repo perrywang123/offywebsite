@@ -49,6 +49,11 @@ export default async function ProductDetailPage({
     locale === "zh"
       ? product.description.zh || product.description.en
       : product.description.en;
+  // 结构化描述段落(descriptionHtml):加粗导语 + 正文,优先于整段 description 展示
+  const descriptionBlocks =
+    locale === "zh"
+      ? (product.descriptionBlocks?.zh ?? product.descriptionBlocks?.en)
+      : product.descriptionBlocks?.en;
   const siblings = await enrichProducts(
     getProductsBySeries(rawProduct.series).filter((p) => p.code !== rawProduct.code),
   );
@@ -114,11 +119,24 @@ export default async function ProductDetailPage({
 
           <p className="mt-3 text-xs text-ink-muted">{t("sku")}: {product.code}</p>
 
-          {description && (
-            <div className="mt-6">
-              <p className="mb-2 text-sm font-medium text-ink-soft">{t("description")}</p>
-              <p className="text-sm leading-relaxed text-ink">{description}</p>
+          {descriptionBlocks && descriptionBlocks.length > 0 ? (
+            <div className="mt-6 space-y-3">
+              {descriptionBlocks.map((block, i) => (
+                <p
+                  key={i}
+                  className={`text-sm leading-relaxed text-ink ${block.bold ? "font-bold" : ""}`}
+                >
+                  {block.text}
+                </p>
+              ))}
             </div>
+          ) : (
+            description && (
+              <div className="mt-6">
+                <p className="mb-2 text-sm font-medium text-ink-soft">{t("description")}</p>
+                <p className="text-sm leading-relaxed text-ink">{description}</p>
+              </div>
+            )
           )}
 
           {product.emotionTags.zh.length > 0 && (

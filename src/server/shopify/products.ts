@@ -1,8 +1,11 @@
 import { env } from "../../lib/env";
+import { parseDescriptionHtml, type DescriptionBlock } from "../../lib/description-html";
 
 export interface ShopifyProductData {
   title: string;
   description: string;
+  /** Structured paragraphs parsed from descriptionHtml (bold lead preserved). */
+  descriptionBlocks: DescriptionBlock[];
   images: string[];
   priceCents: number;
   currency: string;
@@ -27,6 +30,7 @@ query ProductEnrich($handle: String!) @inContext(country: ${country}) {
   product(handle: $handle) {
     title
     description
+    descriptionHtml
     images(first: 10) { nodes { url } }
     variants(first: 1) { nodes { price { amount currencyCode } } }
   }
@@ -36,6 +40,7 @@ query ProductEnrich($handle: String!) @inContext(country: ${country}) {
 interface ProductNode {
   title?: string;
   description?: string;
+  descriptionHtml?: string;
   images?: { nodes?: Array<{ url?: string }> };
   variants?: { nodes?: Array<{ price?: { amount?: string; currencyCode?: string } }> };
 }
@@ -80,6 +85,7 @@ export async function fetchProductData(
   return {
     title: product.title ?? "",
     description: product.description ?? "",
+    descriptionBlocks: parseDescriptionHtml(product.descriptionHtml ?? ""),
     images: (product.images?.nodes ?? [])
       .map((n) => n.url)
       .filter((u): u is string => Boolean(u)),

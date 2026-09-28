@@ -35,6 +35,11 @@ export async function enrichProduct(
       description: data.description
         ? { en: data.description, zh: data.description }
         : product.description,
+      // Shopify 单语言:结构化段落同样中英共用,待 Translate & Adapt 配置后分流。
+      descriptionBlocks:
+        (data.descriptionBlocks?.length ?? 0) > 0
+          ? { en: data.descriptionBlocks!, zh: data.descriptionBlocks! }
+          : product.descriptionBlocks,
       images: data.images.length > 0 ? data.images : product.images,
       // 网站以 USD 展示：仅当 Shopify 价格确实是 USD 时才覆盖(含合法 $0 免费款),
       // 否则保留本地 USD 占位价,避免把 HKD 等非美元金额当作美元显示(币种串味)。

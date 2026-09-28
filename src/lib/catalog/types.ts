@@ -1,8 +1,15 @@
+import type { DescriptionBlock } from "../description-html";
+
 export type SeriesSlug = "princess-lady" | "outdoor-sporty" | "playful-life";
 
 export interface LocalizedString {
   en: string;
   zh: string;
+}
+
+export interface LocalizedDescriptionBlocks {
+  en: DescriptionBlock[];
+  zh: DescriptionBlock[];
 }
 
 export interface LocalizedStringList {
@@ -24,6 +31,8 @@ export interface Product {
   series: SeriesSlug;
   name: LocalizedString;
   description: LocalizedString;
+  /** Structured description paragraphs from Shopify descriptionHtml (bold lead preserved). */
+  descriptionBlocks?: LocalizedDescriptionBlocks;
   /** Price in USD cents (integer) — never floating point. */
   priceCents: number;
   dimensions: Dimensions | null;

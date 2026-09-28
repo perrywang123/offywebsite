@@ -30,6 +30,10 @@ describe("enrichProduct", () => {
     const fetcher = vi.fn().mockResolvedValue({
       title: "Offy Sport - MOTARO",
       description: "A cool sporty Offy.",
+      descriptionBlocks: [
+        { text: "A cool sporty Offy.", bold: true },
+        { text: "Body copy here.", bold: false },
+      ],
       images: ["https://cdn.shopify.com/a.jpg"],
       priceCents: 5900,
       currency: "USD",
@@ -40,11 +44,34 @@ describe("enrichProduct", () => {
     // 中文名保留本地直译占位,后续由 Shopify Translate & Adapt 接管
     expect(result.name.zh).toBe("街头小子 Offy");
     expect(result.description.en).toBe("A cool sporty Offy.");
+    expect(result.descriptionBlocks?.en).toEqual([
+      { text: "A cool sporty Offy.", bold: true },
+      { text: "Body copy here.", bold: false },
+    ]);
     expect(result.images).toEqual(["https://cdn.shopify.com/a.jpg"]);
     expect(result.priceCents).toBe(5900);
     // 非展示字段保留本地
     expect(result.series).toBe("outdoor-sporty");
     expect(result.emotionTags.en).toEqual(["street"]);
+  });
+
+  it("keeps local descriptionBlocks when Shopify returns none", async () => {
+    const local = make({
+      descriptionBlocks: {
+        en: [{ text: "local lead", bold: true }],
+        zh: [{ text: "local lead", bold: true }],
+      },
+    });
+    const fetcher = vi.fn().mockResolvedValue({
+      title: "x",
+      description: "x",
+      descriptionBlocks: [],
+      images: ["https://cdn.shopify.com/a.jpg"],
+      priceCents: 5900,
+      currency: "USD",
+    });
+    const result = await enrichProduct(local, fetcher);
+    expect(result.descriptionBlocks?.en).toEqual([{ text: "local lead", bold: true }]);
   });
 
   it("does not fetch and returns the local product when unmapped", async () => {
