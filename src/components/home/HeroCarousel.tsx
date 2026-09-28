@@ -8,17 +8,23 @@ import type { HeroSlideData } from "@/lib/content";
 export type HeroSlide = HeroSlideData;
 
 const SWIPE_THRESHOLD = 40;
+/** PSD 头图区宽高比(3250×1815) */
+const STAGE_RATIO = 3250 / 1815;
+
+/** 舞台样式:保持 PSD 比例,宽取 min(视口宽, 屏高×比例) —— 不超屏前提下尽量撑满。 */
+const stageStyle: React.CSSProperties = {
+  aspectRatio: "3250 / 1815",
+  width: `min(100%, calc((100vh - var(--header-h)) * ${STAGE_RATIO.toFixed(4)}))`,
+  maxHeight: "100%",
+};
 
 /**
- * 首页头图轮播(主 PSD UI 树精确还原,5 屏)。所有位置为头图区(容器=视口-header)百分比:
- * - 屏 1:is.offy 字标(x 居中,顶 9.7%,宽 18.3%)+ slogan 一行(顶 29.5%,宽 55%居中,
- *   移动端允许换行);
- * - 屏 2 促销屏:玩偶(x11%,y10%,w46%,h50%)+ 包包 2×2(x61.7%,y18.2%)+
- *   文案 PNG(x11.5%,y62.4%,w50%);
- * - 屏 3-5 系列屏:玩偶上半 + 左下标题组 —— 标题 PNG(x11.5%,y62.4%,w41.9%)、
- *   副标题 PNG(OFFY 行右侧,x39.9%,y62.6%,w13.5%)、查看详情按钮(x58%,y73.1%);
- *   时尚屏深色背景白字(dark)。
- * 尺寸用 clamp() 约束:vw 为主、设上下限,移动端等比缩小,过长文字换行不截断。
+ * 首页头图轮播(主 PSD UI 树,5 屏)——「舞台」自适应架构:
+ * 每屏内容放进一个保持 PSD 头图区比例(3250:1815)的舞台框,舞台宽取
+ * min(视口宽, (100vh-header)×比例) —— 在不超出屏幕的前提下尽量撑满;
+ * 图片 fill 铺满舞台(同比例无变形、无裁切),文字/按钮/指示条/箭头全部按
+ * 舞台百分比定位(=PSD 头图区坐标),并随舞台等比缩放(字号用 cqw + clamp 上下限)。
+ * 因此任何屏幕尺寸下,头图上的字和按钮都严格贴在 PSD 设计位置。
  */
 export function HeroCarousel({
   slides,
@@ -40,7 +46,7 @@ export function HeroCarousel({
     return () => clearInterval(id);
   }, [slides.length, intervalMs]);
 
-  /** 屏 2:PSD「头图-活动奖励」合成屏(坐标按 PSD 头图区百分比)。 */
+  /** 屏 2:PSD「头图-活动奖励」合成屏(元素按舞台百分比=PSD 头图区坐标)。 */
   const renderPromo = (s: HeroSlide) => (
     <div className="absolute inset-0 bg-white">
       {/* 玩偶(PSD 本体区 x11% y10% w46% h50%) */}
@@ -50,7 +56,7 @@ export function HeroCarousel({
           alt=""
           fill
           priority
-          sizes="(max-width: 768px) 46vw, 46vw"
+          sizes="46vw"
           className="object-contain object-center"
         />
       </div>
@@ -69,7 +75,7 @@ export function HeroCarousel({
         ))}
       </div>
       {/* 文案 PNG(PSD x11.5% y62.4% w49.9%) */}
-      <div className="absolute left-[11.5%] top-[62.4%] w-[50%] max-w-[720px]">
+      <div className="absolute left-[11.5%] top-[62.4%] w-[49.9%]">
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img
           src={s.promo!.text}
@@ -80,18 +86,17 @@ export function HeroCarousel({
     </div>
   );
 
-  /** 屏 3-5 系列屏:左下标题组(标题+副标题+查看详情按钮)。 */
+  /** 屏 3-5 系列屏:左下标题组(标题+副标题+查看详情按钮),全部按舞台 % 定位。 */
   const renderSeriesOverlay = (s: HeroSlide) => {
-    const textColor = s.dark ? "text-cream" : "text-ink";
     const arrowSrc = s.dark ? "/assets/hero/cta-arrow-white.png" : "/assets/hero/cta-arrow.png";
     return (
       <>
-        {/* 标题 PNG(PSD x11.5% y62.4% w41.9%);clamp 下限防移动端过小 */}
+        {/* 标题 PNG(PSD x11.5% y62.4% w41.9%) */}
         <div className="absolute left-[11.5%] top-[62.4%] w-[41.9%] min-w-[150px] max-w-[604px]">
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img
             src={s.titleImage}
-            alt={s.subtitleAlt ? (locale === "zh" ? `OFFY 系列` : "OFFY series") : ""}
+            alt={s.subtitleAlt ? (locale === "zh" ? "OFFY 系列" : "OFFY series") : ""}
             className="w-full"
           />
         </div>
@@ -106,10 +111,11 @@ export function HeroCarousel({
             />
           </div>
         )}
-        {/* 查看详情按钮(PSD x58% y73.1% w13% h6.1%):描边样式 + 箭头图标 */}
+        {/* 查看详情按钮(PSD x58% y73.1% w13% h6.1%):描边样式 + 箭头图标;
+            字号 1.5cqw 跟随头图宽,clamp 约束上下限 */}
         <Link
           href={s.href!}
-          className={`group absolute left-[58%] top-[73.1%] flex h-[6.1%] min-h-[34px] w-[13%] min-w-[86px] max-w-[187px] items-center justify-center gap-1.5 rounded-full border-[1.5px] text-[clamp(10px,1.1vw,14px)] font-medium transition-colors ${
+          className={`group absolute left-[58%] top-[73.1%] flex h-[6.1%] min-h-[28px] w-[13%] min-w-[72px] max-w-[187px] items-center justify-center gap-1.5 rounded-full border-[1.5px] text-[clamp(9px,1.5cqw,14px)] font-medium transition-colors ${
             s.dark
               ? "border-cream/70 text-cream hover:bg-cream hover:text-ink"
               : "border-ink/70 text-ink hover:bg-ink hover:text-cream"
@@ -126,7 +132,8 @@ export function HeroCarousel({
 
   const renderOverlay = (s: HeroSlide) => (
     <>
-      {/* 屏 1:is.offy 字标(PSD x 居中,顶 9.7%,宽 18.3%)+ slogan(顶 29.5%) */}
+      {/* 屏 1:is.offy 字标(PSD 居中,顶 9.7%,宽 18.3%)+ slogan(顶 29.5%);
+          字号 4cqw 跟随头图宽,clamp 约束,过长自然换行不溢出 */}
       {s.wordmark && (
         <>
           <div className="absolute inset-x-0 top-[9.7%] flex justify-center">
@@ -134,12 +141,11 @@ export function HeroCarousel({
             <img
               src="/assets/brand/is-offy-wordmark.png"
               alt="is.offy"
-              className="w-[18.3%] min-w-[110px] max-w-[264px]"
+              className="w-[18.3%] min-w-[80px] max-w-[264px]"
             />
           </div>
-          <div className="absolute inset-x-0 top-[29.5%] flex justify-center px-6">
-            {/* vw 主单位(一行宽由视口宽决定);移动端字号收敛,过长时自然换行不溢出 */}
-            <p className="max-w-full break-words text-center text-[clamp(15px,4.2vw,50px)] font-bold leading-[1.65] tracking-[0.1em] text-ink">
+          <div className="absolute inset-x-0 top-[29.5%] flex justify-center px-[4%]">
+            <p className="max-w-full break-words text-center text-[clamp(15px,4cqw,50px)] font-bold leading-[1.65] tracking-[0.1em] text-ink">
               {locale === "zh" ? s.text!.zh : s.text!.en}
             </p>
           </div>
@@ -168,69 +174,78 @@ export function HeroCarousel({
       }}
     >
       {slides.map((s, i) => {
-        const cls = `absolute inset-0 transition-opacity duration-1000 ease-editorial ${
+        const cls = `absolute inset-0 flex items-center justify-center transition-opacity duration-1000 ease-editorial ${
           i === active ? "opacity-100" : "pointer-events-none opacity-0"
         }`;
-        const content = s.promo ? (
-          renderPromo(s)
-        ) : (
-          <div className="absolute inset-0" style={{ backgroundColor: s.bg }}>
-            <Image
-              src={s.image}
-              alt=""
-              fill
-              priority={i === 0}
-              sizes="100vw"
-              className="object-contain object-center"
-            />
-            {renderOverlay(s)}
-          </div>
-        );
-        // 系列屏不再整图可点(避免与「查看详情」按钮形成 <a> 嵌套 <a>);
-        // 按钮是屏内唯一导航入口。
         return (
-          <div key={s.image} aria-hidden={i !== active} className={cls}>
-            {content}
+          <div
+            key={s.image}
+            aria-hidden={i !== active}
+            className={cls}
+            style={{ backgroundColor: s.bg }}
+          >
+            {/* 舞台:保持 PSD 比例,尽量撑满屏幕;头图与上面的字/按钮都活在舞台里 */}
+            <div className="@container relative" style={stageStyle}>
+              {s.promo ? (
+                renderPromo(s)
+              ) : (
+                <>
+                  <Image
+                    src={s.image}
+                    alt=""
+                    fill
+                    priority={i === 0}
+                    sizes="100vw"
+                    className="object-cover object-center"
+                  />
+                  {renderOverlay(s)}
+                </>
+              )}
+            </div>
           </div>
         );
       })}
 
-      {/* 底部居中:横线指示条 */}
-      <div className="absolute bottom-6 left-1/2 z-10 flex -translate-x-1/2 gap-2" role="tablist" aria-label="Slides">
-        {slides.map((s, i) => (
-          <button
-            key={s.image}
-            role="tab"
-            aria-selected={i === active}
-            aria-label={`Go to slide ${i + 1}`}
-            onClick={() => go(i)}
-            className={`h-[3px] rounded-full transition-all duration-500 ${
-              i === active ? "w-10 bg-ink/70" : "w-5 bg-ink/30 hover:bg-ink/50"
-            }`}
-          />
-        ))}
-      </div>
-
-      {/* 右下角:←/→ 深色箭头按钮(PSD 白色箭头 PNG) */}
-      <div className="absolute bottom-5 right-5 z-10 flex gap-2 md:bottom-6 md:right-8">
-        <button
-          type="button"
-          aria-label="Previous slide"
-          onClick={() => go(active - 1)}
-          className="flex h-11 w-11 items-center justify-center bg-ink/80 transition-colors hover:bg-ink"
-        >
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img src="/assets/hero/arrow-left.png" alt="" className="h-3 w-auto" />
-        </button>
-        <button
-          type="button"
-          aria-label="Next slide"
-          onClick={() => go(active + 1)}
-          className="flex h-11 w-11 items-center justify-center bg-ink/80 transition-colors hover:bg-ink"
-        >
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img src="/assets/hero/arrow-right.png" alt="" className="h-3 w-auto" />
-        </button>
+      {/* 控件层:与舞台同尺寸(共享一组控件,跟随头图比例,不随屏切换) */}
+      <div className="pointer-events-none absolute inset-0 z-10 flex items-center justify-center">
+        <div className="@container relative" style={stageStyle}>
+          {/* 横线指示条(PSD y88.3% 居中) */}
+          <div className="absolute bottom-[11.7%] left-1/2 flex -translate-x-1/2 gap-2" role="tablist" aria-label="Slides">
+            {slides.map((sl, di) => (
+              <button
+                key={sl.image}
+                role="tab"
+                aria-selected={di === active}
+                aria-label={`Go to slide ${di + 1}`}
+                onClick={() => go(di)}
+                className={`pointer-events-auto h-[3px] rounded-full transition-all duration-500 ${
+                  di === active ? "w-10 bg-ink/70" : "w-5 bg-ink/30 hover:bg-ink/50"
+                }`}
+              />
+            ))}
+          </div>
+          {/* 右下 ←/→ 深色箭头按钮(PSD 右下角,尺寸跟随头图) */}
+          <div className="absolute bottom-[5%] right-[2.8%] flex gap-2">
+            <button
+              type="button"
+              aria-label="Previous slide"
+              onClick={() => go(active - 1)}
+              className="pointer-events-auto flex h-[clamp(30px,3.4cqw,44px)] w-[clamp(30px,3.4cqw,44px)] items-center justify-center bg-ink/80 transition-colors hover:bg-ink"
+            >
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img src="/assets/hero/arrow-left.png" alt="" className="h-3 w-auto" />
+            </button>
+            <button
+              type="button"
+              aria-label="Next slide"
+              onClick={() => go(active + 1)}
+              className="pointer-events-auto flex h-[clamp(30px,3.4cqw,44px)] w-[clamp(30px,3.4cqw,44px)] items-center justify-center bg-ink/80 transition-colors hover:bg-ink"
+            >
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img src="/assets/hero/arrow-right.png" alt="" className="h-3 w-auto" />
+            </button>
+          </div>
+        </div>
       </div>
     </div>
   );
