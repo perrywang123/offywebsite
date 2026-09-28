@@ -82,10 +82,10 @@ export function HeroCarousel({
   const renderOverlay = (s: HeroSlide) => (
     <>
       {/* 屏 1:is.offy 字标(顶 15.3% 图区)+ 两行 slogan(顶 30.7% 图区)。
-          定位基准:图片区 = 视口 - header(112px),top = header + pct*87.6vh。 */}
+          定位基准:容器 = header 之下(top: var(--header-h)),位置为容器 %。 */}
       {s.wordmark && (
         <>
-          <div className="absolute inset-x-0 top-[calc(var(--header-h)+13.4vh)] flex justify-center">
+          <div className="absolute inset-x-0 top-[15%] flex justify-center">
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img
               src="/assets/brand/is-offy-wordmark.png"
@@ -93,7 +93,7 @@ export function HeroCarousel({
               className="h-[7.6vh] w-auto max-w-none"
             />
           </div>
-          <div className="absolute inset-x-0 top-[calc(var(--header-h)+24.5vh)] px-6 text-center">
+          <div className="absolute inset-x-0 top-[30%] px-6 text-center">
             <p className="whitespace-pre-line text-[5.6vh] font-bold leading-[1.65] tracking-[0.15em] text-ink">
               {locale === "zh" ? s.text!.zh : s.text!.en}
             </p>
@@ -102,7 +102,7 @@ export function HeroCarousel({
       )}
       {/* 屏 3-5:标题 PNG(顶 23.4% 图区) */}
       {s.titleImage && (
-        <div className="absolute inset-x-0 top-[calc(var(--header-h)+20.5vh)] flex justify-center px-6">
+        <div className="absolute inset-x-0 top-[23%] flex justify-center px-6">
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img
             src={s.titleImage}
@@ -116,7 +116,7 @@ export function HeroCarousel({
 
   return (
     <div
-      className="absolute inset-0"
+      className="absolute inset-x-0 bottom-0 top-[var(--header-h)]"
       role="region"
       aria-roledescription="carousel"
       aria-label="Hero"
