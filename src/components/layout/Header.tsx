@@ -32,21 +32,22 @@ export function Header() {
         />
 
         <div className="relative mx-auto flex h-full max-w-7xl items-center justify-between px-4 sm:px-6 lg:px-8">
-          {/* 左：品牌字标，滚动后延迟滑入 */}
+          {/* 左：品牌字标(PSD 导航 LOGO 图层,ink 色) */}
           <Link
             href="/"
-            className={`flex items-baseline gap-2 transition-all duration-[400ms] ease-editorial ${
+            aria-label="is.offy"
+            className={`flex items-center transition-all duration-[400ms] ease-editorial ${
               overHero
                 ? "translate-y-3 opacity-0"
                 : "translate-y-0 opacity-100 delay-200"
             }`}
           >
-            <span className="font-display text-lg font-semibold tracking-tight">
-              {t("brandLatin")}
-            </span>
-            <span className="hidden text-sm font-medium text-ink-soft sm:inline">
-              {t("brandZh")}
-            </span>
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
+              src="/assets/brand/is-offy-logo.png"
+              alt="is.offy"
+              className="h-6 w-auto md:h-7"
+            />
           </Link>
 
           {/* 中/右导航 */}

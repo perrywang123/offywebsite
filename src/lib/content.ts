@@ -21,24 +21,31 @@ export const newsItems: NewsItem[] = [
 ];
 
 /**
- * 首页头图轮播(设计稿精确还原):5 屏。
- * 屏 1 品牌全员图(hero-01):顶部居中 is.offy 手写体字标(PSD LOGO 图层)
- *   + 两行 slogan「让想象落地 / 让陪伴发生」,不可点击;
- * 屏 2 促销合成屏(PSD「头图-活动奖励」组):白底 + 左玩偶图 + 右 2×2 包包图
- *   + 左下促销文案 PNG(PSD 文字层导出,精确字体),不可点击;
- * 屏 3-5 系列图(hero-02 公主lady / hero-04 时尚潮流生活 / hero-03 趣味生活):
- *   顶部居中「OFFY + 系列名」标题 PNG(PSD 文字层导出),点击跳对应系列页。
+ * 首页头图轮播(主 PSD UI 树精确还原):5 屏。
+ * 屏 1 品牌全员图:is.offy 字标(PSD 头图-1 矢量层,596×224)+ slogan
+ *   「让想象落地 让陪伴发生」(PSD 单文本块,一行,移动端允许换行),不可点击;
+ * 屏 2 促销合成屏(PSD「头图-活动奖励」组):白底 + 左大玩偶(2882×1905 裁本体)
+ *   + 右 2×2 包包图 + 左下促销文案 PNG,不可点击;
+ * 屏 3-5 系列屏(PSD 头图-2/3/4):玩偶图上半 + 左下标题组 ——
+ *   「OFFY⏎系列名」标题 PNG + 副标题 PNG(生活需要仪式感/周末出门玩/日常犯可爱)
+ *   +「查看详情」按钮跳系列页;时尚屏深色背景白字(dark),其余浅底黑字。
  */
 export interface HeroSlideData {
   image: string;
   bg: string;
   href?: string;
-  /** 屏 1 专用:展示 is.offy 手写体字标 PNG + 两行 slogan。 */
+  /** 屏 1 专用:展示 is.offy 手写体字标 PNG + slogan。 */
   wordmark?: boolean;
   /** 主文案(slogan),双语。 */
   text?: { zh: string; en: string };
-  /** 屏 3-5:「OFFY + 系列名」标题 PNG(PSD 文字层导出)。 */
+  /** 屏 3-5:「OFFY⏎系列名」标题 PNG(主 PSD 文字层导出)。 */
   titleImage?: string;
+  /** 屏 3-5:副标题 PNG(主 PSD 文字层导出)。 */
+  subtitleImage?: string;
+  /** 屏 3-5:副标题无障碍文本,双语。 */
+  subtitleAlt?: { zh: string; en: string };
+  /** 屏 3-5:深色背景(标题/副标题为白色)。 */
+  dark?: boolean;
   /** 屏 2 专用:PSD 合成促销屏(玩偶 + 2×2 包包图 + 文案 PNG)。 */
   promo?: {
     doll: string;
@@ -52,7 +59,7 @@ export const heroSlides: HeroSlideData[] = [
     image: "/assets/hero/hero-01.jpg",
     bg: "#babbb9",
     wordmark: true,
-    text: { zh: "让想象落地\n让陪伴发生", en: "Let imagination land\nLet companionship happen" },
+    text: { zh: "让想象落地 让陪伴发生", en: "Let imagination land, let companionship happen" },
   },
   {
     image: "/assets/hero/promo/doll.png",
@@ -70,20 +77,27 @@ export const heroSlides: HeroSlideData[] = [
   },
   {
     image: "/assets/hero/hero-02.jpg",
-    bg: "#fefefe",
+    bg: "#f9f9f9",
     href: "/collections/princess-lady",
     titleImage: "/assets/hero/titles/princess-lady.png",
+    subtitleImage: "/assets/hero/titles/sub-princess.png",
+    subtitleAlt: { zh: "生活需要仪式感", en: "Life needs a sense of ritual" },
   },
   {
     image: "/assets/hero/hero-04.jpg",
-    bg: "#fefefe",
+    bg: "#3a383c",
     href: "/collections/outdoor-sporty",
     titleImage: "/assets/hero/titles/fashion-life.png",
+    subtitleImage: "/assets/hero/titles/sub-fashion.png",
+    subtitleAlt: { zh: "周末出门玩", en: "Weekend outing" },
+    dark: true,
   },
   {
     image: "/assets/hero/hero-03.jpg",
-    bg: "#c9b8ab",
+    bg: "#fdfdfd",
     href: "/collections/playful-life",
     titleImage: "/assets/hero/titles/playful-life.png",
+    subtitleImage: "/assets/hero/titles/sub-playful.png",
+    subtitleAlt: { zh: "日常犯可爱", en: "Everyday cute" },
   },
 ];

@@ -30,7 +30,7 @@ const slides: HeroSlide[] = [
     image: "/assets/hero/hero-01.jpg",
     bg: "#babbb9",
     wordmark: true,
-    text: { zh: "让想象落地\n让陪伴发生", en: "Let imagination land\nLet companionship happen" },
+    text: { zh: "让想象落地 让陪伴发生", en: "Let imagination land, let companionship happen" },
   },
   {
     image: "/assets/hero/promo/doll.png",
@@ -48,34 +48,39 @@ const slides: HeroSlide[] = [
   },
   {
     image: "/assets/hero/hero-02.jpg",
-    bg: "#fefefe",
+    bg: "#f9f9f9",
     href: "/collections/princess-lady",
     titleImage: "/assets/hero/titles/princess-lady.png",
+    subtitleImage: "/assets/hero/titles/sub-princess.png",
+    subtitleAlt: { zh: "生活需要仪式感", en: "Life needs a sense of ritual" },
   },
   {
     image: "/assets/hero/hero-04.jpg",
-    bg: "#fefefe",
+    bg: "#3a383c",
     href: "/collections/outdoor-sporty",
     titleImage: "/assets/hero/titles/fashion-life.png",
+    subtitleImage: "/assets/hero/titles/sub-fashion.png",
+    subtitleAlt: { zh: "周末出门玩", en: "Weekend outing" },
+    dark: true,
   },
   {
     image: "/assets/hero/hero-03.jpg",
-    bg: "#c9b8ab",
+    bg: "#fdfdfd",
     href: "/collections/playful-life",
     titleImage: "/assets/hero/titles/playful-life.png",
+    subtitleImage: "/assets/hero/titles/sub-playful.png",
+    subtitleAlt: { zh: "日常犯可爱", en: "Everyday cute" },
   },
 ];
 
 describe("HeroCarousel", () => {
-  it("renders only slides 3-5 as links to the series pages (1/2 not clickable)", () => {
+  it("renders a details CTA link on each series slide (3-5), not on slides 1-2", () => {
     render(<HeroCarousel slides={slides} locale="zh" />);
-    const links = screen.getAllByRole("link", { hidden: true });
-    expect(links).toHaveLength(3);
-    const slide = (n: number) =>
-      links.find((l) => l.getAttribute("aria-label") === `Hero slide ${n}`);
-    expect(slide(3)).toHaveAttribute("href", "/collections/princess-lady");
-    expect(slide(4)).toHaveAttribute("href", "/collections/outdoor-sporty");
-    expect(slide(5)).toHaveAttribute("href", "/collections/playful-life");
+    const ctas = screen.getAllByRole("link", { name: "查看详情", hidden: true });
+    expect(ctas).toHaveLength(3);
+    expect(ctas[0]).toHaveAttribute("href", "/collections/princess-lady");
+    expect(ctas[1]).toHaveAttribute("href", "/collections/outdoor-sporty");
+    expect(ctas[2]).toHaveAttribute("href", "/collections/playful-life");
   });
 
   it("renders the is.offy hand-written wordmark image on slide 1", () => {
@@ -86,9 +91,8 @@ describe("HeroCarousel", () => {
     );
   });
 
-  it("renders the slide-1 two-line slogan", () => {
+  it("renders the slide-1 one-line slogan", () => {
     render(<HeroCarousel slides={slides} locale="zh" />);
-    // whitespace-pre-line 下 DOM 文本含换行,用正则匹配两行内容
     expect(screen.getByText(/让想象落地/)).toBeInTheDocument();
     expect(screen.getByText(/让陪伴发生/)).toBeInTheDocument();
   });
@@ -106,27 +110,39 @@ describe("HeroCarousel", () => {
     expect(srcs).toContain("/assets/hero/promo/promo-text.png");
   });
 
-  it("renders the promo copy alt text on slide 2", () => {
-    render(<HeroCarousel slides={slides} locale="zh" />);
-    expect(screen.getByAltText(/送offy包包/)).toHaveAttribute(
-      "src",
-      "/assets/hero/promo/promo-text.png",
-    );
-  });
-
-  it("renders OFFY + series title images on slides 3-5", () => {
+  it("renders OFFY title + subtitle images on series slides", () => {
     const { container } = render(<HeroCarousel slides={slides} locale="zh" />);
     const srcs = Array.from(container.querySelectorAll("img")).map((i) =>
       i.getAttribute("src"),
     );
-    expect(srcs).toContain("/assets/hero/titles/princess-lady.png");
-    expect(srcs).toContain("/assets/hero/titles/fashion-life.png");
-    expect(srcs).toContain("/assets/hero/titles/playful-life.png");
+    for (const t of ["princess-lady", "fashion-life", "playful-life"]) {
+      expect(srcs).toContain(`/assets/hero/titles/${t}.png`);
+    }
+    for (const sub of ["sub-princess", "sub-fashion", "sub-playful"]) {
+      expect(srcs).toContain(`/assets/hero/titles/${sub}.png`);
+    }
+  });
+
+  it("renders subtitle alt text localized", () => {
+    render(<HeroCarousel slides={slides} locale="zh" />);
+    expect(screen.getByAltText("生活需要仪式感")).toBeInTheDocument();
+    expect(screen.getByAltText("周末出门玩")).toBeInTheDocument();
+    expect(screen.getByAltText("日常犯可爱")).toBeInTheDocument();
+  });
+
+  it("uses the white CTA arrow on the dark (fashion) slide and ink arrow elsewhere", () => {
+    const { container } = render(<HeroCarousel slides={slides} locale="zh" />);
+    const srcs = Array.from(container.querySelectorAll("img")).map((i) =>
+      i.getAttribute("src"),
+    );
+    expect(srcs).toContain("/assets/hero/cta-arrow-white.png");
+    expect(srcs).toContain("/assets/hero/cta-arrow.png");
   });
 
   it("localizes overlay text for en", () => {
     render(<HeroCarousel slides={slides} locale="en" />);
     expect(screen.getByText(/Let imagination land/)).toBeInTheDocument();
+    expect(screen.getAllByRole("link", { name: "Details", hidden: true })).toHaveLength(3);
   });
 
   it("advances on next arrow and goes back on prev arrow", () => {

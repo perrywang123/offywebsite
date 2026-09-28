@@ -10,14 +10,15 @@ export type HeroSlide = HeroSlideData;
 const SWIPE_THRESHOLD = 40;
 
 /**
- * 首页头图轮播(设计稿精确还原,5 屏)。
- * 布局基准:图片区 = 视口去掉 sticky header(112px)后的区域,
- * 文字位置全部以图片区百分比定位(与设计稿实测一致):
- * - 屏 1:is.offy 字标顶 15% 图区(高 8%),slogan 两行顶 30%/41%(字高 6.4%);
- * - 屏 2:促销合成屏 —— 玩偶 x12-45%/y15-75%,包包 2×2 x55-95%/y20-70%,
- *   文案 PNG 底部 y82%;
- * - 屏 3-5:系列图(PSD 头图区合成,玩偶垂直居中)+ 标题 PNG 顶 23% 图区。
- * 底部横线指示条 + 右下角 ←/→ 箭头;自动播放 + 交叉淡入 + 触摸滑动。
+ * 首页头图轮播(主 PSD UI 树精确还原,5 屏)。所有位置为头图区(容器=视口-header)百分比:
+ * - 屏 1:is.offy 字标(x 居中,顶 9.7%,宽 18.3%)+ slogan 一行(顶 29.5%,宽 55%居中,
+ *   移动端允许换行);
+ * - 屏 2 促销屏:玩偶(x11%,y10%,w46%,h50%)+ 包包 2×2(x61.7%,y18.2%)+
+ *   文案 PNG(x11.5%,y62.4%,w50%);
+ * - 屏 3-5 系列屏:玩偶上半 + 左下标题组 —— 标题 PNG(x11.5%,y62.4%,w41.9%)、
+ *   副标题 PNG(OFFY 行右侧,x39.9%,y62.6%,w13.5%)、查看详情按钮(x58%,y73.1%);
+ *   时尚屏深色背景白字(dark)。
+ * 尺寸用 clamp() 约束:vw 为主、设上下限,移动端等比缩小,过长文字换行不截断。
  */
 export function HeroCarousel({
   slides,
@@ -39,22 +40,22 @@ export function HeroCarousel({
     return () => clearInterval(id);
   }, [slides.length, intervalMs]);
 
-  /** 屏 2:促销合成屏(白底 + 左大玩偶 + 右 2×2 包包 + 底部文案 PNG)。 */
+  /** 屏 2:PSD「头图-活动奖励」合成屏(坐标按 PSD 头图区百分比)。 */
   const renderPromo = (s: HeroSlide) => (
     <div className="absolute inset-0 bg-white">
-      {/* 玩偶(PSD 布局: 宽 63% 视口,贴底;本体已裁切) */}
-      <div className="absolute left-[-5%] top-[10%] h-[70%] w-[60%]">
+      {/* 玩偶(PSD 本体区 x11% y10% w46% h50%) */}
+      <div className="absolute left-[11%] top-[10%] h-[50%] w-[46%]">
         <Image
           src={s.promo!.doll}
           alt=""
           fill
           priority
-          sizes="60vw"
-          className="object-contain object-bottom"
+          sizes="(max-width: 768px) 46vw, 46vw"
+          className="object-contain object-center"
         />
       </div>
-      {/* 包包 2×2: x 50-95%, y 15-75%(设计稿) */}
-      <div className="absolute right-[5%] top-[15%] grid w-[45%] grid-cols-2 gap-4 md:gap-6">
+      {/* 包包 2×2(PSD x61.7% y18.2%,单格 20.2% 宽) */}
+      <div className="absolute left-[61.7%] top-[18.2%] grid w-[40.4%] grid-cols-2">
         {s.promo!.bags.map((bag) => (
           <div key={bag} className="relative aspect-square">
             <Image
@@ -67,50 +68,84 @@ export function HeroCarousel({
           </div>
         ))}
       </div>
-      {/* 文案 PNG: 左下(设计稿 y 72-92%,x 12% 起) */}
-      <div className="absolute bottom-[8%] left-[12%]">
+      {/* 文案 PNG(PSD x11.5% y62.4% w49.9%) */}
+      <div className="absolute left-[11.5%] top-[62.4%] w-[50%] max-w-[720px]">
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img
           src={s.promo!.text}
           alt={locale === "zh" ? "即日起，任意购买三个公仔以上，送offy包包" : "Buy any 3 plush dolls, get an Offy bag free"}
-          className="w-[52vw] max-w-3xl"
+          className="w-full"
         />
       </div>
     </div>
   );
 
+  /** 屏 3-5 系列屏:左下标题组(标题+副标题+查看详情按钮)。 */
+  const renderSeriesOverlay = (s: HeroSlide) => {
+    const textColor = s.dark ? "text-cream" : "text-ink";
+    const arrowSrc = s.dark ? "/assets/hero/cta-arrow-white.png" : "/assets/hero/cta-arrow.png";
+    return (
+      <>
+        {/* 标题 PNG(PSD x11.5% y62.4% w41.9%);clamp 下限防移动端过小 */}
+        <div className="absolute left-[11.5%] top-[62.4%] w-[41.9%] min-w-[150px] max-w-[604px]">
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img
+            src={s.titleImage}
+            alt={s.subtitleAlt ? (locale === "zh" ? `OFFY 系列` : "OFFY series") : ""}
+            className="w-full"
+          />
+        </div>
+        {/* 副标题 PNG(PSD x39.9% y62.6% w13.5%,与 OFFY 行右对齐) */}
+        {s.subtitleImage && (
+          <div className="absolute left-[39.9%] top-[62.6%] w-[13.5%] min-w-[52px] max-w-[195px]">
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
+              src={s.subtitleImage}
+              alt={locale === "zh" ? s.subtitleAlt!.zh : s.subtitleAlt!.en}
+              className="w-full"
+            />
+          </div>
+        )}
+        {/* 查看详情按钮(PSD x58% y73.1% w13% h6.1%):描边样式 + 箭头图标 */}
+        <Link
+          href={s.href!}
+          className={`group absolute left-[58%] top-[73.1%] flex h-[6.1%] min-h-[34px] w-[13%] min-w-[86px] max-w-[187px] items-center justify-center gap-1.5 rounded-full border-[1.5px] text-[clamp(10px,1.1vw,14px)] font-medium transition-colors ${
+            s.dark
+              ? "border-cream/70 text-cream hover:bg-cream hover:text-ink"
+              : "border-ink/70 text-ink hover:bg-ink hover:text-cream"
+          }`}
+          onClick={(e) => e.stopPropagation()}
+        >
+          <span className="whitespace-nowrap">{locale === "zh" ? "查看详情" : "Details"}</span>
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img src={arrowSrc} alt="" className="h-[0.9em] w-auto transition-colors group-hover:invert" />
+        </Link>
+      </>
+    );
+  };
+
   const renderOverlay = (s: HeroSlide) => (
     <>
-      {/* 屏 1:is.offy 字标(顶 15.3% 图区)+ 两行 slogan(顶 30.7% 图区)。
-          定位基准:容器 = header 之下(top: var(--header-h)),位置为容器 %。 */}
+      {/* 屏 1:is.offy 字标(PSD x 居中,顶 9.7%,宽 18.3%)+ slogan(顶 29.5%) */}
       {s.wordmark && (
         <>
-          <div className="absolute inset-x-0 top-[15%] flex justify-center">
+          <div className="absolute inset-x-0 top-[9.7%] flex justify-center">
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img
               src="/assets/brand/is-offy-wordmark.png"
               alt="is.offy"
-              className="h-[7.6vh] w-auto max-w-none"
+              className="w-[18.3%] min-w-[110px] max-w-[264px]"
             />
           </div>
-          <div className="absolute inset-x-0 top-[30%] px-6 text-center">
-            <p className="whitespace-pre-line text-[5.6vh] font-bold leading-[1.65] tracking-[0.15em] text-ink">
+          <div className="absolute inset-x-0 top-[29.5%] flex justify-center px-6">
+            {/* vw 主单位(一行宽由视口宽决定);移动端字号收敛,过长时自然换行不溢出 */}
+            <p className="max-w-full break-words text-center text-[clamp(15px,4.2vw,50px)] font-bold leading-[1.65] tracking-[0.1em] text-ink">
               {locale === "zh" ? s.text!.zh : s.text!.en}
             </p>
           </div>
         </>
       )}
-      {/* 屏 3-5:标题 PNG(顶 23.4% 图区) */}
-      {s.titleImage && (
-        <div className="absolute inset-x-0 top-[23%] flex justify-center px-6">
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img
-            src={s.titleImage}
-            alt={locale === "zh" ? "OFFY 系列头图" : "OFFY series hero"}
-            className="w-[42%] max-w-xl md:w-[38%]"
-          />
-        </div>
-      )}
+      {s.titleImage && renderSeriesOverlay(s)}
     </>
   );
 
@@ -151,18 +186,9 @@ export function HeroCarousel({
             {renderOverlay(s)}
           </div>
         );
-        return s.href ? (
-          <Link
-            key={s.image}
-            href={s.href}
-            aria-label={`Hero slide ${i + 1}`}
-            aria-hidden={i !== active}
-            tabIndex={i === active ? 0 : -1}
-            className={cls}
-          >
-            {content}
-          </Link>
-        ) : (
+        // 系列屏不再整图可点(避免与「查看详情」按钮形成 <a> 嵌套 <a>);
+        // 按钮是屏内唯一导航入口。
+        return (
           <div key={s.image} aria-hidden={i !== active} className={cls}>
             {content}
           </div>
@@ -185,23 +211,25 @@ export function HeroCarousel({
         ))}
       </div>
 
-      {/* 右下角:←/→ 深色箭头 */}
+      {/* 右下角:←/→ 深色箭头按钮(PSD 白色箭头 PNG) */}
       <div className="absolute bottom-5 right-5 z-10 flex gap-2 md:bottom-6 md:right-8">
         <button
           type="button"
           aria-label="Previous slide"
           onClick={() => go(active - 1)}
-          className="flex h-11 w-11 items-center justify-center bg-ink/80 text-cream transition-colors hover:bg-ink"
+          className="flex h-11 w-11 items-center justify-center bg-ink/80 transition-colors hover:bg-ink"
         >
-          ←
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img src="/assets/hero/arrow-left.png" alt="" className="h-3 w-auto" />
         </button>
         <button
           type="button"
           aria-label="Next slide"
           onClick={() => go(active + 1)}
-          className="flex h-11 w-11 items-center justify-center bg-ink/80 text-cream transition-colors hover:bg-ink"
+          className="flex h-11 w-11 items-center justify-center bg-ink/80 transition-colors hover:bg-ink"
         >
-          →
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img src="/assets/hero/arrow-right.png" alt="" className="h-3 w-auto" />
         </button>
       </div>
     </div>
