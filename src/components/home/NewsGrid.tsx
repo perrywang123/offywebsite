@@ -28,7 +28,8 @@ export function NewsGrid({
 }) {
   return (
     <div>
-      <div className="grid gap-4 lg:grid-cols-2 lg:gap-6">
+      {/* PSD 比例:主卡 43% / 副卡区 57%(主:副≈1324:1746) */}
+      <div className="grid gap-4 lg:grid-cols-[43fr_57fr] lg:gap-6">
         {/* ============ 左:大主卡 ============ */}
         <Reveal>
           <div className="group relative aspect-[3/4] overflow-hidden rounded-card bg-cream-deep lg:aspect-auto lg:h-full lg:min-h-[32rem]">

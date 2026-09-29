@@ -113,6 +113,17 @@ body {
 
 /* ============ editorial 工具类 ============ */
 @layer components {
+  /* 站点主流式容器:PSD 3250 画布内容边距 ~4-7%,统一 92% 流式宽 + 超大屏封顶。
+     替代旧 max-w-7xl(1280px 封顶)——后者在超宽屏下与全宽头图缩放节奏脱节。 */
+  .container-site {
+    width: calc(100% - 2rem);
+    max-width: 2800px;
+    margin-inline: auto;
+  }
+  @media (min-width: 768px) {
+    .container-site { width: 92%; }
+  }
+
   .kicker {
     font-family: var(--font-display);
     font-size: 0.6875rem;

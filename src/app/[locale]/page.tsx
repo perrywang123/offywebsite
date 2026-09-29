@@ -43,10 +43,10 @@ export default async function HomePage({ params }: { params: Promise<{ locale: s
       </Marquee>
 
       {/* ============ 最新资讯 · 揭晓 ============ */}
-      <section className="mx-auto max-w-7xl px-6 py-20 md:py-28 lg:px-8">
+      <section className="container-site py-20 md:py-28">
         <Reveal className="mb-10">
           <p className="kicker mb-3">News</p>
-          <h2 className="font-display text-4xl font-semibold uppercase tracking-tight md:text-6xl">
+          <h2 className="font-display text-[clamp(30px,2.6vw,60px)] font-semibold uppercase tracking-tight">
             {t("newsTitle")}
           </h2>
           <p className="mt-3 text-ink-soft">{t("newsSub")}</p>
@@ -65,10 +65,10 @@ export default async function HomePage({ params }: { params: Promise<{ locale: s
       </section>
 
       {/* ============ 按类别选购 + 最新曝光造型(设计稿:同一模块) ============ */}
-      <section className="mx-auto max-w-7xl px-6 py-20 md:py-28 lg:px-8">
+      <section className="container-site py-20 md:py-28">
         <Reveal className="mb-12 text-center">
           <p className="kicker mb-3">{t("categorySub")}</p>
-          <h2 className="font-display text-4xl font-semibold uppercase tracking-tight md:text-6xl">
+          <h2 className="font-display text-[clamp(30px,2.6vw,60px)] font-semibold uppercase tracking-tight">
             {t("categoryTitle")}
           </h2>
           <p className="mt-3 text-ink-soft">{t("castSub")}</p>
@@ -102,7 +102,7 @@ export default async function HomePage({ params }: { params: Promise<{ locale: s
         {/* ============ 产品汇总-选购同款造型(圆形名册,紧接本模块) ============ */}
         <p className="mt-16 text-sm text-ink-soft">{t("rosterTitle")}</p>
         <Reveal className="mt-6">
-          <div className="flex flex-wrap gap-3">
+          <div className="grid grid-cols-6 gap-3 sm:grid-cols-8 lg:grid-cols-12">
             {roster.map((p) => (
               <Link
                 key={p.code}
@@ -123,9 +123,9 @@ export default async function HomePage({ params }: { params: Promise<{ locale: s
 
       {/* ============ OFFY 新品抢先看(设计稿:整幅背景图 + 左文字叠加 + 黑色 pill) ============ */}
       <section className="py-20 md:py-28">
-        <Reveal className="mx-auto mb-14 max-w-7xl px-6 text-center lg:px-8">
+        <Reveal className="container-site mx-auto mb-14 text-center">
           <p className="kicker mb-3">{t("teaserTitle")}</p>
-          <h2 className="font-display text-4xl font-semibold tracking-tight md:text-6xl">
+          <h2 className="font-display text-[clamp(30px,2.6vw,60px)] font-semibold tracking-tight">
             {t("teaserSub")}
           </h2>
         </Reveal>
@@ -141,11 +141,11 @@ export default async function HomePage({ params }: { params: Promise<{ locale: s
           </div>
           <div className="absolute inset-0 bg-gradient-to-r from-cream/80 via-cream/30 to-transparent" />
           <div className="absolute inset-0 flex items-center">
-            <div className="mx-auto w-full max-w-7xl px-6 lg:px-8">
+            <div className="container-site w-full">
               <div className="max-w-lg">
                 <p className="kicker mb-3">{t("teaserKicker")}</p>
                 <p className="text-lg text-ink-soft">{t("comingSub")}</p>
-                <h3 className="mt-6 font-display text-4xl font-extrabold tracking-tight md:text-6xl">
+                <h3 className="mt-6 font-display text-[clamp(30px,2.6vw,60px)] font-extrabold tracking-tight">
                   /{locale === "zh" ? teaserSeries.name.zh : teaserSeries.name.en}
                 </h3>
                 <p className="mt-4 text-sm text-ink-muted">
@@ -164,7 +164,7 @@ export default async function HomePage({ params }: { params: Promise<{ locale: s
       </section>
 
       {/* ============ 联名定制(让 OFFY 成为你的) ============ */}
-      <section className="mx-auto max-w-7xl px-6 py-20 lg:px-8">
+      <section className="container-site py-20">
         <Reveal className="relative aspect-[2/1] overflow-hidden rounded-block">
           <Image
             src="/assets/collab/collab-ip.jpg"
@@ -191,10 +191,10 @@ export default async function HomePage({ params }: { params: Promise<{ locale: s
       </section>
 
       {/* ============ 后续新的 IP ============ */}
-      <section className="mx-auto max-w-7xl px-6 py-20 lg:px-8">
+      <section className="container-site py-20">
         <Reveal className="mb-10">
           <p className="kicker mb-3">Coming Next</p>
-          <h2 className="font-display text-3xl font-semibold uppercase tracking-tight md:text-5xl">{t("comingTitle")}</h2>
+          <h2 className="font-display text-[clamp(26px,2.2vw,48px)] font-semibold uppercase tracking-tight">{t("comingTitle")}</h2>
           <p className="mt-3 text-ink-soft">{t("comingSub")}</p>
         </Reveal>
         <div className="grid gap-6 md:grid-cols-2">
@@ -214,10 +214,10 @@ export default async function HomePage({ params }: { params: Promise<{ locale: s
 
       {/* ============ 订阅(永远不会错过她) ============ */}
       <section className="bg-cream-deep py-20">
-        <div className="mx-auto grid max-w-7xl items-center gap-10 px-6 md:grid-cols-2 lg:px-8">
+        <div className="container-site grid items-center gap-10 md:grid-cols-2">
           <Reveal variant="left">
             <p className="kicker mb-3">Never Miss Her</p>
-            <h2 className="font-display text-3xl font-semibold uppercase tracking-tight md:text-4xl">{t("subscribeTitle")}</h2>
+            <h2 className="font-display text-[clamp(24px,2vw,40px)] font-semibold uppercase tracking-tight">{t("subscribeTitle")}</h2>
             <p className="mt-3 text-ink-soft">{t("subscribeSub")}</p>
           </Reveal>
           <Reveal variant="right"><NewsletterForm /></Reveal>

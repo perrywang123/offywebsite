@@ -23,7 +23,7 @@ export function CategoryTabs({
       aria-label={locale === "zh" ? "分类" : "Categories"}
       className="sticky top-[var(--header-h)] z-30 border-b border-cream-line bg-cream/90 backdrop-blur-md"
     >
-      <div className="no-scrollbar mx-auto flex max-w-7xl items-center gap-6 overflow-x-auto px-6 py-4 lg:px-8">
+      <div className="no-scrollbar container-site flex items-center gap-6 overflow-x-auto py-4">
         <Link
           href="/products"
           aria-current={active === undefined ? "page" : undefined}

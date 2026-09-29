@@ -8,7 +8,7 @@ export async function Footer() {
   return (
     <footer className="bg-ink text-cream">
       {/* 链接列 */}
-      <div className="mx-auto grid max-w-7xl gap-10 px-6 py-16 md:grid-cols-4 md:gap-8 lg:px-8">
+      <div className="container-site grid gap-10 py-16 md:grid-cols-4 md:gap-8">
         <div>
           <p className="max-w-xs text-sm leading-relaxed text-cream/70">
             {t("tagline")} — Offy 是我们创造的第一个小精灵，把情绪穿在身上的黑肤色卡通 IP。
@@ -42,7 +42,7 @@ export async function Footer() {
 
       {/* 版权细条 */}
       <div className="border-t border-cream/10 py-6">
-        <div className="mx-auto flex max-w-7xl flex-wrap items-center justify-between gap-4 px-6 text-xs text-cream/50 lg:px-8">
+        <div className="container-site flex flex-wrap items-center justify-between gap-4 text-xs text-cream/50">
           <span>© {new Date().getFullYear()} {t("brand")} · {t("footer.rights")}</span>
           <span>{t("taglineEn")}</span>
         </div>

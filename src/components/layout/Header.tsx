@@ -31,7 +31,7 @@ export function Header() {
           }`}
         />
 
-        <div className="relative mx-auto flex h-full max-w-7xl items-center justify-between px-4 sm:px-6 lg:px-8">
+        <div className="container-site relative flex h-full items-center justify-between">
           {/* 左：品牌字标(PSD 导航 LOGO 图层,ink 色) */}
           <Link
             href="/"
@@ -67,7 +67,7 @@ export function Header() {
               </Link>
               <div className="invisible absolute left-0 right-0 top-full z-50 -translate-y-2 opacity-0 transition-all duration-300 ease-editorial group-hover:visible group-hover:translate-y-0 group-hover:opacity-100">
                 <div className="border-b border-cream-line bg-cream/95 shadow-card backdrop-blur-md">
-                  <div className="mx-auto grid max-w-7xl grid-cols-2 gap-x-8 gap-y-2 px-6 py-8 sm:grid-cols-3 lg:grid-cols-4 lg:px-8">
+                  <div className="container-site grid grid-cols-2 gap-x-8 gap-y-2 py-8 sm:grid-cols-3 lg:grid-cols-4">
                     <Link
                       href="/products"
                       className="text-sm font-medium uppercase tracking-[0.1em] text-ink transition-colors hover:text-brown-600"
