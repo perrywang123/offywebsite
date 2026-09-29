@@ -30,8 +30,8 @@ export default async function HomePage({ params }: { params: Promise<{ locale: s
 
   return (
     <>
-      {/* ============ 头图轮播(交互稿版式:整图居中不截断,系列图直跳系列页) ============ */}
-      <section className="relative -mt-[var(--header-h)] min-h-screen overflow-hidden bg-cream">
+      {/* ============ 头图轮播(图片驱动:宽撑满,高=宽/1.789 等比,文字随图) ============ */}
+      <section className="relative overflow-hidden">
         <HeroCarousel slides={heroSlides} locale={locale} />
       </section>
 

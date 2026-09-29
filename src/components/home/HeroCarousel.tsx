@@ -11,20 +11,13 @@ const SWIPE_THRESHOLD = 40;
 /** PSD 头图区宽高比(3250×1815) */
 const STAGE_RATIO = 3250 / 1815;
 
-/** 舞台样式:保持 PSD 比例,宽取 min(视口宽, 屏高×比例) —— 不超屏前提下尽量撑满。 */
-const stageStyle: React.CSSProperties = {
-  aspectRatio: "3250 / 1815",
-  width: `min(100%, calc((100vh - var(--header-h)) * ${STAGE_RATIO.toFixed(4)}))`,
-  maxHeight: "100%",
-};
-
 /**
- * 首页头图轮播(主 PSD UI 树,5 屏)——「舞台」自适应架构:
- * 每屏内容放进一个保持 PSD 头图区比例(3250:1815)的舞台框,舞台宽取
- * min(视口宽, (100vh-header)×比例) —— 在不超出屏幕的前提下尽量撑满;
- * 图片 fill 铺满舞台(同比例无变形、无裁切),文字/按钮/指示条/箭头全部按
- * 舞台百分比定位(=PSD 头图区坐标),并随舞台等比缩放(字号用 cqw + clamp 上下限)。
- * 因此任何屏幕尺寸下,头图上的字和按钮都严格贴在 PSD 设计位置。
+ * 首页头图轮播(主 PSD UI 树,5 屏)——图片驱动布局:
+ * 轮播容器宽 = 屏宽(左右边距 0),高 = 宽 ÷ 1.789(等比) —— 头图区域的高度
+ * 就是图片高度,没有任何色块补边;图片 fill 铺满容器(同比例零裁切),
+ * 文字/按钮/指示条/箭头全部按图片百分比定位(=PSD 头图区坐标),
+ * 字号用 cqw(相对图片宽)+ clamp 上下限 —— 任何屏幕下,头图上的字和按钮
+ * 都严格贴在 PSD 设计位置并跟随头图等比缩放。
  */
 export function HeroCarousel({
   slides,
@@ -60,8 +53,8 @@ export function HeroCarousel({
           className="object-contain object-center"
         />
       </div>
-      {/* 包包 2×2(PSD x61.7% y18.2%,单格 20.2% 宽) */}
-      <div className="absolute left-[61.7%] top-[18.2%] grid w-[40.4%] grid-cols-2">
+      {/* 包包 2×2(PSD x61.7%-99.9%,两列有重叠,总宽 38.2%) */}
+      <div className="absolute left-[61.7%] top-[18.2%] grid w-[38.2%] grid-cols-2">
         {s.promo!.bags.map((bag) => (
           <div key={bag} className="relative aspect-square">
             <Image
@@ -156,8 +149,11 @@ export function HeroCarousel({
   );
 
   return (
+    // 外层定尺寸(aspect-ratio = 屏宽/1.789);内层做 cqw 容器 —
+    // container-type 与 aspect-ratio 同元素有 Chrome 高度计算异常,必须分层。
     <div
-      className="absolute inset-x-0 bottom-0 top-[var(--header-h)]"
+      className="relative w-full"
+      style={{ aspectRatio: "3250 / 1815" }}
       role="region"
       aria-roledescription="carousel"
       aria-label="Hero"
@@ -173,8 +169,12 @@ export function HeroCarousel({
         else if (dx >= SWIPE_THRESHOLD) go(active - 1);
       }}
     >
+      <div
+        className="absolute inset-0"
+        style={{ containerType: "inline-size" }}
+      >
       {slides.map((s, i) => {
-        const cls = `absolute inset-0 flex items-center justify-center transition-opacity duration-1000 ease-editorial ${
+        const cls = `absolute inset-0 transition-opacity duration-1000 ease-editorial ${
           i === active ? "opacity-100" : "pointer-events-none opacity-0"
         }`;
         return (
@@ -184,31 +184,27 @@ export function HeroCarousel({
             className={cls}
             style={{ backgroundColor: s.bg }}
           >
-            {/* 舞台:保持 PSD 比例,尽量撑满屏幕;头图与上面的字/按钮都活在舞台里 */}
-            <div className="@container relative" style={stageStyle}>
-              {s.promo ? (
-                renderPromo(s)
-              ) : (
-                <>
-                  <Image
-                    src={s.image}
-                    alt=""
-                    fill
-                    priority={i === 0}
-                    sizes="100vw"
-                    className="object-cover object-center"
-                  />
-                  {renderOverlay(s)}
-                </>
-              )}
-            </div>
+            {s.promo ? (
+              renderPromo(s)
+            ) : (
+              <>
+                <Image
+                  src={s.image}
+                  alt=""
+                  fill
+                  priority={i === 0}
+                  sizes="100vw"
+                  className="object-cover object-center"
+                />
+                {renderOverlay(s)}
+              </>
+            )}
           </div>
         );
       })}
 
-      {/* 控件层:与舞台同尺寸(共享一组控件,跟随头图比例,不随屏切换) */}
-      <div className="pointer-events-none absolute inset-0 z-10 flex items-center justify-center">
-        <div className="@container relative" style={stageStyle}>
+      {/* 控件层:覆盖整个图片(共享一组控件,按图片比例定位,不随屏切换) */}
+      <div className="pointer-events-none absolute inset-0 z-10">
           {/* 横线指示条(PSD y88.3% 居中) */}
           <div className="absolute bottom-[11.7%] left-1/2 flex -translate-x-1/2 gap-2" role="tablist" aria-label="Slides">
             {slides.map((sl, di) => (
@@ -245,7 +241,7 @@ export function HeroCarousel({
               <img src="/assets/hero/arrow-right.png" alt="" className="h-3 w-auto" />
             </button>
           </div>
-        </div>
+      </div>
       </div>
     </div>
   );
