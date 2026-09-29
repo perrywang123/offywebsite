@@ -8,8 +8,6 @@ import type { HeroSlideData } from "@/lib/content";
 export type HeroSlide = HeroSlideData;
 
 const SWIPE_THRESHOLD = 40;
-/** PSD 头图区宽高比(3250×1815) */
-const STAGE_RATIO = 3250 / 1815;
 
 /**
  * 首页头图轮播(主 PSD UI 树,5 屏)——图片驱动布局:

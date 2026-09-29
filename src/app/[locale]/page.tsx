@@ -5,8 +5,6 @@ import {
   getFeaturedProducts,
   products,
   teaserSeries,
-  upcomingIps,
-  collabLooks,
 } from "@/lib/catalog";
 import { heroSlides, newsFeature, newsItems } from "@/lib/content";
 import { enrichProducts } from "@/server/catalog/enrich";
@@ -121,31 +119,36 @@ export default async function HomePage({ params }: { params: Promise<{ locale: s
         </Reveal>
       </section>
 
-      {/* ============ OFFY 新品抢先看(设计稿:整幅背景图 + 左文字叠加 + 黑色 pill) ============ */}
+      {/* ============ OFFY 新品抢先看(PSD:Stay tuned 标题区 + 玩偶图左上文字块) ============ */}
       <section className="py-20 md:py-28">
+        {/* 标题区(PSD:Stay tuned. 大字 + offy新品抢先看 + 更多新品，敬请期待) */}
         <Reveal className="container-site mx-auto mb-14 text-center">
-          <p className="kicker mb-3">{t("teaserTitle")}</p>
-          <h2 className="font-display text-[clamp(30px,2.6vw,60px)] font-semibold tracking-tight">
+          <p className="font-display text-[clamp(40px,5vw,96px)] font-extrabold uppercase tracking-tight">
+            Stay tuned.
+          </p>
+          <p className="kicker mt-4">{t("teaserTitle")}</p>
+          <h2 className="mt-2 font-display text-[clamp(24px,2.2vw,44px)] font-semibold tracking-tight">
             {t("teaserSub")}
           </h2>
         </Reveal>
+        {/* 玩偶图 + 左上文字块(PSD:文字在图左上 8-42%,不是垂直居中) */}
         <Reveal className="relative overflow-hidden">
-          <div className="relative aspect-[4/3] md:aspect-[16/8.5]">
+          <div className="relative aspect-[4/3] md:aspect-[3/2]">
             <Image
-              src={teaserSeries.heroImage}
+              src="/assets/home/teaser-doll.png"
               alt={locale === "zh" ? teaserSeries.name.zh : teaserSeries.name.en}
               fill
               sizes="100vw"
               className="object-cover object-center"
             />
           </div>
-          <div className="absolute inset-0 bg-gradient-to-r from-cream/80 via-cream/30 to-transparent" />
-          <div className="absolute inset-0 flex items-center">
+          <div className="absolute inset-0 bg-gradient-to-r from-white/85 via-white/35 to-transparent" />
+          <div className="absolute inset-0 flex items-start">
             <div className="container-site">
-              <div className="max-w-lg">
+              <div className="max-w-lg pt-[8%]">
                 <p className="kicker mb-3">{t("teaserKicker")}</p>
                 <p className="text-lg text-ink-soft">{t("comingSub")}</p>
-                <h3 className="mt-6 font-display text-[clamp(30px,2.6vw,60px)] font-extrabold tracking-tight">
+                <h3 className="mt-6 font-display text-[clamp(28px,2.6vw,60px)] font-extrabold tracking-tight">
                   /{locale === "zh" ? teaserSeries.name.zh : teaserSeries.name.en}
                 </h3>
                 <p className="mt-4 text-sm text-ink-muted">
@@ -163,65 +166,52 @@ export default async function HomePage({ params }: { params: Promise<{ locale: s
         </Reveal>
       </section>
 
-      {/* ============ 联名定制(让 OFFY 成为你的) ============ */}
+      {/* ============ 联名定制(PSD:上灰横条 + 主标题 + 14 OF 头像图 + CTA + 下灰横条) ============ */}
       <section className="container-site py-20">
-        <Reveal className="relative aspect-[2/1] overflow-hidden rounded-block">
-          <Image
-            src="/assets/collab/collab-ip.jpg"
-            alt={t("collabTitle")}
-            fill
-            sizes="100vw"
-            className="object-cover"
-          />
-          <div className="absolute inset-0 bg-gradient-to-t from-ink/60 via-transparent to-transparent" />
-          <div className="absolute inset-x-0 bottom-0 p-6 text-center md:p-10">
-            <p className="kicker kicker--on-dark mb-3">Make Offy Yours</p>
-            <h2 className="font-display text-3xl font-semibold uppercase tracking-tight text-cream md:text-4xl">{t("collabTitle")}</h2>
-          </div>
+        {/* 上横条(PSD 图层12 浅灰装饰带) */}
+        <div className="h-10 rounded-t-block bg-[#ededed] md:h-16" />
+        {/* 主标题(头像图上方居中,不叠加压图) */}
+        <Reveal className="py-10 text-center">
+          <h2 className="font-display text-[clamp(26px,2.4vw,48px)] font-semibold uppercase tracking-tight">{t("collabTitle")}</h2>
+          <a href="mailto:hello@playcoretoys.com" className="link-line mt-4 inline-block text-sm">{t("collabCta")}</a>
         </Reveal>
-        <Reveal className="mx-auto mt-10 max-w-4xl text-center">
-          <p className="text-ink-soft">{t("collabSub")}</p>
-          <div className="mt-8 flex flex-wrap justify-center gap-2">
-            {collabLooks.map((code) => (
-              <span key={code} className="rounded-full border border-sand px-3 py-1 text-xs uppercase tracking-[0.12em] text-ink-soft transition-colors hover:border-accent hover:text-accent">{code}</span>
-            ))}
-          </div>
-          <a href="mailto:hello@playcoretoys.com" className="link-line mt-8 inline-block text-sm">{t("collabCta")}</a>
+        {/* 14 OF 造型头像图(PSD 矢量智能对象,透明底) */}
+        <Reveal className="relative">
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img src="/assets/home/collab-ips.png" alt={t("collabTitle")} className="w-full" />
         </Reveal>
+        {/* 下横条(PSD 图层15 浅灰装饰带) */}
+        <div className="h-10 rounded-b-block bg-[#e1e1e1] md:h-16" />
       </section>
 
-      {/* ============ 后续新的 IP ============ */}
+      {/* ============ 订阅(永远不会错过她)——移至联名下方 ============ */}
+      <section className="bg-cream-deep py-20">
+        <div className="container-site grid items-center gap-10 md:grid-cols-2">
+          <Reveal variant="up">
+            <p className="kicker mb-3">Never Miss Her</p>
+            <h2 className="font-display text-[clamp(24px,2vw,40px)] font-semibold uppercase tracking-tight">{t("subscribeTitle")}</h2>
+            <p className="mt-3 text-ink-soft">{t("subscribeSub")}</p>
+          </Reveal>
+          <Reveal variant="up"><NewsletterForm /></Reveal>
+        </div>
+      </section>
+
+      {/* ============ 后续新的 IP(PSD:标题 + 图层11 大图,图自带 2 IP 卡片+文字) ============ */}
       <section className="container-site py-20">
         <Reveal className="mb-10">
           <p className="kicker mb-3">Coming Next</p>
           <h2 className="font-display text-[clamp(26px,2.2vw,48px)] font-semibold uppercase tracking-tight">{t("comingTitle")}</h2>
           <p className="mt-3 text-ink-soft">{t("comingSub")}</p>
         </Reveal>
-        <div className="grid gap-6 md:grid-cols-2">
-          {upcomingIps.map((ip, i) => (
-            <Reveal key={ip.code} variant={i % 2 === 0 ? "left" : "right"}>
-              <div className="media-placeholder aspect-[16/9] rounded-block" data-label="COMING SOON — TBD">
-                <div className="relative z-10 p-8 text-center">
-                  <p className="rounded-full bg-ink/80 px-3 py-1 text-[10px] font-semibold uppercase tracking-[0.16em] text-cream">{locale === "zh" ? "即将登场" : "Coming Soon"}</p>
-                  <p className="mt-4 font-display text-2xl font-semibold text-ink">{locale === "zh" ? ip.name.zh : ip.name.en}</p>
-                  <p className="mt-2 text-sm text-ink-soft">{locale === "zh" ? ip.tagline.zh : ip.tagline.en}</p>
-                </div>
-              </div>
-            </Reveal>
-          ))}
-        </div>
-      </section>
-
-      {/* ============ 订阅(永远不会错过她) ============ */}
-      <section className="bg-cream-deep py-20">
-        <div className="container-site grid items-center gap-10 md:grid-cols-2">
-          <Reveal variant="left">
-            <p className="kicker mb-3">Never Miss Her</p>
-            <h2 className="font-display text-[clamp(24px,2vw,40px)] font-semibold uppercase tracking-tight">{t("subscribeTitle")}</h2>
-            <p className="mt-3 text-ink-soft">{t("subscribeSub")}</p>
-          </Reveal>
-          <Reveal variant="right"><NewsletterForm /></Reveal>
-        </div>
+        {/* PSD 图层11 大图:凯蒂小姐 + 普赛克(即将推出/COMING SOON-TBD 均图内自带) */}
+        <Reveal className="relative overflow-hidden rounded-block">
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img
+            src="/assets/home/upcoming-ips.png"
+            alt={locale === "zh" ? "凯蒂小姐、普赛克 即将推出" : "Miss Kitty & Psyche, coming soon"}
+            className="w-full"
+          />
+        </Reveal>
       </section>
     </>
   );
