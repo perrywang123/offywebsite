@@ -141,7 +141,7 @@ export default async function HomePage({ params }: { params: Promise<{ locale: s
           </div>
           <div className="absolute inset-0 bg-gradient-to-r from-cream/80 via-cream/30 to-transparent" />
           <div className="absolute inset-0 flex items-center">
-            <div className="container-site w-full">
+            <div className="container-site">
               <div className="max-w-lg">
                 <p className="kicker mb-3">{t("teaserKicker")}</p>
                 <p className="text-lg text-ink-soft">{t("comingSub")}</p>

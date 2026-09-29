@@ -1,10 +1,10 @@
 @import "tailwindcss";
 
 @theme {
-  /* ============ 中性色：暖奶油底 + 暖黑墨（对齐 dogguo #f7f2ef） ============ */
-  --color-cream: #f7f2ef;
-  --color-cream-deep: #efe7df;
-  --color-cream-line: #e8ded3;
+  /* ============ 中性色：白 + 浅灰 + 暖黑墨（对齐 is.offy PSD 页面底 #efefef） ============ */
+  --color-cream: #ffffff;
+  --color-cream-deep: #f5f5f5;
+  --color-cream-line: #e3e3e3;
   --color-sand: #d9cbbb;
   --color-paper: #ffffff;
 
@@ -91,7 +91,7 @@
 }
 
 :root {
-  --background: #f7f2ef;
+  --background: #efefef;
   --foreground: #1d1915;
   /* 固定 header 高度（含 promo 条），供 sticky 子 tab 定位 */
   --header-h: 104px;
