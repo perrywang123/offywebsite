@@ -166,12 +166,10 @@ export default async function HomePage({ params }: { params: Promise<{ locale: s
         </Reveal>
       </section>
 
-      {/* ============ 联名定制(PSD:上灰横条 + 主标题 + 14 OF 头像图 + CTA + 下灰横条) ============ */}
+      {/* ============ 联名定制(PSD:主标题 + 14 OF 头像图 + CTA) ============ */}
       <section className="container-site py-20">
-        {/* 上横条(PSD 图层12 浅灰装饰带) */}
-        <div className="h-10 rounded-t-block bg-[#ededed] md:h-16" />
         {/* 主标题(头像图上方居中,不叠加压图) */}
-        <Reveal className="py-10 text-center">
+        <Reveal className="pb-10 text-center">
           <h2 className="font-display text-[clamp(26px,2.4vw,48px)] font-semibold uppercase tracking-tight">{t("collabTitle")}</h2>
           <a href="mailto:hello@playcoretoys.com" className="link-line mt-4 inline-block text-sm">{t("collabCta")}</a>
         </Reveal>
@@ -180,8 +178,6 @@ export default async function HomePage({ params }: { params: Promise<{ locale: s
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img src="/assets/home/collab-ips.png" alt={t("collabTitle")} className="w-full" />
         </Reveal>
-        {/* 下横条(PSD 图层15 浅灰装饰带) */}
-        <div className="h-10 rounded-b-block bg-[#e1e1e1] md:h-16" />
       </section>
 
       {/* ============ 订阅(永远不会错过她)——移至联名下方 ============ */}
@@ -196,22 +192,33 @@ export default async function HomePage({ params }: { params: Promise<{ locale: s
         </div>
       </section>
 
-      {/* ============ 后续新的 IP(PSD:标题 + 图层11 大图,图自带 2 IP 卡片+文字) ============ */}
+      {/* ============ 后续新的 IP(PSD:标题 + 图层11 双卡;移动端上下排布,桌面左右并排) ============ */}
       <section className="container-site py-20">
         <Reveal className="mb-10">
           <p className="kicker mb-3">Coming Next</p>
           <h2 className="font-display text-[clamp(26px,2.2vw,48px)] font-semibold uppercase tracking-tight">{t("comingTitle")}</h2>
           <p className="mt-3 text-ink-soft">{t("comingSub")}</p>
         </Reveal>
-        {/* PSD 图层11 大图:凯蒂小姐 + 普赛克(即将推出/COMING SOON-TBD 均图内自带) */}
-        <Reveal className="relative overflow-hidden rounded-block">
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img
-            src="/assets/home/upcoming-ips.png"
-            alt={locale === "zh" ? "凯蒂小姐、普赛克 即将推出" : "Miss Kitty & Psyche, coming soon"}
-            className="w-full"
-          />
-        </Reveal>
+        {/* PSD 图层11 裁双卡:凯蒂小姐 + 普赛克(图内自带即将推出/COMING SOON-TBD);
+            移动端 grid-cols-1 上下排布,桌面 md:grid-cols-2 左右并排 */}
+        <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
+          <Reveal className="relative overflow-hidden rounded-block">
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
+              src="/assets/home/upcoming-kitty.png"
+              alt={locale === "zh" ? "凯蒂小姐 即将推出" : "Miss Kitty, coming soon"}
+              className="w-full"
+            />
+          </Reveal>
+          <Reveal className="relative overflow-hidden rounded-block">
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
+              src="/assets/home/upcoming-psyche.png"
+              alt={locale === "zh" ? "普赛克 即将推出" : "Psyche, coming soon"}
+              className="w-full"
+            />
+          </Reveal>
+        </div>
       </section>
     </>
   );

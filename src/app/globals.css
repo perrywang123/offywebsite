@@ -5,26 +5,26 @@
   --color-cream: #ffffff;
   --color-cream-deep: #f5f5f5;
   --color-cream-line: #e3e3e3;
-  --color-sand: #d9cbbb;
+  --color-sand: #d4d4d4;
   --color-paper: #ffffff;
 
   --color-ink: #1d1915;
-  --color-ink-soft: #554c43;
-  --color-ink-muted: #8d8175;
+  --color-ink-soft: #525252;
+  --color-ink-muted: #8a8a8a;
 
   /* ============ 品牌暖棕（对齐 dogguo #784415） ============ */
-  --color-brown-700: #5b3411;
-  --color-brown-600: #784415;
-  --color-brown-500: #9a6a3a;
-  --color-brown-100: #ecdfd0;
+  --color-brown-700: #1d1915;
+  --color-brown-600: #404040;
+  --color-brown-500: #737373;
+  --color-brown-100: #f0f0f0;
 
   /* ============ 克制点缀 ============ */
-  --color-accent: #b65a37;
-  --color-accent-deep: #9a4629;
+  --color-accent: #1d1915;
+  --color-accent-deep: #000000;
   --color-sky: #a7c4d1;
   --color-sky-deep: #6d95a8;
   --color-leaf: #65a754;
-  --color-butter: #e6c98a;
+  --color-butter: #e5e5e5;
 
   /* ============ 语义色（暖化） ============ */
   --color-success: #4c8a4a;
