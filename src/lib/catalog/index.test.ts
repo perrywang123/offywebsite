@@ -122,7 +122,7 @@ describe("teaserSeries (fashionable bag charm, upcoming)", () => {
     expect(teaserSeries.items).toHaveLength(6);
     teaserSeries.items.forEach((item, i) => {
       expect(item.code).toBe(`WCOFFY-XXX0${i + 1}`);
-      expect(item.image).toMatch(/^\/assets\/teaser\//);
+      expect(item.image).toMatch(/^\/assets\/bag-charm\//);
     });
   });
 });

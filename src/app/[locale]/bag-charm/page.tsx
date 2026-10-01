@@ -5,8 +5,12 @@ import { teaserSeries } from "@/lib/catalog";
 import { Reveal } from "@/components/Reveal";
 
 /**
- * 时尚包挂系列预告详情页(设计稿):超大英文标题两行 + 左大图右竖图 hero
- * (同一张头图,object-left/object-right 各取半幅),下方 6 张预告产品卡。
+ * 时尚包挂系列预告详情页(更多新品.psd 还原):
+ * Hero = 超大英文标题两行「FashionableBag / Charm Collection」
+ *   + 左方形玩偶图(hero-left 1888×1888)+ 右竖图(hero-right 1308×1744);
+ * 标题区「时尚包挂系列 / 更多都市精灵，敬请期待」;
+ * 下方 6 款包挂产品卡(PSD 提取图,WCOFFY-XXX01-06 + 点击查看)。
+ * 移动端:左右双图改为上下排布。
  */
 export default async function BagCharmTeaserPage({
   params,
@@ -21,60 +25,62 @@ export default async function BagCharmTeaserPage({
 
   return (
     <>
-      {/* ============ Hero:超大标题 + 左大右竖双图 ============ */}
-      <section className="mx-auto max-w-7xl px-6 pt-[calc(var(--header-h)+3rem)] lg:px-8">
+      {/* ============ Hero:超大标题 + 左方形图 / 右竖图(移动端上下排布) ============ */}
+      <section className="container-site pt-[calc(var(--header-h)+2.5rem)]">
         <Reveal>
-          <h1 className="font-display text-5xl font-extrabold uppercase leading-[0.95] tracking-tight md:text-7xl lg:text-8xl">
+          <h1 className="font-display text-[clamp(30px,4.2vw,60px)] font-extrabold uppercase leading-[1.02] tracking-tight">
             {titleLine1}
             <br />
             {titleLine2}
           </h1>
         </Reveal>
-        <div className="mt-10 grid gap-4 md:grid-cols-[2fr_1fr] lg:gap-6">
-          <Reveal variant="left" className="relative aspect-[4/3] overflow-hidden bg-cream-deep">
+        <div className="mt-10 grid grid-cols-1 gap-4 md:grid-cols-[58fr_40fr] lg:gap-6">
+          {/* 左:方形玩偶图(PSD 1888×1888) */}
+          <Reveal variant="left" className="relative aspect-square overflow-hidden rounded-card bg-cream-deep">
             <Image
-              src={teaserSeries.heroImage}
+              src={teaserSeries.heroLeft}
               alt={`${seriesName} — 1`}
               fill
               priority
-              sizes="(max-width: 768px) 100vw, 66vw"
-              className="object-cover object-left"
+              sizes="(max-width: 768px) 100vw, 58vw"
+              className="object-cover"
             />
           </Reveal>
-          <Reveal variant="right" className="relative aspect-[3/4] overflow-hidden bg-cream-deep md:aspect-auto">
+          {/* 右:竖图(PSD 1308×1744) */}
+          <Reveal variant="right" className="relative aspect-[3/4] overflow-hidden rounded-card bg-cream-deep md:aspect-auto">
             <Image
-              src={teaserSeries.heroImage}
+              src={teaserSeries.heroRight}
               alt={`${seriesName} — 2`}
               fill
               priority
-              sizes="(max-width: 768px) 100vw, 33vw"
-              className="object-cover object-right"
+              sizes="(max-width: 768px) 100vw, 40vw"
+              className="object-cover"
             />
           </Reveal>
         </div>
       </section>
 
       {/* ============ 标题区 ============ */}
-      <section className="mx-auto max-w-7xl px-6 pt-16 lg:px-8">
+      <section className="container-site pt-14">
         <Reveal>
           <h2 className="text-xl font-bold text-ink">{seriesName}</h2>
           <p className="mt-1 text-sm text-ink-soft">{t("comingSub")}</p>
         </Reveal>
       </section>
 
-      {/* ============ 预告产品卡(6 张,点击查看 → 产品汇总页) ============ */}
-      <section className="mx-auto max-w-7xl px-6 py-12 lg:px-8">
+      {/* ============ 预告产品卡(6 款,点击查看 → 产品汇总页) ============ */}
+      <section className="container-site py-12">
         <div className="grid grid-cols-2 gap-x-4 gap-y-10 sm:gap-x-6 md:grid-cols-3 lg:gap-x-8">
           {teaserSeries.items.map((item, i) => (
             <Reveal key={item.code} delay={Math.min(i, 5) * 60}>
               <div className="group">
-                <div className="relative aspect-[4/5] overflow-hidden bg-cream-deep">
+                <div className="relative aspect-[4/5] overflow-hidden rounded-card bg-cream-deep">
                   <Image
                     src={item.image}
                     alt={item.code}
                     fill
                     sizes="(max-width: 768px) 50vw, 33vw"
-                    className="scale-[1.01] object-cover transition-transform duration-500 ease-editorial group-hover:scale-105"
+                    className="object-cover transition-transform duration-500 ease-editorial group-hover:scale-105"
                   />
                 </div>
                 <div className="flex items-center justify-between gap-3 pt-3">

@@ -84,14 +84,17 @@ export const teaserSeries = {
   titleEn: "FASHIONABLEBAG CHARM COLLECTION",
   note: { zh: "具体发布时间以 INS 为准", en: "Release date follows our Instagram" },
   heroImage: "/assets/teaser/teaser-hero.jpg",
-  /** 预告详情页 6 张产品卡(编码为设计稿占位款号)。 */
+  /** bag-charm 详情页 hero 双图(更多新品.psd:左 1888×1888 方形玩偶图 + 右 1308×1744 竖图)。 */
+  heroLeft: "/assets/bag-charm/hero-left.png",
+  heroRight: "/assets/bag-charm/hero-right.png",
+  /** 预告详情页 6 张产品卡(更多新品.psd 提取,编码为设计稿占位款号)。 */
   items: [
-    { code: "WCOFFY-XXX01", image: "/assets/teaser/teaser-p01.jpg" },
-    { code: "WCOFFY-XXX02", image: "/assets/teaser/teaser-p02a.jpg" },
-    { code: "WCOFFY-XXX03", image: "/assets/teaser/teaser-p02b.jpg" },
-    { code: "WCOFFY-XXX04", image: "/assets/teaser/teaser-p02c.jpg" },
-    { code: "WCOFFY-XXX05", image: "/assets/teaser/teaser-p03.jpg" },
-    { code: "WCOFFY-XXX06", image: "/assets/teaser/teaser-p04.jpg" },
+    { code: "WCOFFY-XXX01", image: "/assets/bag-charm/prod-1.png" },
+    { code: "WCOFFY-XXX02", image: "/assets/bag-charm/prod-2.png" },
+    { code: "WCOFFY-XXX03", image: "/assets/bag-charm/prod-3.png" },
+    { code: "WCOFFY-XXX04", image: "/assets/bag-charm/prod-4.png" },
+    { code: "WCOFFY-XXX05", image: "/assets/bag-charm/prod-5.png" },
+    { code: "WCOFFY-XXX06", image: "/assets/bag-charm/prod-6.png" },
   ],
 };
 
