@@ -34,26 +34,37 @@ export default async function BagCharmTeaserPage({
             {titleLine2}
           </h1>
         </Reveal>
-        <div className="mt-10 grid grid-cols-1 gap-4 md:grid-cols-[58fr_40fr] lg:gap-6">
-          {/* 左:方形玩偶图(PSD 1888×1888) */}
-          <Reveal variant="left" className="relative aspect-square overflow-hidden rounded-card bg-cream-deep">
+        {/* 移动端:flex-col 上下全宽堆叠;桌面端:flex-row,两图均用显式百分比宽度
+            (左 62% 方形 → 高度=62%容器宽;右按真实比例 608:1496 反算得 25%宽,
+            使其渲染高度与左图一致,不再撑高/压扁——避免 flex 自动拉伸宽度
+            在 Next Image fill 绝对定位场景下不生效的问题)。 */}
+        <div className="mt-10 flex flex-col gap-4 md:flex-row lg:gap-6">
+          {/* 左:方形玩偶图(PSD 1888×1888,近似居中,object-cover 安全) */}
+          <Reveal
+            variant="left"
+            className="relative aspect-square w-full overflow-hidden rounded-card bg-cream-deep md:w-[62%]"
+          >
             <Image
               src={teaserSeries.heroLeft}
               alt={`${seriesName} — 1`}
               fill
               priority
-              sizes="(max-width: 768px) 100vw, 58vw"
+              sizes="(max-width: 768px) 100vw, 62vw"
               className="object-cover"
             />
           </Reveal>
-          {/* 右:竖图(PSD 1308×1744) */}
-          <Reveal variant="right" className="relative aspect-[3/4] overflow-hidden rounded-card bg-cream-deep md:aspect-auto">
+          {/* 右:竖图(原图层边界有大片留白,已裁至真实内容区 608×1496≈0.41;
+              25% 宽 ÷ 0.4064 比例 ≈ 62%,与左图渲染高度一致) */}
+          <Reveal
+            variant="right"
+            className="relative aspect-[608/1496] w-full overflow-hidden rounded-card bg-cream-deep md:w-[25%]"
+          >
             <Image
               src={teaserSeries.heroRight}
               alt={`${seriesName} — 2`}
               fill
               priority
-              sizes="(max-width: 768px) 100vw, 40vw"
+              sizes="(max-width: 768px) 100vw, 25vw"
               className="object-cover"
             />
           </Reveal>
@@ -68,19 +79,21 @@ export default async function BagCharmTeaserPage({
         </Reveal>
       </section>
 
-      {/* ============ 预告产品卡(6 款,点击查看 → 产品汇总页) ============ */}
+      {/* ============ 预告产品卡(6 款,点击查看 → 产品汇总页) ============
+           PSD 各商品图原始比例差异较大(0.75~1.14,方形/竖图混合),卡片统一按
+           PSD 矩形8 比例(877:1078)留框,图片用 object-contain 完整展示不裁切。 */}
       <section className="container-site py-12">
         <div className="grid grid-cols-2 gap-x-4 gap-y-10 sm:gap-x-6 md:grid-cols-3 lg:gap-x-8">
           {teaserSeries.items.map((item, i) => (
             <Reveal key={item.code} delay={Math.min(i, 5) * 60}>
               <div className="group">
-                <div className="relative aspect-[4/5] overflow-hidden rounded-card bg-cream-deep">
+                <div className="relative aspect-[877/1078] overflow-hidden rounded-card bg-cream-deep">
                   <Image
                     src={item.image}
                     alt={item.code}
                     fill
                     sizes="(max-width: 768px) 50vw, 33vw"
-                    className="object-cover transition-transform duration-500 ease-editorial group-hover:scale-105"
+                    className="object-contain p-2 transition-transform duration-500 ease-editorial group-hover:scale-105"
                   />
                 </div>
                 <div className="flex items-center justify-between gap-3 pt-3">
