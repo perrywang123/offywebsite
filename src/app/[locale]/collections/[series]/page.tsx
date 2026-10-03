@@ -1,7 +1,6 @@
 import Image from "next/image";
 import { notFound } from "next/navigation";
-import { getProductsBySeries, getSeries, seriesList } from "@/lib/catalog";
-import { enrichProducts } from "@/server/catalog/enrich";
+import { getLiveProductsBySeries, getLiveSeriesList } from "@/server/catalog/live";
 import { ProductGrid } from "@/components/product/ProductGrid";
 import { CategoryTabs } from "@/components/layout/CategoryTabs";
 import { Reveal } from "@/components/Reveal";
@@ -14,10 +13,14 @@ export default async function SeriesPage({
   params: Promise<{ locale: string; series: string }>;
 }) {
   const { locale, series: slug } = await params;
-  const series = getSeries(slug);
+
+  // 实时拉取:系列名称/该系列下的商品清单均来自 Shopify 当前真实状态,
+  // 不再依赖本地手写死的快照;Shopify 不可达时内部自动回退本地数据。
+  const seriesList = await getLiveSeriesList();
+  const series = seriesList.find((s) => s.slug === slug);
   if (!series) notFound();
 
-  const products = await enrichProducts(getProductsBySeries(slug));
+  const products = await getLiveProductsBySeries(series.slug);
   const idx = seriesList.findIndex((s) => s.slug === slug);
   const name = locale === "zh" ? series.name.zh : series.name.en;
   const tagline = locale === "zh" ? series.tagline.zh : series.tagline.en;

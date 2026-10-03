@@ -1,13 +1,9 @@
 import Image from "next/image";
 import { getTranslations } from "next-intl/server";
 import { Link } from "@/i18n/navigation";
-import {
-  getFeaturedProducts,
-  products,
-  teaserSeries,
-} from "@/lib/catalog";
+import { teaserSeries } from "@/lib/catalog";
 import { heroSlides, newsFeature, newsItems } from "@/lib/content";
-import { enrichProducts } from "@/server/catalog/enrich";
+import { getLiveFeaturedProducts, getLiveProducts } from "@/server/catalog/live";
 import { Reveal } from "@/components/Reveal";
 
 export const revalidate = 60;
@@ -22,8 +18,10 @@ export default async function HomePage({ params }: { params: Promise<{ locale: s
   const t = await getTranslations("home");
   const tCommon = await getTranslations("common");
 
-  const looks = await enrichProducts(getFeaturedProducts(6));
-  const roster = await enrichProducts(products);
+  // 实时拉取 Shopify:每次请求都反映当前真实的系列成员/价格/图片,不再依赖
+  // 本地手写死的商品快照;Shopify 不可达时内部自动回退本地数据。
+  const looks = await getLiveFeaturedProducts(6);
+  const roster = await getLiveProducts();
   const regionals = roster.filter((p) => p.badge);
 
   return (

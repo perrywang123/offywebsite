@@ -1,18 +1,28 @@
 import Image from "next/image";
 import { getTranslations } from "next-intl/server";
 import { Link } from "@/i18n/navigation";
-import { getProductsBySeries, seriesList } from "@/lib/catalog";
+import { getLiveProductsBySeries, getLiveSeriesList } from "@/server/catalog/live";
 import { Reveal } from "@/components/Reveal";
+
+export const revalidate = 60;
 
 export default async function CollectionsPage({ params }: { params: Promise<{ locale: string }> }) {
   const { locale } = await params;
   const t = await getTranslations("catalog");
 
-  const series = seriesList.map((s) => ({
-    ...s,
-    count: getProductsBySeries(s.slug).length,
-    image: getProductsBySeries(s.slug)[0]?.images[0] ?? "/assets/hero/hero-01.jpg",
-  }));
+  // 实时拉取:系列名称跟随 Shopify Collection 标题,每个系列的张数/封面图
+  // 来自该系列当前真实的商品清单,而不是本地快照。
+  const seriesList = await getLiveSeriesList();
+  const series = await Promise.all(
+    seriesList.map(async (s) => {
+      const products = await getLiveProductsBySeries(s.slug);
+      return {
+        ...s,
+        count: products.length,
+        image: products[0]?.images[0] ?? "/assets/hero/hero-01.jpg",
+      };
+    }),
+  );
 
   return (
     <div className="mx-auto max-w-7xl px-6 py-12 lg:px-8">

@@ -10,16 +10,18 @@ function mockFetch(json: unknown, ok = true): typeof fetch {
 }
 
 describe("fetchProductData", () => {
-  it("parses title/description/images/price from the product(handle) response", async () => {
+  it("parses title/description/images/price/variantId/available/collections from the product(handle) response", async () => {
     const f = mockFetch({
       data: {
         product: {
           title: "offy_redrush",
           description: "A cool sporty Offy.",
           descriptionHtml: "<p><b>A cool sporty Offy.</b></p><p><span>Body copy here.</span></p>",
+          availableForSale: true,
           images: { nodes: [{ url: "https://cdn.shopify.com/a.jpg" }, { url: "https://cdn.shopify.com/b.jpg" }] },
           // @inContext(US) 下返回 USD 价
-          variants: { nodes: [{ price: { amount: "45.0", currencyCode: "USD" } }] },
+          variants: { nodes: [{ id: "gid://shopify/ProductVariant/1", price: { amount: "45.0", currencyCode: "USD" } }] },
+          collections: { nodes: [{ handle: "outdoor-sporty系列" }] },
         },
       },
     });
@@ -35,6 +37,9 @@ describe("fetchProductData", () => {
       images: ["https://cdn.shopify.com/a.jpg", "https://cdn.shopify.com/b.jpg"],
       priceCents: 4500,
       currency: "USD",
+      variantId: "gid://shopify/ProductVariant/1",
+      available: true,
+      collectionHandles: ["outdoor-sporty系列"],
     });
   });
 
@@ -51,6 +56,39 @@ describe("fetchProductData", () => {
     });
     const data = await fetchProductData("x", f);
     expect(data?.descriptionBlocks).toEqual([]);
+  });
+
+  it("defaults variantId to null, available to true, and collectionHandles to [] when absent", async () => {
+    const f = mockFetch({
+      data: {
+        product: {
+          title: "x",
+          description: "",
+          images: { nodes: [] },
+          variants: { nodes: [] },
+        },
+      },
+    });
+    const data = await fetchProductData("x", f);
+    expect(data?.variantId).toBeNull();
+    expect(data?.available).toBe(true);
+    expect(data?.collectionHandles).toEqual([]);
+  });
+
+  it("surfaces availableForSale: false (sold out / unpublished)", async () => {
+    const f = mockFetch({
+      data: {
+        product: {
+          title: "x",
+          description: "",
+          availableForSale: false,
+          images: { nodes: [] },
+          variants: { nodes: [{ price: { amount: "0", currencyCode: "USD" } }] },
+        },
+      },
+    });
+    const data = await fetchProductData("x", f);
+    expect(data?.available).toBe(false);
   });
 
   it("returns null when the product is missing", async () => {

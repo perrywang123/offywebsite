@@ -3,9 +3,8 @@
 import { useEffect, useState } from "react";
 import { useLocale, useTranslations } from "next-intl";
 import { Link } from "@/i18n/navigation";
-import { getProductByCode } from "@/lib/catalog";
 import { formatUsdCents } from "@/lib/pricing";
-import { useCart } from "@/components/cart/CartProvider";
+import { useCart, type CartCatalogEntry } from "@/components/cart/CartProvider";
 
 type Provider = "paypal" | "stripe" | "shopify";
 type Notice = "cancelled" | "failed" | null;
@@ -55,7 +54,10 @@ const inputCls =
   "h-12 w-full rounded-soft border border-sand bg-paper px-4 text-base outline-none transition-colors focus:border-brown-600";
 
 export default function CheckoutPage() {
-  const { lines } = useCart();
+  // `catalog`(来自 /api/products 实时拉取)取代直接 import 本地静态目录 ——
+  // 否则本地完全没有记录的新商品加入购物车后会在结算页被静默过滤掉,
+  // 表现为"购物车显示是空的",无法下单。
+  const { lines, catalog, catalogLoaded } = useCart();
   const locale = useLocale();
   const t = useTranslations("checkout");
 
@@ -74,8 +76,8 @@ export default function CheckoutPage() {
   const [notice, setNotice] = useState<Notice>(null);
 
   const items = lines
-    .map((line) => ({ line, product: getProductByCode(line.code) }))
-    .filter((x): x is { line: { code: string; quantity: number }; product: NonNullable<ReturnType<typeof getProductByCode>> } => Boolean(x.product));
+    .map((line) => ({ line, product: catalog[line.code] }))
+    .filter((x): x is { line: { code: string; quantity: number }; product: CartCatalogEntry } => Boolean(x.product));
   const subtotal = items.reduce((sum, x) => sum + x.product.priceCents * x.line.quantity, 0);
 
   useEffect(() => {
@@ -131,7 +133,11 @@ export default function CheckoutPage() {
         <div className="mb-6 rounded-card bg-error-bg p-4 text-sm text-error">{t("failBanner")}</div>
       )}
 
-      {items.length === 0 ? (
+      {!catalogLoaded && lines.length > 0 ? (
+        <p className="text-center text-sm text-ink-muted">
+          {locale === "zh" ? "正在加载购物车…" : "Loading your bag…"}
+        </p>
+      ) : items.length === 0 ? (
         <div className="text-center">
           <p className="text-ink-muted">{t("empty")}</p>
           <Link href="/products" className="link-line mt-4 inline-block text-sm">

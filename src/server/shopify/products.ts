@@ -9,10 +9,24 @@ export interface ShopifyProductData {
   images: string[];
   priceCents: number;
   currency: string;
+  /** First variant's GID, used to build a Shopify-hosted checkout cart line. */
+  variantId: string | null;
+  /** Live availability — drives whether the product can be added to cart / checked out. */
+  available: boolean;
+  /** Collection handles this product currently belongs to (drives series assignment). */
+  collectionHandles: string[];
 }
 
-function storefrontEndpoint(): string {
-  return `https://${env.SHOPIFY_STORE_DOMAIN}/api/${env.SHOPIFY_API_VERSION}/graphql.json`;
+/**
+ * Storefront GraphQL 端点,按 handle 附加区分用的查询串,避免 Next.js fetch
+ * 数据缓存在同一端点 URL、仅 body(GraphQL variables)不同的并发请求间发生
+ * 缓存串味/污染 —— 真机实测验证过的真实 bug(详见
+ * `server/shopify/catalog.ts` 顶部注释的完整复现记录)。此处尤其关键:
+ * 不同商品详情页/结算请求会在短时间内并发查询不同 handle,一旦串味会导致
+ * "用户看到/买到错误的商品",必须保证每个 handle 的缓存键互不相同。
+ */
+function storefrontEndpoint(handle: string): string {
+  return `https://${env.SHOPIFY_STORE_DOMAIN}/api/${env.SHOPIFY_API_VERSION}/graphql.json?ck=product:${encodeURIComponent(handle)}`;
 }
 
 /** CountryCode 是 GraphQL 枚举，必须作为字面量注入（用变量传会不生效）。仅允许两位字母。 */
@@ -24,6 +38,9 @@ function marketCountry(): string {
 // 按 handle 查询，并用 @inContext(country) 让价格按 Shopify Markets 的市场币种返回
 // （US → USD）。注意：product(handle) 路径能正确响应市场上下文，而 node(id: variant)
 // 不会，因此富化读取走 handle。
+// variants.id（结算用变体 GID）+ availableForSale（实时上下架）+ collections.handle
+// （实时系列归属，驱动 live 目录层判定一个商品当前属于哪个系列）一并取回，
+// 避免再发起第二次请求。
 function productQuery(country: string): string {
   return `
 query ProductEnrich($handle: String!) @inContext(country: ${country}) {
@@ -31,8 +48,10 @@ query ProductEnrich($handle: String!) @inContext(country: ${country}) {
     title
     description
     descriptionHtml
+    availableForSale
     images(first: 10) { nodes { url } }
-    variants(first: 1) { nodes { price { amount currencyCode } } }
+    variants(first: 1) { nodes { id price { amount currencyCode } } }
+    collections(first: 5) { nodes { handle } }
   }
 }`;
 }
@@ -41,8 +60,10 @@ interface ProductNode {
   title?: string;
   description?: string;
   descriptionHtml?: string;
+  availableForSale?: boolean;
   images?: { nodes?: Array<{ url?: string }> };
-  variants?: { nodes?: Array<{ price?: { amount?: string; currencyCode?: string } }> };
+  variants?: { nodes?: Array<{ id?: string; price?: { amount?: string; currencyCode?: string } }> };
+  collections?: { nodes?: Array<{ handle?: string }> };
 }
 
 /**
@@ -55,7 +76,7 @@ export async function fetchProductData(
   handle: string,
   fetchImpl: typeof fetch = fetch,
 ): Promise<ShopifyProductData | null> {
-  const res = await fetchImpl(storefrontEndpoint(), {
+  const res = await fetchImpl(storefrontEndpoint(handle), {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
@@ -78,8 +99,8 @@ export async function fetchProductData(
   const product = json.data?.product;
   if (!product) return null;
 
-  const price = product.variants?.nodes?.[0]?.price;
-  const amount = price?.amount;
+  const variant = product.variants?.nodes?.[0];
+  const amount = variant?.price?.amount;
   const priceCents = amount ? Math.round(parseFloat(amount) * 100) : 0;
 
   return {
@@ -90,6 +111,12 @@ export async function fetchProductData(
       .map((n) => n.url)
       .filter((u): u is string => Boolean(u)),
     priceCents,
-    currency: price?.currencyCode ?? "USD",
+    currency: variant?.price?.currencyCode ?? "USD",
+    variantId: variant?.id ?? null,
+    // 缺省按"可售"处理：老店铺未返回该字段时不至于把整站商品误判为下架。
+    available: product.availableForSale ?? true,
+    collectionHandles: (product.collections?.nodes ?? [])
+      .map((n) => n.handle)
+      .filter((h): h is string => Boolean(h)),
   };
 }

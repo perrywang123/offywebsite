@@ -3,21 +3,31 @@
 import Image from "next/image";
 import { useLocale, useTranslations } from "next-intl";
 import { Link } from "@/i18n/navigation";
-import { getProductByCode } from "@/lib/catalog";
 import { formatUsdCents } from "@/lib/pricing";
-import { useCart } from "@/components/cart/CartProvider";
+import { useCart, type CartCatalogEntry } from "@/components/cart/CartProvider";
 
 export default function CartPage() {
-  const { lines, setQty, remove } = useCart();
+  // `catalog`(来自 /api/products 实时拉取)取代直接 import 本地静态目录 ——
+  // 否则本地完全没有记录的新商品(如本次新发现的 noir/wander/fable 等)
+  // 加入购物车后会在这个页面被静默过滤掉,表现为"购物车显示是空的"。
+  const { lines, catalog, catalogLoaded, setQty, remove } = useCart();
   const locale = useLocale();
   const t = useTranslations("common.cart");
   const ta = useTranslations("common.actions");
 
   const items = lines
-    .map((line) => ({ line, product: getProductByCode(line.code) }))
-    .filter((x): x is { line: { code: string; quantity: number }; product: NonNullable<ReturnType<typeof getProductByCode>> } => Boolean(x.product));
+    .map((line) => ({ line, product: catalog[line.code] }))
+    .filter((x): x is { line: { code: string; quantity: number }; product: CartCatalogEntry } => Boolean(x.product));
 
   const subtotal = items.reduce((sum, x) => sum + x.product.priceCents * x.line.quantity, 0);
+
+  if (!catalogLoaded && lines.length > 0) {
+    return (
+      <div className="mx-auto max-w-5xl px-6 py-12 text-center text-sm text-ink-muted lg:px-8">
+        {locale === "zh" ? "正在加载购物车…" : "Loading your bag…"}
+      </div>
+    );
+  }
 
   return (
     <div className="mx-auto max-w-5xl px-6 py-12 lg:px-8">

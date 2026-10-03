@@ -1,7 +1,8 @@
 import { randomUUID } from "node:crypto";
 import { eq } from "drizzle-orm";
+import type { Product } from "../../../lib/catalog";
 import { env, isPayPalConfigured } from "../../../lib/env";
-import { computeSubtotalCents, getProductByCode } from "../../../lib/catalog";
+import { getLiveProductByCode } from "../../catalog/live";
 import { checkoutSessions, orders } from "../../db/schema";
 import { getDb, type Db } from "../../db/client";
 import { finalizeOrder } from "../../orders/order-service";
@@ -33,28 +34,27 @@ export class PayPalPaymentProvider implements PaymentProvider {
   }
 
   async createCheckout(input: CreateCheckoutInput): Promise<CreateCheckoutResult> {
-    const validItems: { code: string; quantity: number }[] = [];
+    // 实时解析(getLiveProductByCode 内部已在 Shopify 不可达时自动回退本地目录),
+    // 保证新上架 Shopify 商品也能走通 PayPal 结算,不需要再手动维护本地清单。
+    const validItems: { product: Product; quantity: number }[] = [];
     for (const item of input.items) {
-      const product = getProductByCode(item.code);
+      const product = await getLiveProductByCode(item.code);
       if (!product || !product.isAvailable || product.isQuoteOnly) {
         return { ok: false, status: 400, error: "invalid_items" };
       }
-      validItems.push({ code: product.code, quantity: item.quantity });
+      validItems.push({ product, quantity: item.quantity });
     }
     if (validItems.length === 0) return { ok: false, status: 400, error: "invalid_request" };
     if (!this.isConfigured()) return { ok: false, status: 503, error: "paypal_unavailable" };
 
-    const subtotalCents = computeSubtotalCents(validItems);
-    const lineItems: LineItemSnapshot[] = validItems.map((item) => {
-      const p = getProductByCode(item.code)!;
-      return {
-        code: p.code,
-        nameEn: p.name.en,
-        nameZh: p.name.zh,
-        unitPriceCents: p.priceCents,
-        quantity: item.quantity,
-      };
-    });
+    const subtotalCents = validItems.reduce((sum, { product, quantity }) => sum + product.priceCents * quantity, 0);
+    const lineItems: LineItemSnapshot[] = validItems.map(({ product, quantity }) => ({
+      code: product.code,
+      nameEn: product.name.en,
+      nameZh: product.name.zh,
+      unitPriceCents: product.priceCents,
+      quantity,
+    }));
 
     const requestId = `create_${randomUUID()}`;
     const returnUrl = `${env.SITE_URL}/${input.locale}/checkout/paypal-return`;

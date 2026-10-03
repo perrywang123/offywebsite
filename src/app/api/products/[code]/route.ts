@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { getProductByCode } from "@/lib/catalog";
+import { getLiveProductByCode } from "@/server/catalog/live";
 
 export const dynamic = "force-dynamic";
 
@@ -8,7 +8,8 @@ export async function GET(
   { params }: { params: Promise<{ code: string }> },
 ) {
   const { code } = await params;
-  const product = getProductByCode(code);
+  // 实时解析:供商品详情页之外的客户端场景(购物车抽屉)按 code 实时校验/渲染。
+  const product = await getLiveProductByCode(code);
   if (!product) {
     return NextResponse.json({ error: "product_not_found" }, { status: 404 });
   }

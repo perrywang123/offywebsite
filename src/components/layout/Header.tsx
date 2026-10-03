@@ -2,12 +2,18 @@
 
 import { useLocale, useTranslations } from "next-intl";
 import { Link } from "@/i18n/navigation";
-import { seriesList } from "@/lib/catalog";
+import type { Series } from "@/lib/catalog";
 import { CartButton } from "@/components/cart/CartButton";
 import { LanguageSwitcher } from "./LanguageSwitcher";
 import { MobileNav } from "./MobileNav";
 
-export function Header() {
+/**
+ * `series` 由根布局 [`layout.tsx`](src/app/[locale]/layout.tsx) 服务端实时拉取
+ * (`getLiveSeriesList()`)后下发,而不是本组件直接 import 本地静态 `seriesList`——
+ * Header 是 "use client" 组件,拿不到服务端 fetch,靠 props 下发才能让导航里的
+ * 系列名跟随 Shopify Collection 标题实时变化。
+ */
+export function Header({ series }: { series: Series[] }) {
   const t = useTranslations("common");
   const locale = useLocale();
 
@@ -74,7 +80,7 @@ export function Header() {
                     >
                       {locale === "zh" ? "全部形象" : "All Looks"}
                     </Link>
-                    {seriesList.map((s) => (
+                    {series.map((s) => (
                       <Link
                         key={s.slug}
                         href={`/collections/${s.slug}`}
@@ -101,7 +107,7 @@ export function Header() {
               <LanguageSwitcher />
             </div>
             <CartButton />
-            <MobileNav />
+            <MobileNav series={series} />
           </div>
         </div>
       </div>

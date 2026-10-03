@@ -3,14 +3,16 @@
 import { useEffect, useState } from "react";
 import { useLocale, useTranslations } from "next-intl";
 import { Link } from "@/i18n/navigation";
-import { seriesList } from "@/lib/catalog";
+import type { Series } from "@/lib/catalog";
 import { LanguageSwitcher } from "./LanguageSwitcher";
 
 /**
  * 移动端抽屉导航(<768px):汉堡按钮 + 右侧滑入面板。
  * 含主导航链接、系列子链接与语言切换;Esc / 遮罩点击 / 链接跳转均关闭。
+ * `series` 由 [`Header`](src/components/layout/Header.tsx) 转发(根布局实时
+ * 拉取的 `getLiveSeriesList()` 结果),保证系列名与 Shopify 实时一致。
  */
-export function MobileNav() {
+export function MobileNav({ series }: { series: Series[] }) {
   const t = useTranslations("common");
   const locale = useLocale();
   const [open, setOpen] = useState(false);
@@ -72,7 +74,7 @@ export function MobileNav() {
                 {t("nav.shop")}
               </Link>
               <div className="flex flex-col gap-1 border-l border-cream-line pl-4">
-                {seriesList.map((s) => (
+                {series.map((s) => (
                   <Link
                     key={s.slug}
                     href={`/collections/${s.slug}`}

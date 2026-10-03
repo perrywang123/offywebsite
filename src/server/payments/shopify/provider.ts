@@ -1,5 +1,5 @@
 import { isShopifyConfigured } from "../../../lib/env";
-import { getProductByCode } from "../../../lib/catalog";
+import { getLiveProductByCode } from "../../catalog/live";
 import type {
   CaptureResult,
   CompletedPayment,
@@ -21,7 +21,10 @@ export interface ShopifyProviderDeps {
 /**
  * Shopify provider: builds a cart via the Storefront API and redirects the
  * buyer to Shopify's hosted checkout. Prices/variants are resolved server-side
- * from the catalog `shopifyVariantId` mapping — client prices are never trusted.
+ * — client prices are never trusted — and resolved **live from Shopify**
+ * (`getLiveProductByCode`, which itself falls back to the local static catalog
+ * when Shopify is unreachable), so products added to the store later are
+ * immediately purchasable without a code change.
  *
  * Orders are owned by Shopify, so `capture` is a no-op and `parseCallback`
  * returns null (order write-back is reserved for a future webhook milestone).
@@ -38,7 +41,7 @@ export class ShopifyPaymentProvider implements PaymentProvider {
   async createCheckout(input: CreateCheckoutInput): Promise<CreateCheckoutResult> {
     const lines: CartLineInput[] = [];
     for (const item of input.items) {
-      const product = getProductByCode(item.code);
+      const product = await getLiveProductByCode(item.code);
       if (!product || !product.isAvailable || product.isQuoteOnly || !product.shopifyVariantId) {
         return { ok: false, status: 400, error: "invalid_items" };
       }

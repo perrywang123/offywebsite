@@ -2,13 +2,12 @@ import Image from "next/image";
 import { notFound } from "next/navigation";
 import { getTranslations } from "next-intl/server";
 import { Link } from "@/i18n/navigation";
-import { getProductByCode, getProductsBySeries, getSeries } from "@/lib/catalog";
-import { enrichProduct, enrichProducts } from "@/server/catalog/enrich";
+import { getLiveProductByCode, getLiveProductsBySeries, getLiveSeriesList } from "@/server/catalog/live";
 import { formatUsdCents } from "@/lib/pricing";
 import { AddToCartButton } from "@/components/cart/AddToCartButton";
 import { Reveal } from "@/components/Reveal";
 
-// 近实时：每 60s 重新生成，从 Shopify 拉取最新图片/描述/价格/标题。
+// 近实时：每 60s 重新生成，从 Shopify 拉取最新图片/描述/价格/标题/库存。
 export const revalidate = 60;
 
 export async function generateMetadata({
@@ -17,7 +16,7 @@ export async function generateMetadata({
   params: Promise<{ locale: string; code: string }>;
 }): Promise<import("next").Metadata> {
   const { locale, code } = await params;
-  const product = getProductByCode(code);
+  const product = await getLiveProductByCode(code);
   if (!product) return {};
   const name = locale === "zh" ? product.name.zh : product.name.en;
   return {
@@ -38,12 +37,14 @@ export default async function ProductDetailPage({
   params: Promise<{ locale: string; code: string }>;
 }) {
   const { locale, code } = await params;
-  const rawProduct = getProductByCode(code);
-  if (!rawProduct) notFound();
+  // 实时拉取:标题/图片/价格/描述/库存/结算变体 ID 均为 Shopify 当前真实值,
+  // 而非本地手写死的快照;Shopify 不可达时内部自动回退本地数据。
+  const product = await getLiveProductByCode(code);
+  if (!product) notFound();
 
   const t = await getTranslations("product");
-  const series = getSeries(rawProduct.series);
-  const product = await enrichProduct(rawProduct);
+  const seriesList = await getLiveSeriesList();
+  const series = seriesList.find((s) => s.slug === product.series);
   // Shopify 单语言:zh 描述暂缺时回退英文原文(后续 Translate & Adapt 接管)
   const description =
     locale === "zh"
@@ -54,8 +55,8 @@ export default async function ProductDetailPage({
     locale === "zh"
       ? (product.descriptionBlocks?.zh ?? product.descriptionBlocks?.en)
       : product.descriptionBlocks?.en;
-  const siblings = await enrichProducts(
-    getProductsBySeries(rawProduct.series).filter((p) => p.code !== rawProduct.code),
+  const siblings = (await getLiveProductsBySeries(product.series)).filter(
+    (p) => p.code !== product.code,
   );
 
   return (

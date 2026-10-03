@@ -1,7 +1,8 @@
 import { randomUUID } from "node:crypto";
 import type Stripe from "stripe";
-import { getProductByCode, toStripeLineItems } from "../../lib/catalog";
+import type { Product } from "../../lib/catalog";
 import { env, isStripeConfigured } from "../../lib/env";
+import { getLiveProductByCode } from "../catalog/live";
 import { checkoutSessions } from "../db/schema";
 import { getDb, type Db } from "../db/client";
 import { getStripe } from "../stripe/client";
@@ -18,7 +19,10 @@ export interface CheckoutItem {
 /**
  * Create a Stripe Checkout Session for the given cart lines.
  * Prices come exclusively from the server-side catalog — client prices are
- * never accepted. A `stripe` client and `db` may be injected for tests.
+ * never accepted. Products are resolved live from Shopify (`getLiveProductByCode`,
+ * which falls back to the local static catalog on its own if Shopify is
+ * unreachable), so newly published Shopify products are checkout-able without
+ * any code change. A `stripe` client and `db` may be injected for tests.
  */
 export async function createCheckoutSession(
   items: CheckoutItem[],
@@ -27,13 +31,13 @@ export async function createCheckoutSession(
   db?: Db,
   shipping?: import("../payments/types").ShippingInfo,
 ): Promise<CreateCheckoutResult> {
-  const validItems: CheckoutItem[] = [];
+  const validItems: { product: Product; quantity: number }[] = [];
   for (const item of items) {
-    const product = getProductByCode(item.code);
+    const product = await getLiveProductByCode(item.code);
     if (!product || !product.isAvailable || product.isQuoteOnly) {
       return { ok: false, status: 400, error: "invalid_items" };
     }
-    validItems.push({ code: product.code, quantity: item.quantity });
+    validItems.push({ product, quantity: item.quantity });
   }
   if (validItems.length === 0) {
     return { ok: false, status: 400, error: "invalid_request" };
@@ -50,22 +54,26 @@ export async function createCheckoutSession(
 
   // Snapshot the authoritative line items (code/name/unit price/qty) so the
   // webhook can write order_items without re-querying Stripe.
-  const lineItemsSnapshot = validItems.map((item) => {
-    const product = getProductByCode(item.code)!;
-    return {
-      code: product.code,
-      nameEn: product.name.en,
-      nameZh: product.name.zh,
-      unitPriceCents: product.priceCents,
-      quantity: item.quantity,
-    };
-  });
+  const lineItemsSnapshot = validItems.map(({ product, quantity }) => ({
+    code: product.code,
+    nameEn: product.name.en,
+    nameZh: product.name.zh,
+    unitPriceCents: product.priceCents,
+    quantity,
+  }));
 
   try {
     const session = await stripe.checkout.sessions.create({
       mode: "payment",
       currency: "usd",
-      line_items: toStripeLineItems(validItems),
+      line_items: validItems.map(({ product, quantity }) => ({
+        quantity,
+        price_data: {
+          currency: "usd",
+          unit_amount: product.priceCents,
+          product_data: { name: product.name.en, metadata: { code: product.code } },
+        },
+      })),
       client_reference_id: clientReferenceId,
       success_url: successUrl,
       cancel_url: cancelUrl,

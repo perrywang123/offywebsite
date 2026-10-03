@@ -4,11 +4,15 @@ import { hasLocale, NextIntlClientProvider } from "next-intl";
 import { getTranslations, setRequestLocale } from "next-intl/server";
 import { routing } from "@/i18n/routing";
 import { env } from "@/lib/env";
+import { getLiveSeriesList } from "@/server/catalog/live";
 import { CartProvider } from "@/components/cart/CartProvider";
 import { CartDrawer } from "@/components/cart/CartDrawer";
 import { Header } from "@/components/layout/Header";
 import { Footer } from "@/components/layout/Footer";
 import "../globals.css";
+
+// 近实时:每 60s 重新生成,导航栏/页脚的系列名随 Shopify Collection 标题变化。
+export const revalidate = 60;
 
 /** 全站根元数据:标题模板/描述/OG/hreflang(zh↔en 互为替代语言)。 */
 export async function generateMetadata({
@@ -56,6 +60,10 @@ export default async function LocaleLayout({
   setRequestLocale(locale);
 
   const messages = (await import(`../../../messages/${locale}.json`)).default;
+  // 全站导航(Header/Footer/MobileNav)共用同一次实时系列拉取结果,
+  // 避免每个组件各自发起请求;Shopify 不可达时 getLiveSeriesList 内部
+  // 已回退本地静态 seriesList,这里不需要再处理失败场景。
+  const series = await getLiveSeriesList();
 
   return (
     <html lang={locale} suppressHydrationWarning>
@@ -65,9 +73,9 @@ export default async function LocaleLayout({
         />
         <NextIntlClientProvider messages={messages}>
           <CartProvider>
-            <Header />
+            <Header series={series} />
             <main>{children}</main>
-            <Footer />
+            <Footer series={series} />
             <CartDrawer />
           </CartProvider>
         </NextIntlClientProvider>

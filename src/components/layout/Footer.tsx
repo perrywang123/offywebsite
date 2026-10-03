@@ -1,8 +1,10 @@
 import { getTranslations } from "next-intl/server";
 import { Link } from "@/i18n/navigation";
-import { seriesList } from "@/lib/catalog";
+import type { Series } from "@/lib/catalog";
 
-export async function Footer() {
+/** `series` 由根布局 [`layout.tsx`](src/app/[locale]/layout.tsx) 实时拉取
+ * (`getLiveSeriesList()`)后下发,保证页脚系列名与 Shopify Collection 标题一致。 */
+export async function Footer({ series }: { series: Series[] }) {
   const t = await getTranslations("common");
 
   return (
@@ -26,7 +28,7 @@ export async function Footer() {
         <nav>
           <p className="kicker kicker--on-dark mb-4">Collections</p>
           <div className="flex flex-col gap-3 text-xs uppercase tracking-[0.1em] text-cream/70">
-            {seriesList.slice(0, 6).map((s) => (
+            {series.slice(0, 6).map((s) => (
               <Link key={s.slug} href={`/collections/${s.slug}`} className="transition-colors hover:text-paper">
                 {s.name.en}
               </Link>

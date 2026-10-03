@@ -4,12 +4,11 @@ import { useEffect, useRef } from "react";
 import Image from "next/image";
 import { useLocale, useTranslations } from "next-intl";
 import { Link } from "@/i18n/navigation";
-import { getProductByCode } from "@/lib/catalog";
 import { formatUsdCents } from "@/lib/pricing";
-import { useCart } from "./CartProvider";
+import { useCart, type CartCatalogEntry } from "./CartProvider";
 
 export function CartDrawer() {
-  const { lines, isOpen, mounted, close, setQty, remove } = useCart();
+  const { lines, catalog, catalogLoaded, isOpen, mounted, close, setQty, remove } = useCart();
   const locale = useLocale();
   const t = useTranslations("common.cart");
   const ta = useTranslations("common.actions");
@@ -26,9 +25,11 @@ export function CartDrawer() {
     return () => document.removeEventListener("keydown", onKeyDown);
   }, [isOpen, close]);
 
+  // `catalog`(来自 /api/products 实时拉取)未加载完成前不做"商品不存在"的
+  // 判定,避免把"数据还没到"误判成"购物车是空的"闪烁一下。
   const items = lines
-    .map((line) => ({ line, product: getProductByCode(line.code) }))
-    .filter((x): x is { line: { code: string; quantity: number }; product: NonNullable<ReturnType<typeof getProductByCode>> } => Boolean(x.product));
+    .map((line) => ({ line, product: catalog[line.code] }))
+    .filter((x): x is { line: { code: string; quantity: number }; product: CartCatalogEntry } => Boolean(x.product));
 
   const subtotal = items.reduce((sum, x) => sum + x.product.priceCents * x.line.quantity, 0);
 
@@ -59,7 +60,11 @@ export function CartDrawer() {
           </button>
         </header>
 
-        {items.length === 0 ? (
+        {!catalogLoaded && lines.length > 0 ? (
+          <div className="flex flex-1 items-center justify-center px-6 text-center text-sm text-ink-muted">
+            {locale === "zh" ? "正在加载购物车…" : "Loading your bag…"}
+          </div>
+        ) : items.length === 0 ? (
           <div className="flex flex-1 flex-col items-center justify-center gap-3 px-6 text-center">
             <p className="text-base font-medium">{t("empty")}</p>
             <p className="text-sm text-ink-muted">{t("emptyHint")}</p>

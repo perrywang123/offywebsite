@@ -10,8 +10,38 @@ export interface ShopifyListItem {
   available: boolean;
 }
 
-function storefrontEndpoint(): string {
-  return `https://${env.SHOPIFY_STORE_DOMAIN}/api/${env.SHOPIFY_API_VERSION}/graphql.json`;
+export interface ShopifyCollectionSummary {
+  handle: string;
+  title: string;
+  description: string;
+}
+
+export interface ShopifyCollectionProductItem {
+  handle: string;
+  title: string;
+  priceCents: number;
+  currency: string;
+  image: string | null;
+  available: boolean;
+  /** First variant's GID — required to build a Shopify checkout cart line. */
+  variantId: string | null;
+}
+
+/**
+ * Storefront GraphQL 端点。可选 `cacheTag` 会作为无害的查询串追加到 URL 上
+ * (Shopify 会忽略未知的 query 参数,不影响请求本身)。
+ *
+ * 原因:Next.js 的 fetch 数据缓存按完整请求(含 body)生成缓存键,但经真机
+ * 实测验证(本次真实复现并修复的 bug):本模块里多个查询共享同一条端点 URL、
+ * 仅 body 中的 GraphQL variables 不同(如按不同 collection handle 查询商品清单),
+ * 并发/短时间内多次请求时会出现错误的缓存复用 —— 例如 outdoor-sporty 系列
+ * 的请求结果被错误地长期固定在某次历史响应上,超过 revalidate 窗口也不刷新,
+ * 而其它系列却能正常更新。为每个"查询类型 + 关键参数"的组合生成 URL 层面
+ * 即可区分的 cache key,从根本上避免这种串味/缓存污染。
+ */
+function storefrontEndpoint(cacheTag?: string): string {
+  const base = `https://${env.SHOPIFY_STORE_DOMAIN}/api/${env.SHOPIFY_API_VERSION}/graphql.json`;
+  return cacheTag ? `${base}?ck=${encodeURIComponent(cacheTag)}` : base;
 }
 
 /** CountryCode 是 GraphQL 枚举，必须作为字面量注入（用变量传不生效）。仅允许两位字母。 */
@@ -53,7 +83,7 @@ interface ProductListNode {
 export async function listShopifyProducts(
   fetchImpl: typeof fetch = fetch,
 ): Promise<ShopifyListItem[]> {
-  const res = await fetchImpl(storefrontEndpoint(), {
+  const res = await fetchImpl(storefrontEndpoint("products-list"), {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
@@ -85,6 +115,142 @@ export async function listShopifyProducts(
       currency: n.priceRange?.minVariantPrice?.currencyCode ?? "USD",
       image: n.featuredImage?.url ?? null,
       available: Boolean(n.availableForSale),
+    };
+  });
+}
+
+// `collections` 返回全店当前的 Collection 列表(标题/描述为 Shopify 实时值,
+// 商家改名/改描述即时生效,不需要改代码)。中文名由 live 目录层按稳定的
+// handle→本地译名表补充(Shopify 侧未配置多语言,@inContext(language) 实测
+// 仍返回英文原文)。
+function collectionsQuery(country: string): string {
+  return `
+query Collections @inContext(country: ${country}) {
+  collections(first: 20) {
+    nodes { handle title description }
+  }
+}`;
+}
+
+interface CollectionListNode {
+  handle: string;
+  title?: string;
+  description?: string;
+}
+
+/** List all Shopify collections (live). Throws on transport errors. */
+export async function fetchShopifyCollections(
+  fetchImpl: typeof fetch = fetch,
+): Promise<ShopifyCollectionSummary[]> {
+  const res = await fetchImpl(storefrontEndpoint("collections-list"), {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      "X-Shopify-Storefront-Access-Token": env.SHOPIFY_STOREFRONT_TOKEN ?? "",
+    },
+    body: JSON.stringify({ query: collectionsQuery(marketCountry()) }),
+    next: { revalidate: 60 },
+    signal: AbortSignal.timeout(3000),
+  } as RequestInit);
+
+  if (!res.ok) throw new ShopifyError("storefront_collections_failed", res.status);
+
+  const json = (await res.json()) as {
+    data?: { collections?: { nodes?: CollectionListNode[] } };
+    errors?: Array<{ message: string }>;
+  };
+  if (json.errors && json.errors.length > 0) {
+    throw new ShopifyError(json.errors[0]?.message ?? "storefront_collections_error");
+  }
+
+  const nodes = json.data?.collections?.nodes ?? [];
+  return nodes.map((n) => ({
+    handle: n.handle,
+    title: n.title ?? "",
+    description: n.description ?? "",
+  }));
+}
+
+// collectionByHandle(先于本会话用真实店铺验证字段名可用) + 嵌套 products(first: 100)
+// 一次往返拿到该系列当前的完整真实商品清单(含变体 ID,结算要用)。first: 100 足够
+// 覆盖目前最大的系列(12 款);如未来某系列商品数超过 100,需要分页(届时再加)。
+function collectionProductsQuery(country: string): string {
+  return `
+query CollectionProducts($handle: String!) @inContext(country: ${country}) {
+  collectionByHandle(handle: $handle) {
+    title
+    products(first: 100) {
+      nodes {
+        handle
+        title
+        availableForSale
+        featuredImage { url }
+        priceRange { minVariantPrice { amount currencyCode } }
+        variants(first: 1) { nodes { id } }
+      }
+    }
+  }
+}`;
+}
+
+interface CollectionProductNode {
+  handle: string;
+  title?: string;
+  availableForSale?: boolean;
+  featuredImage?: { url?: string } | null;
+  priceRange?: { minVariantPrice?: { amount?: string; currencyCode?: string } };
+  variants?: { nodes?: Array<{ id?: string }> };
+}
+
+/**
+ * List the current, live product roster of a Shopify collection by handle —
+ * this is the single source of truth for "which products belong to this
+ * series right now" (replaces any hardcoded per-series product list).
+ * Throws on transport errors or an unknown collection handle so the caller
+ * can fall back to the local static roster.
+ */
+export async function fetchShopifyCollectionProducts(
+  collectionHandle: string,
+  fetchImpl: typeof fetch = fetch,
+): Promise<ShopifyCollectionProductItem[]> {
+  const res = await fetchImpl(storefrontEndpoint(`collection-products:${collectionHandle}`), {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      "X-Shopify-Storefront-Access-Token": env.SHOPIFY_STOREFRONT_TOKEN ?? "",
+    },
+    body: JSON.stringify({
+      query: collectionProductsQuery(marketCountry()),
+      variables: { handle: collectionHandle },
+    }),
+    next: { revalidate: 60 },
+    signal: AbortSignal.timeout(3000),
+  } as RequestInit);
+
+  if (!res.ok) throw new ShopifyError("storefront_collection_products_failed", res.status);
+
+  const json = (await res.json()) as {
+    data?: { collectionByHandle?: { products?: { nodes?: CollectionProductNode[] } } | null };
+    errors?: Array<{ message: string }>;
+  };
+  if (json.errors && json.errors.length > 0) {
+    throw new ShopifyError(json.errors[0]?.message ?? "storefront_collection_products_error");
+  }
+  if (!json.data?.collectionByHandle) {
+    throw new ShopifyError("storefront_collection_not_found");
+  }
+
+  const nodes = json.data.collectionByHandle.products?.nodes ?? [];
+  return nodes.map((n) => {
+    const amount = n.priceRange?.minVariantPrice?.amount;
+    return {
+      handle: n.handle,
+      title: n.title ?? "",
+      priceCents: amount ? Math.round(parseFloat(amount) * 100) : 0,
+      currency: n.priceRange?.minVariantPrice?.currencyCode ?? "USD",
+      image: n.featuredImage?.url ?? null,
+      available: Boolean(n.availableForSale),
+      variantId: n.variants?.nodes?.[0]?.id ?? null,
     };
   });
 }
