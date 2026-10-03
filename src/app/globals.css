@@ -201,6 +201,18 @@ body {
 }
 .js .reveal[data-variant="clip"].is-in { clip-path: inset(0 0 0 0); }
 
+/* 商品预告浮窗(quick view):淡入 + 轻微放大,尊重 prefers-reduced-motion */
+.quick-view-panel {
+  animation: quick-view-in 0.22s var(--ease-out) both;
+}
+@keyframes quick-view-in {
+  from { opacity: 0; transform: scale(0.96); }
+  to { opacity: 1; transform: scale(1); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .quick-view-panel { animation: none; }
+}
+
 /* 隐藏横向滚动条（子 tab 跟随滑动） */
 .no-scrollbar {
   -ms-overflow-style: none;

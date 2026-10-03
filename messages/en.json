@@ -82,7 +82,9 @@
     "teaserNote": "Release date follows our Instagram",
     "teaserCta": "View details",
     "teaserKicker": "Next up",
-    "viewDetail": "View"
+    "viewDetail": "View",
+    "quickViewClose": "Close preview",
+    "quickViewLabel": "Product quick view"
   },
   "product": {
     "series": "Series",

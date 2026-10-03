@@ -82,7 +82,9 @@
     "teaserNote": "具体发布时间以 INS 为准",
     "teaserCta": "查看详情",
     "teaserKicker": "接下来",
-    "viewDetail": "点击查看"
+    "viewDetail": "点击查看",
+    "quickViewClose": "关闭预览",
+    "quickViewLabel": "商品大图预览"
   },
   "product": {
     "series": "系列",

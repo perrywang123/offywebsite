@@ -1,8 +1,8 @@
 import Image from "next/image";
 import { getTranslations } from "next-intl/server";
-import { Link } from "@/i18n/navigation";
 import { teaserSeries } from "@/lib/catalog";
 import { Reveal } from "@/components/Reveal";
+import { TeaserProductGrid } from "./TeaserProductGrid";
 
 /**
  * 时尚包挂系列预告详情页(更多新品.psd 还原):
@@ -79,36 +79,17 @@ export default async function BagCharmTeaserPage({
         </Reveal>
       </section>
 
-      {/* ============ 预告产品卡(6 款,点击查看 → 产品汇总页) ============
+      {/* ============ 预告产品卡(6 款,悬停/点击"点击查看"弹出半透明大图浮窗,
+           不跳转页面) ============
            PSD 各商品图原始比例差异较大(0.75~1.14,方形/竖图混合),卡片统一按
            PSD 矩形8 比例(877:1078)留框,图片用 object-contain 完整展示不裁切。 */}
       <section className="container-site py-12">
-        <div className="grid grid-cols-2 gap-x-4 gap-y-10 sm:gap-x-6 md:grid-cols-3 lg:gap-x-8">
-          {teaserSeries.items.map((item, i) => (
-            <Reveal key={item.code} delay={Math.min(i, 5) * 60}>
-              <div className="group">
-                <div className="relative aspect-[877/1078] overflow-hidden rounded-card bg-cream-deep">
-                  <Image
-                    src={item.image}
-                    alt={item.code}
-                    fill
-                    sizes="(max-width: 768px) 50vw, 33vw"
-                    className="object-contain p-2 transition-transform duration-500 ease-editorial group-hover:scale-105"
-                  />
-                </div>
-                <div className="flex items-center justify-between gap-3 pt-3">
-                  <span className="text-sm font-medium text-ink">{item.code}</span>
-                  <Link
-                    href="/products"
-                    className="shrink-0 text-sm text-ink-soft underline-offset-4 transition-colors hover:text-ink hover:underline"
-                  >
-                    {t("viewDetail")} →
-                  </Link>
-                </div>
-              </div>
-            </Reveal>
-          ))}
-        </div>
+        <TeaserProductGrid
+          items={teaserSeries.items}
+          viewDetailLabel={t("viewDetail")}
+          closeLabel={t("quickViewClose")}
+          quickViewLabel={t("quickViewLabel")}
+        />
       </section>
     </>
   );
