@@ -15,6 +15,8 @@ export interface ShopifyProductData {
   available: boolean;
   /** Collection handles this product currently belongs to (drives series assignment). */
   collectionHandles: string[];
+  /** Merchant-managed variant SKU — the human-facing "product code", distinct from the URL handle. */
+  sku: string | null;
 }
 
 /**
@@ -50,7 +52,7 @@ query ProductEnrich($handle: String!) @inContext(country: ${country}) {
     descriptionHtml
     availableForSale
     images(first: 10) { nodes { url } }
-    variants(first: 1) { nodes { id price { amount currencyCode } } }
+    variants(first: 1) { nodes { id sku price { amount currencyCode } } }
     collections(first: 5) { nodes { handle } }
   }
 }`;
@@ -62,7 +64,7 @@ interface ProductNode {
   descriptionHtml?: string;
   availableForSale?: boolean;
   images?: { nodes?: Array<{ url?: string }> };
-  variants?: { nodes?: Array<{ id?: string; price?: { amount?: string; currencyCode?: string } }> };
+  variants?: { nodes?: Array<{ id?: string; sku?: string | null; price?: { amount?: string; currencyCode?: string } }> };
   collections?: { nodes?: Array<{ handle?: string }> };
 }
 
@@ -118,5 +120,6 @@ export async function fetchProductData(
     collectionHandles: (product.collections?.nodes ?? [])
       .map((n) => n.handle)
       .filter((h): h is string => Boolean(h)),
+    sku: variant?.sku || null,
   };
 }

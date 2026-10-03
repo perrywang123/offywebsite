@@ -55,8 +55,8 @@ describe("getLiveSeriesList", () => {
 describe("getLiveProductsBySeries", () => {
   it("returns the live collection roster, including brand-new handles not in the local skeleton", async () => {
     mockedCollectionProducts.mockResolvedValue([
-      { handle: "offy_redrush", title: "RED RUSH", priceCents: 0, currency: "USD", image: "https://cdn/1.jpg", available: true, variantId: "gid://shopify/ProductVariant/1" },
-      { handle: "noir", title: "NOIR", priceCents: 4500, currency: "USD", image: "https://cdn/2.jpg", available: true, variantId: "gid://shopify/ProductVariant/2" },
+      { handle: "offy_redrush", title: "RED RUSH", priceCents: 0, currency: "USD", image: "https://cdn/1.jpg", available: true, variantId: "gid://shopify/ProductVariant/1", sku: null },
+      { handle: "noir", title: "NOIR", priceCents: 4500, currency: "USD", image: "https://cdn/2.jpg", available: true, variantId: "gid://shopify/ProductVariant/2", sku: null },
     ]);
     const list = await getLiveProductsBySeries("outdoor-sporty");
     expect(list).toHaveLength(2);
@@ -71,6 +71,20 @@ describe("getLiveProductsBySeries", () => {
     expect(noir.isAvailable).toBe(true);
     // 本地已有记录(offy_redrush):中文名沿用本地精修译名
     expect(list.find((p) => p.code === "offy_redrush")?.name.zh).toBe("赤红冲锋");
+  });
+
+  it("surfaces the live Shopify SKU as skuCode — a human-facing product code the merchant can change, distinct from the stable routing `code`", async () => {
+    mockedCollectionProducts.mockResolvedValue([
+      { handle: "ace", title: "CLUB 28", priceCents: 4590, currency: "USD", image: "https://cdn/ace.jpg", available: true, variantId: "v1", sku: "CLUB-28" },
+      { handle: "offy_redrush", title: "NEON RUSH", priceCents: 0, currency: "USD", image: "https://cdn/1.jpg", available: true, variantId: "v2", sku: null },
+    ]);
+    const list = await getLiveProductsBySeries("outdoor-sporty");
+    const ace = list.find((p) => p.code === "ace")!;
+    expect(ace.skuCode).toBe("CLUB-28");
+    expect(ace.code).toBe("ace"); // 路由/购物车用的 code 不受 sku 改名影响
+    // 未设置 SKU 时 skuCode 留空,展示层自行回退到 code
+    const redrush = list.find((p) => p.code === "offy_redrush")!;
+    expect(redrush.skuCode).toBeUndefined();
   });
 
   it("does not adopt a non-USD price as if it were USD", async () => {
@@ -193,5 +207,25 @@ describe("getLiveProductByCode", () => {
     });
     const product = await getLiveProductByCode("swan-princess");
     expect(product?.priceCents).toBe(4590);
+  });
+
+  it("surfaces the live Shopify SKU as skuCode on the detail-page resolution path too — this is exactly the bug reported: renaming a product in Shopify (e.g. Ace → CLUB 28) must update the displayed product code, not just the title", async () => {
+    mockedProductData.mockResolvedValue({
+      title: "CLUB 28",
+      description: "x",
+      descriptionBlocks: [],
+      images: ["https://cdn/ace.jpg"],
+      priceCents: 4590,
+      currency: "USD",
+      variantId: "v",
+      available: true,
+      collectionHandles: ["outdoor-sporty系列"],
+      sku: "CLUB-28",
+    });
+    const product = await getLiveProductByCode("ace");
+    expect(product?.name.en).toBe("CLUB 28");
+    expect(product?.skuCode).toBe("CLUB-28");
+    // code(路由/购物车/结算标识符)始终是 handle,不随改名/改 SKU 变化
+    expect(product?.code).toBe("ace");
   });
 });

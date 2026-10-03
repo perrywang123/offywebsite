@@ -25,6 +25,8 @@ export interface ShopifyCollectionProductItem {
   available: boolean;
   /** First variant's GID — required to build a Shopify checkout cart line. */
   variantId: string | null;
+  /** Merchant-managed variant SKU — the human-facing "product code", distinct from the URL handle. */
+  sku: string | null;
 }
 
 /**
@@ -186,7 +188,7 @@ query CollectionProducts($handle: String!) @inContext(country: ${country}) {
         availableForSale
         featuredImage { url }
         priceRange { minVariantPrice { amount currencyCode } }
-        variants(first: 1) { nodes { id } }
+        variants(first: 1) { nodes { id sku } }
       }
     }
   }
@@ -199,7 +201,7 @@ interface CollectionProductNode {
   availableForSale?: boolean;
   featuredImage?: { url?: string } | null;
   priceRange?: { minVariantPrice?: { amount?: string; currencyCode?: string } };
-  variants?: { nodes?: Array<{ id?: string }> };
+  variants?: { nodes?: Array<{ id?: string; sku?: string | null }> };
 }
 
 /**
@@ -251,6 +253,7 @@ export async function fetchShopifyCollectionProducts(
       image: n.featuredImage?.url ?? null,
       available: Boolean(n.availableForSale),
       variantId: n.variants?.nodes?.[0]?.id ?? null,
+      sku: n.variants?.nodes?.[0]?.sku || null,
     };
   });
 }

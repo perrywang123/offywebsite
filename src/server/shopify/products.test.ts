@@ -20,7 +20,7 @@ describe("fetchProductData", () => {
           availableForSale: true,
           images: { nodes: [{ url: "https://cdn.shopify.com/a.jpg" }, { url: "https://cdn.shopify.com/b.jpg" }] },
           // @inContext(US) 下返回 USD 价
-          variants: { nodes: [{ id: "gid://shopify/ProductVariant/1", price: { amount: "45.0", currencyCode: "USD" } }] },
+          variants: { nodes: [{ id: "gid://shopify/ProductVariant/1", sku: "NEON-RUSH-01", price: { amount: "45.0", currencyCode: "USD" } }] },
           collections: { nodes: [{ handle: "outdoor-sporty系列" }] },
         },
       },
@@ -40,6 +40,7 @@ describe("fetchProductData", () => {
       variantId: "gid://shopify/ProductVariant/1",
       available: true,
       collectionHandles: ["outdoor-sporty系列"],
+      sku: "NEON-RUSH-01",
     });
   });
 
@@ -58,7 +59,7 @@ describe("fetchProductData", () => {
     expect(data?.descriptionBlocks).toEqual([]);
   });
 
-  it("defaults variantId to null, available to true, and collectionHandles to [] when absent", async () => {
+  it("defaults variantId/sku to null, available to true, and collectionHandles to [] when absent", async () => {
     const f = mockFetch({
       data: {
         product: {
@@ -71,8 +72,24 @@ describe("fetchProductData", () => {
     });
     const data = await fetchProductData("x", f);
     expect(data?.variantId).toBeNull();
+    expect(data?.sku).toBeNull();
     expect(data?.available).toBe(true);
     expect(data?.collectionHandles).toEqual([]);
+  });
+
+  it("falls back to null sku when the variant's sku is an empty string (unset in Shopify)", async () => {
+    const f = mockFetch({
+      data: {
+        product: {
+          title: "x",
+          description: "",
+          images: { nodes: [] },
+          variants: { nodes: [{ sku: "", price: { amount: "0", currencyCode: "USD" } }] },
+        },
+      },
+    });
+    const data = await fetchProductData("x", f);
+    expect(data?.sku).toBeNull();
   });
 
   it("surfaces availableForSale: false (sold out / unpublished)", async () => {

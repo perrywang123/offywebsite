@@ -92,7 +92,7 @@ describe("fetchShopifyCollectionProducts", () => {
                 availableForSale: true,
                 featuredImage: { url: "https://cdn.shopify.com/noir.jpg" },
                 priceRange: { minVariantPrice: { amount: "45.00", currencyCode: "USD" } },
-                variants: { nodes: [{ id: "gid://shopify/ProductVariant/1" }] },
+                variants: { nodes: [{ id: "gid://shopify/ProductVariant/1", sku: "CLUB-28" }] },
               },
               {
                 handle: "ease",
@@ -118,6 +118,7 @@ describe("fetchShopifyCollectionProducts", () => {
         image: "https://cdn.shopify.com/noir.jpg",
         available: true,
         variantId: "gid://shopify/ProductVariant/1",
+        sku: "CLUB-28",
       },
       {
         handle: "ease",
@@ -127,6 +128,7 @@ describe("fetchShopifyCollectionProducts", () => {
         image: null,
         available: false,
         variantId: null,
+        sku: null,
       },
     ]);
   });

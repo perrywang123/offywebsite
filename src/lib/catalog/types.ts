@@ -49,6 +49,13 @@ export interface Product {
   shopifyVariantId?: string;
   /** Shopify product handle for enrichment reads (stable across variant edits). */
   shopifyHandle?: string;
+  /**
+   * 展示用"商品编码"(优先取 Shopify variant 的 SKU 字段,商家可在后台随时改;
+   * 未设置时留空,展示层回退到 `code`(= handle))。与 `code`/`shopifyHandle`
+   * 这两个"路由/结算用的稳定技术标识符"是两回事——那两个绝不应随意改变,
+   * 而 `skuCode` 纯粹是给人看的编码,允许随商家维护而变化。
+   */
+  skuCode?: string;
 }
 
 export interface Series {

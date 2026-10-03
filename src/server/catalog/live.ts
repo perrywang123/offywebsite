@@ -92,6 +92,7 @@ function toLiveProduct(item: ShopifyCollectionProductItem, series: SeriesSlug, s
     badge: local?.badge,
     shopifyHandle: item.handle,
     shopifyVariantId: item.variantId ?? local?.shopifyVariantId,
+    skuCode: item.sku ?? undefined,
   };
 }
 
@@ -200,6 +201,7 @@ export async function getLiveProductByCode(code: string): Promise<Product | unde
       badge: local?.badge,
       shopifyHandle: code,
       shopifyVariantId: data.variantId ?? local?.shopifyVariantId,
+      skuCode: data.sku ?? undefined,
     };
   } catch (error) {
     console.error(`getLiveProductByCode(${code}): Shopify unreachable, falling back to local`, error);

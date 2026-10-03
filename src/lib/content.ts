@@ -7,17 +7,35 @@ export interface NewsItem {
   id: string;
   title: { zh: string; en: string };
   image: string;
+  /**
+   * Shopify handle(= 商品详情页路由 code),点击卡片跳转到 /products/${productCode}。
+   * 必须是当前 Shopify 真实在售的 handle —— 若填错/该商品下架,链接会指向 404,
+   * 这是预期行为(不做隐藏兜底,方便运营第一时间发现配置错误)。
+   */
+  productCode: string;
 }
 
-/** 资讯主卡(左大图):新品上市 · 仪式感生活专题;badge/标题/CTA 文案走 messages。 */
-export const newsFeature = { image: "/assets/news/news-01.jpg", href: "/products" };
+/**
+ * 首页"最新资讯 · 揭晓"模块(NewsGrid):1 张大卡(feature) + 4 张副卡(items),
+ * 每张卡 = 宣传图 + 宣传文案(本文件维护) + 跳转目标(Shopify 商品 handle)。
+ * 布局固定在 NewsGrid.tsx,这里只是数据——后续要换宣传图/文案/跳转商品,
+ * 只需改这个文件,不需要碰组件代码。
+ *
+ * 当前 5 张卡对应的真实商品(2026-10 由运营指定,标题随 Shopify 改名自动同步,
+ * 这里登记的 handle 是跳转用的稳定路由标识符,不会随改名变化):
+ *   1(大卡) CARAMEL RÊVE → warm-biscuit
+ *   2       PETITE BUNNY → bunny-hug
+ *   3       CLUB 28      → ace
+ *   4       WANDERER     → wander
+ *   5       NEON RUSH    → offy_redrush
+ */
+export const newsFeature = { image: "/assets/news/news-01.jpg", productCode: "warm-biscuit" };
 
-/** 最新资讯 · 揭晓 —— 右侧 2×2 副卡(设计稿:日常犯可爱/周末出门玩/时尚潮流生活/趣味潮流OFFY)。 */
 export const newsItems: NewsItem[] = [
-  { id: "daily-cute", title: { zh: "日常犯可爱", en: "Everyday cute" }, image: "/assets/news/news-04.jpg" },
-  { id: "weekend", title: { zh: "周末出门玩", en: "Weekend outing" }, image: "/assets/news/news-03.jpg" },
-  { id: "fashion-life", title: { zh: "时尚潮流生活", en: "Fashion Lifestyle" }, image: "/assets/news/news-08.jpg" },
-  { id: "fun-offy", title: { zh: "趣味潮流OFFY", en: "Playful trendy Offy" }, image: "/assets/news/news-02.jpg" },
+  { id: "daily-cute", title: { zh: "日常犯可爱", en: "Everyday cute" }, image: "/assets/news/news-04.jpg", productCode: "bunny-hug" },
+  { id: "weekend", title: { zh: "周末出门玩", en: "Weekend outing" }, image: "/assets/news/news-03.jpg", productCode: "ace" },
+  { id: "fashion-life", title: { zh: "时尚潮流生活", en: "Fashion Lifestyle" }, image: "/assets/news/news-08.jpg", productCode: "wander" },
+  { id: "fun-offy", title: { zh: "趣味潮流OFFY", en: "Playful trendy Offy" }, image: "/assets/news/news-02.jpg", productCode: "offy_redrush" },
 ];
 
 /**

@@ -118,7 +118,11 @@ export default async function ProductDetailPage({
             </p>
           )}
 
-          <p className="mt-3 text-xs text-ink-muted">{t("sku")}: {product.code}</p>
+          {/* 展示用商品编码:优先取 Shopify 的 SKU(商家可随时改),未设置时
+              回退 code(= handle)。注意这与 product.code 是两个概念:
+              code 是路由/购物车/结算用的稳定技术标识符,不应随意展示为
+              "会变化的编码"语义;真正给用户看、且应随商家维护而变的,是这里。 */}
+          <p className="mt-3 text-xs text-ink-muted">{t("sku")}: {product.skuCode ?? product.code}</p>
 
           {descriptionBlocks && descriptionBlocks.length > 0 ? (
             <div className="mt-6 space-y-3">

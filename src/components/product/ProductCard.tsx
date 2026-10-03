@@ -16,7 +16,9 @@ export function ProductCard({
   caption?: "name" | "code";
 }) {
   const localizedName = locale === "zh" ? product.name.zh : product.name.en;
-  const name = caption === "code" ? product.code : localizedName;
+  // caption="code" 场景(如首页"区域限定"/"产品汇总"圆形名册)展示的是给人看的
+  // 商品编码:优先取 Shopify 实时 SKU(skuCode),未设置时回退 code(= handle)。
+  const name = caption === "code" ? (product.skuCode ?? product.code) : localizedName;
   const secondImage = product.images[1];
   const revealLabel = locale === "zh" ? "待揭晓" : "Revealing soon";
   const price =

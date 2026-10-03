@@ -21,18 +21,23 @@ export function NewsGrid({
   texts,
   locale,
 }: {
-  feature: { image: string; href: string };
+  /** `productCode` = Shopify handle;跳转目标按 /products/${productCode} 拼接。 */
+  feature: { image: string; productCode: string };
   items: NewsItem[];
   texts: NewsGridTexts;
   locale: string;
 }) {
+  const featureHref = `/products/${feature.productCode}`;
   return (
     <div>
       {/* PSD 比例:主卡 43% / 副卡区 57%(主:副≈1324:1746) */}
       <div className="grid gap-4 lg:grid-cols-[43fr_57fr] lg:gap-6">
-        {/* ============ 左:大主卡 ============ */}
+        {/* ============ 左:大主卡(整张卡可点击,跳转到绑定的商品详情页) ============ */}
         <Reveal>
-          <div className="group relative aspect-[3/4] overflow-hidden rounded-card bg-cream-deep lg:aspect-auto lg:h-full lg:min-h-[32rem]">
+          <Link
+            href={featureHref}
+            className="group relative block aspect-[3/4] overflow-hidden rounded-card bg-cream-deep lg:aspect-auto lg:h-full lg:min-h-[32rem]"
+          >
             <Image
               src={feature.image}
               alt={texts.featureTitle}
@@ -48,34 +53,33 @@ export function NewsGrid({
               <h3 className="mt-4 font-display text-3xl font-semibold tracking-tight text-cream md:text-5xl">
                 {texts.featureTitle}
               </h3>
-              <Link
-                href={feature.href}
-                className="mt-5 inline-flex h-11 items-center justify-center border border-cream px-6 text-xs font-medium uppercase tracking-[0.14em] text-cream transition-colors duration-300 hover:bg-cream hover:text-ink"
-              >
+              <span className="mt-5 inline-flex h-11 items-center justify-center border border-cream px-6 text-xs font-medium uppercase tracking-[0.14em] text-cream transition-colors duration-300 group-hover:bg-cream group-hover:text-ink">
                 {texts.cta}
-              </Link>
+              </span>
             </div>
-          </div>
+          </Link>
         </Reveal>
 
-        {/* ============ 右:2×2 副卡 ============ */}
+        {/* ============ 右:2×2 副卡(每张可点击,跳转到各自绑定的商品详情页) ============ */}
         <div className="grid grid-cols-2 gap-4 lg:gap-6">
           {items.map((item, i) => (
             <Reveal key={item.id} delay={Math.min(i, 3) * 70}>
-              <figure className="group">
-                <div className="relative aspect-[3/4] overflow-hidden rounded-card bg-cream-deep">
-                  <Image
-                    src={item.image}
-                    alt={locale === "zh" ? item.title.zh : item.title.en}
-                    fill
-                    sizes="(max-width: 1024px) 50vw, 25vw"
-                    className="object-cover transition-transform duration-500 ease-editorial group-hover:scale-105"
-                  />
-                </div>
-                <figcaption className="mt-3 text-sm font-medium text-ink">
-                  {locale === "zh" ? item.title.zh : item.title.en}
-                </figcaption>
-              </figure>
+              <Link href={`/products/${item.productCode}`} className="group block">
+                <figure>
+                  <div className="relative aspect-[3/4] overflow-hidden rounded-card bg-cream-deep">
+                    <Image
+                      src={item.image}
+                      alt={locale === "zh" ? item.title.zh : item.title.en}
+                      fill
+                      sizes="(max-width: 1024px) 50vw, 25vw"
+                      className="object-cover transition-transform duration-500 ease-editorial group-hover:scale-105"
+                    />
+                  </div>
+                  <figcaption className="mt-3 text-sm font-medium text-ink">
+                    {locale === "zh" ? item.title.zh : item.title.en}
+                  </figcaption>
+                </figure>
+              </Link>
             </Reveal>
           ))}
         </div>
