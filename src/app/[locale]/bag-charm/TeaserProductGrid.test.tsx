@@ -21,6 +21,8 @@ const texts = {
   quickViewLabel: "商品大图预览",
 };
 
+const HOVER_DELAY = 3000;
+
 /** 默认模拟为非 hover 能力设备(触屏),按需在单个用例里覆盖为 hover 能力(桌面鼠标)。 */
 function mockMatchMedia(hoverCapable: boolean) {
   window.matchMedia = vi.fn().mockImplementation((query: string) => ({
@@ -105,20 +107,62 @@ describe("TeaserProductGrid (quick-view popover, no page navigation)", () => {
     expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
   });
 
-  it("opens on mouse enter and closes shortly after the cursor really moves to the backdrop (desktop hover)", () => {
-    // 注意:关闭不再由卡片的 mouseLeave 触发(该事件在浮窗插入 DOM 后可能被浏览器
-    // 引擎在指针静止时合成重放,不可靠),而是由浮窗遮罩自身的 mousemove 触发
-    // (该事件只会随真实指针移动产生),详见组件顶部注释第 2 点。
+  it("does NOT open immediately on mouse enter — requires a 3s hover dwell (desktop hover-capable)", () => {
     vi.useFakeTimers();
     mockMatchMedia(true);
     render(<TeaserProductGrid items={items} {...texts} />);
     const card = screen.getByText("WCOFFY-XXX01").closest(".group")!;
 
     fireEvent.mouseEnter(card);
+    // 刚悬停,远未满 3s —— 不应弹出
+    act(() => {
+      vi.advanceTimersByTime(2999);
+    });
+    expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
+
+    // 满 3s —— 弹出
+    act(() => {
+      vi.advanceTimersByTime(1);
+    });
+    expect(screen.getByRole("dialog")).toBeInTheDocument();
+    vi.useRealTimers();
+  });
+
+  it("cancels the pending hover-open if the cursor leaves the card before 3s elapses", () => {
+    vi.useFakeTimers();
+    mockMatchMedia(true);
+    render(<TeaserProductGrid items={items} {...texts} />);
+    const card = screen.getByText("WCOFFY-XXX01").closest(".group")!;
+
+    fireEvent.mouseEnter(card);
+    act(() => {
+      vi.advanceTimersByTime(1000);
+    });
+    fireEvent.mouseLeave(card); // 未满 3s 移出 —— 应取消待打开计时器
+    act(() => {
+      vi.advanceTimersByTime(5000);
+    });
+    expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
+    vi.useRealTimers();
+  });
+
+  it("opens the panel after a real-mouse-move to the backdrop, then auto-closes shortly after (desktop hover)", () => {
+    vi.useFakeTimers();
+    mockMatchMedia(true);
+    render(<TeaserProductGrid items={items} {...texts} />);
+    const card = screen.getByText("WCOFFY-XXX01").closest(".group")!;
+
+    fireEvent.mouseEnter(card);
+    act(() => {
+      vi.advanceTimersByTime(HOVER_DELAY);
+    });
     const dialog = screen.getByRole("dialog");
     expect(dialog).toBeInTheDocument();
 
-    // 鼠标真实移动到遮罩空白区域(面板之外)
+    // 鼠标真实移动到遮罩空白区域(面板之外)—— 注意:关闭不再由卡片的
+    // mouseLeave 触发(该事件在浮窗插入 DOM 后可能被浏览器引擎在指针静止时
+    // 合成重放,不可靠),而是由浮窗遮罩自身的 mousemove 触发(该事件只会随
+    // 真实指针移动产生),详见组件顶部注释第 2 点。
     fireEvent.mouseMove(dialog);
     // 150ms 宽限期内仍应保持打开
     act(() => {
@@ -139,6 +183,9 @@ describe("TeaserProductGrid (quick-view popover, no page navigation)", () => {
     const card = screen.getByText("WCOFFY-XXX01").closest(".group")!;
 
     fireEvent.mouseEnter(card);
+    act(() => {
+      vi.advanceTimersByTime(HOVER_DELAY);
+    });
     const dialog = screen.getByRole("dialog");
     const panel = dialog.querySelector(".quick-view-panel")!;
     // 鼠标在面板内部移动 —— 不应调度关闭
@@ -151,23 +198,55 @@ describe("TeaserProductGrid (quick-view popover, no page navigation)", () => {
   });
 
   it("ignores hover (mouseenter/mouseleave) on touch devices and relies on click only", () => {
+    vi.useFakeTimers();
     mockMatchMedia(false);
     render(<TeaserProductGrid items={items} {...texts} />);
     const card = screen.getByText("WCOFFY-XXX01").closest(".group")!;
     fireEvent.mouseEnter(card);
+    act(() => {
+      vi.advanceTimersByTime(HOVER_DELAY);
+    });
     expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
+    vi.useRealTimers();
   });
 
-  it("real-mouse race: clicking the trigger right after hover-open PINS it open (does not immediately close)", () => {
-    // 真机场景复现:鼠标指针在点击按钮前必然先掠过卡片触发 mouseenter(悬停预览),
-    // 紧接着点击不应把刚打开的"临时预览"误判为"已打开→本次应关闭"。
+  it("clicking 点击查看 opens immediately, even before the 3s hover dwell elapses", () => {
+    // 真实用户点击按钮前指针必然先掠过卡片(触发 mouseenter),但点击动作本身
+    // 几乎不可能让鼠标停留满 3s —— 点击必须立即生效,不应该被悬停延迟拖慢。
     vi.useFakeTimers();
     mockMatchMedia(true);
     render(<TeaserProductGrid items={items} {...texts} />);
     const card = screen.getByText("WCOFFY-XXX01").closest(".group")!;
 
-    fireEvent.mouseEnter(card); // 悬停打开(临时态)
+    fireEvent.mouseEnter(card); // 悬停计时器启动,但远未满 3s
+    act(() => {
+      vi.advanceTimersByTime(200);
+    });
+    fireEvent.click(screen.getAllByRole("button", { name: /点击查看/ })[0]!);
+    expect(screen.getByRole("dialog")).toBeInTheDocument(); // 应立即打开(钉住)
+
+    // 即使之后悬停计时器"本该"触发的时间点也过去了,也不应有任何副作用
+    act(() => {
+      vi.advanceTimersByTime(HOVER_DELAY);
+    });
     expect(screen.getByRole("dialog")).toBeInTheDocument();
+    vi.useRealTimers();
+  });
+
+  it("real-mouse race: clicking the trigger right after hover-open PINS it open (does not immediately close)", () => {
+    // 真机场景复现:鼠标指针在点击按钮前必然先掠过卡片触发 mouseenter(悬停满
+    // 3s 后弹出预览),紧接着点击不应把刚打开的"临时预览"误判为
+    // "已打开→本次应关闭"。
+    vi.useFakeTimers();
+    mockMatchMedia(true);
+    render(<TeaserProductGrid items={items} {...texts} />);
+    const card = screen.getByText("WCOFFY-XXX01").closest(".group")!;
+
+    fireEvent.mouseEnter(card);
+    act(() => {
+      vi.advanceTimersByTime(HOVER_DELAY);
+    });
+    expect(screen.getByRole("dialog")).toBeInTheDocument(); // 悬停打开(临时态)
 
     fireEvent.click(screen.getAllByRole("button", { name: /点击查看/ })[0]!); // 紧接着点击
     const dialog = screen.getByRole("dialog");
