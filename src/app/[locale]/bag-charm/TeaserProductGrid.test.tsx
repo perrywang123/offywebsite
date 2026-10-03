@@ -21,7 +21,7 @@ const texts = {
   quickViewLabel: "商品大图预览",
 };
 
-const HOVER_DELAY = 3000;
+const HOVER_DELAY = 1000;
 
 /** 默认模拟为非 hover 能力设备(触屏),按需在单个用例里覆盖为 hover 能力(桌面鼠标)。 */
 function mockMatchMedia(hoverCapable: boolean) {
@@ -107,20 +107,20 @@ describe("TeaserProductGrid (quick-view popover, no page navigation)", () => {
     expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
   });
 
-  it("does NOT open immediately on mouse enter — requires a 3s hover dwell (desktop hover-capable)", () => {
+  it("does NOT open immediately on mouse enter — requires a 1s hover dwell (desktop hover-capable)", () => {
     vi.useFakeTimers();
     mockMatchMedia(true);
     render(<TeaserProductGrid items={items} {...texts} />);
     const card = screen.getByText("WCOFFY-XXX01").closest(".group")!;
 
     fireEvent.mouseEnter(card);
-    // 刚悬停,远未满 3s —— 不应弹出
+    // 刚悬停,远未满 —— 不应弹出
     act(() => {
-      vi.advanceTimersByTime(2999);
+      vi.advanceTimersByTime(HOVER_DELAY - 1);
     });
     expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
 
-    // 满 3s —— 弹出
+    // 满 1s —— 弹出
     act(() => {
       vi.advanceTimersByTime(1);
     });
@@ -128,7 +128,7 @@ describe("TeaserProductGrid (quick-view popover, no page navigation)", () => {
     vi.useRealTimers();
   });
 
-  it("cancels the pending hover-open if the cursor leaves the card before 3s elapses", () => {
+  it("cancels the pending hover-open if the cursor leaves the card before the dwell elapses", () => {
     vi.useFakeTimers();
     mockMatchMedia(true);
     render(<TeaserProductGrid items={items} {...texts} />);
@@ -136,9 +136,10 @@ describe("TeaserProductGrid (quick-view popover, no page navigation)", () => {
 
     fireEvent.mouseEnter(card);
     act(() => {
-      vi.advanceTimersByTime(1000);
+      vi.advanceTimersByTime(HOVER_DELAY - 400); // 尚未满停留时长
     });
-    fireEvent.mouseLeave(card); // 未满 3s 移出 —— 应取消待打开计时器
+    expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
+    fireEvent.mouseLeave(card); // 未满即移出 —— 应取消待打开计时器
     act(() => {
       vi.advanceTimersByTime(5000);
     });
@@ -210,15 +211,15 @@ describe("TeaserProductGrid (quick-view popover, no page navigation)", () => {
     vi.useRealTimers();
   });
 
-  it("clicking 点击查看 opens immediately, even before the 3s hover dwell elapses", () => {
+  it("clicking 点击查看 opens immediately, even before the hover dwell elapses", () => {
     // 真实用户点击按钮前指针必然先掠过卡片(触发 mouseenter),但点击动作本身
-    // 几乎不可能让鼠标停留满 3s —— 点击必须立即生效,不应该被悬停延迟拖慢。
+    // 几乎不可能让鼠标停留满该时长 —— 点击必须立即生效,不应该被悬停延迟拖慢。
     vi.useFakeTimers();
     mockMatchMedia(true);
     render(<TeaserProductGrid items={items} {...texts} />);
     const card = screen.getByText("WCOFFY-XXX01").closest(".group")!;
 
-    fireEvent.mouseEnter(card); // 悬停计时器启动,但远未满 3s
+    fireEvent.mouseEnter(card); // 悬停计时器启动,但远未满停留时长
     act(() => {
       vi.advanceTimersByTime(200);
     });
@@ -234,8 +235,8 @@ describe("TeaserProductGrid (quick-view popover, no page navigation)", () => {
   });
 
   it("real-mouse race: clicking the trigger right after hover-open PINS it open (does not immediately close)", () => {
-    // 真机场景复现:鼠标指针在点击按钮前必然先掠过卡片触发 mouseenter(悬停满
-    // 3s 后弹出预览),紧接着点击不应把刚打开的"临时预览"误判为
+    // 真机场景复现:鼠标指针在点击按钮前必然先掠过卡片触发 mouseenter
+    // (停留满后弹出预览),紧接着点击不应把刚打开的"临时预览"误判为
     // "已打开→本次应关闭"。
     vi.useFakeTimers();
     mockMatchMedia(true);

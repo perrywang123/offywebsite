@@ -11,16 +11,16 @@ export interface TeaserProductItem {
 }
 
 /** 悬停需停留满这么久才弹出预览,避免划过卡片就意外触发。 */
-const HOVER_OPEN_DELAY_MS = 3000;
+const HOVER_OPEN_DELAY_MS = 1000;
 /** 悬停态下,指针移到预览面板之外的关闭宽限(给移向面板留出时间)。 */
 const HOVER_CLOSE_GRACE_MS = 150;
 
 /**
  * 预告产品卡 + 悬浮预览(quick view)。不跳转页面:
- * - 悬停(hover 能力设备):鼠标在卡片上停留满 3s → 显示浮窗(临时态);未满 3s
+ * - 悬停(hover 能力设备):鼠标在卡片上停留满 1s → 显示浮窗(临时态);未满
  *   移出则取消、不弹出。打开后鼠标真正移动到浮窗面板之外(遮罩区域)150ms 后
  *   关闭,移回面板内可取消关闭、继续端详大图。
- * - 点击"点击查看":不受 3s 延迟限制,立即把浮窗"钉住"(sticky),不再自动关闭,
+ * - 点击"点击查看":不受停留延迟限制,立即把浮窗"钉住"(sticky),不再自动关闭,
  *   需显式关闭(背景/Esc/✕/再次点击同一按钮)。
  *
  * 浮窗通过 React Portal 直接挂载到 document.body,而不是作为本组件的兄弟
@@ -67,7 +67,7 @@ export function TeaserProductGrid({
   const [hoverCapable, setHoverCapable] = useState(false);
   const [mounted, setMounted] = useState(false);
   const closeTimerRef = useRef<number | null>(null);
-  /** 悬停满 3s 才弹出的"待打开"计时器;未满时移出卡片会被取消。 */
+  /** 悬停停留满 HOVER_OPEN_DELAY_MS 才弹出的"待打开"计时器;未满时移出卡片会被取消。 */
   const hoverOpenTimerRef = useRef<number | null>(null);
   /** true = 当前打开的浮窗由用户显式点击"钉住",不随指针移出面板而自动关闭。 */
   const stickyRef = useRef(false);
@@ -119,26 +119,26 @@ export function TeaserProductGrid({
     if (stickyRef.current || closeTimerRef.current) return;
     closeTimerRef.current = window.setTimeout(() => setActiveCode(null), HOVER_CLOSE_GRACE_MS);
   };
-  /** 悬停满 3s 后触发:打开为临时态,不钉住。 */
+  /** 悬停停留满 HOVER_OPEN_DELAY_MS 后触发:打开为临时态,不钉住。 */
   const openOnHover = (code: string) => {
     hoverOpenTimerRef.current = null;
     cancelScheduledClose();
     stickyRef.current = false;
     setActiveCode(code);
   };
-  /** 鼠标进入卡片:启动 3s 停留计时器,未满时移出会被取消。 */
+  /** 鼠标进入卡片:启动停留计时器,未满时移出会被取消。 */
   const handleCardMouseEnter = (code: string) => {
     if (!hoverCapable) return;
     cancelPendingHoverOpen();
     hoverOpenTimerRef.current = window.setTimeout(() => openOnHover(code), HOVER_OPEN_DELAY_MS);
   };
-  /** 鼠标移出卡片:若还没满 3s(浮窗尚未弹出),取消待打开计时器。 */
+  /** 鼠标移出卡片:若停留尚未满时(浮窗尚未弹出),取消待打开计时器。 */
   const handleCardMouseLeave = () => {
     if (!hoverCapable) return;
     cancelPendingHoverOpen();
   };
   /**
-   * 点击打开/切换:不受 3s 停留延迟限制,立即生效。
+   * 点击打开/切换:不受停留延迟限制,立即生效。
    * 已钉住且是同一商品 → 关闭;否则钉住打开(覆盖/抢占悬停态或悬停待打开计时器)。
    */
   const toggleOnClick = (code: string) => {
