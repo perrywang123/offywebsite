@@ -93,7 +93,6 @@
     "description": "关于这款形象",
     "outOfStock": "暂时售罄",
     "related": "同系列其他形象",
-    "sku": "产品编号",
     "dimension": {
       "height": "高度",
       "length": "长度",

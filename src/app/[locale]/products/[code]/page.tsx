@@ -102,30 +102,28 @@ export default async function ProductDetailPage({
           )}
         </div>
 
-        {/* 信息区 */}
-        <div>
-          <p className="kicker mb-3">{series ? (locale === "zh" ? series.name.zh : series.name.en) : product.series}</p>
-          <h1 className="font-display text-3xl font-semibold tracking-tight md:text-4xl">
-            {locale === "zh" ? product.name.zh : product.name.en}
-          </h1>
-          {product.isUpcoming ? (
-            <p className="mt-3 text-sm font-medium uppercase tracking-[0.14em] text-brown-600">
-              {locale === "zh" ? "待揭晓" : "Revealing soon"}
-            </p>
-          ) : (
-            <p className="mt-3 font-display text-2xl font-medium text-ink tabular-nums md:text-3xl">
-              {formatUsdCents(product.priceCents, locale)}
-            </p>
-          )}
-
-          {/* 展示用商品编码:优先取 Shopify 的 SKU(商家可随时改),未设置时
-              回退 code(= handle)。注意这与 product.code 是两个概念:
-              code 是路由/购物车/结算用的稳定技术标识符,不应随意展示为
-              "会变化的编码"语义;真正给用户看、且应随商家维护而变的,是这里。 */}
-          <p className="mt-3 text-xs text-ink-muted">{t("sku")}: {product.skuCode ?? product.code}</p>
+        {/* 信息区:按"标题/价格" → "营销文案" → "规格信息(情绪标签/尺寸,
+            用分隔线与上方文案区隔开)" → "行动按钮" 的节奏分组,
+            整体用 space-y 统一纵向间距,不再逐个元素各自零散设置 mt-*。 */}
+        <div className="space-y-8">
+          <div>
+            <p className="kicker mb-3">{series ? (locale === "zh" ? series.name.zh : series.name.en) : product.series}</p>
+            <h1 className="font-display text-3xl font-semibold tracking-tight md:text-4xl">
+              {locale === "zh" ? product.name.zh : product.name.en}
+            </h1>
+            {product.isUpcoming ? (
+              <p className="mt-3 text-sm font-medium uppercase tracking-[0.14em] text-brown-600">
+                {locale === "zh" ? "待揭晓" : "Revealing soon"}
+              </p>
+            ) : (
+              <p className="mt-3 font-display text-2xl font-medium text-ink tabular-nums md:text-3xl">
+                {formatUsdCents(product.priceCents, locale)}
+              </p>
+            )}
+          </div>
 
           {descriptionBlocks && descriptionBlocks.length > 0 ? (
-            <div className="mt-6 space-y-3">
+            <div className="space-y-3">
               {descriptionBlocks.map((block, i) => (
                 <p
                   key={i}
@@ -137,49 +135,53 @@ export default async function ProductDetailPage({
             </div>
           ) : (
             description && (
-              <div className="mt-6">
+              <div>
                 <p className="mb-2 text-sm font-medium text-ink-soft">{t("description")}</p>
                 <p className="text-sm leading-relaxed text-ink">{description}</p>
               </div>
             )
           )}
 
-          {product.emotionTags.zh.length > 0 && (
-            <div className="mt-6">
-              <p className="mb-2 text-sm font-medium text-ink-soft">{t("emotion")}</p>
-              <div className="flex flex-wrap gap-2">
-                {(locale === "zh" ? product.emotionTags.zh : product.emotionTags.en).map((tag) => (
-                  <span key={tag} className="rounded-full border border-sand px-3 py-1 text-xs text-ink-soft">
-                    {tag}
-                  </span>
-                ))}
-              </div>
-            </div>
-          )}
-
-          {product.dimensions && (
-            <div className="mt-8">
-              <p className="mb-2 text-sm font-medium text-ink-soft">{t("dimensions")}</p>
-              <dl className="divide-y divide-cream-line border-y border-cream-line text-sm">
-                {(
-                  [
-                    ["dimension.height", product.dimensions.heightCm],
-                    ["dimension.length", product.dimensions.lengthCm],
-                    ["dimension.head", product.dimensions.headCm],
-                    ["dimension.arm", product.dimensions.armCm],
-                    ["dimension.leg", product.dimensions.legCm],
-                  ] as const
-                ).map(([key, value]) => (
-                  <div key={key} className="flex justify-between py-3">
-                    <dt className="text-ink-muted">{t(key)}</dt>
-                    <dd className="font-medium text-ink tabular-nums">{value}{t("dimension.cm")}</dd>
+          {(product.emotionTags.zh.length > 0 || product.dimensions) && (
+            <div className="space-y-6 border-t border-cream-line pt-8">
+              {product.emotionTags.zh.length > 0 && (
+                <div>
+                  <p className="mb-2 text-sm font-medium text-ink-soft">{t("emotion")}</p>
+                  <div className="flex flex-wrap gap-2">
+                    {(locale === "zh" ? product.emotionTags.zh : product.emotionTags.en).map((tag) => (
+                      <span key={tag} className="rounded-full border border-sand px-3 py-1 text-xs text-ink-soft">
+                        {tag}
+                      </span>
+                    ))}
                   </div>
-                ))}
-              </dl>
+                </div>
+              )}
+
+              {product.dimensions && (
+                <div>
+                  <p className="mb-2 text-sm font-medium text-ink-soft">{t("dimensions")}</p>
+                  <dl className="divide-y divide-cream-line border-y border-cream-line text-sm">
+                    {(
+                      [
+                        ["dimension.height", product.dimensions.heightCm],
+                        ["dimension.length", product.dimensions.lengthCm],
+                        ["dimension.head", product.dimensions.headCm],
+                        ["dimension.arm", product.dimensions.armCm],
+                        ["dimension.leg", product.dimensions.legCm],
+                      ] as const
+                    ).map(([key, value]) => (
+                      <div key={key} className="flex justify-between py-3">
+                        <dt className="text-ink-muted">{t(key)}</dt>
+                        <dd className="font-medium text-ink tabular-nums">{value}{t("dimension.cm")}</dd>
+                      </div>
+                    ))}
+                  </dl>
+                </div>
+              )}
             </div>
           )}
 
-          <div className="mt-8">
+          <div>
             {product.isUpcoming ? (
               <p className="rounded-full bg-cream-deep px-6 py-3 text-center text-sm text-ink-muted">
                 {locale === "zh" ? "即将揭晓，敬请期待" : "Revealing soon"}
