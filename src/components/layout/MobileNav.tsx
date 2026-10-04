@@ -66,9 +66,9 @@ export function MobileNav({ series }: { series: Series[] }) {
                 ✕
               </button>
             </div>
-            <nav className="flex flex-col gap-1 px-6 py-6 text-sm font-medium uppercase tracking-[0.14em]">
+            <nav className="flex flex-col gap-1 px-6 py-6 text-sm font-medium uppercase tracking-[var(--tracking-14)]">
               <Link href="/products" onClick={close} className="py-3 transition-opacity hover:opacity-60">
-                {locale === "zh" ? "新品" : "New"}
+                {t("nav.new")}
               </Link>
               <Link href="/products" onClick={close} className="py-3 transition-opacity hover:opacity-60">
                 {t("nav.shop")}
@@ -86,7 +86,7 @@ export function MobileNav({ series }: { series: Series[] }) {
                 ))}
               </div>
               <Link href="/collections" onClick={close} className="py-3 transition-opacity hover:opacity-60">
-                {locale === "zh" ? "系列" : "Series"}
+                {t("nav.series")}
               </Link>
               <Link href="/about" onClick={close} className="py-3 transition-opacity hover:opacity-60">
                 {t("nav.about")}

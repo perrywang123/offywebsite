@@ -27,7 +27,7 @@ export default async function CollectionsPage({ params }: { params: Promise<{ lo
   return (
     <div className="mx-auto max-w-7xl px-6 py-12 lg:px-8">
       <header className="mb-10">
-        <p className="kicker mb-3">Series</p>
+        <p className="kicker mb-3">{t("seriesKicker")}</p>
         <h1 className="font-display text-4xl font-semibold tracking-tight md:text-5xl">{t("title")}</h1>
         <p className="mt-2 text-ink-soft">{t("subtitle")}</p>
       </header>
@@ -46,14 +46,14 @@ export default async function CollectionsPage({ params }: { params: Promise<{ lo
               <div className="absolute inset-0 bg-gradient-to-t from-ink/50 via-transparent to-transparent" />
               <div className="absolute inset-x-5 bottom-5 flex items-end justify-between">
                 <div>
-                  <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-cream/80">
+                  <p className="text-[11px] font-semibold uppercase tracking-[var(--tracking-18)] text-cream/80">
                     {String(i + 1).padStart(2, "0")}
                   </p>
                   <p className="mt-1 font-display text-xl font-semibold text-cream">
                     {locale === "zh" ? s.name.zh : s.name.en}
                   </p>
                 </div>
-                <p className="text-xs text-cream/70">{s.count} {locale === "zh" ? "个形象" : "looks"}</p>
+                <p className="text-xs text-cream/70">{t("looksCount", { count: s.count })}</p>
               </div>
             </Link>
           </Reveal>

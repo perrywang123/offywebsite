@@ -1,8 +1,9 @@
+import { getTranslations } from "next-intl/server";
 import type { Product } from "@/lib/catalog";
 import { Reveal } from "@/components/Reveal";
 import { ProductCard } from "./ProductCard";
 
-export function ProductGrid({
+export async function ProductGrid({
   products,
   locale,
   density = "catalog",
@@ -12,7 +13,8 @@ export function ProductGrid({
   density?: "catalog" | "series";
 }) {
   if (products.length === 0) {
-    return <p className="py-16 text-center text-ink-muted">No products found.</p>;
+    const t = await getTranslations("catalog");
+    return <p className="py-16 text-center text-ink-muted">{t("empty")}</p>;
   }
 
   const gridCls =

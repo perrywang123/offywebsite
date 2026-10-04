@@ -5,6 +5,7 @@ import type { Product } from "./types";
 export { products, upcomingIps, collabLooks, teaserSeries, seriesList };
 export { getSeries, seriesMap } from "./series";
 export type { Product, Series, SeriesSlug, LocalizedString, Dimensions } from "./types";
+export type { UpcomingIp } from "./products";
 
 export function getProducts(): Product[] {
   return [...products].sort((a, b) => a.sortOrder - b.sortOrder);

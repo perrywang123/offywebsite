@@ -1,19 +1,21 @@
 "use client";
 
 import { useState } from "react";
+import { useTranslations } from "next-intl";
 import { Button } from "./Button";
 
 type Status = "idle" | "submitting" | "success" | "error";
 
 export function NewsletterForm() {
+  const t = useTranslations("home.newsletter");
   const [email, setEmail] = useState("");
   const [status, setStatus] = useState<Status>("idle");
-  const [message, setMessage] = useState("");
+  const [messageKey, setMessageKey] = useState<"success" | "duplicate" | "invalidEmail" | "networkError" | "">("");
 
   async function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
     setStatus("submitting");
-    setMessage("");
+    setMessageKey("");
 
     try {
       const response = await fetch("/api/newsletter", {
@@ -24,18 +26,18 @@ export function NewsletterForm() {
 
       if (response.ok) {
         setStatus("success");
-        setMessage("订阅成功，感谢关注！");
+        setMessageKey("success");
         setEmail("");
       } else if (response.status === 409) {
         setStatus("error");
-        setMessage("该邮箱已订阅。");
+        setMessageKey("duplicate");
       } else {
         setStatus("error");
-        setMessage("请输入有效的邮箱地址。");
+        setMessageKey("invalidEmail");
       }
     } catch {
       setStatus("error");
-      setMessage("网络错误，请稍后重试。");
+      setMessageKey("networkError");
     }
   }
 
@@ -47,17 +49,17 @@ export function NewsletterForm() {
           required
           value={email}
           onChange={(event) => setEmail(event.target.value)}
-          placeholder="you@example.com"
-          aria-label="邮箱地址"
+          placeholder={t("placeholder")}
+          aria-label={t("emailAria")}
           className="flex-1 rounded-full border border-slate-300 px-5 py-3 text-sm outline-none focus:border-slate-900"
         />
         <Button type="submit" disabled={status === "submitting"}>
-          {status === "submitting" ? "订阅中…" : "订阅"}
+          {status === "submitting" ? t("submitting") : t("submit")}
         </Button>
       </div>
-      {message ? (
+      {messageKey ? (
         <p role="status" className="text-sm text-slate-600">
-          {message}
+          {t(messageKey)}
         </p>
       ) : null}
     </form>

@@ -60,6 +60,7 @@ export default function CheckoutPage() {
   const { lines, catalog, catalogLoaded } = useCart();
   const locale = useLocale();
   const t = useTranslations("checkout");
+  const tCart = useTranslations("common.cart");
 
   const [provider, setProvider] = useState<Provider>("paypal");
   const [email, setEmail] = useState("");
@@ -135,7 +136,7 @@ export default function CheckoutPage() {
 
       {!catalogLoaded && lines.length > 0 ? (
         <p className="text-center text-sm text-ink-muted">
-          {locale === "zh" ? "正在加载购物车…" : "Loading your bag…"}
+          {tCart("loading")}
         </p>
       ) : items.length === 0 ? (
         <div className="text-center">
@@ -249,7 +250,7 @@ export default function CheckoutPage() {
                   <span className="block text-base font-medium text-ink">{t("paymentPaypal")}</span>
                   <span className="mt-0.5 block text-xs text-ink-muted">{t("paymentPaypalSub")}</span>
                 </span>
-                <span className="absolute right-3 top-3 rounded-full bg-butter px-2 py-0.5 text-[10px] font-semibold uppercase tracking-[0.14em] text-ink">{t("paymentRecommended")}</span>
+                <span className="absolute right-3 top-3 rounded-full bg-butter px-2 py-0.5 text-[10px] font-semibold uppercase tracking-[var(--tracking-14)] text-ink">{t("paymentRecommended")}</span>
               </label>
               <label className={cardClass(provider === "stripe")}>
                 <input type="radio" name="payment" value="stripe" checked={provider === "stripe"} onChange={() => setProvider("stripe")} className="sr-only" />
@@ -275,7 +276,16 @@ export default function CheckoutPage() {
               </label>
             </fieldset>
 
-            {error && <p className="text-sm text-error">Error: {error}</p>}
+            {error && (
+              <p className="text-sm text-error">
+                {t("errorPrefix")}
+                {error === "checkout_failed"
+                  ? t("errorCheckoutFailed")
+                  : error === "network_error"
+                    ? t("errorNetwork")
+                    : error}
+              </p>
+            )}
 
             <button
               type="submit" disabled={submitting} aria-busy={submitting}
@@ -289,7 +299,7 @@ export default function CheckoutPage() {
                     ? t("payWithShopify")
                     : t("payWithCard")}
             </button>
-            <p className="text-center text-xs text-ink-muted">USD · PayPal / Stripe Checkout</p>
+            <p className="text-center text-xs text-ink-muted">{t("paymentNote")}</p>
           </form>
 
           <aside className="h-fit rounded-card bg-paper p-6">

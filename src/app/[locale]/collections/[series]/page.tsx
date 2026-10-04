@@ -1,5 +1,6 @@
 import Image from "next/image";
 import { notFound } from "next/navigation";
+import { getTranslations } from "next-intl/server";
 import { getLiveProductsBySeries, getLiveSeriesList } from "@/server/catalog/live";
 import { ProductGrid } from "@/components/product/ProductGrid";
 import { CategoryTabs } from "@/components/layout/CategoryTabs";
@@ -13,6 +14,7 @@ export default async function SeriesPage({
   params: Promise<{ locale: string; series: string }>;
 }) {
   const { locale, series: slug } = await params;
+  const t = await getTranslations("catalog");
 
   // 实时拉取:系列名称/该系列下的商品清单均来自 Shopify 当前真实状态,
   // 不再依赖本地手写死的快照;Shopify 不可达时内部自动回退本地数据。
@@ -45,7 +47,7 @@ export default async function SeriesPage({
         <div className="grain absolute inset-0 opacity-[0.05]" />
         <div className="relative z-10 mx-auto w-full max-w-7xl px-6 pb-14 lg:px-8">
           <p className="kicker kicker--on-dark mb-3">
-            OFFY · Series {String(idx + 1).padStart(2, "0")} · {products.length} Looks
+            {t("seriesHeroKicker", { n: String(idx + 1).padStart(2, "0"), count: products.length })}
           </p>
           <h1 className="max-w-3xl font-display text-5xl font-semibold uppercase leading-[0.95] tracking-tight text-cream md:text-7xl">
             {name}
@@ -57,7 +59,7 @@ export default async function SeriesPage({
       {/* 产品网格 */}
       <section className="mx-auto max-w-7xl px-6 py-16 md:py-20 lg:px-8">
         <Reveal className="mb-8 flex items-end justify-between">
-          <p className="kicker">{products.length} {locale === "zh" ? "个形象" : "Looks"}</p>
+          <p className="kicker">{t("looksCount", { count: products.length })}</p>
         </Reveal>
         <ProductGrid products={products} locale={locale} density="series" />
       </section>

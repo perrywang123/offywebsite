@@ -95,10 +95,44 @@
   --foreground: #1d1915;
   /* 固定 header 高度（含 promo 条），供 sticky 子 tab 定位 */
   --header-h: 104px;
+
+  /* ============ 字距分级(中文调校的宽字距,英文版通过 html[lang="en"] 收窄;
+     刻意不放进上方 @theme,避免 Tailwind 把 --tracking-* 当作内置 tracking
+     标度自动生成同名工具类并把值在构建期直接内联——那样 html[lang="en"]
+     的覆盖就不会在运行时生效了;这里保持纯 CSS 自定义属性,配合类名里的
+     `tracking-[var(--tracking-14)]` 任意值写法,在运行时按 html[lang] 层叠取值) ============ */
+  --tracking-06: 0.06em;
+  --tracking-10: 0.1em;
+  --tracking-12: 0.12em;
+  --tracking-14: 0.14em;
+  --tracking-16: 0.16em;
+  --tracking-18: 0.18em;
+  --tracking-22: 0.22em;
 }
 
 @media (min-width: 768px) {
   :root { --header-h: 112px; }
+}
+
+/* ============ 英文站点:苹方优先承载拉丁字形 + 收窄中文调校的宽字距 ============
+   中文默认字体栈把 PingFang SC 排在拉丁字体之后(拉丁字体不含 CJK 字形,浏览器
+   天然回退到苹方渲染中文,顺序无影响);英文站若保持同样顺序,拉丁字形永远由
+   SF Pro / Avenir Next 等渲染,苹方永不生效——这里为 html[lang="en"] 单独
+   把苹方放在最前,英文文字才会真正套用苹方;同时字距统一收窄一级,
+   避免中文调校的宽字距在拉丁字母上显得过于松散。 */
+html[lang="en"] {
+  --font-display: "PingFang SC", "SF Pro Display", "Avenir Next", "Futura",
+    "Century Gothic", "Segoe UI", "Hiragino Sans GB", sans-serif;
+  --font-sans: "PingFang SC", -apple-system, "SF Pro Text", "Segoe UI",
+    "Helvetica Neue", "Hiragino Sans GB", sans-serif;
+
+  --tracking-06: 0.04em;
+  --tracking-10: 0.04em;
+  --tracking-12: 0.05em;
+  --tracking-14: 0.06em;
+  --tracking-16: 0.07em;
+  --tracking-18: 0.08em;
+  --tracking-22: 0.1em;
 }
 
 html { scroll-behavior: smooth; }
@@ -128,7 +162,7 @@ body {
     font-family: var(--font-display);
     font-size: 0.6875rem;
     font-weight: 600;
-    letter-spacing: 0.22em;
+    letter-spacing: var(--tracking-22);
     text-transform: uppercase;
     color: var(--color-brown-600);
   }

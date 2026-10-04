@@ -15,16 +15,20 @@ export function ProductCard({
   /** name: 显示产品名(默认);code: 按设计稿显示款号(首页曝光造型卡)。 */
   caption?: "name" | "code";
 }) {
+  // 保持无 hook(可被 Server Component 直接渲染,如 page.tsx / ProductGrid.tsx):
+  // 这两处是已登记在双语对象里的短文案,不经过 next-intl 的 t(),
+  // 但值本身与 messages.json 的 home.revealing / home.newsBadge 保持一致维护。
   const localizedName = locale === "zh" ? product.name.zh : product.name.en;
   // caption="code" 场景(如首页"区域限定"/"产品汇总"圆形名册)展示的是给人看的
   // 商品编码:优先取 Shopify 实时 SKU(skuCode),未设置时回退 code(= handle)。
   const name = caption === "code" ? (product.skuCode ?? product.code) : localizedName;
   const secondImage = product.images[1];
   const revealLabel = locale === "zh" ? "待揭晓" : "Revealing soon";
-  const price =
-    caption === "code" && locale === "zh"
-      ? `${(product.priceCents / 100).toFixed(2)}美元`
-      : formatUsdCents(product.priceCents, locale);
+  const badgeLabel = locale === "zh" ? "新品上市" : "New in";
+  // formatUsdCents 已按 locale 走 Intl.NumberFormat 本地化货币格式(zh-CN 下
+  // 自动输出 "US$" 前缀),不再需要手写 "xx.xx美元" 的特例分支——
+  // 两处价格展示(caption="code" 与默认)统一走同一套格式化逻辑。
+  const price = formatUsdCents(product.priceCents, locale);
 
   return (
     <div className="group">
@@ -54,8 +58,8 @@ export function ProductCard({
         )}
 
         {product.featured && (
-          <span className="absolute left-0 top-0 bg-cream px-3 py-1.5 text-[10px] font-semibold uppercase tracking-[0.14em] text-ink">
-            {locale === "zh" ? "新品" : "New in"}
+          <span className="absolute left-0 top-0 bg-cream px-3 py-1.5 text-[10px] font-semibold uppercase tracking-[var(--tracking-14)] text-ink">
+            {badgeLabel}
           </span>
         )}
 
@@ -69,7 +73,7 @@ export function ProductCard({
 
         {/* hover 上滑信息条 */}
         <div className="pointer-events-none absolute inset-x-0 bottom-0 flex translate-y-4 items-end justify-between gap-3 bg-gradient-to-t from-ink/70 to-transparent p-4 text-cream opacity-0 transition-all duration-500 ease-editorial group-hover:translate-y-0 group-hover:opacity-100">
-          <h3 className="truncate text-xs font-medium uppercase tracking-[0.06em]">{name}</h3>
+          <h3 className="truncate text-xs font-medium uppercase tracking-[var(--tracking-06)]">{name}</h3>
           <span className="shrink-0 text-xs tabular-nums">
             {product.isUpcoming ? revealLabel : price}
           </span>

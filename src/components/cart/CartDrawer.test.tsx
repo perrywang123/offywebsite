@@ -87,7 +87,10 @@ describe("CartDrawer × live catalog (/api/products-backed)", () => {
     );
     render(<CartDrawer />);
     expect(screen.getByText("诺尔")).toBeInTheDocument();
-    expect(screen.getByAltText("NOIR")).toHaveAttribute("src", "https://cdn.shopify.com/noir.jpg");
+    // alt 应跟随当前 locale(此测试 mock useLocale 为 "zh")取中文名,
+    // 而不是此前一直硬编码的英文名(此前即便中文站也显示英文 alt,是一个
+    // 真实的本地化缺陷)。
+    expect(screen.getByAltText("诺尔")).toHaveAttribute("src", "https://cdn.shopify.com/noir.jpg");
   });
 
   it("hides a cart line whose code is not (yet / no longer) present in the live catalog", () => {

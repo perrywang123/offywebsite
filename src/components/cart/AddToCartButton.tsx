@@ -1,12 +1,12 @@
 "use client";
 
 import { useState } from "react";
-import { useLocale } from "next-intl";
+import { useTranslations } from "next-intl";
 import { useCart } from "./CartProvider";
 
 export function AddToCartButton({ code, className = "" }: { code: string; className?: string }) {
   const [added, setAdded] = useState(false);
-  const locale = useLocale();
+  const t = useTranslations("common.actions");
   const { add } = useCart();
 
   function handleClick() {
@@ -23,7 +23,7 @@ export function AddToCartButton({ code, className = "" }: { code: string; classN
         added ? "bg-leaf text-cream" : "bg-accent text-cream hover:bg-accent-deep"
       } ${className}`}
     >
-      {added ? (locale === "zh" ? "已加入 ✓" : "Added ✓") : locale === "zh" ? "加入购物袋" : "Add to Bag"}
+      {added ? t("addedCheck") : t("addToBag")}
     </button>
   );
 }

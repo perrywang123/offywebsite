@@ -43,6 +43,7 @@ export default async function ProductDetailPage({
   if (!product) notFound();
 
   const t = await getTranslations("product");
+  const tHome = await getTranslations("home");
   const seriesList = await getLiveSeriesList();
   const series = seriesList.find((s) => s.slug === product.series);
   // Shopify 单语言:zh 描述暂缺时回退英文原文(后续 Translate & Adapt 接管)
@@ -62,7 +63,7 @@ export default async function ProductDetailPage({
   return (
     <div className="mx-auto max-w-7xl px-6 py-12 lg:px-8">
       <nav className="mb-6 text-sm text-ink-muted">
-        <Link href="/products" className="link-line">{locale === "zh" ? "商店" : "Shop"}</Link>
+        <Link href="/products" className="link-line">{t("shopBreadcrumb")}</Link>
         {" / "}
         <Link href={`/collections/${product.series}`} className="link-line">
           {series ? (locale === "zh" ? series.name.zh : series.name.en) : product.series}
@@ -112,8 +113,8 @@ export default async function ProductDetailPage({
               {locale === "zh" ? product.name.zh : product.name.en}
             </h1>
             {product.isUpcoming ? (
-              <p className="mt-3 text-sm font-medium uppercase tracking-[0.14em] text-brown-600">
-                {locale === "zh" ? "待揭晓" : "Revealing soon"}
+              <p className="mt-3 text-sm font-medium uppercase tracking-[var(--tracking-14)] text-brown-600">
+                {tHome("revealing")}
               </p>
             ) : (
               <p className="mt-3 font-display text-2xl font-medium text-ink tabular-nums md:text-3xl">
@@ -184,7 +185,7 @@ export default async function ProductDetailPage({
           <div>
             {product.isUpcoming ? (
               <p className="rounded-full bg-cream-deep px-6 py-3 text-center text-sm text-ink-muted">
-                {locale === "zh" ? "即将揭晓，敬请期待" : "Revealing soon"}
+                {t("upcomingNotice")}
               </p>
             ) : (
               <AddToCartButton code={product.code} className="w-full" />
@@ -197,7 +198,7 @@ export default async function ProductDetailPage({
       {siblings.length > 0 && (
         <section className="mt-20">
           <Reveal className="mb-6">
-            <p className="kicker mb-2">More</p>
+            <p className="kicker mb-2">{t("moreKicker")}</p>
             <h2 className="font-display text-2xl font-semibold tracking-tight">{t("related")}</h2>
           </Reveal>
           <div className="grid grid-cols-3 gap-4 md:grid-cols-6">

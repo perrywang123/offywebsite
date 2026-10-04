@@ -1,11 +1,14 @@
 "use client";
 
+import { useEffect, useState } from "react";
 import { useLocale, useTranslations } from "next-intl";
 import { Link } from "@/i18n/navigation";
 import type { Series } from "@/lib/catalog";
 import { CartButton } from "@/components/cart/CartButton";
 import { LanguageSwitcher } from "./LanguageSwitcher";
 import { MobileNav } from "./MobileNav";
+
+const PROMO_ROTATE_MS = 4500;
 
 /**
  * `series` 由根布局 [`layout.tsx`](src/app/[locale]/layout.tsx) 服务端实时拉取
@@ -17,15 +20,29 @@ export function Header({ series }: { series: Series[] }) {
   const t = useTranslations("common");
   const locale = useLocale();
 
+  // 顶部 promo 条:多条促销语轮播淡入淡出(2026 首页文案表第 2-3 行)。
+  const promoMessages = t.raw("promoMessages") as string[];
+  const [promoIndex, setPromoIndex] = useState(0);
+  useEffect(() => {
+    if (promoMessages.length <= 1) return;
+    const id = setInterval(() => setPromoIndex((i) => (i + 1) % promoMessages.length), PROMO_ROTATE_MS);
+    return () => clearInterval(id);
+  }, [promoMessages.length]);
+
   // 头图已换为浅底素材,header 始终实底黑字(与交互稿一致);
   // 旧深色 hero 的"透明白字覆盖 + 滚动滑入"逻辑已停用(overHero 恒 false)。
   const overHero = false;
 
   return (
     <header className="sticky top-0 z-50">
-      {/* 顶部 promo 条：始终黑底白字，居中 */}
-      <div className="flex h-10 items-center justify-center bg-ink px-4 text-center text-[11px] uppercase tracking-[0.16em] text-cream">
-        {t("promo")}
+      {/* 顶部 promo 条：始终黑底白字，居中，多条文案轮播;
+          不用 truncate/绝对定位堆叠——窄屏下英文促销语较长,绝对定位+truncate
+          会把文字裁掉看不全,这里改成单一可见 span + 自然换行(min-h 兜底,
+          文案变长时整条高度自适应撑开,而不是裁切内容)。 */}
+      <div className="flex min-h-10 items-center justify-center bg-ink px-4 py-1.5 text-center text-[11px] uppercase leading-snug tracking-[var(--tracking-16)] text-cream">
+        <span key={promoIndex} className="animate-fade-up max-w-full">
+          {promoMessages[promoIndex]}
+        </span>
       </div>
 
       {/* 导航栏 */}
@@ -57,9 +74,9 @@ export function Header({ series }: { series: Series[] }) {
           </Link>
 
           {/* 中/右导航 */}
-          <nav className="hidden items-center gap-8 text-xs font-medium uppercase tracking-[0.14em] md:flex">
+          <nav className="hidden items-center gap-8 text-xs font-medium uppercase tracking-[var(--tracking-14)] md:flex">
             <Link href="/products" className="transition-opacity hover:opacity-60">
-              {locale === "zh" ? "新品" : "New"}
+              {t("nav.new")}
             </Link>
 
             {/* Shop mega-menu：全宽下拉，hover 淡入下滑 */}
@@ -76,15 +93,15 @@ export function Header({ series }: { series: Series[] }) {
                   <div className="container-site grid grid-cols-2 gap-x-8 gap-y-2 py-8 sm:grid-cols-3 lg:grid-cols-4">
                     <Link
                       href="/products"
-                      className="text-sm font-medium uppercase tracking-[0.1em] text-ink transition-colors hover:text-brown-600"
+                      className="text-sm font-medium uppercase tracking-[var(--tracking-10)] text-ink transition-colors hover:text-brown-600"
                     >
-                      {locale === "zh" ? "全部形象" : "All Looks"}
+                      {t("nav.allLooks")}
                     </Link>
                     {series.map((s) => (
                       <Link
                         key={s.slug}
                         href={`/collections/${s.slug}`}
-                        className="text-sm uppercase tracking-[0.1em] text-ink-soft transition-colors hover:text-brown-600"
+                        className="text-sm uppercase tracking-[var(--tracking-10)] text-ink-soft transition-colors hover:text-brown-600"
                       >
                         {locale === "zh" ? s.name.zh : s.name.en}
                       </Link>
@@ -95,7 +112,7 @@ export function Header({ series }: { series: Series[] }) {
             </div>
 
             <Link href="/collections" className="transition-opacity hover:opacity-60">
-              {locale === "zh" ? "系列" : "Series"}
+              {t("nav.series")}
             </Link>
             <Link href="/about" className="transition-opacity hover:opacity-60">
               {t("nav.about")}

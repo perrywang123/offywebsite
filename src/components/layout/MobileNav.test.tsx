@@ -43,8 +43,8 @@ describe("MobileNav", () => {
     expect(screen.getByRole("button", { name: /menu/i })).toHaveAttribute("aria-expanded", "true");
     const dialog = screen.getByRole("dialog");
     expect(dialog).toBeInTheDocument();
-    expect(screen.getByRole("link", { name: "新品" })).toHaveAttribute("href", "/products");
-    expect(screen.getByRole("link", { name: "系列" })).toHaveAttribute("href", "/collections");
+    expect(screen.getByRole("link", { name: "nav.new" })).toHaveAttribute("href", "/products");
+    expect(screen.getByRole("link", { name: "nav.series" })).toHaveAttribute("href", "/collections");
     expect(screen.getByRole("link", { name: "nav.about" })).toHaveAttribute("href", "/about");
     // 系列子链接的名称来自 props(实时数据),而不是本地静态 seriesList
     expect(screen.getByRole("link", { name: "公主lady系列" })).toHaveAttribute("href", "/collections/princess-lady");
@@ -67,7 +67,7 @@ describe("MobileNav", () => {
   it("closes after a nav link is followed", () => {
     render(<MobileNav series={testSeries} />);
     fireEvent.click(screen.getByRole("button", { name: /menu/i }));
-    fireEvent.click(screen.getByRole("link", { name: "新品" }));
+    fireEvent.click(screen.getByRole("link", { name: "nav.new" }));
     expect(screen.getByRole("button", { name: /menu/i })).toHaveAttribute("aria-expanded", "false");
   });
 });

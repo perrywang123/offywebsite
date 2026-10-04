@@ -40,13 +40,16 @@ export const newsItems: NewsItem[] = [
 
 /**
  * 首页头图轮播(主 PSD UI 树精确还原):5 屏。
- * 屏 1 品牌全员图:is.offy 字标(PSD 头图-1 矢量层,596×224)+ slogan
- *   「让想象落地 让陪伴发生」(PSD 单文本块,一行,移动端允许换行),不可点击;
+ * 屏 1 品牌全员图:is.offy 字标(PSD 头图-1 矢量层,596×224)+ slogan,不可点击;
  * 屏 2 促销合成屏(PSD「头图-活动奖励」组):白底 + 左大玩偶(2882×1905 裁本体)
- *   + 右 2×2 包包图 + 左下促销文案 PNG,不可点击;
+ *   + 右 2×2 包包图 + 左下促销文案,不可点击;
  * 屏 3-5 系列屏(PSD 头图-2/3/4):玩偶图上半 + 左下标题组 ——
- *   「OFFY⏎系列名」标题 PNG + 副标题 PNG(生活需要仪式感/周末出门玩/日常犯可爱)
- *   +「查看详情」按钮跳系列页;时尚屏深色背景白字(dark),其余浅底黑字。
+ *   标题 + 副标题 +「查看详情」按钮跳系列页;
+ *   时尚屏深色背景白字(dark),其余浅底黑字。
+ *
+ * 2026 首页文案表(resources/独立站首页文案.xlsx)落地后,标题/副标题/促销语
+ * 改为由本文件维护的实时双语文本直接渲染,不再是设计稿导出的 PNG ——
+ * PNG 无法跟随语言切换,也无法在不重新出图的情况下改文案。
  */
 export interface HeroSlideData {
   image: string;
@@ -54,21 +57,19 @@ export interface HeroSlideData {
   href?: string;
   /** 屏 1 专用:展示 is.offy 手写体字标 PNG + slogan。 */
   wordmark?: boolean;
-  /** 主文案(slogan),双语。 */
+  /** 主文案(slogan),双语;en 允许用 "\n" 换行(如两行标语)。 */
   text?: { zh: string; en: string };
-  /** 屏 3-5:「OFFY⏎系列名」标题 PNG(主 PSD 文字层导出)。 */
-  titleImage?: string;
-  /** 屏 3-5:副标题 PNG(主 PSD 文字层导出)。 */
-  subtitleImage?: string;
-  /** 屏 3-5:副标题无障碍文本,双语。 */
-  subtitleAlt?: { zh: string; en: string };
+  /** 屏 3-5:系列标题(实时文字,随语言切换)。 */
+  title?: { zh: string; en: string };
+  /** 屏 3-5:系列副标题(实时文字,随语言切换)。 */
+  subtitle?: { zh: string; en: string };
   /** 屏 3-5:深色背景(标题/副标题为白色)。 */
   dark?: boolean;
-  /** 屏 2 专用:PSD 合成促销屏(玩偶 + 2×2 包包图 + 文案 PNG)。 */
+  /** 屏 2 专用:PSD 合成促销屏(玩偶 + 2×2 包包图 + 实时促销文字)。 */
   promo?: {
     doll: string;
     bags: [string, string, string, string];
-    text: string;
+    text: { zh: string; en: string };
   };
 }
 
@@ -77,7 +78,7 @@ export const heroSlides: HeroSlideData[] = [
     image: "/assets/hero/hero-01.jpg",
     bg: "#babbb9",
     wordmark: true,
-    text: { zh: "让想象落地 让陪伴发生", en: "Let imagination land, let companionship happen" },
+    text: { zh: "设计师玩具（大）差异化价值", en: "Designer Plush Art Toys\nMeet who you love to be." },
   },
   {
     image: "/assets/hero/promo/doll.png",
@@ -90,32 +91,29 @@ export const heroSlides: HeroSlideData[] = [
         "/assets/hero/promo/bag-3.png",
         "/assets/hero/promo/bag-4.png",
       ],
-      text: "/assets/hero/promo/promo-text.png",
+      text: { zh: "即日起 任意购买3个公仔以上 送offy宝宝", en: "BUY ANY 3 OFFYs, GET A FREE BIG TOTE" },
     },
   },
   {
     image: "/assets/hero/hero-02.jpg",
     bg: "#f9f9f9",
     href: "/collections/princess-lady",
-    titleImage: "/assets/hero/titles/princess-lady.png",
-    subtitleImage: "/assets/hero/titles/sub-princess.png",
-    subtitleAlt: { zh: "生活需要仪式感", en: "Life needs a sense of ritual" },
+    title: { zh: "Offy 公主系列", en: "OFFY Princess Series" },
+    subtitle: { zh: "生活需要仪式感", en: "Romanticize the Everyday" },
   },
   {
     image: "/assets/hero/hero-04.jpg",
     bg: "#3a383c",
     href: "/collections/outdoor-sporty",
-    titleImage: "/assets/hero/titles/fashion-life.png",
-    subtitleImage: "/assets/hero/titles/sub-fashion.png",
-    subtitleAlt: { zh: "周末出门玩", en: "Weekend outing" },
+    title: { zh: "Offy 时尚潮流生活", en: "OFFY Streetwear Series" },
+    subtitle: { zh: "周末出去玩", en: "Weekend in motion" },
     dark: true,
   },
   {
     image: "/assets/hero/hero-03.jpg",
     bg: "#fdfdfd",
     href: "/collections/playful-life",
-    titleImage: "/assets/hero/titles/playful-life.png",
-    subtitleImage: "/assets/hero/titles/sub-playful.png",
-    subtitleAlt: { zh: "日常犯可爱", en: "Everyday cute" },
+    title: { zh: "Offy 趣味生活系列", en: "OFFY Dress-up Series" },
+    subtitle: { zh: "日常犯可爱", en: "Too cute to dress normal" },
   },
 ];

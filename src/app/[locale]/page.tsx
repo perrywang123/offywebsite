@@ -1,7 +1,7 @@
 import Image from "next/image";
 import { getTranslations } from "next-intl/server";
 import { Link } from "@/i18n/navigation";
-import { teaserSeries } from "@/lib/catalog";
+import { teaserSeries, upcomingIps } from "@/lib/catalog";
 import { heroSlides, newsFeature, newsItems } from "@/lib/content";
 import { getLiveFeaturedProducts, getLiveProducts } from "@/server/catalog/live";
 import { Reveal } from "@/components/Reveal";
@@ -10,6 +10,7 @@ export const revalidate = 60;
 import { Marquee } from "@/components/Marquee";
 import { HeroCarousel } from "@/components/home/HeroCarousel";
 import { NewsGrid } from "@/components/home/NewsGrid";
+import { UpcomingCard } from "@/components/home/UpcomingCard";
 import { ProductCard } from "@/components/product/ProductCard";
 import { NewsletterForm } from "@/components/newsletter-form";
 
@@ -17,6 +18,8 @@ export default async function HomePage({ params }: { params: Promise<{ locale: s
   const { locale } = await params;
   const t = await getTranslations("home");
   const tCommon = await getTranslations("common");
+  const promoMessages = tCommon.raw("promoMessages") as string[];
+  const promoLine = promoMessages.join("  —  is.offy  —  ");
 
   // 实时拉取 Shopify:每次请求都反映当前真实的系列成员/价格/图片,不再依赖
   // 本地手写死的商品快照;Shopify 不可达时内部自动回退本地数据。
@@ -31,21 +34,20 @@ export default async function HomePage({ params }: { params: Promise<{ locale: s
         <HeroCarousel slides={heroSlides} locale={locale} />
       </section>
 
-      {/* ============ 促销条:任意购买三个公仔以上,送 offy 包包 ============ */}
+      {/* ============ 促销条:多条促销语滚动(2026 首页文案表第 2-3 行) ============ */}
       <Marquee>
-        <span className="mr-8 text-xs uppercase tracking-[0.18em]">
-          {tCommon("promo")} — is.offy —
+        <span className="mr-8 text-xs uppercase tracking-[var(--tracking-18)]">
+          {promoLine}
         </span>
       </Marquee>
 
       {/* ============ 最新资讯 · 揭晓 ============ */}
       <section className="container-site py-20 md:py-28">
         <Reveal className="mb-10">
-          <p className="kicker mb-3">News</p>
+          <p className="kicker mb-3">{t("newsKicker")}</p>
           <h2 className="font-display text-[clamp(30px,2.6vw,60px)] font-semibold uppercase tracking-tight">
             {t("newsTitle")}
           </h2>
-          <p className="mt-3 text-ink-soft">{t("newsSub")}</p>
         </Reveal>
         <NewsGrid
           feature={newsFeature}
@@ -119,12 +121,11 @@ export default async function HomePage({ params }: { params: Promise<{ locale: s
 
       {/* ============ OFFY 新品抢先看(PSD:Stay tuned 标题区 + 玩偶图左上文字块) ============ */}
       <section className="py-20 md:py-28">
-        {/* 标题区(PSD:Stay tuned. 大字 + offy新品抢先看 + 更多新品，敬请期待) */}
+        {/* 标题区(PSD:Stay tuned. 大字 + 更多新品，敬请期待) */}
         <Reveal className="container-site mx-auto mb-14 text-center">
           <p className="font-display text-[clamp(40px,5vw,96px)] font-extrabold uppercase tracking-tight">
-            Stay tuned.
+            {t("stayTuned")}
           </p>
-          <p className="kicker mt-4">{t("teaserTitle")}</p>
           <h2 className="mt-2 font-display text-[clamp(24px,2.2vw,44px)] font-semibold tracking-tight">
             {t("teaserSub")}
           </h2>
@@ -144,9 +145,7 @@ export default async function HomePage({ params }: { params: Promise<{ locale: s
           <div className="absolute inset-0 flex items-start">
             <div className="container-site">
               <div className="max-w-lg pt-[8%]">
-                <p className="kicker mb-3">{t("teaserKicker")}</p>
-                <p className="text-lg text-ink-soft">{t("comingSub")}</p>
-                <h3 className="mt-6 font-display text-[clamp(28px,2.6vw,60px)] font-extrabold tracking-tight">
+                <h3 className="font-display text-[clamp(28px,2.6vw,60px)] font-extrabold tracking-tight">
                   /{locale === "zh" ? teaserSeries.name.zh : teaserSeries.name.en}
                 </h3>
                 <p className="mt-4 text-sm text-ink-muted">
@@ -169,6 +168,7 @@ export default async function HomePage({ params }: { params: Promise<{ locale: s
         {/* 主标题(头像图上方居中,不叠加压图) */}
         <Reveal className="pb-10 text-center">
           <h2 className="font-display text-[clamp(26px,2.4vw,48px)] font-semibold uppercase tracking-tight">{t("collabTitle")}</h2>
+          <p className="mt-3 text-ink-soft">{t("collabSub")}</p>
           <a href="mailto:hello@playcoretoys.com" className="link-line mt-4 inline-block text-sm">{t("collabCta")}</a>
         </Reveal>
         {/* 14 OF 造型头像图(PSD 矢量智能对象,透明底) */}
@@ -178,11 +178,11 @@ export default async function HomePage({ params }: { params: Promise<{ locale: s
         </Reveal>
       </section>
 
-      {/* ============ 订阅(永远不会错过她)——移至联名下方 ============ */}
+      {/* ============ 订阅(NEVER MISS OFFY)——移至联名下方 ============ */}
       <section className="bg-cream-deep py-20">
         <div className="container-site grid items-center gap-10 md:grid-cols-2">
           <Reveal variant="up">
-            <p className="kicker mb-3">Never Miss Her</p>
+            <p className="kicker mb-3">{t("subscribeKicker")}</p>
             <h2 className="font-display text-[clamp(24px,2vw,40px)] font-semibold uppercase tracking-tight">{t("subscribeTitle")}</h2>
             <p className="mt-3 text-ink-soft">{t("subscribeSub")}</p>
           </Reveal>
@@ -190,32 +190,21 @@ export default async function HomePage({ params }: { params: Promise<{ locale: s
         </div>
       </section>
 
-      {/* ============ 后续新的 IP(PSD:标题 + 图层11 双卡;移动端上下排布,桌面左右并排) ============ */}
+      {/* ============ 后续新的 IP(标题 + 双卡;移动端上下排布,桌面左右并排) ============ */}
       <section className="container-site py-20">
         <Reveal className="mb-10">
-          <p className="kicker mb-3">Coming Next</p>
+          <p className="kicker mb-3">{t("comingKicker")}</p>
           <h2 className="font-display text-[clamp(26px,2.2vw,48px)] font-semibold uppercase tracking-tight">{t("comingTitle")}</h2>
           <p className="mt-3 text-ink-soft">{t("comingSub")}</p>
         </Reveal>
-        {/* PSD 图层11 裁双卡:凯蒂小姐 + 普赛克(图内自带即将推出/COMING SOON-TBD);
+        {/* 裁切后无烤字插画(顶部约 33% 高度) + 实时文字;
             移动端 grid-cols-1 上下排布,桌面 md:grid-cols-2 左右并排 */}
         <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
-          <Reveal className="relative overflow-hidden rounded-block">
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img
-              src="/assets/home/upcoming-kitty.png"
-              alt={locale === "zh" ? "凯蒂小姐 即将推出" : "Miss Kitty, coming soon"}
-              className="w-full"
-            />
-          </Reveal>
-          <Reveal className="relative overflow-hidden rounded-block">
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img
-              src="/assets/home/upcoming-psyche.png"
-              alt={locale === "zh" ? "普赛克 即将推出" : "Psyche, coming soon"}
-              className="w-full"
-            />
-          </Reveal>
+          {upcomingIps.map((ip) => (
+            <Reveal key={ip.code}>
+              <UpcomingCard ip={ip} inDevelopmentLabel={t("inDevelopment")} locale={locale} />
+            </Reveal>
+          ))}
         </div>
       </section>
     </>

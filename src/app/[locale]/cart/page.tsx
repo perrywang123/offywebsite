@@ -24,7 +24,7 @@ export default function CartPage() {
   if (!catalogLoaded && lines.length > 0) {
     return (
       <div className="mx-auto max-w-5xl px-6 py-12 text-center text-sm text-ink-muted lg:px-8">
-        {locale === "zh" ? "正在加载购物车…" : "Loading your bag…"}
+        {t("loading")}
       </div>
     );
   }
@@ -50,7 +50,13 @@ export default function CartPage() {
             {items.map(({ line, product }) => (
               <li key={line.code} className="flex gap-4 py-6">
                 <div className="relative h-32 w-24 shrink-0 overflow-hidden rounded-lg bg-cream-deep">
-                  <Image src={product.images[0]} alt={product.name.en} fill sizes="96px" className="object-cover" />
+                  <Image
+                    src={product.images[0]}
+                    alt={locale === "zh" ? product.name.zh : product.name.en}
+                    fill
+                    sizes="96px"
+                    className="object-cover"
+                  />
                 </div>
                 <div className="flex flex-1 flex-col">
                   <p className="font-medium">{locale === "zh" ? product.name.zh : product.name.en}</p>

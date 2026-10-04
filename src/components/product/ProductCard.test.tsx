@@ -92,9 +92,9 @@ describe("ProductCard caption=code (design-draft look cards)", () => {
     expect(screen.queryByText("Tennis Ace")).not.toBeInTheDocument();
   });
 
-  it("formats the price as 美元 for zh locale", () => {
+  it("formats the price via Intl currency formatting for zh locale (US$ prefix, no ad-hoc 美元 suffix)", () => {
     render(<ProductCard product={make({ priceCents: 2200 })} locale="zh" caption="code" />);
-    expect(screen.getAllByText("22.00美元").length).toBeGreaterThan(0);
+    expect(screen.getAllByText("US$22.00").length).toBeGreaterThan(0);
   });
 
   it("keeps the USD price format for en locale", () => {

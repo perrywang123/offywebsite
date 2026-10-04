@@ -82,7 +82,8 @@ export const teaserSeries = {
   name: { zh: "时尚包挂系列", en: "Fashionable Bag Charm Collection" },
   /** 详情页 hero 超大英文标题(设计稿连写两行)。 */
   titleEn: "FASHIONABLEBAG CHARM COLLECTION",
-  note: { zh: "具体发布时间以 INS 为准", en: "Release date follows our Instagram" },
+  // 2026 首页文案表第 24 行:无对应中文原文,中英两版均使用英文原文。
+  note: { zh: "Follow @is.offy on Instagram for drop dates.", en: "Follow @is.offy on Instagram for drop dates." },
   heroImage: "/assets/teaser/teaser-hero.jpg",
   /** bag-charm 详情页 hero 双图(更多新品.psd:左 1888×1888 方形玩偶图 + 右 1308×1744 竖图)。 */
   heroLeft: "/assets/bag-charm/hero-left.png",
@@ -98,17 +99,29 @@ export const teaserSeries = {
   ],
 };
 
-// Upcoming IP (预告,不可售) — displayed on the brand/about page, not in the shop grid.
-export const upcomingIps = [
+// Upcoming IP (预告,不可售) — displayed on the brand/about page + 首页"后续新的 IP"模块。
+// 2026 首页文案表第 27 行:无对应中文原文,中英两版均使用英文原文;
+// 卡片图改用裁切后的无字插画(upcoming-kitty-art.png / upcoming-psyche-art.png),
+// 文案不再烤进图片像素,随语言/后续改文案实时更新。
+export interface UpcomingIp {
+  code: string;
+  name: { zh: string; en: string };
+  tagline: { zh: string; en: string };
+  art: string;
+}
+
+export const upcomingIps: UpcomingIp[] = [
   {
     code: "MISS-KITTY",
-    name: { zh: "凯蒂小姐 Miss Kitty", en: "Miss Kitty" },
-    tagline: { zh: "即将登场 · 千金大小姐,傲娇但心软", en: "Coming soon · The heiress, proud but soft-hearted" },
+    name: { zh: "Miss Kitty", en: "Miss Kitty" },
+    tagline: { zh: "A spoiled princess with a tender heart.", en: "A spoiled princess with a tender heart." },
+    art: "/assets/home/upcoming-kitty-art.png",
   },
   {
     code: "PSYCHE",
-    name: { zh: "普赛克 Psyche", en: "Psyche — Soul & Butterfly" },
-    tagline: { zh: "即将推出 · Soul & Butterfly,温柔而神秘", en: "Coming soon · Soul & Butterfly, gentle and mysterious" },
+    name: { zh: "PSYCHE", en: "PSYCHE" },
+    tagline: { zh: "Soul & Butterfly, gentle but mysterious.", en: "Soul & Butterfly, gentle but mysterious." },
+    art: "/assets/home/upcoming-psyche-art.png",
   },
 ];
 

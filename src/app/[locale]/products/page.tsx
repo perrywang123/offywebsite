@@ -25,7 +25,7 @@ export default async function ProductsPage({ params }: { params: Promise<{ local
       <CategoryTabs series={series} active={undefined} locale={locale} />
       <div className="mx-auto max-w-7xl px-6 py-12 lg:px-8">
         <header className="mb-10">
-          <p className="kicker mb-3">Catalog · {products.length} Looks</p>
+          <p className="kicker mb-3">{t("kicker", { count: products.length })}</p>
           <h1 className="font-display text-4xl font-semibold uppercase tracking-tight md:text-6xl">
             {t("title")}
           </h1>

@@ -1,6 +1,11 @@
 import { render, screen, fireEvent, act } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
 
+vi.mock("next-intl", () => ({
+  useTranslations: () => (key: string, values?: Record<string, string | number>) =>
+    values ? `${key}:${JSON.stringify(values)}` : key,
+}));
+
 vi.mock("@/i18n/navigation", () => ({
   Link: ({
     href,
@@ -30,7 +35,7 @@ const slides: HeroSlide[] = [
     image: "/assets/hero/hero-01.jpg",
     bg: "#babbb9",
     wordmark: true,
-    text: { zh: "让想象落地 让陪伴发生", en: "Let imagination land, let companionship happen" },
+    text: { zh: "让想象落地 让陪伴发生", en: "Line one\nLine two" },
   },
   {
     image: "/assets/hero/promo/doll.png",
@@ -43,40 +48,37 @@ const slides: HeroSlide[] = [
         "/assets/hero/promo/bag-3.png",
         "/assets/hero/promo/bag-4.png",
       ],
-      text: "/assets/hero/promo/promo-text.png",
+      text: { zh: "买三个公仔送包包", en: "Buy 3 get a free tote" },
     },
   },
   {
     image: "/assets/hero/hero-02.jpg",
     bg: "#f9f9f9",
     href: "/collections/princess-lady",
-    titleImage: "/assets/hero/titles/princess-lady.png",
-    subtitleImage: "/assets/hero/titles/sub-princess.png",
-    subtitleAlt: { zh: "生活需要仪式感", en: "Life needs a sense of ritual" },
+    title: { zh: "公主系列", en: "Princess Series" },
+    subtitle: { zh: "生活需要仪式感", en: "Life needs a sense of ritual" },
   },
   {
     image: "/assets/hero/hero-04.jpg",
     bg: "#3a383c",
     href: "/collections/outdoor-sporty",
-    titleImage: "/assets/hero/titles/fashion-life.png",
-    subtitleImage: "/assets/hero/titles/sub-fashion.png",
-    subtitleAlt: { zh: "周末出门玩", en: "Weekend outing" },
+    title: { zh: "时尚潮流", en: "Streetwear" },
+    subtitle: { zh: "周末出门玩", en: "Weekend outing" },
     dark: true,
   },
   {
     image: "/assets/hero/hero-03.jpg",
     bg: "#fdfdfd",
     href: "/collections/playful-life",
-    titleImage: "/assets/hero/titles/playful-life.png",
-    subtitleImage: "/assets/hero/titles/sub-playful.png",
-    subtitleAlt: { zh: "日常犯可爱", en: "Everyday cute" },
+    title: { zh: "趣味生活", en: "Playful Life" },
+    subtitle: { zh: "日常犯可爱", en: "Everyday cute" },
   },
 ];
 
 describe("HeroCarousel", () => {
   it("renders a details CTA link on each series slide (3-5), not on slides 1-2", () => {
     render(<HeroCarousel slides={slides} locale="zh" />);
-    const ctas = screen.getAllByRole("link", { name: "查看详情", hidden: true });
+    const ctas = screen.getAllByRole("link", { name: "heroDetailsCta", hidden: true });
     expect(ctas).toHaveLength(3);
     expect(ctas[0]).toHaveAttribute("href", "/collections/princess-lady");
     expect(ctas[1]).toHaveAttribute("href", "/collections/outdoor-sporty");
@@ -91,15 +93,21 @@ describe("HeroCarousel", () => {
     );
   });
 
-  it("renders the slide-1 one-line slogan", () => {
+  it("renders the slide-1 slogan localized by the locale prop", () => {
     render(<HeroCarousel slides={slides} locale="zh" />);
     expect(screen.getByText(/让想象落地/)).toBeInTheDocument();
     expect(screen.getByText(/让陪伴发生/)).toBeInTheDocument();
   });
 
-  it("renders the promo composite (doll + 4 bags + text PNG) on slide 2", () => {
+  it("renders a two-line slide-1 slogan (en, via explicit \\n) without baking it into an image", () => {
+    const { container } = render(<HeroCarousel slides={slides} locale="en" />);
+    const node = container.querySelector("p.whitespace-pre-line");
+    expect(node).toBeTruthy();
+    expect(node?.textContent).toBe("Line one\nLine two");
+  });
+
+  it("renders the promo composite (doll + 4 bags + live promo text, not a baked PNG)", () => {
     const { container } = render(<HeroCarousel slides={slides} locale="zh" />);
-    // mock 的 <img alt=""> 无障碍名为空,getAllByRole 匹配不到;直接查 DOM。
     const srcs = Array.from(container.querySelectorAll("img")).map((i) =>
       i.getAttribute("src"),
     );
@@ -107,27 +115,17 @@ describe("HeroCarousel", () => {
     for (const bag of ["bag-1", "bag-2", "bag-3", "bag-4"]) {
       expect(srcs).toContain(`/assets/hero/promo/${bag}.png`);
     }
-    expect(srcs).toContain("/assets/hero/promo/promo-text.png");
+    expect(screen.getByText("买三个公仔送包包")).toBeInTheDocument();
   });
 
-  it("renders OFFY title + subtitle images on series slides", () => {
-    const { container } = render(<HeroCarousel slides={slides} locale="zh" />);
-    const srcs = Array.from(container.querySelectorAll("img")).map((i) =>
-      i.getAttribute("src"),
-    );
-    for (const t of ["princess-lady", "fashion-life", "playful-life"]) {
-      expect(srcs).toContain(`/assets/hero/titles/${t}.png`);
-    }
-    for (const sub of ["sub-princess", "sub-fashion", "sub-playful"]) {
-      expect(srcs).toContain(`/assets/hero/titles/${sub}.png`);
-    }
-  });
-
-  it("renders subtitle alt text localized", () => {
+  it("renders OFFY title + subtitle as live text on series slides (not baked PNGs)", () => {
     render(<HeroCarousel slides={slides} locale="zh" />);
-    expect(screen.getByAltText("生活需要仪式感")).toBeInTheDocument();
-    expect(screen.getByAltText("周末出门玩")).toBeInTheDocument();
-    expect(screen.getByAltText("日常犯可爱")).toBeInTheDocument();
+    for (const title of ["公主系列", "时尚潮流", "趣味生活"]) {
+      expect(screen.getByText(title)).toBeInTheDocument();
+    }
+    for (const sub of ["生活需要仪式感", "周末出门玩", "日常犯可爱"]) {
+      expect(screen.getByText(sub)).toBeInTheDocument();
+    }
   });
 
   it("uses the white CTA arrow on the dark (fashion) slide and ink arrow elsewhere", () => {
@@ -139,18 +137,19 @@ describe("HeroCarousel", () => {
     expect(srcs).toContain("/assets/hero/cta-arrow.png");
   });
 
-  it("localizes overlay text for en", () => {
+  it("localizes title/subtitle text for en", () => {
     render(<HeroCarousel slides={slides} locale="en" />);
-    expect(screen.getByText(/Let imagination land/)).toBeInTheDocument();
-    expect(screen.getAllByRole("link", { name: "Details", hidden: true })).toHaveLength(3);
+    expect(screen.getByText("Princess Series")).toBeInTheDocument();
+    expect(screen.getByText("Life needs a sense of ritual")).toBeInTheDocument();
+    expect(screen.getAllByRole("link", { name: "heroDetailsCta", hidden: true })).toHaveLength(3);
   });
 
   it("advances on next arrow and goes back on prev arrow", () => {
     render(<HeroCarousel slides={slides} locale="zh" intervalMs={60000} />);
     const dots = screen.getAllByRole("tab", { hidden: true });
-    fireEvent.click(screen.getByRole("button", { name: /next/i }));
+    fireEvent.click(screen.getByRole("button", { name: "heroNextSlide" }));
     expect(dots[1]).toHaveAttribute("aria-selected", "true");
-    fireEvent.click(screen.getByRole("button", { name: /previous/i }));
+    fireEvent.click(screen.getByRole("button", { name: "heroPrevSlide" }));
     expect(dots[0]).toHaveAttribute("aria-selected", "true");
   });
 

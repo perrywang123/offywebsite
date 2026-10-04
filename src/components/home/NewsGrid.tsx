@@ -47,13 +47,13 @@ export function NewsGrid({
             />
             <div className="absolute inset-0 bg-gradient-to-t from-ink/70 via-ink/15 to-transparent" />
             <div className="absolute inset-x-0 bottom-0 p-6 md:p-8">
-              <span className="inline-block rounded-full bg-cream px-3 py-1 text-[10px] font-semibold uppercase tracking-[0.16em] text-ink">
+              <span className="inline-block rounded-full bg-cream px-3 py-1 text-[10px] font-semibold uppercase tracking-[var(--tracking-16)] text-ink">
                 {texts.badge}
               </span>
               <h3 className="mt-4 font-display text-3xl font-semibold tracking-tight text-cream md:text-5xl">
                 {texts.featureTitle}
               </h3>
-              <span className="mt-5 inline-flex h-11 items-center justify-center border border-cream px-6 text-xs font-medium uppercase tracking-[0.14em] text-cream transition-colors duration-300 group-hover:bg-cream group-hover:text-ink">
+              <span className="mt-5 inline-flex h-11 items-center justify-center border border-cream px-6 text-xs font-medium uppercase tracking-[var(--tracking-14)] text-cream transition-colors duration-300 group-hover:bg-cream group-hover:text-ink">
                 {texts.cta}
               </span>
             </div>

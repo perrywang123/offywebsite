@@ -46,14 +46,14 @@ export function CartDrawer() {
         aria-label={t("title")}
       >
         <header className="flex items-center justify-between border-b border-cream-line px-6 py-4">
-          <h2 className="text-base font-semibold uppercase tracking-[0.14em]">
+          <h2 className="text-base font-semibold uppercase tracking-[var(--tracking-14)]">
             {t("title")} ({lines.length})
           </h2>
           <button
             ref={closeRef}
             type="button"
             onClick={close}
-            aria-label="Close"
+            aria-label={ta("close")}
             className="flex h-8 w-8 items-center justify-center rounded-full text-ink-muted hover:bg-cream-deep"
           >
             ✕
@@ -62,7 +62,7 @@ export function CartDrawer() {
 
         {!catalogLoaded && lines.length > 0 ? (
           <div className="flex flex-1 items-center justify-center px-6 text-center text-sm text-ink-muted">
-            {locale === "zh" ? "正在加载购物车…" : "Loading your bag…"}
+            {t("loading")}
           </div>
         ) : items.length === 0 ? (
           <div className="flex flex-1 flex-col items-center justify-center gap-3 px-6 text-center">
@@ -82,7 +82,13 @@ export function CartDrawer() {
               {items.map(({ line, product }) => (
                 <li key={line.code} className="flex gap-4 p-4">
                   <div className="relative h-24 w-20 shrink-0 overflow-hidden rounded-soft bg-paper">
-                    <Image src={product.images[0]} alt={product.name.en} fill sizes="80px" className="object-cover" />
+                    <Image
+                      src={product.images[0]}
+                      alt={locale === "zh" ? product.name.zh : product.name.en}
+                      fill
+                      sizes="80px"
+                      className="object-cover"
+                    />
                   </div>
                   <div className="flex flex-1 flex-col">
                     <p className="text-sm font-medium">{locale === "zh" ? product.name.zh : product.name.en}</p>

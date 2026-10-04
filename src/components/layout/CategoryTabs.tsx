@@ -27,7 +27,7 @@ export function CategoryTabs({
         <Link
           href="/products"
           aria-current={active === undefined ? "page" : undefined}
-          className={`whitespace-nowrap text-xs uppercase tracking-[0.14em] transition-colors hover:text-ink ${
+          className={`whitespace-nowrap text-xs uppercase tracking-[var(--tracking-14)] transition-colors hover:text-ink ${
             active === undefined ? "font-bold text-ink" : "font-medium text-ink-soft"
           }`}
         >
@@ -40,7 +40,7 @@ export function CategoryTabs({
               key={s.slug}
               href={`/collections/${s.slug}`}
               aria-current={isActive ? "page" : undefined}
-              className={`whitespace-nowrap text-xs uppercase tracking-[0.14em] transition-colors hover:text-ink ${
+              className={`whitespace-nowrap text-xs uppercase tracking-[var(--tracking-14)] transition-colors hover:text-ink ${
                 isActive ? "font-bold text-ink" : "font-medium text-ink-soft"
               }`}
             >

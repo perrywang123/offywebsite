@@ -12,7 +12,7 @@ export default async function AboutPage({ params }: { params: Promise<{ locale: 
       {/* 页首：公司名 + slogan */}
       <section className="mx-auto max-w-7xl px-6 py-20 text-center lg:px-8">
         <Reveal>
-          <p className="kicker mb-5">Our Story</p>
+          <p className="kicker mb-5">{t("storyKicker")}</p>
           <h1 className="font-display text-5xl font-semibold leading-[1.05] tracking-tight md:text-7xl">
             {t("title")}
           </h1>
@@ -45,7 +45,7 @@ export default async function AboutPage({ params }: { params: Promise<{ locale: 
       <section className="bg-ink py-20 text-cream">
         <div className="mx-auto max-w-7xl px-6 lg:px-8">
           <Reveal>
-            <p className="kicker kicker--on-dark mb-8">The Makers</p>
+            <p className="kicker kicker--on-dark mb-8">{t("teamKicker")}</p>
           </Reveal>
           <div className="grid gap-8 md:grid-cols-2">
             {[
@@ -66,7 +66,7 @@ export default async function AboutPage({ params }: { params: Promise<{ locale: 
       {/* 零售网络 */}
       <section className="mx-auto max-w-7xl px-6 py-20 lg:px-8">
         <Reveal className="mb-8">
-          <p className="kicker mb-3">Stockists</p>
+          <p className="kicker mb-3">{t("retailKicker")}</p>
           <h2 className="font-display text-3xl font-semibold tracking-tight md:text-4xl">{t("retailHeading")}</h2>
         </Reveal>
         <ul className="divide-y divide-cream-line border-y border-cream-line">
@@ -77,7 +77,7 @@ export default async function AboutPage({ params }: { params: Promise<{ locale: 
           ].map(([city, addr]) => (
             <Reveal key={addr}>
               <li className="flex items-baseline justify-between gap-6 py-5">
-                <span className="text-xs font-semibold uppercase tracking-[0.18em] text-brown-600">{city}</span>
+                <span className="text-xs font-semibold uppercase tracking-[var(--tracking-18)] text-brown-600">{city}</span>
                 <span className="text-ink-soft">{addr}</span>
               </li>
             </Reveal>
@@ -88,13 +88,13 @@ export default async function AboutPage({ params }: { params: Promise<{ locale: 
       {/* 未来 IP */}
       <section className="mx-auto max-w-7xl px-6 py-20 lg:px-8">
         <Reveal className="mb-8">
-          <p className="kicker mb-3">Coming Next</p>
+          <p className="kicker mb-3">{t("futureKicker")}</p>
           <h2 className="font-display text-3xl font-semibold tracking-tight md:text-4xl">{t("futureHeading")}</h2>
         </Reveal>
         <div className="grid gap-6 md:grid-cols-2">
           {upcomingIps.map((ip) => (
             <Reveal key={ip.code}>
-              <div className="media-placeholder aspect-[4/3] rounded-block" data-label="COMING SOON — TBD">
+              <div className="media-placeholder aspect-[4/3] rounded-block" data-label={t("comingSoonLabel")}>
                 <div className="relative z-10 p-8 text-center">
                   <p className="font-display text-2xl font-semibold text-ink">{locale === "zh" ? ip.name.zh : ip.name.en}</p>
                   <p className="mt-2 text-sm text-ink-soft">{locale === "zh" ? ip.tagline.zh : ip.tagline.en}</p>
@@ -108,12 +108,12 @@ export default async function AboutPage({ params }: { params: Promise<{ locale: 
       {/* 定制 CTA */}
       <section className="mx-auto max-w-3xl px-6 py-20 text-center lg:px-8">
         <Reveal>
-          <p className="kicker mb-3">Make Offy Yours</p>
+          <p className="kicker mb-3">{t("customKicker")}</p>
           <h2 className="font-display text-3xl font-semibold tracking-tight md:text-4xl">{t("customHeading")}</h2>
           <p className="mx-auto mt-4 max-w-xl text-ink-soft">{t("customBody")}</p>
           <div className="mt-6 flex flex-wrap justify-center gap-2">
             {collabLooks.map((code) => (
-              <span key={code} className="rounded-full border border-sand px-3 py-1 text-xs uppercase tracking-[0.12em] text-ink-soft">
+              <span key={code} className="rounded-full border border-sand px-3 py-1 text-xs uppercase tracking-[var(--tracking-12)] text-ink-soft">
                 {code}
               </span>
             ))}

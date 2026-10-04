@@ -75,7 +75,7 @@ export default async function LocaleLayout({
           <CartProvider>
             <Header series={series} />
             <main>{children}</main>
-            <Footer series={series} />
+            <Footer series={series} locale={locale} />
             <CartDrawer />
           </CartProvider>
         </NextIntlClientProvider>
