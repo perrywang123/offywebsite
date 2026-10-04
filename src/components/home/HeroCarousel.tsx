@@ -70,9 +70,10 @@ export function HeroCarousel({
           </div>
         ))}
       </div>
-      {/* 促销文案(实时文字,PSD x11.5% y62.4% w49.9% 区域) */}
-      <div className="absolute left-[11.5%] top-[62.4%] w-[49.9%] max-w-[680px]">
-        <p className="text-[clamp(12px,2.3cqw,30px)] font-bold uppercase leading-snug tracking-[var(--tracking-10)] text-ink">
+      {/* 促销文案(实时文字,PSD x11.5% w49.9% 区域;y 由 62.4% 下移到 69%——
+          反馈:原位置太靠上;字号由 2.3cqw 加大到 3.2cqw 并改为 extrabold) */}
+      <div className="absolute left-[11.5%] top-[69%] w-[49.9%] max-w-[680px]">
+        <p className="text-[clamp(14px,3.2cqw,44px)] font-extrabold uppercase leading-tight tracking-[var(--tracking-10)] text-ink">
           {locale === "zh" ? s.promo!.text.zh : s.promo!.text.en}
         </p>
       </div>
@@ -86,11 +87,15 @@ export function HeroCarousel({
     const subtitle = s.subtitle ? (locale === "zh" ? s.subtitle.zh : s.subtitle.en) : null;
     return (
       <>
-        {/* 标题 + 副标题(实时文字区,锚点与 PSD 一致,但放宽宽度容纳较长的英文词组,
-            避免英文版出现生硬截断/换行) */}
-        <div className="absolute left-[11.5%] top-[58%] w-[58%] min-w-[170px] max-w-[640px]">
+        {/* 标题 + 副标题(实时文字区,放宽宽度容纳较长的英文词组,避免生硬截断/换行;
+            反馈:文字块应与右下「查看详情」按钮(top 73.1% + h 6.1% → 中心 76.2%)
+            在同一中轴线上——用 top 76.1% + -translate-y-1/2 做精确垂直居中,
+            任意文案长度/换行都始终对齐;max-w 700px 保证最长的英文标题
+            (OFFY Streetwear Series)在桌面端单行不折行,移动端经实测文字右缘
+            ≤56% 不会碰到按钮(左缘 58%)。 */}
+        <div className="absolute left-[11.5%] top-[76.1%] w-[58%] min-w-[170px] max-w-[700px] -translate-y-1/2">
           <p
-            className={`text-[clamp(17px,3.6cqw,50px)] font-extrabold uppercase leading-[1.1] tracking-tight ${
+            className={`text-[clamp(13px,3.2cqw,50px)] font-extrabold uppercase leading-[1.1] tracking-tight ${
               s.dark ? "text-cream" : "text-ink"
             }`}
           >
@@ -127,9 +132,11 @@ export function HeroCarousel({
 
   const renderOverlay = (s: HeroSlide) => (
     <>
-      {/* 屏 1:is.offy 字标(PSD 居中,顶 9.7%,宽 18.3%)+ slogan(顶 29.5%);
-          字号 4cqw 跟随头图宽,clamp 约束,过长自然换行不溢出;
-          en 文案允许用 "\n" 显式分两行(whitespace-pre-line)。 */}
+      {/* 屏 1:is.offy 字标(PSD 居中,顶 9.7%,宽 18.3%)+ slogan;
+          字号跟随头图宽,clamp 约束,过长自然换行不溢出;
+          en 文案允许用 "\n" 显式分两行(whitespace-pre-line)。
+          slogan 顶距由 29.5% 上收到 24%——反馈:文字与画面中间的 offy 玩偶
+          有重叠,需更靠近顶部字标(字标本体约到 22% 高度)。 */}
       {s.wordmark && (
         <>
           <div className="absolute inset-x-0 top-[9.7%] flex justify-center">
@@ -140,7 +147,7 @@ export function HeroCarousel({
               className="w-[18.3%] min-w-[80px] max-w-[264px]"
             />
           </div>
-          <div className="absolute inset-x-0 top-[29.5%] flex justify-center px-[4%]">
+          <div className="absolute inset-x-0 top-[25%] flex justify-center px-[4%]">
             <p className="max-w-full whitespace-pre-line break-words text-center text-[clamp(14px,3.6cqw,46px)] font-bold leading-[1.45] tracking-[var(--tracking-10)] text-ink">
               {locale === "zh" ? s.text!.zh : s.text!.en}
             </p>
