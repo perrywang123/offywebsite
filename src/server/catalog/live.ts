@@ -136,24 +136,36 @@ export async function getLiveProducts(): Promise<Product[]> {
 }
 
 /**
- * 首页精选商品:Shopify 侧没有稳定的"精选"字段/标签可用,改为跨系列轮询
- * (每个系列依次各取一款,凑满 limit),近似还原原先人工挑选、覆盖三大系列
- * 的首页陈列效果,并随各系列实际上下架自动调整。
+ * 首页"New Looks"(最新造型曝光):每个系列取**最新上架**的 N 款(默认 2 款,
+ * 3 系列共 6 款)——按 Shopify 商品 createdAt 降序排序,而不是 Collection
+ * 后台的手工排列顺序;商家新上架一款商品,下一次请求即进入本模块。
+ * 过滤不可售款(售罄/下架不占位)。Shopify 不可达时按系列回退本地清单前 N 款。
  */
-export async function getLiveFeaturedProducts(limit = 6): Promise<Product[]> {
+export async function getLiveNewLooksProducts(perSeries = 2): Promise<Product[]> {
   const slugs = Object.keys(SERIES_SHOPIFY_HANDLE) as SeriesSlug[];
-  const perSeries = await Promise.all(slugs.map((s) => getLiveProductsBySeries(s)));
-  const pools = perSeries.map((list) => list.filter((p) => p.isAvailable));
-  const result: Product[] = [];
-  let i = 0;
-  while (result.length < limit && pools.some((list) => i < list.length)) {
-    for (const list of pools) {
-      if (result.length >= limit) break;
-      if (list[i]) result.push(list[i]);
-    }
-    i += 1;
-  }
-  return result;
+  const perSeriesResults = await Promise.all(
+    slugs.map(async (slug) => {
+      try {
+        const items = await fetchShopifyCollectionProducts(SERIES_SHOPIFY_HANDLE[slug]);
+        return items
+          .filter((item) => item.available)
+          .sort((a, b) => {
+            // createdAt 缺失的旧数据视为最旧,排在最后
+            const ta = a.createdAt ? Date.parse(a.createdAt) : 0;
+            const tb = b.createdAt ? Date.parse(b.createdAt) : 0;
+            return tb - ta;
+          })
+          .slice(0, perSeries)
+          .map((item, i) => toLiveProduct(item, slug, i * 10));
+      } catch (error) {
+        console.error(`getLiveNewLooksProducts(${slug}): Shopify unreachable, falling back to local roster`, error);
+        return getProductsBySeries(slug)
+          .filter((p) => p.isAvailable)
+          .slice(0, perSeries);
+      }
+    }),
+  );
+  return perSeriesResults.flat();
 }
 
 /**

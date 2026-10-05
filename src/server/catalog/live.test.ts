@@ -12,7 +12,7 @@ vi.mock("../shopify/products", () => ({
 import { fetchShopifyCollectionProducts, fetchShopifyCollections } from "../shopify/catalog";
 import { fetchProductData } from "../shopify/products";
 import {
-  getLiveFeaturedProducts,
+  getLiveNewLooksProducts,
   getLiveProductByCode,
   getLiveProducts,
   getLiveProductsBySeries,
@@ -114,30 +114,73 @@ describe("getLiveProducts", () => {
   });
 });
 
-describe("getLiveFeaturedProducts", () => {
-  it("round-robins across the three series so the homepage shows a cross-series mix", async () => {
-    mockedCollectionProducts.mockImplementation(async (handle: string) => {
-      if (handle === "frontpage") {
-        return ["a1", "a2", "a3"].map((h, i) => ({ handle: h, title: h, priceCents: 100, currency: "USD", image: "x", available: true, variantId: String(i) }));
-      }
-      if (handle === "outdoor-sporty系列") {
-        return ["b1", "b2"].map((h, i) => ({ handle: h, title: h, priceCents: 100, currency: "USD", image: "x", available: true, variantId: String(i) }));
-      }
-      return ["c1"].map((h, i) => ({ handle: h, title: h, priceCents: 100, currency: "USD", image: "x", available: true, variantId: String(i) }));
-    });
-    const featured = await getLiveFeaturedProducts(6);
-    // 轮询顺序: a1,b1,c1,a2,b2,a3 (每轮各系列按序各取一款,系列耗尽则跳过)
-    expect(featured.map((p) => p.code)).toEqual(["a1", "b1", "c1", "a2", "b2", "a3"]);
+describe("getLiveNewLooksProducts", () => {
+  const item = (handle: string, createdAt: string | null, available = true) => ({
+    handle,
+    title: handle.toUpperCase(),
+    priceCents: 100,
+    currency: "USD",
+    image: "x",
+    available,
+    variantId: `v-${handle}`,
+    sku: null,
+    createdAt,
   });
 
-  it("excludes unavailable products from the featured pool", async () => {
-    mockedCollectionProducts.mockImplementation(async () => [
-      { handle: "sold-out", title: "x", priceCents: 100, currency: "USD", image: "x", available: false, variantId: "v" },
-      { handle: "in-stock", title: "x", priceCents: 100, currency: "USD", image: "x", available: true, variantId: "v" },
+  it("takes the newest N products per series by Shopify createdAt (not the collection's manual order), concatenated in series order", async () => {
+    mockedCollectionProducts.mockImplementation(async (handle: string) => {
+      if (handle === "frontpage") {
+        // 故意按"旧→新"返回,验证函数按 createdAt 重新降序排序
+        return [
+          item("a-old", "2026-01-01T00:00:00Z"),
+          item("a-new", "2026-09-01T00:00:00Z"),
+          item("a-mid", "2026-05-01T00:00:00Z"),
+        ];
+      }
+      if (handle === "outdoor-sporty系列") {
+        return [item("b-old", "2026-02-01T00:00:00Z"), item("b-new", "2026-08-01T00:00:00Z")];
+      }
+      return [item("c-only", "2026-07-01T00:00:00Z")];
+    });
+    const looks = await getLiveNewLooksProducts(2);
+    // 每系列取最新 2 款,按系列顺序拼合;某系列不足 2 款则有多少给多少
+    expect(looks.map((p) => p.code)).toEqual(["a-new", "a-mid", "b-new", "b-old", "c-only"]);
+  });
+
+  it("excludes unavailable products before picking the newest N", async () => {
+    mockedCollectionProducts.mockImplementation(async (handle: string) => {
+      if (handle !== "frontpage") return [];
+      return [
+        item("newest-but-sold-out", "2026-09-01T00:00:00Z", false),
+        item("newest-available", "2026-08-01T00:00:00Z"),
+        item("older-available", "2026-01-01T00:00:00Z"),
+      ];
+    });
+    const looks = await getLiveNewLooksProducts(2);
+    expect(looks.map((p) => p.code)).toEqual(["newest-available", "older-available"]);
+    expect(looks.every((p) => p.isAvailable)).toBe(true);
+  });
+
+  it("treats items with missing createdAt as the oldest (sorted last)", async () => {
+    mockedCollectionProducts.mockImplementation(async (handle: string) => {
+      if (handle !== "frontpage") return [];
+      return [item("no-date", null), item("dated", "2026-06-01T00:00:00Z")];
+    });
+    const looks = await getLiveNewLooksProducts(1);
+    expect(looks.map((p) => p.code)).toEqual(["dated"]);
+  });
+
+  it("falls back to the first N local products of that series when Shopify is unreachable", async () => {
+    mockedCollectionProducts.mockRejectedValue(new Error("timeout"));
+    const looks = await getLiveNewLooksProducts(2);
+    // 本地清单按 sortOrder 取每系列前 2 款(均为可售);本地 outdoor-sporty 仅 1 款 → 共 5 款
+    expect(looks.map((p) => p.code)).toEqual([
+      "swan-princess",
+      "black-pearl",
+      "offy_redrush",
+      "prep-school",
+      "country-getaway",
     ]);
-    const featured = await getLiveFeaturedProducts(6);
-    expect(featured.every((p) => p.isAvailable)).toBe(true);
-    expect(featured.some((p) => p.code === "sold-out")).toBe(false);
   });
 });
 

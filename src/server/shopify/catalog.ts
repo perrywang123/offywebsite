@@ -27,6 +27,8 @@ export interface ShopifyCollectionProductItem {
   variantId: string | null;
   /** Merchant-managed variant SKU — the human-facing "product code", distinct from the URL handle. */
   sku: string | null;
+  /** 商品在 Shopify 的创建时间(ISO 8601)——首页"New Looks"按它取每系列最新上架款。 */
+  createdAt: string | null;
 }
 
 /**
@@ -185,6 +187,7 @@ query CollectionProducts($handle: String!) @inContext(country: ${country}) {
       nodes {
         handle
         title
+        createdAt
         availableForSale
         featuredImage { url }
         priceRange { minVariantPrice { amount currencyCode } }
@@ -198,6 +201,7 @@ query CollectionProducts($handle: String!) @inContext(country: ${country}) {
 interface CollectionProductNode {
   handle: string;
   title?: string;
+  createdAt?: string;
   availableForSale?: boolean;
   featuredImage?: { url?: string } | null;
   priceRange?: { minVariantPrice?: { amount?: string; currencyCode?: string } };
@@ -254,6 +258,7 @@ export async function fetchShopifyCollectionProducts(
       available: Boolean(n.availableForSale),
       variantId: n.variants?.nodes?.[0]?.id ?? null,
       sku: n.variants?.nodes?.[0]?.sku || null,
+      createdAt: n.createdAt ?? null,
     };
   });
 }

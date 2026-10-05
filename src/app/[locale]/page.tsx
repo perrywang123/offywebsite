@@ -3,7 +3,7 @@ import { getTranslations } from "next-intl/server";
 import { Link } from "@/i18n/navigation";
 import { teaserSeries, upcomingIps } from "@/lib/catalog";
 import { heroSlides, newsFeature, newsItems } from "@/lib/content";
-import { getLiveFeaturedProducts, getLiveProducts } from "@/server/catalog/live";
+import { getLiveNewLooksProducts, getLiveProducts } from "@/server/catalog/live";
 import { Reveal } from "@/components/Reveal";
 
 export const revalidate = 60;
@@ -23,7 +23,8 @@ export default async function HomePage({ params }: { params: Promise<{ locale: s
 
   // 实时拉取 Shopify:每次请求都反映当前真实的系列成员/价格/图片,不再依赖
   // 本地手写死的商品快照;Shopify 不可达时内部自动回退本地数据。
-  const looks = await getLiveFeaturedProducts(6);
+  // New Looks:每个系列按 Shopify 创建时间取最新 2 款(3 系列共 6 款)。
+  const looks = await getLiveNewLooksProducts(2);
   const roster = await getLiveProducts();
   const regionals = roster.filter((p) => p.badge);
 
@@ -82,7 +83,9 @@ export default async function HomePage({ params }: { params: Promise<{ locale: s
         <div className="grid grid-cols-2 gap-x-4 gap-y-10 sm:gap-x-6 lg:grid-cols-3 lg:gap-x-8">
           {looks.map((p, i) => (
             <Reveal key={p.code} delay={Math.min(i, 5) * 60}>
-              <ProductCard product={p} locale={locale} caption="code" sizes="(max-width: 768px) 50vw, 33vw" />
+              {/* 显示商品名而非 SKU:商家的真实 SKU 可能是任意字符串
+                  (如 NEON RUSH 的 SKU 是 "20"),直接展示会像乱码。 */}
+              <ProductCard product={p} locale={locale} sizes="(max-width: 768px) 50vw, 33vw" />
             </Reveal>
           ))}
         </div>
@@ -92,7 +95,7 @@ export default async function HomePage({ params }: { params: Promise<{ locale: s
         <div className="mt-6 grid grid-cols-2 gap-x-4 gap-y-10 sm:gap-x-6 lg:grid-cols-3 lg:gap-x-8">
           {regionals.map((p) => (
             <Reveal key={p.code}>
-              <ProductCard product={p} locale={locale} caption="code" sizes="(max-width: 768px) 50vw, 33vw" />
+              <ProductCard product={p} locale={locale} sizes="(max-width: 768px) 50vw, 33vw" />
             </Reveal>
           ))}
         </div>

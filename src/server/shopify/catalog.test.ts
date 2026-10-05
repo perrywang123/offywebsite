@@ -89,6 +89,7 @@ describe("fetchShopifyCollectionProducts", () => {
               {
                 handle: "noir",
                 title: "NOIR",
+                createdAt: "2026-09-01T00:00:00Z",
                 availableForSale: true,
                 featuredImage: { url: "https://cdn.shopify.com/noir.jpg" },
                 priceRange: { minVariantPrice: { amount: "45.00", currencyCode: "USD" } },
@@ -119,6 +120,7 @@ describe("fetchShopifyCollectionProducts", () => {
         available: true,
         variantId: "gid://shopify/ProductVariant/1",
         sku: "CLUB-28",
+        createdAt: "2026-09-01T00:00:00Z",
       },
       {
         handle: "ease",
@@ -129,6 +131,7 @@ describe("fetchShopifyCollectionProducts", () => {
         available: false,
         variantId: null,
         sku: null,
+        createdAt: null,
       },
     ]);
   });
