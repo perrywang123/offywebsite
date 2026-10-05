@@ -92,17 +92,21 @@ export function HeroCarousel({
           {title}
         </p>
         {/* 查看详情(PSD x73.8% y62.8% w11.6% h4.95%,与副标题同带;
-            无边框:47px=1.45cqw 文字 + 箭头图标,浅底黑字/深底白字) */}
+            PSD 矩形7:胶囊形(角半径≈47%高=rounded-full)+ 3px 描边无填充
+            (浅底黑边黑字/深底 #f3f0f1 白边白字),47px=1.45cqw 文字 + 箭头图标;
+            hover 反色填充,箭头同步反色。 */}
         <Link
           href={s.href!}
-          className={`group absolute left-[73.8%] top-[62.8%] flex h-[4.95%] min-h-[28px] w-[11.6%] min-w-[84px] items-center justify-center gap-1.5 text-[clamp(10px,1.45cqw,21px)] font-normal transition-opacity hover:opacity-60 ${
-            s.dark ? "text-cream" : "text-ink"
+          className={`group absolute left-[73.8%] top-[62.8%] flex h-[4.95%] min-h-[28px] w-[11.6%] min-w-[84px] items-center justify-center gap-1.5 rounded-full border-[1.5px] text-[clamp(10px,1.45cqw,21px)] font-normal transition-colors ${
+            s.dark
+              ? "border-cream text-cream hover:bg-cream hover:text-ink"
+              : "border-ink text-ink hover:bg-ink hover:text-cream"
           }`}
           onClick={(e) => e.stopPropagation()}
         >
           <span className="whitespace-nowrap">{t("heroDetailsCta")}</span>
           {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img src={arrowSrc} alt="" className="h-[0.85em] w-auto" />
+          <img src={arrowSrc} alt="" className="h-[0.85em] w-auto transition-colors group-hover:invert" />
         </Link>
       </>
     );
@@ -210,13 +214,14 @@ export function HeroCarousel({
             ))}
           </div>
           {/* 右下 ←/→ 箭头按钮(PSD y76.3-82.3%,与主标题同带;x89.8-97.2%;
-              120×122px≈3.7cqw 方形,黑 50% 透明底 + 白色箭头图标) */}
-          <div className="absolute right-[2.8%] top-[76.3%] flex">
+              120×122px≈3.7cqw 方形,黑 50% 透明底 + 白色箭头图标;
+              效果图实测两按钮间有约 8-12px 间距(gap-1)且角部微圆) */}
+          <div className="absolute right-[2.8%] top-[76.3%] flex gap-1">
             <button
               type="button"
               aria-label={t("heroPrevSlide")}
               onClick={() => go(active - 1)}
-              className="pointer-events-auto flex h-[clamp(30px,3.7cqw,48px)] w-[clamp(30px,3.7cqw,48px)] items-center justify-center bg-ink/50 transition-colors hover:bg-ink/70"
+              className="pointer-events-auto flex h-[clamp(30px,3.7cqw,48px)] w-[clamp(30px,3.7cqw,48px)] items-center justify-center rounded-[4px] bg-ink/50 transition-colors hover:bg-ink/70"
             >
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img src="/assets/hero/arrow-left.png" alt="" className="h-[clamp(8px,1.2cqw,15px)] w-auto" />
@@ -225,7 +230,7 @@ export function HeroCarousel({
               type="button"
               aria-label={t("heroNextSlide")}
               onClick={() => go(active + 1)}
-              className="pointer-events-auto flex h-[clamp(30px,3.7cqw,48px)] w-[clamp(30px,3.7cqw,48px)] items-center justify-center bg-ink/50 transition-colors hover:bg-ink/70"
+              className="pointer-events-auto flex h-[clamp(30px,3.7cqw,48px)] w-[clamp(30px,3.7cqw,48px)] items-center justify-center rounded-[4px] bg-ink/50 transition-colors hover:bg-ink/70"
             >
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img src="/assets/hero/arrow-right.png" alt="" className="h-[clamp(8px,1.2cqw,15px)] w-auto" />
