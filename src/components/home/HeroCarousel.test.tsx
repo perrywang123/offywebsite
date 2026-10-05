@@ -38,17 +38,11 @@ const slides: HeroSlide[] = [
     text: { zh: "让想象落地 让陪伴发生", en: "Line one\nLine two" },
   },
   {
-    image: "/assets/hero/promo/doll.png",
-    bg: "#ffffff",
+    image: "/assets/hero/hero-promo.jpg",
+    bg: "#f7f2ef",
     promo: {
-      doll: "/assets/hero/promo/doll.png",
-      bags: [
-        "/assets/hero/promo/bag-1.png",
-        "/assets/hero/promo/bag-2.png",
-        "/assets/hero/promo/bag-3.png",
-        "/assets/hero/promo/bag-4.png",
-      ],
-      text: { zh: "买三个公仔送包包", en: "Buy 3 get a free tote" },
+      kicker: { zh: "OFFY大促加赠", en: "OFFY MEGA GIVEAWAY" },
+      text: { zh: "买三个公仔\n送包包", en: "Buy 3\nget a free tote" },
     },
   },
   {
@@ -106,16 +100,16 @@ describe("HeroCarousel", () => {
     expect(node?.textContent).toBe("Line one\nLine two");
   });
 
-  it("renders the promo composite (doll + 4 bags + live promo text, not a baked PNG)", () => {
+  it("renders the promo slide (bg image with products baked in + live kicker & two-line promo text)", () => {
     const { container } = render(<HeroCarousel slides={slides} locale="zh" />);
     const srcs = Array.from(container.querySelectorAll("img")).map((i) =>
       i.getAttribute("src"),
     );
-    expect(srcs).toContain("/assets/hero/promo/doll.png");
-    for (const bag of ["bag-1", "bag-2", "bag-3", "bag-4"]) {
-      expect(srcs).toContain(`/assets/hero/promo/${bag}.png`);
-    }
-    expect(screen.getByText("买三个公仔送包包")).toBeInTheDocument();
+    expect(srcs).toContain("/assets/hero/hero-promo.jpg");
+    expect(screen.getByText("OFFY大促加赠")).toBeInTheDocument();
+    // 两行大字:whitespace-pre-line 保留显式 \n 换行
+    const promoText = container.querySelector("p.whitespace-pre-line:not(.break-words)");
+    expect(promoText?.textContent).toBe("买三个公仔\n送包包");
   });
 
   it("renders OFFY title + subtitle as live text on series slides (not baked PNGs)", () => {

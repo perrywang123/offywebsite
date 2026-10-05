@@ -19,7 +19,7 @@ export default async function CollectionsPage({ params }: { params: Promise<{ lo
       return {
         ...s,
         count: products.length,
-        image: products[0]?.images[0] ?? "/assets/hero/hero-01.jpg",
+        image: products[0]?.images[0] ?? "/assets/hero/hero-brand.jpg",
       };
     }),
   );

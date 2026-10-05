@@ -39,7 +39,7 @@ export async function generateMetadata({
       description: t("tagline"),
       type: "website",
       locale: locale === "zh" ? "zh_CN" : "en_US",
-      images: [{ url: "/assets/hero/hero-01.jpg", width: 1920, height: 1071, alt: "is.offy" }],
+      images: [{ url: "/assets/hero/hero-brand.jpg", width: 3250, height: 2041, alt: "is.offy" }],
     },
   };
 }
