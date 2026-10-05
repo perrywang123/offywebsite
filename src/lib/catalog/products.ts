@@ -101,13 +101,11 @@ export const teaserSeries = {
 
 // Upcoming IP (预告,不可售) — displayed on the brand/about page + 首页"后续新的 IP"模块。
 // 2026 首页文案表第 27 行:无对应中文原文,中英两版均使用英文原文;
-// 卡片图改用裁切后的无字插画(upcoming-kitty-art.png / upcoming-psyche-art.png),
-// 文案不再烤进图片像素,随语言/后续改文案实时更新。
+// 卡片为 PSD 点阵占位盒(角色形象未公开,COMING SOON — TBD),文案实时双语渲染。
 export interface UpcomingIp {
   code: string;
   name: { zh: string; en: string };
   tagline: { zh: string; en: string };
-  art: string;
 }
 
 export const upcomingIps: UpcomingIp[] = [
@@ -115,13 +113,11 @@ export const upcomingIps: UpcomingIp[] = [
     code: "MISS-KITTY",
     name: { zh: "Miss Kitty", en: "Miss Kitty" },
     tagline: { zh: "A spoiled princess with a tender heart.", en: "A spoiled princess with a tender heart." },
-    art: "/assets/home/upcoming-kitty-art.png",
   },
   {
     code: "PSYCHE",
     name: { zh: "PSYCHE", en: "PSYCHE" },
     tagline: { zh: "Soul & Butterfly, gentle but mysterious.", en: "Soul & Butterfly, gentle but mysterious." },
-    art: "/assets/home/upcoming-psyche-art.png",
   },
 ];
 

@@ -200,12 +200,17 @@ export default async function HomePage({ params }: { params: Promise<{ locale: s
           <h2 className="font-display text-[clamp(26px,2.2vw,48px)] font-semibold uppercase tracking-tight">{t("comingTitle")}</h2>
           <p className="mt-3 text-ink-soft">{t("comingSub")}</p>
         </Reveal>
-        {/* 裁切后无烤字插画(顶部约 33% 高度) + 实时文字;
+        {/* PSD:整卡点阵占位盒,卡片内部左文右「COMING SOON — TBD」;
             移动端 grid-cols-1 上下排布,桌面 md:grid-cols-2 左右并排 */}
         <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
           {upcomingIps.map((ip) => (
             <Reveal key={ip.code}>
-              <UpcomingCard ip={ip} inDevelopmentLabel={t("inDevelopment")} locale={locale} />
+              <UpcomingCard
+                ip={ip}
+                inDevelopmentLabel={t("inDevelopment")}
+                comingSoonLabel={t("comingSoonTbd")}
+                locale={locale}
+              />
             </Reveal>
           ))}
         </div>
