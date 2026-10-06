@@ -99,25 +99,31 @@ export const teaserSeries = {
   ],
 };
 
-// Upcoming IP (预告,不可售) — displayed on the brand/about page + 首页"后续新的 IP"模块。
-// 2026 首页文案表第 27 行:无对应中文原文,中英两版均使用英文原文;
-// 卡片为 PSD 点阵占位盒(角色形象未公开,COMING SOON — TBD),文案实时双语渲染。
+// Upcoming IP (预告,不可售) —— 首页「后续计划」模块(后续计划.psd,画布 3195×1245)。
+// PSD 只有英文稿,中英两版同文案;角色插画从 PSD 的智能对象导出(透明底)。
+// 卡片视觉:点阵底 + 右侧溢出卡片的角色插画 + IN DEVELOPMENT 胶囊 + 名字 + 居中两行标语。
 export interface UpcomingIp {
   code: string;
   name: { zh: string; en: string };
   tagline: { zh: string; en: string };
+  /** 角色插画(透明底 PNG,从 PSD 智能对象导出)。 */
+  image: string;
 }
 
 export const upcomingIps: UpcomingIp[] = [
   {
     code: "MISS-KITTY",
     name: { zh: "Miss Kitty", en: "Miss Kitty" },
-    tagline: { zh: "A spoiled princess with a tender heart.", en: "A spoiled princess with a tender heart." },
+    // 标语里的 \n 是 PSD 的显式断行(设计稿就是两行),不是排版折行
+    tagline: { zh: "A spoiled princess with\na tender heart.", en: "A spoiled princess with\na tender heart." },
+    image: "/assets/home/upcoming-kitty.png",
   },
   {
-    code: "PSYCHE",
-    name: { zh: "PSYCHE", en: "PSYCHE" },
-    tagline: { zh: "Soul & Butterfly, gentle but mysterious.", en: "Soul & Butterfly, gentle but mysterious." },
+    // 旧版这里叫 PSYCHE;后续计划.psd 已定名 Butterfly Sprite。
+    code: "BUTTERFLY-SPRITE",
+    name: { zh: "Butterfly Sprite", en: "Butterfly Sprite" },
+    tagline: { zh: "Soul & Butterfly,\ngentle but mysterious.", en: "Soul & Butterfly,\ngentle but mysterious." },
+    image: "/assets/home/upcoming-butterfly.png",
   },
 ];
 

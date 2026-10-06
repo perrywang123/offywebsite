@@ -75,50 +75,68 @@ export function HeroCarousel({
     const subtitle = s.subtitle ? (locale === "zh" ? s.subtitle.zh : s.subtitle.en) : null;
     return (
       <>
-        {/* 副标题(PSD 例:Romanticize the Everyday bbox x210 y1606 w1147 h60:
-            x6.46% y64.51%,79.8px=2.46cqw) */}
-        {subtitle && (
-          <p
-            className={`absolute left-[6.4%] top-[64.51%] text-[clamp(11px,2.46cqw,36px)] font-normal uppercase leading-snug tracking-[var(--tracking-10)] ${
-              s.dark ? "text-cream/85" : "text-ink-soft"
+        {/* 副标题与「查看详情」放在**同一个 flex 行**里(items-center + justify-between),
+            这样按钮的垂直中心天然跟这行小字的中心对齐,任何视口下都一致 ——
+            旧版是两段各自 absolute 定位(副标题 y64.51%、按钮 y62.75%),按钮中心
+            比小字中心高约 2% 头图高(实测 1440 下 65.22% vs 67.20%),看着就是没对齐。
+            行的左右边界 6.4% / 93.6% 与两个元素的 PSD 位置一致(按钮右缘 78+15.35=93.35%)。
+            按钮用 absolute + top-1/2 居中,而不是当 flex 子项:它带 min-h-[24px],在
+            窄屏(如 390px)会反过来把整行撑高,把副标题顶下去撞到主标题(实测副标题
+            被推到 66.3%)。绝对定位后行高只由小字行盒决定,副标题恒定在 64.51%。 */}
+        <div className="absolute inset-x-[6.4%] top-[64.51%]">
+          {/* 副标题(PSD 例:Romanticize the Everyday bbox x210 y1606 w1147 h60:
+              x6.46% y64.51%,79.8px=2.46cqw) */}
+          {subtitle && (
+            <p
+              className={`pr-[18cqw] text-[clamp(11px,2.46cqw,36px)] font-normal uppercase leading-snug tracking-[var(--tracking-10)] ${
+                s.dark ? "text-cream/85" : "text-ink-soft"
+              }`}
+            >
+              {subtitle}
+            </p>
+          )}
+          {/* 查看详情(PSD 组「查看详情 拷贝 N」:矩形7 bbox x2535 y1570 w499 h101
+              = x78.00% w15.35% h4.94%头图高=3.11cqw;箭头 x90.62%;
+              胶囊形 + 1.5px 描边无填充,浅底黑边黑字/深底白边白字)。
+              内边距/间距按 PSD 实测:左右各 50/3250=1.54%、文字到箭头 27/3250=0.83cqw。
+              宽度用 min-w 而不是固定 w —— 固定宽度在窄屏或中文短字时会挤压文字。
+              尺寸统一用 cqw(相对头图容器),避免被父级 flex 行的宽度改变百分比基数。
+              字号在 PSD 的 47.2px=1.45cqw 基础上再小 2 号 → 18px 封顶(箭头 h-[0.85em]
+              是 em 单位,会跟着一起缩)。
+              高度从 PSD 的 4.94% 头图高(=3.11cqw)收到 2.6cqw:1440 下边框 37.4px、
+              文字 17.9px,上下各留 ~9.8px —— 比原来(边框 44.8px)矮一截但不贴字。 */}
+          <Link
+            href={s.href!}
+            className={`group absolute right-0 top-1/2 flex h-[2.6cqw] min-h-[24px] w-auto min-w-[15.35cqw] -translate-y-1/2 items-center justify-center gap-[0.83cqw] rounded-full border-[1.5px] px-[1.54cqw] text-[clamp(9px,1.24cqw,18px)] font-normal transition-colors ${
+              s.dark
+                ? "border-cream text-cream hover:bg-cream hover:text-ink"
+                : "border-ink text-ink hover:bg-ink hover:text-cream"
             }`}
+            onClick={(e) => e.stopPropagation()}
           >
-            {subtitle}
-          </p>
-        )}
+            <span className="whitespace-nowrap uppercase">{t("heroDetailsCta")}</span>
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img src={arrowSrc} alt="" className="h-[0.85em] w-auto transition-colors group-hover:invert" />
+          </Link>
+        </div>
         {/* 主标题(PSD 例:OFFY PRINCESS SERIES bbox x208 y1777 w2647 h168:
             x6.4%,224.5px=6.91cqw)。中英文同字号 —— 新 PSD 直接给了英文稿
             (OFFY DRESS-UP SERIES 宽 2723px = 83.8%),不再需要旧版「英文收窄到
             4.6cqw」的权宜处理。
             y:PSD 给的是字形 ink 顶(高 168 = 0.75em 大写字高),而 CSS top 定位
             的是行盒顶,两者相差约半行距+上伸部;实测在 1.05 行高下为 0.16em
-            ≈ 1.7% 头图高,故 72.88% - 1.68% = 71.2%。 */}
+            ≈ 1.7% 头图高,故 72.88% - 1.68% = 71.2%。
+            窄屏(lg 以下)下移到 73%:头图是固定横构图、字号随宽度等比缩,所以副标题
+            行盒(5.5% 头图高)与主标题行盒(11.6%)之间那 1.2% 间距在手机上只剩几 px,
+            看着糊在一起;73% 把间距拉到 3%,主标题底 84.6% 距滚动条(89.8%)仍有 5.2%。
+            lg 以上维持 PSD 原值。 */}
         <p
-          className={`absolute left-[6.4%] top-[71.2%] w-[88%] font-semibold uppercase leading-[1.05] tracking-tight text-[clamp(18px,6.91cqw,100px)] ${
+          className={`absolute left-[6.4%] top-[73%] w-[88%] font-semibold lg:top-[71.2%] uppercase leading-[1.05] tracking-tight text-[clamp(18px,6.91cqw,100px)] ${
             s.dark ? "text-cream" : "text-ink"
           }`}
         >
           {title}
         </p>
-        {/* 查看详情(PSD 组「查看详情 拷贝 N」:矩形7 bbox x2535 y1570 w499 h101
-            = x78.00% y62.75% w15.35% h4.94%;文字 47.2px=1.45cqw;箭头 x90.62%;
-            胶囊形 + 1.5px 描边无填充,浅底黑边黑字/深底白边白字)。
-            内边距/间距按 PSD 实测:左右各 50/3250=1.54%、文字到箭头 27/3250=0.83cqw。
-            宽度用 min-w 而不是固定 w —— 固定宽度在窄屏或中文短字时会挤压文字,
-            让「VIEW DETAILS」贴到描边上(旧版 w-[11.6%] 就是这个毛病)。 */}
-        <Link
-          href={s.href!}
-          className={`group absolute left-[78%] top-[62.75%] flex h-[4.94%] min-h-[28px] w-auto min-w-[15.35%] items-center justify-center gap-[0.83cqw] rounded-full border-[1.5px] px-[1.54%] text-[clamp(10px,1.45cqw,21px)] font-normal transition-colors ${
-            s.dark
-              ? "border-cream text-cream hover:bg-cream hover:text-ink"
-              : "border-ink text-ink hover:bg-ink hover:text-cream"
-          }`}
-          onClick={(e) => e.stopPropagation()}
-        >
-          <span className="whitespace-nowrap uppercase">{t("heroDetailsCta")}</span>
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img src={arrowSrc} alt="" className="h-[0.85em] w-auto transition-colors group-hover:invert" />
-        </Link>
       </>
     );
   };
@@ -229,25 +247,28 @@ export function HeroCarousel({
           </div>
           {/* 右下 ←/→ 箭头按钮(PSD y76.3-82.3%,与主标题同带;x89.8-97.2%;
               120×122px≈3.7cqw 方形,黑 50% 透明底 + 白色箭头图标;
-              效果图实测两按钮间有约 8-12px 间距(gap-1)且角部微圆) */}
-          <div className="absolute right-[2.8%] top-[76.3%] flex gap-1">
+              效果图实测两按钮间有约 8-12px 间距(gap-1)且角部微圆)。
+              窄屏(lg 以下)下移到 84.8% 并缩到 2.7cqw:最长的那屏标题
+              (OFFY DRESS-UP SERIES)在窄屏会铺到 88% 宽,箭头留在 76.3% 会压住
+              标题尾巴;下移后与滚动条同带,而滚动条只画到 74% 宽,横向不冲突。 */}
+          <div className="absolute right-[2.8%] top-[84.8%] flex gap-1 lg:top-[76.3%]">
             <button
               type="button"
               aria-label={t("heroPrevSlide")}
               onClick={() => go(active - 1)}
-              className="pointer-events-auto flex h-[clamp(30px,3.7cqw,48px)] w-[clamp(30px,3.7cqw,48px)] items-center justify-center rounded-[4px] bg-ink/50 transition-colors hover:bg-ink/70"
+              className="pointer-events-auto flex h-[clamp(20px,2.7cqw,38px)] w-[clamp(20px,2.7cqw,38px)] items-center justify-center rounded-[4px] bg-ink/50 transition-colors hover:bg-ink/70 lg:h-[clamp(30px,3.7cqw,48px)] lg:w-[clamp(30px,3.7cqw,48px)]"
             >
               {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img src="/assets/hero/arrow-left.png" alt="" className="h-[clamp(8px,1.2cqw,15px)] w-auto" />
+              <img src="/assets/hero/arrow-left.png" alt="" className="h-[clamp(6px,0.88cqw,12px)] w-auto lg:h-[clamp(8px,1.2cqw,15px)]" />
             </button>
             <button
               type="button"
               aria-label={t("heroNextSlide")}
               onClick={() => go(active + 1)}
-              className="pointer-events-auto flex h-[clamp(30px,3.7cqw,48px)] w-[clamp(30px,3.7cqw,48px)] items-center justify-center rounded-[4px] bg-ink/50 transition-colors hover:bg-ink/70"
+              className="pointer-events-auto flex h-[clamp(20px,2.7cqw,38px)] w-[clamp(20px,2.7cqw,38px)] items-center justify-center rounded-[4px] bg-ink/50 transition-colors hover:bg-ink/70 lg:h-[clamp(30px,3.7cqw,48px)] lg:w-[clamp(30px,3.7cqw,48px)]"
             >
               {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img src="/assets/hero/arrow-right.png" alt="" className="h-[clamp(8px,1.2cqw,15px)] w-auto" />
+              <img src="/assets/hero/arrow-right.png" alt="" className="h-[clamp(6px,0.88cqw,12px)] w-auto lg:h-[clamp(8px,1.2cqw,15px)]" />
             </button>
           </div>
       </div>

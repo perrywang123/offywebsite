@@ -6,47 +6,37 @@ const ip = {
   code: "MISS-KITTY",
   name: { zh: "凯蒂小姐", en: "Miss Kitty" },
   tagline: { zh: "傲娇但心软", en: "A spoiled princess with a tender heart." },
+  image: "/assets/home/upcoming-kitty.png",
 };
 
-describe("UpcomingCard (PSD dotted placeholder card, live bilingual text)", () => {
-  it("renders the en name/tagline inside the card with badge and COMING SOON — TBD label", () => {
-    render(
-      <UpcomingCard
-        ip={ip}
-        inDevelopmentLabel="IN DEVELOPMENT"
-        comingSoonLabel="COMING SOON — TBD"
-        locale="en"
-      />,
-    );
+const renderCard = (locale: string, overrides: Partial<typeof ip> = {}) =>
+  render(
+    <UpcomingCard ip={{ ...ip, ...overrides }} inDevelopmentLabel="IN DEVELOPMENT" locale={locale} />,
+  );
+
+describe("UpcomingCard (后续计划.psd: 插画卡 + IN DEVELOPMENT 胶囊 + 名字 + 居中标语)", () => {
+  it("渲染 en 的名字、标语与状态胶囊", () => {
+    renderCard("en");
     expect(screen.getByRole("heading", { name: "Miss Kitty" })).toBeInTheDocument();
     expect(screen.getByText("A spoiled princess with a tender heart.")).toBeInTheDocument();
     expect(screen.getByText("IN DEVELOPMENT")).toBeInTheDocument();
-    expect(screen.getByText("COMING SOON — TBD")).toBeInTheDocument();
   });
 
-  it("localizes name and tagline for zh", () => {
-    render(
-      <UpcomingCard
-        ip={ip}
-        inDevelopmentLabel="IN DEVELOPMENT"
-        comingSoonLabel="COMING SOON — TBD"
-        locale="zh"
-      />,
-    );
+  it("zh 走中文文案", () => {
+    renderCard("zh");
     expect(screen.getByRole("heading", { name: "凯蒂小姐" })).toBeInTheDocument();
     expect(screen.getByText("傲娇但心软")).toBeInTheDocument();
   });
 
-  it("renders no product/art image — the card is a CSS dotted placeholder per the PSD", () => {
-    const { container } = render(
-      <UpcomingCard
-        ip={ip}
-        inDevelopmentLabel="IN DEVELOPMENT"
-        comingSoonLabel="COMING SOON — TBD"
-        locale="en"
-      />,
-    );
-    expect(container.querySelectorAll("img")).toHaveLength(0);
-    expect(container.firstChild).toHaveClass("media-placeholder");
+  it("渲染角色插画(新 PSD 里角色形象已公开,不再是纯点阵占位)", () => {
+    const { container } = renderCard("en");
+    const imgs = container.querySelectorAll("img");
+    expect(imgs).toHaveLength(1);
+    expect(imgs[0].getAttribute("src")).toContain("upcoming-kitty.png");
+  });
+
+  it("不再出现旧版的 COMING SOON — TBD(新 PSD 没有这一层)", () => {
+    renderCard("en");
+    expect(screen.queryByText(/COMING SOON/i)).not.toBeInTheDocument();
   });
 });

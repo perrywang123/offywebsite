@@ -3,7 +3,12 @@ import { getTranslations } from "next-intl/server";
 import { Link } from "@/i18n/navigation";
 import { teaserSeries, upcomingIps } from "@/lib/catalog";
 import { heroSlides, newsFeature, newsItems } from "@/lib/content";
-import { getLiveNewLooksProducts, getLiveProducts } from "@/server/catalog/live";
+import { headers } from "next/headers";
+import { getLiveNewLooksProducts, getLiveProducts, toLiveProduct } from "@/server/catalog/live";
+import { getRegionalProducts } from "@/server/catalog/regional";
+import { getProductByCode } from "@/lib/catalog";
+import { pickCountry } from "@/lib/geo";
+import { env } from "@/lib/env";
 import { Reveal } from "@/components/Reveal";
 
 export const revalidate = 60;
@@ -26,7 +31,17 @@ export default async function HomePage({ params }: { params: Promise<{ locale: s
   // New Looks:每个系列按 Shopify 创建时间取最新 2 款(3 系列共 6 款)。
   const looks = await getLiveNewLooksProducts(2);
   const roster = await getLiveProducts();
-  const regionals = roster.filter((p) => p.badge);
+
+  // ——— 区域限定(路线 A:按访客所在国家展示)———
+  // 国家来自前置层注入的请求头(Cloudflare cf-ipcountry / nginx GeoIP2 等),
+  // 拿不到就按 SHOPIFY_MARKET_COUNTRY 展示。Shopify 侧的区域限定是「只发布到
+  // 某些 Market」,判定要按国家各查一次再比对,详见 server/catalog/regional.ts。
+  // 注意:读 headers() 会让本页转为按请求渲染(dynamic)——这是 route A 的必要代价。
+  const visitorCountry = pickCountry(await headers(), env.SHOPIFY_MARKET_COUNTRY);
+  const regionals = (await getRegionalProducts(visitorCountry)).map((item, i) => ({
+    ...toLiveProduct(item, getProductByCode(item.handle)?.series ?? "princess-lady", i * 10),
+    badge: visitorCountry,
+  }));
 
   return (
     <>
@@ -122,15 +137,20 @@ export default async function HomePage({ params }: { params: Promise<{ locale: s
             ))}
           </div>
 
-          {/* ============ 区域限定(设计稿:3 卡,红底 US/UK ONLY 徽章) ============ */}
-          <p className="mt-16 text-sm text-ink-soft">{t("regionalTitle")}</p>
-          <div className="mt-6 grid grid-cols-2 gap-x-4 gap-y-10 sm:gap-x-6 lg:grid-cols-3 lg:gap-x-8">
-            {regionals.map((p) => (
-              <Reveal key={p.code}>
-                <ProductCard product={p} locale={locale} sizes="(max-width: 768px) 50vw, 33vw" />
-              </Reveal>
-            ))}
-          </div>
+          {/* ============ 区域限定(设计稿:红底 US/UK ONLY 徽章)============
+              按访客国家展示;该国没有限定款时整块隐藏,不留空标题。 */}
+          {regionals.length > 0 && (
+            <>
+              <p className="mt-16 text-sm text-ink-soft">{t("regionalTitle")}</p>
+              <div className="mt-6 grid grid-cols-2 gap-x-4 gap-y-10 sm:gap-x-6 lg:grid-cols-3 lg:gap-x-8">
+                {regionals.map((p) => (
+                  <Reveal key={p.code}>
+                    <ProductCard product={p} locale={locale} sizes="(max-width: 768px) 50vw, 33vw" />
+                  </Reveal>
+                ))}
+              </div>
+            </>
+          )}
 
           {/* ============ 产品汇总-选购同款造型(圆形名册,紧接本模块) ============ */}
           <p className="mt-16 text-sm text-ink-soft">{t("rosterTitle")}</p>
@@ -224,7 +244,11 @@ export default async function HomePage({ params }: { params: Promise<{ locale: s
         <Reveal className="pb-10 text-center">
           <h2 className="font-display text-[clamp(26px,2.4vw,48px)] font-semibold uppercase tracking-tight">{t("collabTitle")}</h2>
           <p className="mt-3 text-ink-soft">{t("collabSub")}</p>
-          <a href="mailto:hello@playcoretoys.com" className="link-line mt-4 inline-block text-sm">{t("collabCta")}</a>
+          {/* 联名洽谈邮箱:原为 hello@playcoretoys.com —— 那是旧实体域名,与政策正文里的
+            Whimcore Cultural Creative Co., Limited 不是同一家,站上留着会出现两套联系信息。 */}
+          <a href="mailto:contact@whimcoreofficial.com" className="focus-ring link-line mt-4 inline-block text-sm">
+            {t("collabCta")}
+          </a>
         </Reveal>
         {/* 14 OF 造型头像图(PSD 矢量智能对象,透明底) */}
         <Reveal className="relative">
@@ -245,24 +269,18 @@ export default async function HomePage({ params }: { params: Promise<{ locale: s
         </div>
       </section>
 
-      {/* ============ 后续新的 IP(标题 + 双卡;移动端上下排布,桌面左右并排) ============ */}
+      {/* ============ 后续计划(后续计划.psd:标题 + 双卡;移动端上下排布,桌面左右并排)。
+          PSD 里没有 kicker,标题只有 NEW IPS AHEAD + 一行说明,故去掉了原来的
+          「THE NEXT CHAPTER」小标;卡片内部结构见 UpcomingCard。 ============ */}
       <section className="container-site py-20">
         <Reveal className="mb-10">
-          <p className="kicker mb-3">{t("comingKicker")}</p>
-          <h2 className="font-display text-[clamp(26px,2.2vw,48px)] font-semibold uppercase tracking-tight">{t("comingTitle")}</h2>
-          <p className="mt-3 text-ink-soft">{t("comingSub")}</p>
+          <h2 className="font-display text-[clamp(26px,2.53vw,81px)] font-semibold uppercase tracking-tight">{t("comingTitle")}</h2>
+          <p className="mt-[1.4%] text-[clamp(12px,1.13vw,36px)] uppercase tracking-[var(--tracking-10)] text-ink-soft">{t("comingSub")}</p>
         </Reveal>
-        {/* PSD:整卡点阵占位盒,卡片内部左文右「COMING SOON — TBD」;
-            移动端 grid-cols-1 上下排布,桌面 md:grid-cols-2 左右并排 */}
         <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
           {upcomingIps.map((ip) => (
             <Reveal key={ip.code}>
-              <UpcomingCard
-                ip={ip}
-                inDevelopmentLabel={t("inDevelopment")}
-                comingSoonLabel={t("comingSoonTbd")}
-                locale={locale}
-              />
+              <UpcomingCard ip={ip} inDevelopmentLabel={t("inDevelopment")} locale={locale} />
             </Reveal>
           ))}
         </div>
