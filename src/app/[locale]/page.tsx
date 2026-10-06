@@ -51,7 +51,7 @@ export default async function HomePage({ params }: { params: Promise<{ locale: s
           alt=""
           fill
           sizes="100vw"
-          className="object-cover object-top"
+          className="object-contain object-top"
         />
         <div className="container-site relative py-20 md:py-28">
           <Reveal className="mb-10">
@@ -76,14 +76,16 @@ export default async function HomePage({ params }: { params: Promise<{ locale: s
 
       {/* ============ 按类别选购 + 最新曝光造型(设计稿:同一模块;
           网站素材0926/3、按类别选购:整模块满幅底图,底色与页面同为浅灰,
-          顶部居中的 is.offy 淡化字标正好被标题区盖住) ============ */}
-      <section className="relative overflow-hidden">
+          顶部居中的 is.offy 淡化字标正好被标题区盖住。
+          底图按宽度等比缩放(object-contain),窄屏不再裁掉字标;
+          图下方的留白用底图底色补齐,视觉上与图连成一片) ============ */}
+      <section className="relative overflow-hidden bg-[#f7f7f9]">
         <Image
           src="/assets/home/category-bg.jpg"
           alt=""
           fill
           sizes="100vw"
-          className="object-cover object-top"
+          className="object-contain object-top"
         />
         <div className="container-site relative py-20 md:py-28">
           <Reveal className="mb-12 text-center">
@@ -147,13 +149,13 @@ export default async function HomePage({ params }: { params: Promise<{ locale: s
       {/* ============ OFFY 新品抢先看(PSD:Stay tuned 标题区 + 玩偶图左上文字块;
           网站素材0926/4、更多新品，敬请期待:整模块满幅底图,顶部居中的
           STAY TUNED. 淡化字标正好被标题区盖住) ============ */}
-      <section className="relative overflow-hidden py-20 md:py-28">
+      <section className="relative overflow-hidden bg-[#f7f7f9] py-20 md:py-28">
         <Image
           src="/assets/home/upcoming-bg.jpg"
           alt=""
           fill
           sizes="100vw"
-          className="object-cover object-top"
+          className="object-contain object-top"
         />
         <div className="relative">
           {/* 标题区(PSD:Stay tuned. 大字 + 更多新品，敬请期待) */}
