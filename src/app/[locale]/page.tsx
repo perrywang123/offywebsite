@@ -42,25 +42,36 @@ export default async function HomePage({ params }: { params: Promise<{ locale: s
         </span>
       </Marquee>
 
-      {/* ============ 最新资讯 · 揭晓 ============ */}
-      <section className="container-site py-20 md:py-28">
-        <Reveal className="mb-10">
-          <p className="kicker mb-3">{t("newsKicker")}</p>
-          <h2 className="font-display text-[clamp(30px,2.6vw,60px)] font-semibold uppercase tracking-tight">
-            {t("newsTitle")}
-          </h2>
-        </Reveal>
-        <NewsGrid
-          feature={newsFeature}
-          items={newsItems}
-          texts={{
-            badge: t("newsBadge"),
-            featureTitle: t("newsFeatureTitle"),
-            cta: t("teaserCta"),
-            browseAll: t("browseAll"),
-          }}
-          locale={locale}
+      {/* ============ 最新资讯 · 揭晓(网站素材0926/2、最新咨询:整模块满幅底图,
+          主体与页面底色一致,顶部有一条柔和的过渡渐变带,把本模块与上方
+          头图/促销条在视觉上轻轻隔开) ============ */}
+      <section className="relative overflow-hidden">
+        <Image
+          src="/assets/home/news-bg.jpg"
+          alt=""
+          fill
+          sizes="100vw"
+          className="object-cover object-top"
         />
+        <div className="container-site relative py-20 md:py-28">
+          <Reveal className="mb-10">
+            <p className="kicker mb-3">{t("newsKicker")}</p>
+            <h2 className="font-display text-[clamp(30px,2.6vw,60px)] font-semibold uppercase tracking-tight">
+              {t("newsTitle")}
+            </h2>
+          </Reveal>
+          <NewsGrid
+            feature={newsFeature}
+            items={newsItems}
+            texts={{
+              badge: t("newsBadge"),
+              featureTitle: t("newsFeatureTitle"),
+              cta: t("teaserCta"),
+              browseAll: t("browseAll"),
+            }}
+            locale={locale}
+          />
+        </div>
       </section>
 
       {/* ============ 按类别选购 + 最新曝光造型(设计稿:同一模块) ============ */}
