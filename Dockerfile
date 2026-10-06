@@ -17,6 +17,12 @@ RUN pnpm install --frozen-lockfile
 FROM node:22-slim AS builder
 WORKDIR /app
 RUN corepack enable
+# `corepack enable` 只是装了个 shim:真正执行 `pnpm` 时它才去 registry.npmjs.org 现拉
+# 对应版本的 pnpm。deps 阶段已经拉过一次(那份缓存落在 /root/.cache/node/corepack),
+# 但每个 stage 的文件系统是独立的,所以 builder 里会**再拉一次** —— 构建机上 DNS 被
+# 污染或出网被重置时就直接 ECONNRESET 构建失败(本次真实踩到)。把 deps 那份缓存复制
+# 过来,构建期就完全不再依赖外网。
+COPY --from=deps /root/.cache/node/corepack /root/.cache/node/corepack
 COPY --from=deps /app/node_modules ./node_modules
 COPY . .
 # 构建期环境:`next build` 会预渲染 /products、/collections 与首页,拿不到这些
