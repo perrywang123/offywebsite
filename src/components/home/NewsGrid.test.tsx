@@ -68,9 +68,19 @@ describe("NewsGrid (editorial layout, data-driven: productCode + image + copy)",
     expect(screen.getByText("Fashion Lifestyle")).toBeInTheDocument();
   });
 
-  it("renders the browse-all CTA linking to the full product catalog (unaffected by per-card productCode)", () => {
+  it("no longer renders the browse-all CTA — per 最新资讯.psd it moved up under the section title", () => {
     render(<NewsGrid feature={feature} items={items} texts={texts} locale="zh" />);
-    expect(screen.getByRole("link", { name: /逛全部系列/ })).toHaveAttribute("href", "/products");
+    expect(screen.queryByRole("link", { name: /逛全部系列/ })).not.toBeInTheDocument();
+    // 主卡内的「查看详情」胶囊仍在,并跳绑定商品
+    expect(screen.getByRole("link", { name: /查看详情/ })).toHaveAttribute("href", "/products/warm-biscuit");
+  });
+
+  it("puts each feature/secondary caption inside its own card link (PSD: black pill over the image)", () => {
+    render(<NewsGrid feature={feature} items={items} texts={texts} locale="zh" />);
+    // 副卡文案进的是卡片自身的链接(原来在图下方独立成 figcaption)
+    const card = screen.getByRole("link", { name: /日常犯可爱/ });
+    expect(card).toHaveAttribute("href", "/products/bunny-hug");
+    expect(card.querySelector("figcaption")).toBeNull();
   });
 
   it("changing only the data (productCode/image/copy) reflects immediately with no component changes needed", () => {

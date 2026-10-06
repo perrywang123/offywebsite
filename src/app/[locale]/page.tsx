@@ -54,11 +54,20 @@ export default async function HomePage({ params }: { params: Promise<{ locale: s
           className="object-contain object-top"
         />
         <div className="container-site relative py-20 md:py-28">
-          <Reveal className="mb-10">
-            <p className="kicker mb-3">{t("newsKicker")}</p>
-            <h2 className="font-display text-[clamp(30px,2.6vw,60px)] font-semibold uppercase tracking-tight">
-              {t("newsTitle")}
+          {/* 标题区(最新资讯.psd 组「最新咨询·标题」):PSD 里是一行居中
+              'NEWS·The Latest from OFFY'(80.8px=2.49vw,黑字,just=2 居中),
+              其下居中 'Browse All Series'(36px=1.11vw)+ 一条与文字等宽的
+              下划线(矩形「直线 1」)。原来「逛全部系列」在网格底部,现上移。 */}
+          <Reveal className="mb-12 text-center">
+            <h2 className="font-display text-[clamp(20px,2.49vw,54px)] font-semibold uppercase leading-tight tracking-tight">
+              {t("newsKicker")}·{t("newsTitle")}
             </h2>
+            <Link
+              href="/products"
+              className="link-line mt-5 inline-block text-[clamp(11px,1.11vw,24px)] uppercase tracking-[var(--tracking-10)]"
+            >
+              {t("browseAll")}
+            </Link>
           </Reveal>
           <NewsGrid
             feature={newsFeature}
@@ -158,16 +167,21 @@ export default async function HomePage({ params }: { params: Promise<{ locale: s
           className="object-contain object-top"
         />
         <div className="relative">
-          {/* 标题区(PSD:Stay tuned. 大字 + 更多新品，敬请期待) */}
+          {/* 标题区(更多新品，敬请期待.psd 组「更多新品，敬请期待标题」):
+              PSD 里小字 'Stay tuned.' 在上(36px=1.11vw)、大字 'Upcoming Releases'
+              在下(102.2px=3.14vw),两者都 just=2 居中 —— 与旧版大小颠倒,
+              这里按 PSD 调正。再上面那层超大淡化 'Stay / tuned.'(203.2px,
+              x36.42% y4.43%)是底图 upcoming-bg.jpg 里烤好的水印,不重复渲染。 */}
           <Reveal className="container-site mx-auto mb-14 text-center">
-            <p className="font-display text-[clamp(40px,5vw,96px)] font-extrabold uppercase tracking-tight">
+            <p className="text-[clamp(11px,1.11vw,24px)] font-normal uppercase leading-none tracking-[var(--tracking-10)]">
               {t("stayTuned")}
             </p>
-            <h2 className="mt-2 font-display text-[clamp(24px,2.2vw,44px)] font-semibold tracking-tight">
+            <h2 className="mt-4 font-display text-[clamp(22px,3.14vw,68px)] font-semibold uppercase leading-none tracking-tight">
               {t("teaserSub")}
             </h2>
           </Reveal>
-          {/* 玩偶图 + 左上文字块(PSD:文字在图左上 8-42%,不是垂直居中) */}
+          {/* 玩偶图 + 左上文字块(PSD 组「/时尚包挂系列」:标题 x7.23% y27.52%、
+              说明 x7.20% y41.02%、黑色胶囊按钮 x6.83% y60.64% w18.39%) */}
           <Reveal className="relative overflow-hidden">
             <div className="relative aspect-[4/3] md:aspect-[3/2]">
               <Image
@@ -181,16 +195,19 @@ export default async function HomePage({ params }: { params: Promise<{ locale: s
             <div className="absolute inset-0 bg-gradient-to-r from-white/85 via-white/35 to-transparent" />
             <div className="absolute inset-0 flex items-start">
               <div className="container-site">
-                <div className="max-w-lg pt-[8%]">
-                  <h3 className="font-display text-[clamp(28px,2.6vw,60px)] font-extrabold tracking-tight">
-                    /{locale === "zh" ? teaserSeries.name.zh : teaserSeries.name.en}
+                <div className="pt-[8%]">
+                  {/* PSD 'Fashionable Bag  / Charm Collection' 127.2px = 3.91vw */}
+                  <h3 className="font-display text-[clamp(20px,3.91vw,84px)] font-semibold uppercase leading-[1.1] tracking-tight">
+                    {locale === "zh" ? teaserSeries.name.zh : teaserSeries.name.en}
                   </h3>
-                  <p className="mt-4 text-sm text-ink-muted">
+                  {/* PSD 'Follow @is.offy on Instagram  / for drop dates.' 64.8px = 1.99vw */}
+                  <p className="mt-[3.5%] text-[clamp(11px,1.99vw,42px)] leading-snug text-ink">
                     {locale === "zh" ? teaserSeries.note.zh : teaserSeries.note.en}
                   </p>
+                  {/* PSD 矩形3拷贝8:x6.83% w18.39% h6.31%;文字 'View details' 61.6px=1.89vw 白字 */}
                   <Link
                     href="/bag-charm"
-                    className="mt-8 inline-flex h-12 items-center justify-center rounded-full bg-ink px-8 text-sm font-medium text-cream transition-colors duration-300 hover:bg-accent"
+                    className="mt-[6%] inline-flex h-[clamp(38px,6.31vw,124px)] items-center justify-center rounded-full bg-ink px-[clamp(18px,4.5vw,90px)] text-[clamp(11px,1.89vw,40px)] font-normal uppercase leading-none tracking-[var(--tracking-10)] text-cream transition-colors duration-300 hover:bg-accent"
                   >
                     {t("teaserCta")}
                   </Link>

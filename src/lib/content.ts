@@ -16,13 +16,12 @@ export interface NewsItem {
 }
 
 /**
- * 首页"最新资讯 · 揭晓"模块(NewsGrid):1 张大卡(feature) + 4 张副卡(items),
- * 每张卡 = 宣传图 + 宣传文案(本文件维护) + 跳转目标(Shopify 商品 handle)。
- * 布局固定在 NewsGrid.tsx,这里只是数据——后续要换宣传图/文案/跳转商品,
- * 只需改这个文件,不需要碰组件代码。
+ * 首页"最新资讯 · 揭晓"模块(NewsGrid):1 张大卡(feature)+ 4 张副卡(items)。
+ * 卡片标题按 最新资讯.psd 逐个图层的原文登记(英文),中文沿用首页文案表,
+ * 两者不是互译关系(PSD 没有中文稿)—— 若要中文也改成对应说法,需要运营给稿。
+ * 布局固定在 NewsGrid.tsx,这里只是数据。
  *
- * 当前 5 张卡对应的真实商品(2026-10 由运营指定,标题随 Shopify 改名自动同步,
- * 这里登记的 handle 是跳转用的稳定路由标识符,不会随改名变化):
+ * 当前 5 张卡对应的真实商品(2026-10 由运营指定):
  *   1(大卡) CARAMEL RÊVE → warm-biscuit
  *   2       PETITE BUNNY → bunny-hug
  *   3       CLUB 28      → ace
@@ -32,23 +31,30 @@ export interface NewsItem {
 export const newsFeature = { image: "/assets/news/news-01.jpg", productCode: "warm-biscuit" };
 
 export const newsItems: NewsItem[] = [
-  { id: "daily-cute", title: { zh: "日常犯可爱", en: "Everyday cute" }, image: "/assets/news/news-04.jpg", productCode: "bunny-hug" },
-  { id: "weekend", title: { zh: "周末出门玩", en: "Weekend outing" }, image: "/assets/news/news-03.jpg", productCode: "ace" },
-  { id: "fashion-life", title: { zh: "时尚潮流生活", en: "Fashion Lifestyle" }, image: "/assets/news/news-08.jpg", productCode: "wander" },
-  { id: "fun-offy", title: { zh: "趣味潮流OFFY", en: "Playful trendy Offy" }, image: "/assets/news/news-02.jpg", productCode: "offy_redrush" },
+  { id: "daily-cute", title: { zh: "日常犯可爱", en: "Cute, Never Basic" }, image: "/assets/news/news-04.jpg", productCode: "bunny-hug" },
+  { id: "weekend", title: { zh: "周末出门玩", en: "Weekend in Motion" }, image: "/assets/news/news-03.jpg", productCode: "ace" },
+  { id: "fashion-life", title: { zh: "时尚潮流生活", en: "Chill in Style" }, image: "/assets/news/news-08.jpg", productCode: "wander" },
+  { id: "fun-offy", title: { zh: "趣味潮流OFFY", en: "Born for Streets" }, image: "/assets/news/news-02.jpg", productCode: "offy_redrush" },
 ];
 
 /**
- * 首页头图轮播(网站素材0926/1、网站头图/网站头图.psd,3250×2041 头图区):5 屏。
- * 屏 1 品牌屏(hero-brand.jpg):is.offy 字标 + slogan(实时文字);
- * 屏 2 促销屏(hero-promo.jpg,4 张产品图已烤入背景):kicker「OFFY大促加赠」
- *   + 两行超大促销语(实时文字);
- * 屏 3-5 系列屏(公主lady/时尚潮流/趣味生活):副标题在上(小字)+ 主标题在下
- *   (超大字)+ 右侧与副标题同带的「查看详情」文字按钮跳系列页;
- *   时尚屏底部偏暗,文字用白色(dark),其余浅底黑字。
+ * 首页头图轮播(网站文字参考&图片替换/网站头图.psd,头图区 3250×2043):5 屏。
+ * 底图沿用现有 hero-*.jpg(用户确认底图无需替换),本次只对齐**文字与布局**:
+ * 文字内容/字号/字色/位置全部取自 PSD 图层(字号 = 引擎 FontSize × 图层 transform 缩放,
+ * 位置 = 图层 bbox ÷ 头图区尺寸),详见 HeroCarousel.tsx 内的逐条百分比注释。
  *
- * 文案:促销语/slogan 按 2026 首页文案表(用户确认),布局/字号按新 PSD。
- * 标题/副标题/促销语均为实时双语文本,不再是烤字 PNG。
+ * PSD 分组 ↔ 底图 ↔ 文案(按分组内的智能对象底图认人,不按分组名):
+ *   让想象落地,让陪伴发生      → hero-brand.jpg     黑字居中 slogan
+ *   头图-活动奖励              → hero-promo.jpg    黑字 kicker + 两行大字
+ *   OFFY 公主lady系列          → hero-princess.jpg 黑字
+ *   OFFY 时尚潮流生活          → hero-streetwear.jpg 白字(dark)
+ *   OFFY 趣味生活系列          → hero-playful.jpg  黑字
+ *
+ * 注:新 PSD 把「时尚潮流生活 / 趣味生活系列」两屏的**英文**标题互换了
+ * (PSD: 时尚潮流生活→OFFY DRESS-UP SERIES,趣味生活系列→STREETWEAR SERIES·),
+ * 与 resources/独立站首页文案.xlsx 的登记相反;此处按用户要求以 PSD 为准。
+ * 唯一例外:PSD 该组标题尾部多打了一个 '·',经用户确认是笔误,已去掉。
+ * 中文标题与跳转链接未动(仍与文案表一致)。
  */
 export interface HeroSlideData {
   image: string;
@@ -82,10 +88,11 @@ export const heroSlides: HeroSlideData[] = [
     image: "/assets/hero/hero-promo.jpg",
     bg: "#f7f2ef",
     promo: {
-      kicker: { zh: "OFFY大促加赠", en: "OFFY MEGA GIVEAWAY" },
-      // 两行大字的断行按两行视觉平衡选择(对齐 PSD 两行比例 69%/30%,
-      // 避免首行过长顶到画面右缘)。
-      text: { zh: "即日起 任意购买\n3个公仔以上 送offy宝宝", en: "BUY ANY 3 OFFYs, GET A\nFREE BIG TOTE" },
+      // kicker/促销语按 PSD 图层原文:'OFFY Big Sale: Bonus Gift Included' +
+      // 'BUY ANY 3 OFFYs,\rGET A FREE BIG TOTE'(断行在逗号后,注意 'OFFYs' 的
+      // 小写 s —— 效果图里就是小写,所以这行不做 uppercase)。
+      kicker: { zh: "OFFY大促加赠", en: "OFFY Big Sale: Bonus Gift Included" },
+      text: { zh: "即日起 任意购买\n3个公仔以上 送offy宝宝", en: "BUY ANY 3 OFFYs,\nGET A FREE BIG TOTE" },
     },
   },
   {
@@ -99,15 +106,15 @@ export const heroSlides: HeroSlideData[] = [
     image: "/assets/hero/hero-streetwear.jpg",
     bg: "#d1c0b6",
     href: "/collections/outdoor-sporty",
-    title: { zh: "Offy 时尚潮流生活", en: "OFFY Streetwear Series" },
-    subtitle: { zh: "周末出去玩", en: "Weekend in motion" },
+    title: { zh: "Offy 时尚潮流生活", en: "OFFY DRESS-UP SERIES" },
+    subtitle: { zh: "周末出去玩", en: "Too Cute to Dress Normal" },
     dark: true,
   },
   {
     image: "/assets/hero/hero-playful.jpg",
     bg: "#fefefe",
     href: "/collections/playful-life",
-    title: { zh: "Offy 趣味生活系列", en: "OFFY Dress-up Series" },
-    subtitle: { zh: "日常犯可爱", en: "Too cute to dress normal" },
+    title: { zh: "Offy 趣味生活系列", en: "STREETWEAR SERIES" },
+    subtitle: { zh: "日常犯可爱", en: "Weekend in Motion" },
   },
 ];

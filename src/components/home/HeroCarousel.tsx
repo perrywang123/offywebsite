@@ -53,12 +53,16 @@ export function HeroCarousel({
         sizes="100vw"
         className="object-cover object-center"
       />
-      {/* kicker「OFFY大促加赠」(PSD x12.2% y51.1%,80px=2.46cqw,Regular) */}
-      <p className="absolute left-[12.2%] top-[51.1%] text-[clamp(11px,2.46cqw,36px)] font-normal uppercase leading-snug tracking-[var(--tracking-10)] text-ink">
+      {/* kicker(PSD 图层「OFFY Big Sale: Bonus Gift Included」bbox x398 y1337:
+          x12.25% y51.35%,79.8px=2.46cqw,黑字) */}
+      <p className="absolute left-[12.25%] top-[51.35%] text-[clamp(11px,2.46cqw,36px)] font-normal uppercase leading-snug tracking-[var(--tracking-10)] text-ink">
         {locale === "zh" ? s.promo!.kicker.zh : s.promo!.kicker.en}
       </p>
-      {/* 两行超大促销语(PSD x11.8% y58.6%,224px=6.9cqw,Semibold,行高≈1.05) */}
-      <p className="absolute left-[11.8%] top-[58.6%] whitespace-pre-line text-[clamp(18px,6.9cqw,99px)] font-semibold uppercase leading-[1.05] tracking-tight text-ink">
+      {/* 两行超大促销语(PSD bbox x386 y1508 w2439 h438:x11.88% y59.72%,
+          224.5px=6.91cqw,黑字;两行 ink 高 438 = 行高 + 大写字高(0.75em)
+          → 行高≈1.20em)。PSD/效果图里是 'BUY ANY 3 OFFYs,' 的小写 s,
+          所以这里不加 uppercase。 */}
+      <p className="absolute left-[11.88%] top-[59.72%] whitespace-pre-line text-[clamp(18px,6.91cqw,100px)] font-semibold leading-[1.2] tracking-tight text-ink">
         {locale === "zh" ? s.promo!.text.zh : s.promo!.text.en}
       </p>
     </>
@@ -71,40 +75,47 @@ export function HeroCarousel({
     const subtitle = s.subtitle ? (locale === "zh" ? s.subtitle.zh : s.subtitle.en) : null;
     return (
       <>
-        {/* 副标题(PSD x12.2% y64.2%,80px=2.46cqw,Regular) */}
+        {/* 副标题(PSD 例:Romanticize the Everyday bbox x210 y1606 w1147 h60:
+            x6.46% y64.51%,79.8px=2.46cqw) */}
         {subtitle && (
           <p
-            className={`absolute left-[12.2%] top-[64.2%] text-[clamp(11px,2.46cqw,36px)] font-normal leading-snug tracking-[var(--tracking-10)] ${
+            className={`absolute left-[6.4%] top-[64.51%] text-[clamp(11px,2.46cqw,36px)] font-normal uppercase leading-snug tracking-[var(--tracking-10)] ${
               s.dark ? "text-cream/85" : "text-ink-soft"
             }`}
           >
             {subtitle}
           </p>
         )}
-        {/* 主标题(PSD x11.9% y71.9%,224px=6.9cqw,Semibold);
-            英文词组约为中文 2.4 倍长,同字号会折行溢出,英文档收窄到 4.6cqw
-            保持单行且视觉比重接近(PSD 仅有中文稿)。 */}
+        {/* 主标题(PSD 例:OFFY PRINCESS SERIES bbox x208 y1777 w2647 h168:
+            x6.4%,224.5px=6.91cqw)。中英文同字号 —— 新 PSD 直接给了英文稿
+            (OFFY DRESS-UP SERIES 宽 2723px = 83.8%),不再需要旧版「英文收窄到
+            4.6cqw」的权宜处理。
+            y:PSD 给的是字形 ink 顶(高 168 = 0.75em 大写字高),而 CSS top 定位
+            的是行盒顶,两者相差约半行距+上伸部;实测在 1.05 行高下为 0.16em
+            ≈ 1.7% 头图高,故 72.88% - 1.68% = 71.2%。 */}
         <p
-          className={`absolute left-[11.9%] top-[71.9%] w-[62%] font-semibold uppercase leading-[1.05] tracking-tight ${
-            locale === "zh" ? "text-[clamp(18px,6.9cqw,99px)]" : "text-[clamp(16px,4.6cqw,66px)]"
-          } ${s.dark ? "text-cream" : "text-ink"}`}
+          className={`absolute left-[6.4%] top-[71.2%] w-[88%] font-semibold uppercase leading-[1.05] tracking-tight text-[clamp(18px,6.91cqw,100px)] ${
+            s.dark ? "text-cream" : "text-ink"
+          }`}
         >
           {title}
         </p>
-        {/* 查看详情(PSD x73.8% y62.8% w11.6% h4.95%,与副标题同带;
-            PSD 矩形7:胶囊形(角半径≈47%高=rounded-full)+ 3px 描边无填充
-            (浅底黑边黑字/深底 #f3f0f1 白边白字),47px=1.45cqw 文字 + 箭头图标;
-            hover 反色填充,箭头同步反色。 */}
+        {/* 查看详情(PSD 组「查看详情 拷贝 N」:矩形7 bbox x2535 y1570 w499 h101
+            = x78.00% y62.75% w15.35% h4.94%;文字 47.2px=1.45cqw;箭头 x90.62%;
+            胶囊形 + 1.5px 描边无填充,浅底黑边黑字/深底白边白字)。
+            内边距/间距按 PSD 实测:左右各 50/3250=1.54%、文字到箭头 27/3250=0.83cqw。
+            宽度用 min-w 而不是固定 w —— 固定宽度在窄屏或中文短字时会挤压文字,
+            让「VIEW DETAILS」贴到描边上(旧版 w-[11.6%] 就是这个毛病)。 */}
         <Link
           href={s.href!}
-          className={`group absolute left-[73.8%] top-[62.8%] flex h-[4.95%] min-h-[28px] w-[11.6%] min-w-[84px] items-center justify-center gap-1.5 rounded-full border-[1.5px] text-[clamp(10px,1.45cqw,21px)] font-normal transition-colors ${
+          className={`group absolute left-[78%] top-[62.75%] flex h-[4.94%] min-h-[28px] w-auto min-w-[15.35%] items-center justify-center gap-[0.83cqw] rounded-full border-[1.5px] px-[1.54%] text-[clamp(10px,1.45cqw,21px)] font-normal transition-colors ${
             s.dark
               ? "border-cream text-cream hover:bg-cream hover:text-ink"
               : "border-ink text-ink hover:bg-ink hover:text-cream"
           }`}
           onClick={(e) => e.stopPropagation()}
         >
-          <span className="whitespace-nowrap">{t("heroDetailsCta")}</span>
+          <span className="whitespace-nowrap uppercase">{t("heroDetailsCta")}</span>
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img src={arrowSrc} alt="" className="h-[0.85em] w-auto transition-colors group-hover:invert" />
         </Link>
@@ -114,21 +125,24 @@ export function HeroCarousel({
 
   const renderOverlay = (s: HeroSlide) => (
     <>
-      {/* 屏 1:is.offy 字标(PSD 居中,顶 8.0%,宽 18.3%)+ slogan(顶 25.5%);
-          字号 4.3cqw(PSD 140px),Semibold,zh 字距 0.18em(PSD 0.2em 就近);
-          en 文案允许用 "\n" 显式分两行(whitespace-pre-line)。 */}
+      {/* 屏 1:is.offy 字标(PSD 智能对象 bbox x1444 y468 w513 h193:
+          x44.43% y8.81% w15.78%；左右居中)+ slogan(PSD bbox x869 y762 w1619 h218:
+          x26.74% w49.82%,居中 just=2,104.7px=3.22cqw,黑字;两行 ink 高 218
+          = 行高 + 大写字高 → 行高≈1.33em)。
+          y 同样按 ink 顶换算行盒顶:实测偏低 1.58%,23.20% - 1.58% = 21.6%。
+          en 文案用 "\n" 显式分两行(whitespace-pre-line)。 */}
       {s.wordmark && (
         <>
-          <div className="absolute inset-x-0 top-[8%] flex justify-center">
+          <div className="absolute inset-x-0 top-[8.81%] flex justify-center">
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img
               src="/assets/brand/is-offy-wordmark.png"
               alt="is.offy"
-              className="w-[18.3%] min-w-[80px] max-w-[264px]"
+              className="w-[15.78%] min-w-[80px] max-w-[264px]"
             />
           </div>
-          <div className="absolute inset-x-0 top-[25.5%] flex justify-center px-[4%]">
-            <p className="max-w-full whitespace-pre-line break-words text-center text-[clamp(15px,4.3cqw,62px)] font-semibold leading-[1.45] tracking-[var(--tracking-18)] text-ink">
+          <div className="absolute inset-x-0 top-[21.6%] flex justify-center px-[4%]">
+            <p className="max-w-full whitespace-pre-line break-words text-center text-[clamp(15px,3.22cqw,46px)] font-semibold leading-[1.33] tracking-[var(--tracking-18)] text-ink">
               {locale === "zh" ? s.text!.zh : s.text!.en}
             </p>
           </div>
