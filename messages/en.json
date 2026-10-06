@@ -40,11 +40,10 @@
     },
     "footer": {
       "rights": "All rights reserved",
-      "contact": "Contact",
-      "social": "Xiaohongshu @is.offy",
       "blurb": "Imagine with Love. Create with Companion. — Offy is our first spirit, a dark-skinned cartoon IP who wears her mood on the outside.",
       "menuHeading": "Menu",
-      "collectionsHeading": "Collections"
+      "collectionsHeading": "Collections",
+      "policiesHeading": "Policies & Contact"
     },
     "language": "Language",
     "promoMessages": [
@@ -72,9 +71,7 @@
     "revealing": "Revealing soon",
     "comingTitle": "NEW IPS AHEAD",
     "comingSub": "More urban spirits joining the universe.",
-    "comingKicker": "THE NEXT CHAPTER",
     "inDevelopment": "IN DEVELOPMENT",
-    "comingSoonTbd": "COMING SOON — TBD",
     "collabTitle": "Make OFFY Yours",
     "collabSub": "Partnerships & Customization",
     "collabCta": "Start a collab →",
@@ -229,5 +226,30 @@
     "customKicker": "Make Offy Yours",
     "customHeading": "Custom & Collab",
     "customBody": "Select looks are available for customization and brand collaborations — reach out to us."
+  },
+  "policies": {
+    "navAriaLabel": "Policies and contact",
+    "kicker": "Legal & Support",
+    "titles": {
+      "returns": "Returns & Refunds",
+      "privacy": "Privacy Policy",
+      "terms": "Terms of Service",
+      "shipping": "Shipping Policy",
+      "contact": "Contact Information"
+    },
+    "noticeTitle": "Language note",
+    "notice": "This policy is provided in English only. It reproduces the text maintained in our store back office, and the English version is the authoritative and legally binding one. Our Chinese pages are translated for navigation and description only and do not constitute a translation of this policy.",
+    "originalTitleLabel": "Original title",
+    "unavailable": "The policy text could not be loaded right now. Please try again shortly, or email us and we will send you a copy.",
+    "backToTop": "Back to top",
+    "backToHome": "Back to home",
+    "contactIntro": "If you have any questions, feedback, or notices concerning these Terms, our policies, or any order, please reach out to us at:",
+    "contactNote": "(Please include your order number and full name in all order-related correspondence so we can assist you promptly. Responses are typically provided within 24–48 business hours.)",
+    "contactLabels": {
+      "entity": "Entity",
+      "office": "Registered Office",
+      "email": "Customer Support Email",
+      "instagram": "Official Instagram"
+    }
   }
 }

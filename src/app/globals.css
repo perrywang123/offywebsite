@@ -194,6 +194,95 @@ body {
   }
   .link-line:hover::after { transform: scaleX(0); }
 
+  /* ============ 政策正文(Shopify 书面政策)============
+     正文由后台富文本经 lib/sanitize.ts 白名单消毒后 dangerouslySetInnerHTML 注入,
+     **无法给内部元素挂 class**,所以样式只能写成这个作用域类的后代选择器
+     —— 与项目里 .kicker / .lede / .link-line 的 editorial 工具类模式一致,
+     不为它引 typography 插件。
+     正文只有英文(Translate & Adapt 未配政策翻译),容器带 lang="en"。 */
+  .policy-body {
+    color: var(--color-ink);
+    font-size: 1rem;
+    line-height: 1.75;
+  }
+  .policy-body > * + * { margin-top: 1.25em; }
+  .policy-body h1 {
+    font-family: var(--font-display);
+    font-size: clamp(1.5rem, 1.3rem + 1vw, 2rem);
+    font-weight: 600;
+    line-height: 1.15;
+    letter-spacing: -0.01em;
+    margin-top: 2.5em;
+  }
+  .policy-body h2 {
+    font-family: var(--font-display);
+    font-size: 1.375rem;
+    font-weight: 600;
+    line-height: 1.25;
+    letter-spacing: -0.01em;
+    margin-top: 2.75em;
+    padding-top: 1.75em;
+    border-top: 1px solid var(--color-cream-line);
+  }
+  .policy-body h3 { font-size: 1.0625rem; font-weight: 600; margin-top: 2em; }
+  .policy-body h4,
+  .policy-body h5,
+  .policy-body h6 { font-size: 1rem; font-weight: 600; margin-top: 1.75em; }
+  .policy-body h1:first-child,
+  .policy-body h2:first-child,
+  .policy-body h3:first-child { margin-top: 0; padding-top: 0; border-top: 0; }
+  .policy-body b,
+  .policy-body strong { font-weight: 600; }
+  .policy-body a {
+    color: var(--color-ink);
+    text-decoration: underline;
+    text-decoration-color: var(--color-sand);
+    text-underline-offset: 3px;
+  }
+  .policy-body a:hover { text-decoration-color: var(--color-ink); }
+  .policy-body ul,
+  .policy-body ol { padding-left: 1.25rem; }
+  .policy-body ul { list-style: disc; }
+  .policy-body ol { list-style: decimal; }
+  .policy-body li + li { margin-top: 0.5em; }
+  .policy-body li > ul,
+  .policy-body li > ol { margin-top: 0.5em; }
+  .policy-body blockquote {
+    border-left: 2px solid var(--color-cream-line);
+    padding-left: 1.25rem;
+    color: var(--color-ink-soft);
+  }
+  .policy-body table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.875rem;
+  }
+  .policy-body th {
+    font-family: var(--font-display);
+    font-weight: 600;
+    text-align: left;
+    padding: 0.5rem 0.75rem;
+    border-bottom: 1px solid var(--color-cream-line);
+  }
+  .policy-body td {
+    padding: 0.75rem;
+    border-top: 1px solid var(--color-cream-line);
+    vertical-align: top;
+  }
+
+  /* ============ focus 可见性 ============
+     此前全站只有两处 input 有 focus:border-*,文字链接(含页脚、导航)完全没有焦点
+     样式。用 :focus-visible + outline:outline 不参与盒模型、不会被 overflow 或
+     border-radius 裁掉,offset 保证在深色底上也看得出是"哪一条"。 */
+  .focus-ring:focus-visible {
+    outline: 2px solid var(--color-ink);
+    outline-offset: 2px;
+  }
+  .focus-ring--on-dark:focus-visible {
+    outline: 2px solid var(--color-butter);
+    outline-offset: 2px;
+  }
+
   .media-placeholder {
     position: relative;
     display: flex;

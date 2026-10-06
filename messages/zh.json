@@ -40,11 +40,10 @@
     },
     "footer": {
       "rights": "保留所有权利",
-      "contact": "联系我们",
-      "social": "小红书 @is.offy",
       "blurb": "让想象落地，让陪伴发生 — Offy 是我们创造的第一个小精灵，把情绪穿在身上的黑肤色卡通 IP。",
       "menuHeading": "菜单",
-      "collectionsHeading": "系列"
+      "collectionsHeading": "系列",
+      "policiesHeading": "政策与联系"
     },
     "language": "语言",
     "promoMessages": [
@@ -72,9 +71,7 @@
     "revealing": "待揭晓",
     "comingTitle": "NEW IPS AHEAD",
     "comingSub": "More urban spirits joining the universe.",
-    "comingKicker": "THE NEXT CHAPTER",
     "inDevelopment": "IN DEVELOPMENT",
-    "comingSoonTbd": "COMING SOON — TBD",
     "collabTitle": "让offy成为你的",
     "collabSub": "联名/定制合作",
     "collabCta": "联名 / 定制合作 →",
@@ -229,5 +226,30 @@
     "customKicker": "定制与联名",
     "customHeading": "定制与联名",
     "customBody": "以上款式支持定制及品牌联名合作挑选，欢迎联系我们。"
+  },
+  "policies": {
+    "navAriaLabel": "政策与联系",
+    "kicker": "条款与支持",
+    "titles": {
+      "returns": "退货和退款政策",
+      "privacy": "隐私政策",
+      "terms": "服务条款",
+      "shipping": "物流政策",
+      "contact": "联系信息"
+    },
+    "noticeTitle": "语言说明",
+    "notice": "本页为政策原文，语言为英文，暂无中文译本。以上为 Shopify 店铺后台维护的英文原文，具有唯一效力；中文仅用于页面导航与说明，不构成译文。如中英文表述存在歧义，以英文原文为准。",
+    "originalTitleLabel": "英文原标题",
+    "unavailable": "政策正文暂时无法加载。请稍后重试，或直接邮件联系我们索取副本。",
+    "backToTop": "回到顶部",
+    "backToHome": "返回首页",
+    "contactIntro": "如你对本条款、我们的政策或任何订单有疑问、反馈或通知，请通过以下方式联系我们：",
+    "contactNote": "（订单相关来信请附上订单号与姓名，以便我们尽快处理。我们通常在 24–48 个工作小时内回复。）",
+    "contactLabels": {
+      "entity": "公司实体",
+      "office": "注册地址",
+      "email": "客服邮箱",
+      "instagram": "官方 Instagram"
+    }
   }
 }
