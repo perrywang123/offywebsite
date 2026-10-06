@@ -1,4 +1,5 @@
 import Image from "next/image";
+import { flagEmoji, regionBadgeLabel } from "@/lib/geo";
 import { Link } from "@/i18n/navigation";
 import type { Product } from "@/lib/catalog";
 import { formatUsdCents } from "@/lib/pricing";
@@ -63,11 +64,13 @@ export function ProductCard({
           </span>
         )}
 
-        {/* 区域限定徽章(设计稿:红底,右上) */}
+        {/* 区域限定徽章(设计稿:红底,右上)。badge 现在是访客所在国家的
+            ISO 码,不再只认 US/GB —— 国旗按字母推导,国名走 Intl.DisplayNames,
+            美国/英国保留 PSD 里的 U.S. / UK 措辞。 */}
         {product.badge && (
           <span className="absolute right-2 top-2 flex items-center gap-1 bg-[#c8102e] px-2 py-1 text-[9px] font-bold uppercase tracking-wide text-white">
-            <span aria-hidden>{product.badge === "US" ? "🇺🇸" : "🇬🇧"}</span>
-            {product.badge === "US" ? "AVAILABLE IN THE U.S. ONLY" : "AVAILABLE IN THE UK ONLY"}
+            <span aria-hidden>{flagEmoji(product.badge)}</span>
+            {regionBadgeLabel(product.badge, locale)}
           </span>
         )}
 

@@ -86,15 +86,21 @@ interface ProductListNode {
  */
 export async function listShopifyProducts(
   fetchImpl: typeof fetch = fetch,
+  country: string = marketCountry(),
+  /** 区域限定要按十几个国家各查一次,给个更长的缓存窗口,别 60s 就全刷一遍。 */
+  revalidateSeconds = 60,
 ): Promise<ShopifyListItem[]> {
-  const res = await fetchImpl(storefrontEndpoint("products-list"), {
+  // 国家必须进缓存键:同 URL 不同 body 会被 Next 的数据缓存串味(本文件开头
+  // 记录的线上事故)。区域限定要按十几个国家各查一次,这里尤其关键。
+  const cc = /^[A-Z]{2}$/.test(country) ? country.toUpperCase() : marketCountry();
+  const res = await fetchImpl(storefrontEndpoint(`products-list:${cc}`), {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
       "X-Shopify-Storefront-Access-Token": env.SHOPIFY_STOREFRONT_TOKEN ?? "",
     },
-    body: JSON.stringify({ query: listQuery(marketCountry()) }),
-    next: { revalidate: 60 },
+    body: JSON.stringify({ query: listQuery(cc) }),
+    next: { revalidate: revalidateSeconds },
     // 慢响应按失败处理,避免 Shopify 变慢时拖垮 SSR(由调用方回退本地目录)。
     signal: AbortSignal.timeout(3000),
   } as RequestInit);

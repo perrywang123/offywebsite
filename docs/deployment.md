@@ -13,6 +13,38 @@
 - **路径 B（裸 Node）**：安装 Node.js ≥ 20 与 nginx。
 - 域名解析到服务器 IP（A 记录）。
 
+## 区域限定(按访客国家展示)
+
+首页「区域限定」那一栏是**按访客所在国家**变化的:Shopify 侧的区域限定不是 tag
+也不是 metafield,而是**只把商品发布到某些 Market**,所以服务端会拿同一份
+Storefront 查询换不同 `@inContext(country:)` 跑一遍再比对(实测该店 37 个商品
+里 6 个是限定款)。实现见 `src/server/catalog/regional.ts`,探测结果缓存 1 小时。
+
+**要让它生效,站点必须能知道访客的国家。** 应用按以下顺序读请求头
+(见 `src/lib/geo.ts`):
+
+```
+cf-ipcountry → x-vercel-ip-country → x-country-code → x-geo-country → x-forwarded-country
+```
+
+一个都拿不到时按 `SHOPIFY_MARKET_COUNTRY`(默认 `US`)展示 —— 也就是"按美国市场
+展示",不会白屏。三种接法:
+
+| 做法 | 说明 |
+| --- | --- |
+| 域名挂 Cloudflare | 最省事,CF 自动注入 `cf-ipcountry`,什么都不用配 |
+| nginx + GeoIP2 | 需要 `ngx_http_geoip2_module` + MaxMind GeoLite2-Country.mmdb,配置见 `deploy/nginx.conf` 里的注释 |
+| 都不做 | 全部访客按默认市场展示,那一栏仍有内容 |
+
+可选:`SHOPIFY_REGIONS` 指定要比对的国家(逗号分隔),留空用内置默认
+`US,CA,GB,SG,HK,MY,AU,JP,KR,DE,FR,TW`。
+
+> 注意:读请求头会让首页转为**按请求渲染**(不再走 ISR 静态缓存)。这是按国家
+> 变化的必要代价;Shopify 的数据请求仍有各自的缓存窗口,所以不会每个请求都打
+> Shopify。
+
+---
+
 ## 数据库说明
 
 当前里程碑用 **SQLite**。生产部署务必把数据放在**持久化目录**（Docker 用

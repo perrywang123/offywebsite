@@ -68,7 +68,18 @@ const SERIES_TAGS: Record<SeriesSlug, { zh: string[]; en: string[] }> = {
 /** 实时数据缺图时的占位图(理论上不会触发,Shopify 已发布商品均有主图)。 */
 const FALLBACK_IMAGE = "/assets/hero/hero-01.jpg";
 
-function toLiveProduct(item: ShopifyCollectionProductItem, series: SeriesSlug, sortOrder: number): Product {
+/**
+ * toLiveProduct 的入参:只要求基础展示字段,变体/编码/创建时间可缺省 ——
+ * 这样「区域限定」探测拿到的 ShopifyListItem 也能复用同一套映射,
+ * 不必为它再写一份,避免两处映射逻辑分叉。
+ */
+export type LiveProductInput = Pick<
+  ShopifyCollectionProductItem,
+  "handle" | "title" | "priceCents" | "currency" | "image" | "available"
+> &
+  Partial<ShopifyCollectionProductItem>;
+
+export function toLiveProduct(item: LiveProductInput, series: SeriesSlug, sortOrder: number): Product {
   const tags = SERIES_TAGS[series];
   const local = getProductByCode(item.handle);
   return {
