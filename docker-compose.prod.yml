@@ -13,6 +13,17 @@ services:
     build:
       context: .
       dockerfile: Dockerfile
+      # 构建期参数:让 `next build` 的预渲染直接拿到真实目录数据,避免上线后
+      # 前 60s 还显示本地兜底目录。只传可公开的值 —— 密钥类走下面的 environment,
+      # 不进构建参数(构建参数会留在镜像 history 里)。
+      args:
+        SITE_URL: "${SITE_URL:-http://localhost:3000}"
+        NEXT_PUBLIC_SITE_NAME: "${NEXT_PUBLIC_SITE_NAME:-Offy}"
+        NEXT_PUBLIC_SITE_URL: "${NEXT_PUBLIC_SITE_URL:-https://offy.example.com}"
+        SHOPIFY_STORE_DOMAIN: "${SHOPIFY_STORE_DOMAIN:-}"
+        SHOPIFY_STOREFRONT_TOKEN: "${SHOPIFY_STOREFRONT_TOKEN:-}"
+        SHOPIFY_API_VERSION: "${SHOPIFY_API_VERSION:-2026-07}"
+        SHOPIFY_MARKET_COUNTRY: "${SHOPIFY_MARKET_COUNTRY:-US}"
     restart: always
     ports:
       - "127.0.0.1:3000:3000"
@@ -22,6 +33,24 @@ services:
       DATABASE_URL: "${DATABASE_URL:-/data/offy.db}"
       NEXT_PUBLIC_SITE_NAME: "${NEXT_PUBLIC_SITE_NAME:-Offy}"
       NEXT_PUBLIC_SITE_URL: "${NEXT_PUBLIC_SITE_URL:-https://offy.example.com}"
+      # 服务端真正读的是 SITE_URL(robots / sitemap / metadataBase,以及
+      # Stripe/PayPal 的回跳地址),不是 NEXT_PUBLIC_SITE_URL。漏了这行会让容器里
+      # 一直回落到 http://localhost:3000,线上 sitemap 和结算回跳都会指错域名。
+      SITE_URL: "${SITE_URL:-http://localhost:3000}"
+      # ---- Shopify:商品目录与结算都走 Storefront API ----
+      # 这几项不传,应用会整体回退本地静态目录(现象:商品数不对、系列名是本地
+      # 占位名、部分商品 $0.00)。
+      SHOPIFY_STORE_DOMAIN: "${SHOPIFY_STORE_DOMAIN:-}"
+      SHOPIFY_STOREFRONT_TOKEN: "${SHOPIFY_STOREFRONT_TOKEN:-}"
+      SHOPIFY_ADMIN_TOKEN: "${SHOPIFY_ADMIN_TOKEN:-}"
+      SHOPIFY_API_VERSION: "${SHOPIFY_API_VERSION:-2026-07}"
+      SHOPIFY_MARKET_COUNTRY: "${SHOPIFY_MARKET_COUNTRY:-US}"
+      # ---- 支付渠道:留空则对应渠道自动禁用 ----
+      STRIPE_SECRET_KEY: "${STRIPE_SECRET_KEY:-}"
+      STRIPE_WEBHOOK_SECRET: "${STRIPE_WEBHOOK_SECRET:-}"
+      PAYPAL_MODE: "${PAYPAL_MODE:-sandbox}"
+      PAYPAL_CLIENT_ID: "${PAYPAL_CLIENT_ID:-}"
+      PAYPAL_CLIENT_SECRET: "${PAYPAL_CLIENT_SECRET:-}"
     volumes:
       - offy-data:/data
     healthcheck:

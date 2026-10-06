@@ -14,3 +14,6 @@ coverage
 Dockerfile
 .dockerignore
 *.md
+# 设计/原始素材(PSD、效果图、lookbook 原图)。真正上线的是 public/assets 下的
+# 产物,这些不该进镜像 —— 加上这行之前构建上下文有 2.3GB。
+resources
