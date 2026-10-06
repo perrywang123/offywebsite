@@ -26,22 +26,29 @@ const envSchema = z.object({
 
 export const env = envSchema.parse(process.env);
 
-/** True when a value is a real secret (not a placeholder). */
-function isRealSecret(v?: string): boolean {
-  return Boolean(v && !v.includes("xxxx") && !v.includes("REPLACE_WITH"));
+/**
+ * True when the variable carries a usable (non-empty) value.
+ *
+ * 默认「配了就算启用」:只要填了非空值就认为该渠道可用。
+ * 早期版本会用 `REPLACE_WITH` / `xxxx` 这类**占位符特征**去猜,于是模板里留着
+ * 占位符就等价于把渠道静默关掉 —— 排障时很难发现。现在不再猜:填了就用,
+ * 真填错密钥会在调用渠道时直接报错;只有**完全没配**时才自动禁用该渠道。
+ */
+function isConfiguredValue(v?: string): boolean {
+  return Boolean(v && v.trim() !== "");
 }
 
-/** True when a real Stripe secret key is configured (not the placeholder). */
+/** True when a Stripe secret key is configured. */
 export function isStripeConfigured(): boolean {
-  return isRealSecret(env.STRIPE_SECRET_KEY);
+  return isConfiguredValue(env.STRIPE_SECRET_KEY);
 }
 
-/** True when real PayPal credentials are configured (not placeholders). */
+/** True when PayPal credentials are configured. */
 export function isPayPalConfigured(): boolean {
-  return isRealSecret(env.PAYPAL_CLIENT_ID) && isRealSecret(env.PAYPAL_CLIENT_SECRET);
+  return isConfiguredValue(env.PAYPAL_CLIENT_ID) && isConfiguredValue(env.PAYPAL_CLIENT_SECRET);
 }
 
-/** True when a real Shopify store domain + Storefront token are configured. */
+/** True when a Shopify store domain + Storefront token are configured. */
 export function isShopifyConfigured(): boolean {
-  return isRealSecret(env.SHOPIFY_STORE_DOMAIN) && isRealSecret(env.SHOPIFY_STOREFRONT_TOKEN);
+  return isConfiguredValue(env.SHOPIFY_STORE_DOMAIN) && isConfiguredValue(env.SHOPIFY_STOREFRONT_TOKEN);
 }
