@@ -1,18 +1,34 @@
 /**
- * 访客国家判定(纯函数,无副作用,便于单测)。
+ * 访客国家判定。
  *
- * 站点自身不做 GeoIP:国家信息由**前置层**注入请求头,按优先级依次尝试:
- *   cf-ipcountry        Cloudflare(最省事:域名接入 CF 即自动带上)
- *   x-vercel-ip-country Vercel
- *   x-country-code      通用 CDN / nginx GeoIP2($geoip2_data_country_code)
- *   x-geo-country       Cloudflare Worker / 自建网关常用别名
- *   x-forwarded-country 兜底别名
+ * 站点按访客国家决定两件事:展示哪些「区域限定」商品、以及用什么币种显示价格。
+ * 国家来源分两层,顺序如下:
+ *
+ * 1) **前置层注入的国家头**(优先,想让 nginx/CDN 覆盖判定时用它):
+ *      cf-ipcountry        Cloudflare(域名接入 CF 即自动带上)
+ *      x-vercel-ip-country Vercel
+ *      x-country-code      通用 CDN / nginx GeoIP2($geoip2_data_country_code)
+ *      x-geo-country       Cloudflare Worker / 自建网关常用别名
+ *      x-forwarded-country 兜底别名
+ *
+ * 2) **应用自己按客户端 IP 解析**(2026-10 新增):一个头都拿不到时,取
+ *    `x-forwarded-for` 的第一个地址(否则 `x-real-ip`)交给 `geoip-lite`。
+ *    数据打包在 npm 包里(约 115MB,随包发布),所以**不需要 MaxMind 账号、
+ *    不需要给 nginx 装 GeoIP2 模块、也不需要 Cloudflare** —— 部署完就能用。
+ *    私有/回环地址、畸形 IP、库异常一律静默跳过,继续往下走。
+ *
  * 都拿不到时回落到 `SHOPIFY_MARKET_COUNTRY`(默认 US)—— 也就是"按美国市场展示",
  * 与本次改造前的行为一致,不会因为缺头而白屏。
  *
- * 见 deploy/nginx.conf 里注释掉的 GeoIP2 配置:裸 VPS 上想让 route A 生效,
- * 要么把域名挂到 Cloudflare,要么按那段注释给 nginx 加 GeoIP2 模块。
+ * ⚠️ 这个模块现在依赖 `geoip-lite`(进程启动时同步读入 ~115MB 数据库,只应跑在
+ * 服务端)。**不要从客户端组件(`"use client"`)里 import 它**,连 `flagEmoji` /
+ * `regionBadgeLabel` 这种纯函数也不行 —— 那会把整个地理库拖进 client bundle。
+ * 调用方全是服务端(页面 / route handler / server 目录)。
+ * 打包侧还有两处必要配置(Turbopack 外部化 + standalone 带上数据文件),
+ * 见 next.config.ts 里 `serverExternalPackages` / `outputFileTracingIncludes` 的注释。
  */
+
+import geoip from "geoip-lite";
 
 /** 依次尝试的请求头(小写)。 */
 export const COUNTRY_HEADERS = [
@@ -41,16 +57,54 @@ function readHeader(headers: HeaderLookup, name: string): string | undefined {
   return Array.isArray(raw) ? raw[0] : raw;
 }
 
+/**
+ * 归一化成可用的两字母国家码,拿不到(空 / 非两位字母 / 洲际码 / XX、T1 之类的
+ * 哨兵值)返回 undefined。**所有来源都必须过这一关**,否则 UK 会原样透传给
+ * Shopify Markets 并让它落回默认市场。
+ */
+function asCountryCode(value: string | undefined): string | undefined {
+  const v = value?.trim().toUpperCase();
+  // 归一化(UK→GB 等):Shopify Markets 只认 ISO-3166 alpha-2,"UK" 这种
+  // 常见但非标准的写法会让 @inContext 落回默认市场,区域限定区块会整个消失。
+  if (v && /^[A-Z]{2}$/.test(v) && !NON_COUNTRY_CODES.has(v)) return normalizeCountryCode(v);
+  return undefined;
+}
+
+/**
+ * 访客的客户端 IP。`x-forwarded-for` 是代理链("客户端, 中间代理, ..."),
+ * nginx 的 `$proxy_add_x_forwarded_for` 也是把自己**追加**在后面,所以第一个
+ * 才是访客;整串丢给地理库会解析失败。没有 XFF 时退到 `x-real-ip`。
+ */
+function clientIp(headers: HeaderLookup): string | undefined {
+  const first = readHeader(headers, "x-forwarded-for")?.split(",")[0]?.trim();
+  if (first) return first;
+  return readHeader(headers, "x-real-ip")?.trim() || undefined;
+}
+
+/**
+ * 用本地地理库把 IP 解析成国家码。私有段/回环/畸形 IP 与库内无记录时
+ * geoip-lite 返回 null → undefined;库本身抛错(例如数据文件没打进镜像)
+ * 也吞掉 —— 判不出国家只该回落默认市场,不该让整个请求 500。
+ */
+function countryFromIp(ip: string | undefined): string | undefined {
+  if (!ip) return undefined;
+  try {
+    return asCountryCode(geoip.lookup(ip)?.country);
+  } catch {
+    return undefined;
+  }
+}
+
 /** 选出可用的两字母国家码;拿不到就返回 `fallback`(大写归一)。 */
 export function pickCountry(headers: HeaderLookup, fallback = "US"): string {
   for (const name of COUNTRY_HEADERS) {
-    const v = readHeader(headers, name)?.trim().toUpperCase();
-    // 归一化(UK→GB 等):Shopify Markets 只认 ISO-3166 alpha-2,"UK" 这种
-    // 常见但非标准的写法会让 @inContext 落回默认市场,区域限定区块会整个消失。
-    if (v && /^[A-Z]{2}$/.test(v) && !NON_COUNTRY_CODES.has(v)) return normalizeCountryCode(v);
+    const code = asCountryCode(readHeader(headers, name));
+    if (code) return code;
   }
-  const fb = fallback.trim().toUpperCase();
-  return /^[A-Z]{2}$/.test(fb) && !NON_COUNTRY_CODES.has(fb) ? normalizeCountryCode(fb) : "US";
+  // 没有国家头 → 自己按客户端 IP 解析(裸 nginx / 无 CDN 的部署靠这一步)。
+  const fromIp = countryFromIp(clientIp(headers));
+  if (fromIp) return fromIp;
+  return asCountryCode(fallback) ?? "US";
 }
 
 /** 探测区域限定用的国家列表:优先 SHOPIFY_REGIONS,否则用内置默认。 */

@@ -20,60 +20,98 @@
 
 ### 国家是怎么判定的
 
-应用按以下顺序读请求头(见 `src/lib/geo.ts`):
+应用按以下顺序判定(见 `src/lib/geo.ts`):
 
 ```
-cf-ipcountry → x-vercel-ip-country → x-country-code → x-geo-country → x-forwarded-country
+cf-ipcountry → x-vercel-ip-country → x-country-code → x-geo-country
+             → x-forwarded-country
+             → 应用自己按客户端 IP 解析(geoip-lite)      ← 2026-10-11 新增
+             → SHOPIFY_MARKET_COUNTRY(默认 US)
 ```
 
-**一个都拿不到时按 `SHOPIFY_MARKET_COUNTRY`(默认 `US`)展示** —— 不会白屏,但
-币种是错的,「区域限定」那一栏也不是访客所在地区的。这是最容易漏配、且从页面上
-看不出来的一环。
+**前五级是请求头,第六级是应用自己解析。**一个头都拿不到时,`pickCountry` 会取
+`x-forwarded-for` 的**第一个**地址(没有就退到 `x-real-ip`),用 `geoip-lite` 查
+ISO 国家码,再走和请求头完全相同的归一化(`UK` → `GB`)与哨兵值过滤
+(`XX`/`T1`/`EU` 之类不算国家)。
 
-> 非 ISO 写法会被归一化:`UK` → `GB`。Shopify Markets 只认 ISO-3166 alpha-2,
-> 传 `UK` 会让它落回默认市场(币种和区域限定同时失效),所以 `pickCountry`
-> 在返回前统一归一化。
+这一层是 **zero-config** 的:`geoip-lite` 的数据库打包在 npm 包里,所以
 
-### 三种接法
+- **不用装 nginx GeoIP2 模块**(`libnginx-mod-http-geoip2` 是 Debian/Ubuntu 包名,
+  OpenCloudOS / RHEL 系根本没有,硬开配置会让 `nginx -t` 报
+  `unknown directive "geoip2"`);
+- **不用注册 MaxMind 账号、不用 `geoipupdate`**;
+- **不用把域名挂到 Cloudflare**。
+
+部署完就能按访客地区展示,币种也跟着走。**唯一的硬要求是 nginx 必须把客户端 IP
+传进来**(`deploy/nginx.conf` 里那两行 `X-Real-IP` / `X-Forwarded-For`),否则应用
+只能看到回环地址,退回默认市场。
+
+> 私有段 / 回环地址(`127.0.0.1`、`10.x`、`192.168.x`、`::1`)与畸形 IP 查不到
+> 国家,此时**静默回落**到 `SHOPIFY_MARKET_COUNTRY`,不会报错、不会白屏 ——
+> 从本机直连容器调试时看到 USD 是正常的。
+
+> `UK` 不是 ISO-3166 码(`GB` 才是),但设计稿、文案和人工标注里都习惯写 UK。
+> 所有来源(含 IP 解析)在返回前统一归一化成 `GB` —— Shopify Markets 只认
+> alpha-2,传 `UK` 会让它落回默认市场(币种和区域限定同时失效)。
+
+> 这一层判定最终来自**请求方自己声称的值**(头可以被伪造,`X-Forwarded-For`
+> 的左侧也可能被伪造),它只影响展示币种与区域限定区块。真要按国家做价格/合规
+> 判定,以后得在结算侧另行校验(当前结算是按 `pickCountry` 的结果下单,行为与
+> 改造前一致)。
+
+### 可选:用前置层覆盖判定
+
+想让 CDN / nginx 指定国家(内网压测要伪装成某个国家、或想让判定收口到边缘),
+再在下面三种里挑一种。**都不做也没关系** —— IP 解析这一层已经覆盖了裸机部署。
 
 | 做法 | 说明 |
 | --- | --- |
-| **A. 域名挂 Cloudflare** | 最省事,CF 自动注入 `cf-ipcountry`,什么都不用配 |
-| **B. 裸 nginx + GeoIP2** | 需要 `libnginx-mod-http-geoip2` + MaxMind GeoLite2-Country.mmdb,见下 |
-| **C. 都不做** | 全部访客按默认市场展示,币种恒为 USD |
+| **A. 域名挂 Cloudflare** | CF 自动注入 `cf-ipcountry`,优先级最高,什么都不用配 |
+| **B. 裸 nginx + GeoIP2** | 需要 `libnginx-mod-http-geoip2` + MaxMind 账号,见 `deploy/nginx-geoip2.conf` |
+| **C. 什么都不做(推荐)** | 应用自己按 IP 解析,币种与区域限定已经正确 |
 
-### B 的具体步骤(裸 nginx)
-
-```bash
-apt install libnginx-mod-http-geoip2 geoipupdate
-# 在 /etc/geoipupdate/GeoIP.conf 填 MaxMind 的 AccountID / LicenseKey
-geoipupdate
-
-cp deploy/nginx-geoip2.conf /etc/nginx/conf.d/offy-geoip2.conf
-# deploy/nginx.conf 里那行 proxy_set_header X-Country-Code 已经带上,
-# 但只有模块和 mmdb 就位后它才能生效
-
-nginx -t && systemctl reload nginx     # 顺序不能反
-```
-
-⚠️ **顺序很重要**:模块或 mmdb 没就位就让 `nginx -t` 过不去。先 `nginx -t`
-再 reload —— reload 失败时 nginx 会继续跑旧配置,不会把你整个站打挂。
-
-`deploy/nginx-geoip2.conf` 里带完整的前置说明与安装命令。
+> 有国家头时**以头为准**,IP 解析不会覆盖它 —— 这正是 A/B 能"覆盖"应用判定的原因。
+> `deploy/nginx.conf` 里那行 `proxy_set_header X-Country-Code` 默认是**注释掉**的:
+> 模块没装就打开它,`nginx -t` 会直接失败。
 
 ### 部署后必须验证
 
 ```bash
-# 1. 国家头到底有没有传到应用(最关键的一步)
-curl -s -o /dev/null -D - https://你的域名/api/products | grep -i country
+# 1. 不伪造任何国家头,只给一个公网 IP —— 应用应当自己解析出国家
+curl -s -H "X-Forwarded-For: 210.128.0.1" http://127.0.0.1:3000/api/products | head -c 200
+curl -s -H "X-Forwarded-For: 212.58.244.20" http://127.0.0.1:3000/api/products | head -c 200
+#    期望:两个 IP 拿到**不同**币种(本店实测 JP→SGD、GB→GBP),而不是两边都 USD
+#    (镜像里没有 curl,要在容器内自查就用 node 的 fetch:
+#       docker compose -f docker-compose.prod.yml exec app node -e \
+#         "fetch('http://127.0.0.1:3000/api/products',{headers:{'X-Forwarded-For':'212.58.244.20'}}).then(r=>r.json()).then(j=>console.log(j.products[0].price))")
 
-# 2. 币种是否随国家变化 —— 换两个地区的网络,或直接伪造头:
-curl -s -H "cf-ipcountry: GB" https://你的域名/api/products | head -c 200
-curl -s -H "cf-ipcountry: HK" https://你的域名/api/products | head -c 200
-#    期望:一个 GBP、一个 HKD,而不是两边都是 USD
+# 2. 国家头仍然优先于 IP(优先级没被破坏)
+curl -s -H "cf-ipcountry: GB" -H "X-Forwarded-For: 210.128.0.1" \
+  http://127.0.0.1:3000/api/products | head -c 200
+#    期望:GBP —— 头压过 IP
+
+# 3. 换两个地区的网络访问首页,「区域限定」那一栏与价格币种应当不同
 ```
 
-第 1 步没有输出 = 头没传进来 = **所有访客都在看美国市场**,先去修 A 或 B。
+第 1 步如果两个 IP 都还是 USD,依次检查:(a) 反代有没有传 `X-Forwarded-For`;
+(b) 容器里 `node_modules/geoip-lite/data/` 在不在(少了就会一律回落默认市场,
+见下一条)。
+
+> **打包侧的两个坑(都已在 `next.config.ts` 修好,别删那两行):**
+>
+> 1. `serverExternalPackages: ["geoip-lite"]` —— `geoip-lite` 用
+>    `path.resolve(__dirname, "../data")` 找数据文件。被 Turbopack 打进 server
+>    bundle 后 `__dirname` 变成虚拟路径(`/ROOT/node_modules/...`),**import 阶段
+>    就 ENOENT,每个请求 500**。声明成外部依赖让它按真实路径 `require`。
+> 2. `outputFileTracingIncludes: { "/**": ["node_modules/geoip-lite/**"] }` ——
+>    standalone 的文件追踪只跟 import/require 走,看不到 `fs.openSync(*.dat)`,
+>    不显式包含就不会被复制进镜像 —— 现象是"本地全对,容器里查谁都是 undefined"。
+>    自查:`docker compose -f docker-compose.prod.yml exec app ls node_modules/geoip-lite/data`。
+>
+> 顺带一提,这个库在进程启动时同步读入约 115MB 数据(实测常驻内存约 +150MB),
+> 换 IP 判定的准确性就是拿这点内存换的。它声明 `engines: node >= 24`,但实测在
+> 镜像里的 Node 22 上工作正常(`geoip-lite@2.0.3` 没有用到 Node 24 专有 API)。
+
 
 ### 数据来源与缓存
 
@@ -182,7 +220,8 @@ git ls-files | grep -i env      # 只应看到两个 *.example 和 src/lib/env.t
 
 ### 配置 HTTPS(nginx + certbot)
 
-同下节,反代配置见 `deploy/nginx.conf`,国家头见上一节与 `deploy/nginx-geoip2.conf`。
+同下节,反代配置见 `deploy/nginx.conf`(国家判定默认由应用按 IP 自行解析,不需要
+nginx 模块;想让 nginx 覆盖时才看 `deploy/nginx-geoip2.conf`)。
 
 ## 手工打包产物说明
 

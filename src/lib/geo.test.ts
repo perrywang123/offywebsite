@@ -1,5 +1,17 @@
-import { describe, expect, it } from "vitest";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 import { flagEmoji, normalizeCountryCode, parseRegionList, pickCountry, regionBadgeLabel } from "./geo";
+
+// geoip-lite 在 import 时就会同步把 ~115MB 的数据库读进内存,而单测既不该付这个
+// 代价,也不该依赖真实库的数据(库随 MaxMind 更新,今天的公网 IP 明天可能换国家)。
+// 所以整个文件把 lookup mock 掉,只验证**我们自己那一层**:取哪个 IP、怎么归一化、
+// 拿不到国家时怎么回落。真实数据文件的端到端可用性由容器实测覆盖
+// (见 docs/deployment.md「区域限定与币种」)。
+const { lookupMock } = vi.hoisted(() => ({ lookupMock: vi.fn() }));
+
+vi.mock("geoip-lite", () => ({
+  default: { lookup: lookupMock },
+  lookup: lookupMock,
+}));
 
 describe("pickCountry (访客国家判定)", () => {
   it("优先用 Cloudflare 的 cf-ipcountry", () => {
@@ -37,6 +49,91 @@ describe("pickCountry (访客国家判定)", () => {
   it("支持 Headers 实例", () => {
     const h = new Headers({ "x-country-code": "nz" });
     expect(pickCountry(h)).toBe("NZ");
+  });
+});
+
+describe("pickCountry — 国家头全缺失时按客户端 IP 解析(不需 nginx GeoIP2 / Cloudflare)", () => {
+  beforeEach(() => {
+    lookupMock.mockReset();
+    lookupMock.mockReturnValue(null);
+  });
+
+  it("有国家头时**优先用头**,根本不查 IP", () => {
+    lookupMock.mockReturnValue({ country: "DE" });
+    expect(pickCountry({ "cf-ipcountry": "GB", "x-forwarded-for": "8.8.8.8" }, "US")).toBe("GB");
+    expect(pickCountry({ "x-country-code": "hk", "x-forwarded-for": "8.8.8.8" }, "US")).toBe("HK");
+    expect(lookupMock).not.toHaveBeenCalled();
+  });
+
+  it("没有国家头、x-forwarded-for 是公网 IP 时解析出国家", () => {
+    lookupMock.mockReturnValue({ country: "DE" });
+    expect(pickCountry({ "x-forwarded-for": "8.8.8.8" }, "US")).toBe("DE");
+    expect(lookupMock).toHaveBeenCalledWith("8.8.8.8");
+  });
+
+  it("x-forwarded-for 是代理链时取第一个地址", () => {
+    // nginx 用 $proxy_add_x_forwarded_for,格式是 "客户端, 中间代理, ...",
+    // 只有第一个才是访客。整串丢给 lookup 会解析失败 → 全部回落默认市场。
+    lookupMock.mockReturnValue({ country: "JP" });
+    expect(pickCountry({ "x-forwarded-for": "1.2.3.4, 5.6.7.8" }, "US")).toBe("JP");
+    expect(lookupMock).toHaveBeenCalledWith("1.2.3.4");
+    expect(pickCountry({ "x-forwarded-for": "  203.0.113.9 ,10.0.0.1" }, "US")).toBe("JP");
+    expect(lookupMock).toHaveBeenLastCalledWith("203.0.113.9");
+  });
+
+  it("没有 x-forwarded-for 时退到 x-real-ip", () => {
+    lookupMock.mockReturnValue({ country: "FR" });
+    expect(pickCountry({ "x-real-ip": "8.8.4.4" }, "US")).toBe("FR");
+    expect(lookupMock).toHaveBeenCalledWith("8.8.4.4");
+  });
+
+  it("IP 途径也走同一套归一化:UK → GB、哨兵值被过滤", () => {
+    lookupMock.mockReturnValue({ country: "UK" });
+    expect(pickCountry({ "x-forwarded-for": "8.8.8.8" }, "US")).toBe("GB");
+
+    lookupMock.mockReturnValue({ country: "XX" });
+    expect(pickCountry({ "x-forwarded-for": "8.8.8.8" }, "CA")).toBe("CA");
+
+    lookupMock.mockReturnValue({ country: "" });
+    expect(pickCountry({ "x-forwarded-for": "8.8.8.8" }, "CA")).toBe("CA");
+
+    lookupMock.mockReturnValue({ country: "usa" });
+    expect(pickCountry({ "x-forwarded-for": "8.8.8.8" }, "CA")).toBe("CA");
+  });
+
+  it("私有/回环/畸形 IP 解析不出国家 → 静默回落 fallback,不抛错", () => {
+    lookupMock.mockReturnValue(null); // geoip-lite 对私有段就是返回 null
+    for (const ip of [
+      "127.0.0.1",
+      "10.1.2.3",
+      "192.168.1.7",
+      "172.16.0.9",
+      "::1",
+      "unknown",
+      "not-an-ip",
+      "",
+    ]) {
+      expect(pickCountry({ "x-forwarded-for": ip }, "SG")).toBe("SG");
+    }
+  });
+
+  it("连 IP 都没有时压根不查库", () => {
+    expect(pickCountry({}, "US")).toBe("US");
+    expect(pickCountry({ "cf-ipcountry": "XX" }, "US")).toBe("US");
+    expect(lookupMock).not.toHaveBeenCalled();
+  });
+
+  it("库抛错(例如数据文件没打进镜像)只是回落,不会把请求打成 500", () => {
+    lookupMock.mockImplementation(() => {
+      throw new Error("ENOENT: no such file or directory, open '.../geoip-country.dat'");
+    });
+    expect(pickCountry({ "x-forwarded-for": "8.8.8.8" }, "US")).toBe("US");
+  });
+
+  it("支持 Headers 实例(Next 的 headers() / Request.headers)", () => {
+    lookupMock.mockReturnValue({ country: "FR" });
+    expect(pickCountry(new Headers({ "x-forwarded-for": "8.8.8.8" }), "US")).toBe("FR");
+    expect(pickCountry(new Headers(), "US")).toBe("US");
   });
 });
 
