@@ -60,14 +60,17 @@ describe("catalog data integrity (33 Shopify-mapped products)", () => {
 
   it("prices mirror the Shopify store tiers", () => {
     const byPrice = (cents: number) => products.filter((p) => p.priceCents === cents).length;
-    expect(byPrice(5190)).toBe(2);
     expect(byPrice(5390)).toBe(1);
+    expect(byPrice(5190)).toBe(2);
     expect(byPrice(4990)).toBe(14);
     expect(byPrice(4790)).toBe(3);
-    expect(byPrice(4590)).toBe(13);
-    // 兜底表里不允许出现 0 价:Shopify 侧 0 表示"价格没配",同步前本地有 5 条是 0,
-    // 回退模式下会把商品显示成 $0.00(线上实测踩到过)。
-    expect(byPrice(0)).toBe(0);
+    expect(byPrice(4590)).toBe(12);
+    // 0 价现在**允许**出现 1 条:swan-princess 在 Shopify 后台确实没设价,用户确认
+    // 「以 Shopify 配置为准」。所以这里断言的是"0 价只能来自 Shopify 的真实配置",
+    // 而不是"本地表不许有 0" —— 后者原本是为了防止回退模式显示 $0.00,但那个问题
+    // 真正的防线是 `pnpm check:catalog` 的比价(它会在本地与线上价格不一致时失败)。
+    expect(byPrice(0)).toBe(1);
+    expect(getProductByCode("swan-princess")?.priceCents).toBe(0);
   });
 
   it("marks regional-exclusive products (cold-kitten/lemon-fizz US)", () => {
@@ -97,8 +100,8 @@ describe("catalog queries", () => {
 
 describe("toStripeLineItems", () => {
   it("uses server-side catalog price (ignores any client price)", () => {
-    const [line] = toStripeLineItems([{ code: "swan-princess", quantity: 2 }]);
-    expect(line.price_data.unit_amount).toBe(4590);
+    const [line] = toStripeLineItems([{ code: "royal-grey", quantity: 2 }]);
+    expect(line.price_data.unit_amount).toBe(4990);
     expect(line.quantity).toBe(2);
   });
 
@@ -111,10 +114,10 @@ describe("computeSubtotalCents", () => {
   it("computes server-authoritative subtotal", () => {
     expect(
       computeSubtotalCents([
-        { code: "swan-princess", quantity: 2 },
+        { code: "royal-grey", quantity: 2 },
         { code: "bunny-hug", quantity: 1 },
       ]),
-    ).toBe(4590 * 2 + 4990);
+    ).toBe(4990 * 2 + 4990);
   });
 });
 

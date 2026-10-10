@@ -109,10 +109,10 @@ describe("getLiveProductsBySeries", () => {
     // 本地兜底表的快照价是美元,所以回退时必须把币种一并说明成 USD —— 绝不静默
     // 把美元金额标成访客市场的币种。
     mockedCollectionProducts.mockResolvedValue([
-      { handle: "swan-princess", title: "SWAN PRINCESS", priceCents: 4590, currency: "", image: null, available: true, variantId: null },
+      { handle: "royal-grey", title: "LITTLE HEIRESS", priceCents: 4990, currency: "", image: null, available: true, variantId: null },
     ]);
     const list = await getLiveProductsBySeries("princess-lady", "GB");
-    expect(list[0]?.priceCents).toBe(4590);
+    expect(list[0]?.priceCents).toBe(4990);
     expect(list[0]?.currency).toBe("USD");
   });
 
@@ -252,9 +252,9 @@ describe("getLiveProductByCode", () => {
 
   it("falls back to the local catalog entry when Shopify is unreachable", async () => {
     mockedProductData.mockRejectedValue(new Error("timeout"));
-    const product = await getLiveProductByCode("swan-princess", "US");
-    expect(product?.code).toBe("swan-princess");
-    expect(product?.priceCents).toBe(4590);
+    const product = await getLiveProductByCode("royal-grey", "US");
+    expect(product?.code).toBe("royal-grey");
+    expect(product?.priceCents).toBe(4990);
   });
 
   it("returns undefined for a code that exists neither live nor locally", async () => {
@@ -291,8 +291,8 @@ describe("getLiveProductByCode", () => {
 
   it("marks a local-only fallback price as USD", async () => {
     mockedProductData.mockRejectedValue(new Error("timeout"));
-    const product = await getLiveProductByCode("swan-princess", "GB");
-    expect(product?.priceCents).toBe(4590);
+    const product = await getLiveProductByCode("royal-grey", "GB");
+    expect(product?.priceCents).toBe(4990);
     expect(product?.currency).toBe("USD");
   });
 

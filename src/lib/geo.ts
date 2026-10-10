@@ -45,10 +45,12 @@ function readHeader(headers: HeaderLookup, name: string): string | undefined {
 export function pickCountry(headers: HeaderLookup, fallback = "US"): string {
   for (const name of COUNTRY_HEADERS) {
     const v = readHeader(headers, name)?.trim().toUpperCase();
-    if (v && /^[A-Z]{2}$/.test(v) && !NON_COUNTRY_CODES.has(v)) return v;
+    // 归一化(UK→GB 等):Shopify Markets 只认 ISO-3166 alpha-2,"UK" 这种
+    // 常见但非标准的写法会让 @inContext 落回默认市场,区域限定区块会整个消失。
+    if (v && /^[A-Z]{2}$/.test(v) && !NON_COUNTRY_CODES.has(v)) return normalizeCountryCode(v);
   }
   const fb = fallback.trim().toUpperCase();
-  return /^[A-Z]{2}$/.test(fb) && !NON_COUNTRY_CODES.has(fb) ? fb : "US";
+  return /^[A-Z]{2}$/.test(fb) && !NON_COUNTRY_CODES.has(fb) ? normalizeCountryCode(fb) : "US";
 }
 
 /** 探测区域限定用的国家列表:优先 SHOPIFY_REGIONS,否则用内置默认。 */

@@ -58,8 +58,8 @@ function sp(
 
 export const products: Product[] = [
   // —— 公主lady系列(Lady系列,12 款;royal-grey 按图归入)——
-  sp("swan-princess", "princess-lady", "天鹅公主", "SWAN PRINCESS", 4590, "12.jpg?v=1790114599", "53547334598945", { sortOrder: 10, featured: true }),
-  sp("black-pearl", "princess-lady", "黑珍珠", "BLACK PEARL", 4590, "10.jpg?v=1790113567", "53547250549025", { sortOrder: 20, featured: true }),
+  sp("swan-princess", "princess-lady", "天鹅公主", "SWAN QUEEN- LIMITED", 0, "12.jpg?v=1790114599", "53547334598945", { sortOrder: 10, featured: true }),
+  sp("black-pearl", "princess-lady", "黑珍珠", "DOTTY DARLING", 4590, "10.jpg?v=1790113567", "53547250549025", { sortOrder: 20, featured: true }),
   sp("pink-mallow", "princess-lady", "粉棉花糖", "PINK MALLOW", 4990, "09.jpg?v=1790113185", "53547209720097", { sortOrder: 30, featured: true }),
   sp("lemon-fizz", "princess-lady", "柠檬气泡", "LEMON FIZZ", 5190, "08.jpg?v=1790112061", "53547123278113", { sortOrder: 40, badge: "US" }),
   sp("mint-breeze", "princess-lady", "薄荷微风", "MINT BREEZE", 4990, "07.jpg?v=1790111893", "53547107516705", { sortOrder: 50 }),
@@ -69,7 +69,7 @@ export const products: Product[] = [
   sp("coastal-star", "princess-lady", "海岸之星", "COASTAL STAR", 4990, "03.jpg?v=1790110860", "53547001774369", { sortOrder: 90 }),
   sp("wild-sweetie", "princess-lady", "野性甜心", "WILD SWEETIE", 4590, "01.jpg?v=1790108803", "53546791665953", { sortOrder: 100 }),
   sp("cold-kitten", "princess-lady", "高冷小猫", "COLD KITTEN", 5190, "02.jpg?v=1790026339", "53542214893857", { sortOrder: 110, badge: "US" }),
-  sp("royal-grey", "princess-lady", "皇家灰", "ROYAL GREY", 4990, "11.jpg?v=1790114065", "53547308122401", { sortOrder: 120 }),
+  sp("royal-grey", "princess-lady", "皇家灰", "LITTLE HEIRESS", 4990, "11.jpg?v=1790114065", "53547308122401", { sortOrder: 120 }),
   // —— outdoor & sporty系列(9 款)——
   sp("offy_redrush", "outdoor-sporty", "赤红冲锋", "NEON RUSH", 4990, "WeixinImage_20260912005511_33654_9.jpg?v=1789146147", "53491815579937", { sortOrder: 200, featured: true }),
   sp("alpine", "outdoor-sporty", "ALPINE", "ALPINE", 4990, "002.jpg?v=1790379913", "53582730395937", { sortOrder: 210 }),   // 中文名待业务确认,暂用英文原名
@@ -88,11 +88,11 @@ export const products: Product[] = [
   sp("bunny-hug", "playful-life", "兔兔抱抱", "PETITE BUNNY", 4990, "1_7fbba8f8-08d2-4291-af75-b381a7abe364.jpg?v=1790115065", "53547344232737", { sortOrder: 340 }),
   sp("gurardian-angel", "playful-life", "守护天使", "GURARDIAN ANGEL", 5390, "6.jpg?v=1790116883", "53547420877089", { sortOrder: 350 }),
   sp("diva", "playful-life", "DIVA", "DIVA", 4790, "11_f5a9cbdc-5d00-46cf-9eea-c5bf915c4020.jpg?v=1790379166", "53582684913953", { sortOrder: 360 }),   // 中文名待业务确认,暂用英文原名
-  sp("fable", "playful-life", "FABLE", "FABLE", 4990, "13.jpg?v=1790450295", "53593796378913", { sortOrder: 370 }),   // 中文名待业务确认,暂用英文原名
-  sp("feral", "playful-life", "FERAL", "FERAL", 4790, "12_857f3c9f-1a10-40b0-931c-8fcabd7794b8.jpg?v=1790450164", "53593790644513", { sortOrder: 380 }),   // 中文名待业务确认,暂用英文原名
+  sp("fable", "playful-life", "LADY SUNNY SIDE", "LADY SUNNY SIDE", 4990, "13.jpg?v=1790450295", "53593796378913", { sortOrder: 370 }),   // 中文名待业务确认,暂用英文原名
+  sp("feral", "playful-life", "MADAME WILD", "MADAME WILD", 4790, "12_857f3c9f-1a10-40b0-931c-8fcabd7794b8.jpg?v=1790450164", "53593790644513", { sortOrder: 380 }),   // 中文名待业务确认,暂用英文原名
   sp("glow", "playful-life", "GLOW", "GLOW", 4590, "7.jpg?v=1790278880", "53577721512225", { sortOrder: 390 }),   // 中文名待业务确认,暂用英文原名
   sp("mori", "playful-life", "MORI", "MORI", 4990, "9.jpg?v=1790353821", "53579882332449", { sortOrder: 400 }),   // 中文名待业务确认,暂用英文原名
-  sp("snow-white", "playful-life", "SNOW WHITE", "SNOW WHITE", 4790, "10_302e5d76-bd0d-4c5f-954b-0d3b7e3f5a1c.jpg?v=1790353724", "53579877351713", { sortOrder: 410 }),   // 中文名待业务确认,暂用英文原名
+  sp("snow-white", "playful-life", "LADY PEARL", "LADY PEARL", 4790, "10_302e5d76-bd0d-4c5f-954b-0d3b7e3f5a1c.jpg?v=1790353724", "53579877351713", { sortOrder: 410 }),   // 中文名待业务确认,暂用英文原名
 ];
 
 /** 更多新品,敬请期待 —— 时尚包挂系列预告(发布时间以 INS 为准)。 */

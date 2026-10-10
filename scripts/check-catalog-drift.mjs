@@ -52,20 +52,31 @@ const gql = async (query) => {
 // 必须带市场上下文:不带时走店铺默认市场,会把「仅 GB/仅 HK」这类区域限定款
 // 也算进来,与本地兜底表(按 US 市场构建)不可比,报出来的都是噪音。
 const data = await gql(`query @inContext(country: US) {
-  products(first: 100) { nodes { handle title collections(first: 5) { nodes { handle } } } }
+  products(first: 100) { nodes { handle title priceRange { minVariantPrice { amount currencyCode } } collections(first: 5) { nodes { handle } } } }
   collections(first: 20) { nodes { handle title } }
 }`);
 const live = new Map(
-  data.products.nodes.map((n) => [n.handle, { title: n.title, collections: n.collections.nodes.map((c) => c.handle) }]),
+  data.products.nodes.map((n) => [n.handle, { title: n.title, cents: Math.round(Number(n.priceRange.minVariantPrice.amount) * 100), collections: n.collections.nodes.map((c) => c.handle) }]),
 );
 
 // 本地:从 products.ts 里抓 sp("handle", "series", "中文名", "英文名", ...)
 const src = readFileSync(resolve(root, "src/lib/catalog/products.ts"), "utf8");
-const local = [...src.matchAll(/sp\(\s*"([^"]+)"\s*,\s*"([^"]+)"\s*,\s*"([^"]*)"\s*,\s*"([^"]*)"/g)].map(
-  ([, handle, series, zh, en]) => ({ handle, series, zh, en }),
+const local = [...src.matchAll(/sp\(\s*"([^"]+)"\s*,\s*"([^"]+)"\s*,\s*"([^"]*)"\s*,\s*"([^"]*)"\s*,\s*(\d+)/g)].map(
+  ([, handle, series, zh, en, cents]) => ({ handle, series, zh, en, cents: Number(cents) }),
 );
 
 const problems = [];
+
+// 自检:比价依赖从源码里用正则抠出 priceCents。正则一旦漂移(比如以后有人换个
+// 构造 helper、参数顺序变了),cents 会变成 NaN,而下面的 Number.isFinite 过滤会
+// **静默跳过**这些商品 —— 比价就悄悄不工作了。宁可在这里硬失败。
+const unparsedPrice = local.filter((p) => !Number.isFinite(p.cents));
+if (unparsedPrice.length) {
+  problems.push(
+    `无法从本地表解析出价格(${unparsedPrice.length} 个)—— 比价检查已失效,请修脚本里的正则:\n` +
+      unparsedPrice.map((p) => `    · ${p.handle}`).join("\n"),
+  );
+}
 
 const missing = local.filter((p) => !live.has(p.handle));
 if (missing.length) {
@@ -76,6 +87,20 @@ if (missing.length) {
 }
 
 const nameDrift = local.filter((p) => live.has(p.handle) && live.get(p.handle).title && live.get(p.handle).title !== p.en);
+
+// 价格漂移。加这一条是因为线上真的出现过 0 元商品(swan-princess 在 Shopify 后台
+// 没配价),而当时的脚本只比名字,完全没报 —— 0 元商品能直接下单,是最该拦住的一类。
+// 兜底表按 US 市场构建,所以比的是 US presentment 价。
+const priceDrift = local.filter((p) => live.has(p.handle) && Number.isFinite(live.get(p.handle).cents) && live.get(p.handle).cents !== p.cents);
+if (priceDrift.length) {
+  problems.push(
+    `价格与线上不一致(${priceDrift.length} 个)—— 回退模式下会显示错误价格,0 价商品还能直接下单:\n` +
+      priceDrift
+        .map((p) => `    · ${p.handle}: 本地 ${(p.cents / 100).toFixed(2)}  vs 线上 ${(live.get(p.handle).cents / 100).toFixed(2)}`)
+        .join("\n"),
+  );
+}
+
 if (nameDrift.length) {
   problems.push(
     `商品名与线上不一致(${nameDrift.length} 个)—— 回退模式下会显示成旧名字:\n` +

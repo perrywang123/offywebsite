@@ -76,4 +76,14 @@ describe("区域限定徽章", () => {
     expect(regionBadgeLabel("DE")).toBe("AVAILABLE IN GERMANY ONLY");
     expect(regionBadgeLabel("HK")).toBe("AVAILABLE IN HONG KONG ONLY");
   });
+
+  it("pickCountry 也会把 UK 归一成 GB(两个出口都要)", () => {
+    // 光有 normalizeCountryCode 不够 —— 它得真的接在 pickCountry 的返回路径上。
+    // 之前没接,实测 `cf-ipcountry: UK` 会原样透传给 Shopify,而 Shopify Markets
+    // 不认 "UK",于是落回默认市场:币种变成美元,区域限定区块整个消失。
+    expect(pickCountry(new Headers({ "cf-ipcountry": "UK" }), "US")).toBe("GB");
+    expect(pickCountry(new Headers({ "cf-ipcountry": "GB" }), "US")).toBe("GB");
+    expect(pickCountry(new Headers(), "UK")).toBe("GB");
+    expect(pickCountry(new Headers(), "US")).toBe("US");
+  });
 });
