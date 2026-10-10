@@ -44,7 +44,9 @@
       "blurb": "© 2026 WHIMCORE CULTURAL CREATIVE CO., LIMITED. All Rights Reserved.\nOFFY is an original designer art toy IP created and exclusively distributed by WHIMCORE CULTURAL CREATIVE CO., LIMITED, with all worldwide copyrights strictly reserved.\nAs an independent studio, WHIMCORE continues to dream up and develop original designer art toys. Across our expanding universe, each piece reflects a distinct side of you—inviting you to Meet Who You Love to Be.",
       "menuHeading": "菜单",
       "collectionsHeading": "系列",
-      "policiesHeading": "政策与联系"
+      "policiesHeading": "帮助与支持",
+      "faqLabel": "常见问题",
+      "contactLabel": "联系我们"
     },
     "language": "语言",
     "promoMessages": [
@@ -228,8 +230,11 @@
     "customBody": "以上款式支持定制及品牌联名合作挑选，欢迎联系我们。"
   },
   "policies": {
-    "navAriaLabel": "政策与联系",
+    "navAriaLabel": "政策",
     "kicker": "条款与支持",
+    "legalLabel": "法律与政策",
+    "indexIntro": "适用于所有 is.offy 订单的书面政策。各政策的完整正文取自店铺后台，均为英文原文。",
+    "indexDescription": "is.offy 订单相关的退货退款、隐私、服务条款与物流政策。",
     "titles": {
       "returns": "退货和退款政策",
       "privacy": "隐私政策",

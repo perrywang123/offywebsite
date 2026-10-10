@@ -30,6 +30,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     "/about",
     "/bag-charm",
     "/faq",
+    "/policies",   // 政策二级目录页(那 4 条政策从页脚下沉到这里)
     ...POLICY_HANDLES.map((h) => `/policies/${h}`),
   ];
   const productPaths = products.map((p) => `/products/${p.code}`);
