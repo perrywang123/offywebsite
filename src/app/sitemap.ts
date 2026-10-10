@@ -8,7 +8,12 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const base = env.SITE_URL;
   const locales = ["zh", "en"] as const;
 
-  const [products, seriesList] = await Promise.all([getLiveProducts(), getLiveSeriesList()]);
+  // sitemap 只枚举"站上有哪些商品 URL",与价格/币种无关:用默认市场
+  // (SHOPIFY_MARKET_COUNTRY)查一次即可,不读访客国家(sitemap 也不该按国家分叉)。
+  const [products, seriesList] = await Promise.all([
+    getLiveProducts(env.SHOPIFY_MARKET_COUNTRY),
+    getLiveSeriesList(),
+  ]);
 
   // 政策页必须进 sitemap:支付渠道/广告平台审核会检查政策可达性
   const staticPaths = [
@@ -17,6 +22,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     "/collections",
     "/about",
     "/bag-charm",
+    "/faq",
     ...POLICY_HANDLES.map((h) => `/policies/${h}`),
   ];
   const productPaths = products.map((p) => `/products/${p.code}`);

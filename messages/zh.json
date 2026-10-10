@@ -31,6 +31,7 @@
       "empty": "购物袋还空着",
       "emptyHint": "去挑选一个与你共鸣的她吧",
       "subtotal": "小计",
+      "mixedCurrency": "小计未包含以其它币种计价的商品,最终金额以 Shopify 结账页为准。",
       "total": "合计",
       "quantity": "数量",
       "remove": "移除",
@@ -40,7 +41,7 @@
     },
     "footer": {
       "rights": "保留所有权利",
-      "blurb": "让想象落地，让陪伴发生 — Offy 是我们创造的第一个小精灵，把情绪穿在身上的黑肤色卡通 IP。",
+      "blurb": "© 2026 WHIMCORE CULTURAL CREATIVE CO., LIMITED. All Rights Reserved.\nOFFY is an original designer art toy IP created and exclusively distributed by WHIMCORE CULTURAL CREATIVE CO., LIMITED, with all worldwide copyrights strictly reserved.\nAs an independent studio, WHIMCORE continues to dream up and develop original designer art toys. Across our expanding universe, each piece reflects a distinct side of you—inviting you to Meet Who You Love to Be.",
       "menuHeading": "菜单",
       "collectionsHeading": "系列",
       "policiesHeading": "政策与联系"
@@ -48,7 +49,7 @@
     "language": "语言",
     "promoMessages": [
       "✦ 解锁好礼：满 1 件送贴纸 ✦ 满 3 件送大托特包 ✦ 满 6 件送限定款 ✦",
-      "15 美元全球统一运费 · 美国 · 加拿大 · 英国 · 新加坡 · 中国香港 · 马来西亚（更多地区即将开放）"
+      "15 美元全球统一运费 · 美国 · 加拿大 · 英国 · 新加坡 · 中国香港 · 马来西亚 · 泰国（更多地区即将开放）"
     ]
   },
   "home": {
@@ -64,22 +65,20 @@
     "manifesto3": "她不是一只玩偶，而是与你共鸣的那个「她」。",
     "manifestoSign": "让想象落地，让陪伴发生",
     "castTitle": "她的每个样子",
-    "castSub": "黑皮 OFFY 的都市化身",
     "castChapter": "按情绪找她",
     "castIndex": "全员名册",
-    "castViewAll": "查看全部造型",
+    "castViewAll": "查看全部",
     "revealing": "待揭晓",
     "comingTitle": "NEW IPS AHEAD",
     "comingSub": "More urban spirits joining the universe.",
     "inDevelopment": "IN DEVELOPMENT",
     "collabTitle": "让offy成为你的",
     "collabSub": "联名/定制合作",
-    "collabCta": "联名 / 定制合作 →",
+    "collabCta": "探索联名合作",
     "subscribeKicker": "NEWSLETTER",
     "subscribeTitle": "NEVER MISS OFFY",
     "subscribeSub": "Be the first to know about new wardrobes, exclusive drops, and stories.",
     "categoryTitle": "按类别选购",
-    "categorySub": "选购您感兴趣的类别",
     "discoverTitle": "最新造型曝光",
     "discoverSub": "新近揭晓的造型",
     "originTitle": "原皮 Offy",
@@ -138,7 +137,7 @@
   },
   "catalog": {
     "title": "所有造型",
-    "subtitle": "黑皮 OFFY——每一个化身都是独立的她",
+    "subtitle": "每一个造型，都是完整的她自己。",
     "filterAll": "全部",
     "filter": "按系列筛选",
     "empty": "暂无商品",
@@ -146,7 +145,9 @@
     "kicker": "目录 · {count} 个造型",
     "seriesKicker": "系列",
     "looksCount": "{count} 个形象",
-    "seriesHeroKicker": "OFFY · 系列 {n} · {count} 个形象"
+    "seriesHeroKicker": "OFFY · 系列 {n} · {count} 个形象",
+    "seriesTitle": "全部造型",
+    "seriesSubtitle": "公主的优雅、街头的态度、玩趣的无限可能 —— 只为真实的你而造。"
   },
   "checkout": {
     "title": "结算",
@@ -201,28 +202,27 @@
     "errorPrefix": "错误：",
     "errorCheckoutFailed": "下单失败，请重试",
     "errorNetwork": "网络错误，请稍后重试",
-    "paymentNote": "美元计价 · PayPal / Stripe 结算"
+    "paymentNote": "USD · 由 Shopify 提供安全结算"
   },
   "about": {
-    "title": "让想象落地，让陪伴发生",
+    "title": "遇见你想成为的自己",
+    "tagline": "让想象落地，让陪伴发生",
     "storyKicker": "品牌故事",
     "storyHeading": "她从哪里来",
-    "storyP1": "作为塞尔达死忠粉，我们想把「呀哈哈」带进现实——一个藏在城市喧嚣里、从自然获取力量的小精灵。",
-    "storyP2": "但 Offy 不只是温柔可爱，她还是个任性、倔强、脑子里全是古怪想法的小女孩。她把内心情绪直接穿在身上。",
-    "storyP3": "你挑选的不只是一只玩偶，而是与你共鸣的她。",
-    "teamKicker": "创作团队",
-    "teamHeading": "创作团队",
-    "teamJie": "概念与 IP 设计师｜常驻曼谷的波普艺术家",
-    "teamTaozi": "概念与 IP 设计师｜常驻上海的广告插画艺术家",
-    "retailKicker": "零售网络",
-    "retailHeading": "零售网络",
-    "retail1": "中国 · 上海 TX 淮海",
-    "retail2": "中国 · 杭州 银泰 in77",
-    "retail3": "泰国 · 曼谷 Warehouse30_6 vintage",
-    "futureKicker": "接下来，还有她们",
-    "futureHeading": "接下来，还有她们",
-    "futureSub": "更多住在城市里的小精灵，即将登场",
-    "comingSoonLabel": "即将推出 — 敬请期待",
+    "storyParagraphs": [
+      "在 isoffy，OFFY 从来不只是又一个「可爱」或「精致」的收藏摆件。",
+      "在世界各地的不同城市与人见面时，我们一次又一次听到同一种反应：",
+      "「这好像我。」",
+      "「这简直就是我朋友，我拍张照发给他。」",
+      "那一刻我们明白了 OFFY 真正为何存在：一个陪你找到自己的同伴。",
+      "我们始终在成为：",
+      "人是流动的。我们会改变、会生长——有些日子鲜活、想要往外探索，有些日子疲惫、只想躲起来。我们在起落之间来回，但每一个版本的你，都值得被拥抱。",
+      "OFFY 是一群温柔的精灵，诞生在尚未被驯服的 Briar Island。他们扎根于 OFFLINE，带着一份安静的许可：",
+      "断开连接，退后一步，不必时刻回应这个世界。",
+      "回到自然，按自己真实的频率生活。",
+      "穿上真实的自己，只为当下的心情而打扮。",
+      "你不需要挤进任何人设定的框里。换一身衣服，换一个配件，跟着感觉走——在 OFFY 的镜子里，遇见你真正喜欢的自己。"
+    ],
     "customKicker": "定制与联名",
     "customHeading": "定制与联名",
     "customBody": "以上款式支持定制及品牌联名合作挑选，欢迎联系我们。"
@@ -251,5 +251,13 @@
       "email": "客服邮箱",
       "instagram": "官方 Instagram"
     }
+  },
+  "faq": {
+    "kicker": "帮助中心",
+    "title": "常见问题",
+    "intro": "关于配送、退换、支付与隐私 —— 我们被问得最多的那些问题。",
+    "noticeTitle": "语言说明",
+    "notice": "本页问答为英文原文，暂无中文译本。中文仅用于页面导航与说明，不构成译文；如中英文表述存在歧义，以英文原文为准。",
+    "backToHome": "返回首页"
   }
 }

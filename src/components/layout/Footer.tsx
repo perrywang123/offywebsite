@@ -15,6 +15,7 @@ import { POLICY_HANDLES } from "@/server/catalog/policies";
 export async function Footer({ series, locale }: { series: Series[]; locale: string }) {
   const t = await getTranslations("common");
   const tp = await getTranslations("policies");
+  const tf = await getTranslations("faq");
 
   const linkCls =
     "focus-ring focus-ring--on-dark transition-colors hover:text-paper";
@@ -58,6 +59,10 @@ export async function Footer({ series, locale }: { series: Series[]; locale: str
                 {tp(`titles.${handle}`)}
               </Link>
             ))}
+            {/* Q&A 入口。放在这一组末尾(用户指定),与上面 5 条政策同级同样式。 */}
+            <Link href="/faq" className={linkCls}>
+              {tf("title")}
+            </Link>
           </div>
         </nav>
       </div>
@@ -65,8 +70,10 @@ export async function Footer({ series, locale }: { series: Series[]; locale: str
       {/* 版权细条 */}
       <div className="border-t border-cream/10 py-6">
         <div className="container-site flex flex-wrap items-center justify-between gap-4 text-xs text-cream/50">
-          <span>© {new Date().getFullYear()} {t("brand")} · {t("footer.rights")}</span>
-          <span>{t("taglineEn")}</span>
+          {/* © 行已并入上面的法律声明块(Excel 第 20 行),这里不再重复;
+              右侧保留品牌 slogan。 */}
+          <span className="sr-only">{t("brand")}</span>
+          <span className="ml-auto">{t("taglineEn")}</span>
         </div>
       </div>
     </footer>
