@@ -155,21 +155,13 @@ export default async function ProductDetailPage({
             )
           )}
 
-          {(product.emotionTags.zh.length > 0 || product.dimensions) && (
+          {/* Mood tags 已下线:它取自本地表的 `SERIES_TAGS` 硬编码(按系列统一给
+              "公主/优雅" 这类词),**从来没有从 Shopify 拉过** —— 实时路径里
+              `emotionTags: local?.emotionTags ?? tags` 恒成立,Shopify 侧也没有
+              对应字段。展示一个不是商家真实维护的标签会误导顾客,故整块移除。
+              数据层保留 emotionTags 字段(其它地方仍可能引用),只是详情页不再渲染。 */}
+          {product.dimensions && (
             <div className="space-y-6 border-t border-cream-line pt-8">
-              {product.emotionTags.zh.length > 0 && (
-                <div>
-                  <p className="mb-2 text-sm font-medium text-ink-soft">{t("emotion")}</p>
-                  <div className="flex flex-wrap gap-2">
-                    {(locale === "zh" ? product.emotionTags.zh : product.emotionTags.en).map((tag) => (
-                      <span key={tag} className="rounded-full border border-sand px-3 py-1 text-xs text-ink-soft">
-                        {tag}
-                      </span>
-                    ))}
-                  </div>
-                </div>
-              )}
-
               {product.dimensions && (
                 <div>
                   <p className="mb-2 text-sm font-medium text-ink-soft">{t("dimensions")}</p>
