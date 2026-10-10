@@ -37,7 +37,9 @@
       "remove": "Remove",
       "added": "Added to bag",
       "openAria": "Open bag",
-      "loading": "Loading your bag…"
+      "loading": "Loading your bag…",
+      "checkoutRedirecting": "Redirecting to checkout…",
+      "checkoutFallback": "Checkout is taking longer than expected — opening our checkout page instead."
     },
     "footer": {
       "rights": "All rights reserved",
@@ -179,7 +181,7 @@
     "payWithPaypal": "Pay with PayPal",
     "payWithCard": "Proceed to Payment",
     "payWithShopify": "Go to Shopify Checkout",
-    "jumping": "Redirecting to PayPal…",
+    "jumping": "Redirecting…",
     "cancelBanner": "Payment cancelled — your items are still in your bag",
     "failBanner": "Payment failed — try another method",
     "successItems": "Items",

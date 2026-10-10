@@ -5,6 +5,7 @@ import { useLocale, useTranslations } from "next-intl";
 import { Link } from "@/i18n/navigation";
 import { cartTotal, formatPrice } from "@/lib/pricing";
 import { useCart, type CartCatalogEntry } from "@/components/cart/CartProvider";
+import { useCheckoutRedirect } from "@/components/cart/useCheckoutRedirect";
 
 export default function CartPage() {
   // `catalog`(来自 /api/products 实时拉取)取代直接 import 本地静态目录 ——
@@ -14,6 +15,8 @@ export default function CartPage() {
   const locale = useLocale();
   const t = useTranslations("common.cart");
   const ta = useTranslations("common.actions");
+  // 与购物袋抽屉保持同一条链路:直接去 Shopify 结算页,失败才回退 /checkout。
+  const checkout = useCheckoutRedirect();
 
   const items = lines
     .map((line) => ({ line, product: catalog[line.code] }))
@@ -87,12 +90,21 @@ export default function CartPage() {
               <span className="tabular-nums">{formatPrice(subtotal.cents, subtotal.currency, locale)}</span>
             </div>
             {subtotal.mixed && <p className="mb-4 text-xs text-ink-muted">{t("mixedCurrency")}</p>}
-            <Link
-              href="/checkout"
-              className="flex h-12 items-center justify-center rounded-full bg-accent text-sm font-medium text-paper"
+            {checkout.failed && (
+              <p role="alert" className="mb-3 text-xs text-error">
+                {t("checkoutFallback")}
+              </p>
+            )}
+            {/* 直接建 Shopify cart 并整页跳转到其结算页;加载中禁用 + aria-busy 防连点。 */}
+            <button
+              type="button"
+              onClick={() => void checkout.startCheckout(items.map((x) => ({ code: x.line.code, quantity: x.line.quantity })))}
+              disabled={checkout.pending}
+              aria-busy={checkout.pending}
+              className="flex h-12 w-full items-center justify-center rounded-full bg-accent text-sm font-medium text-paper transition-colors hover:bg-accent-deep disabled:opacity-70"
             >
-              {ta("checkout")}
-            </Link>
+              {checkout.pending ? t("checkoutRedirecting") : ta("checkout")}
+            </button>
           </aside>
         </div>
       )}

@@ -1,5 +1,22 @@
 "use client";
 
+/**
+ * ⚠️ 备用结算页 —— **正常购买路径不再经过这里**。
+ *
+ * 购物袋抽屉(`src/components/cart/CartDrawer.tsx`)与购物袋页
+ * (`src/app/[locale]/cart/page.tsx`)的 Checkout 现在直接
+ * POST `/api/payments/checkout` 并整页跳转到 **Shopify 托管结算页**
+ * (收货信息本来就由 Shopify 收集,中间那层只是多一次点击)。
+ *
+ * 本页**仍然需要**,不是死页面,请勿按"没人访问"清理:
+ *   1. 直达 Shopify 失败(网络错误 / 非 2xx / 没有 `redirect.url`)时的兜底落点
+ *      —— 见 `src/components/cart/useCheckoutRedirect.ts`;
+ *   2. PayPal 与 Stripe 的**回跳地址仍指向本页**:
+ *      `src/server/checkout/create-checkout-session.ts`、
+ *      `src/server/payments/paypal/provider.ts`、
+ *      `src/app/[locale]/checkout/paypal-return/route.ts`。
+ */
+
 import { useEffect, useState } from "react";
 import { useLocale, useTranslations } from "next-intl";
 import { Link } from "@/i18n/navigation";

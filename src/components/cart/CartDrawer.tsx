@@ -6,6 +6,7 @@ import { useLocale, useTranslations } from "next-intl";
 import { Link } from "@/i18n/navigation";
 import { cartTotal, formatPrice } from "@/lib/pricing";
 import { useCart, type CartCatalogEntry } from "./CartProvider";
+import { useCheckoutRedirect } from "./useCheckoutRedirect";
 
 export function CartDrawer() {
   const { lines, catalog, catalogLoaded, isOpen, mounted, close, setQty, remove } = useCart();
@@ -13,6 +14,9 @@ export function CartDrawer() {
   const t = useTranslations("common.cart");
   const ta = useTranslations("common.actions");
   const closeRef = useRef<HTMLButtonElement>(null);
+  // Checkout 直接去 Shopify 结算页(不再经过我们自己的 /checkout);失败时该
+  // hook 会回退跳转到 /checkout 并置位 failed,提示见下方 footer。
+  const checkout = useCheckoutRedirect();
 
   // 打开时焦点移入抽屉(关闭按钮),Escape 关闭 —— WAI-ARIA Dialog 规范。
   useEffect(() => {
@@ -118,13 +122,23 @@ export function CartDrawer() {
                 <span>{t("subtotal")}</span>
                 <span className="tabular-nums">{formatPrice(subtotal.cents, subtotal.currency, locale)}</span>
               </div>
-              <Link
-                href="/checkout"
-                onClick={close}
-                className="flex h-12 items-center justify-center rounded-full bg-accent text-sm font-medium text-cream"
+              {checkout.failed && (
+                <p role="alert" className="mb-3 text-xs text-error">
+                  {t("checkoutFallback")}
+                </p>
+              )}
+              {/* 这是一次"动作"(建 Shopify cart 后整页跳走),不是站内导航,
+                  所以用 button;键盘可达性由原生 button 保证(Tab / Enter / Space)。
+                  加载中 disabled + aria-busy:既挡住连点,也让读屏知道正在处理。 */}
+              <button
+                type="button"
+                onClick={() => void checkout.startCheckout(items.map((x) => ({ code: x.line.code, quantity: x.line.quantity })))}
+                disabled={checkout.pending}
+                aria-busy={checkout.pending}
+                className="flex h-12 w-full items-center justify-center rounded-full bg-accent text-sm font-medium text-cream transition-colors hover:bg-accent-deep disabled:opacity-70"
               >
-                {ta("checkout")}
-              </Link>
+                {checkout.pending ? t("checkoutRedirecting") : ta("checkout")}
+              </button>
             </footer>
           </>
         )}

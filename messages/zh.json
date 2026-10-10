@@ -37,7 +37,9 @@
       "remove": "移除",
       "added": "已加入购物袋",
       "openAria": "打开购物袋",
-      "loading": "正在加载购物车…"
+      "loading": "正在加载购物车…",
+      "checkoutRedirecting": "正在前往结算…",
+      "checkoutFallback": "结算页暂时打不开，已为你打开备用结算页面。"
     },
     "footer": {
       "rights": "保留所有权利",
@@ -179,7 +181,7 @@
     "payWithPaypal": "用 PayPal 支付",
     "payWithCard": "前往安全支付",
     "payWithShopify": "前往 Shopify 结算",
-    "jumping": "正在前往 PayPal…",
+    "jumping": "正在跳转…",
     "cancelBanner": "已取消支付，购物袋里的商品为你保留着",
     "failBanner": "支付失败，请换一种方式重试",
     "successItems": "商品",
