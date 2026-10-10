@@ -158,13 +158,16 @@ export default async function HomePage({ params }: { params: Promise<{ locale: s
           {/* ============ 产品汇总-选购同款造型(圆形名册,紧接本模块) ============ */}
           <p className="mt-16 text-sm text-ink-soft">{t("rosterTitle")}</p>
           <Reveal className="mt-6">
-            <div className="grid grid-cols-6 gap-3 sm:grid-cols-8 lg:grid-cols-12">
+            {/* 圆圈原本是写死的 h-16 w-16(64px)。手机 375px 宽时 6 列 × 64px = 384px
+                已经超出容器,grid 的 gap 根本挤不出来 —— 圆圈直接贴在一起。改成按单元格
+                缩放 + max-w-16 封顶:窄屏自动缩小(间距才是真的),宽屏仍是原来的 64px。 */}
+            <div className="grid grid-cols-6 gap-4 sm:grid-cols-8 sm:gap-3 lg:grid-cols-12">
               {roster.map((p) => (
                 <Link
                   key={p.code}
                   href={`/products/${p.code}`}
                   title={locale === "zh" ? p.name.zh : p.name.en}
-                  className="group relative h-16 w-16 overflow-hidden rounded-full border border-sand bg-cream-deep transition-colors hover:border-brown-600"
+                  className="group relative aspect-square w-full max-w-16 overflow-hidden rounded-full border border-sand bg-cream-deep transition-colors hover:border-brown-600"
                 >
                   {p.isUpcoming ? (
                     <span className="flex h-full w-full items-center justify-center text-xs font-semibold text-ink-muted">?</span>
