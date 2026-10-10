@@ -10,7 +10,7 @@
 ## 先决条件（服务器上）
 
 - **路径 A（Docker，推荐）**：安装 Docker + Docker Compose 插件。
-- **路径 B（裸 Node）**：安装 Node.js ≥ 20 与 nginx。
+- ~~**路径 B（裸 Node）**：安装 Node.js ≥ 20 与 nginx。~~ **已弃用** —— 线上统一走 Docker,见下方「部署方式」。
 - 域名解析到服务器 IP（A 记录）。
 
 ## 区域限定与币种(按访客国家)
@@ -114,77 +114,60 @@ schema 需改为 `pg-core` 并重新生成迁移，属后续 spec 变更。
 
 ---
 
-## 路径 A：Docker（推荐，一键）
+## 部署方式：Docker(唯一推荐路径)
 
-本机（macOS/Linux）执行：
+> **2026-10 起,线上统一走 Docker。** 之前是「裸 Node + systemd + 手工
+> `npx next build`」,那条路有两个问题:(1) 绕过了 `docker-compose.prod.yml`
+> 里固定下来的构建期参数(见 `build.args`),预渲染拿到的是占位域名;(2) systemd
+> 服务会和容器**抢 3000 端口**,谁先起来谁占住。旧的 `deploy/offy.service`
+> 保留只为回滚参考,不要再启用。
 
-```bash
-# 1. 准备生产环境变量（首次）
-cp .env.production.example .env.production
-#    编辑：把 NEXT_PUBLIC_SITE_URL 改成你的域名；DATABASE_URL 保持 /data/offy.db
-
-# 2. 同步源码到服务器并在服务器上构建/启动（原生模块按 Linux 编译）
-DEPLOY_SERVER=root@你的IP DEPLOY_DIR=/opt/offy ./scripts/deploy.sh
-```
-
-`deploy.sh` 会：rsync 源码 → 上传 `.env` → 在服务器上 `docker compose up -d --build`。
-之后每次更新只需重跑同一条命令（幂等）。
-
-也可直接在服务器上操作：
+### 服务器上更新(日常)
 
 ```bash
-cd /opt/offy
-docker compose -f docker-compose.prod.yml up -d --build
+cd /opt/offy        # 或你的 DEPLOY_DIR
+./deploy/update.sh
 ```
 
-### 配置 HTTPS（nginx + certbot）
+`deploy/update.sh` 按顺序做六件事,**任何一步不过就停下并说明原因**:
 
-应用已绑定 `127.0.0.1:3000`，用 nginx 反代并加 TLS：
+1. 检查 docker / compose 可用
+2. **如果 systemd 的 `offy` 服务还在跑就直接失败** —— 它占着 3000,容器起不来
+3. 校验 `.env` 存在且 `SHOPIFY_*` / `SITE_URL` 不是占位值
+4. `git pull --ff-only`
+5. `docker compose -f docker-compose.prod.yml up -d --build`
+6. 等 `/api/health` 通过,并检查它的 `config` 块
+
+### 为什么第 3 步和第 6 步要这么较真
+
+**缺 `SHOPIFY_*` 不会让站点报错。** 站点会正常 200、容器会 healthy,但商品目录
+**静默退回本地兜底表** —— 商品数量、名字、价格全是快照值。这个坑在本项目上已经
+真实踩过两次(容器与本地各一次),从页面上完全看不出来,所以现在:
+
+- `deploy/update.sh` 在部署前就拦住(占位值也拦)
+- 部署后检查 `/api/health` 的 `config.shopify` 是否为 `configured`
+- `pnpm check:catalog` 可以随时比对兜底表与线上是否漂移
+
+### 从旧的裸 Node 部署切过来
 
 ```bash
-sudo apt-get install -y nginx certbot python3-certbot-nginx
-sudo cp deploy/nginx.conf /etc/nginx/sites-available/offy
-sudo sed -i 's/offy.example.com/你的域名/' /etc/nginx/sites-available/offy
-sudo ln -s /etc/nginx/sites-available/offy /etc/nginx/sites-enabled/offy
-sudo nginx -t && sudo systemctl reload nginx
-sudo certbot --nginx -d 你的域名      # 自动签发证书并加 443 配置
+systemctl stop offy && systemctl disable offy    # 必须先做,否则容器抢不到端口
+cd /opt/offy && ./deploy/update.sh
 ```
 
----
-
-## 路径 B：裸 Node + systemd
-
-> 注意：`better-sqlite3` 是原生模块，**必须在 Linux 服务器上构建**。
-> 请把源码同步到服务器后，在服务器上执行打包；不要用 macOS 本地打包的产物直接上传。
-
-在服务器上：
+### 从本地推送到服务器
 
 ```bash
-# 1. 同步源码（或用 git clone）
-rsync -az --exclude node_modules --exclude .next --exclude .git ./ root@服务器:/opt/offy/
-
-# 2. 安装依赖并打包
-cd /opt/offy
-corepack enable && pnpm install --frozen-lockfile
-pnpm package                        # 生成 dist/offy-x.y.z.tar.gz
-
-# 3. 解包到运行目录
-sudo mkdir -p /opt/offy-run && sudo chown -R offy:offy /opt/offy-run
-tar -xzf dist/offy-*.tar.gz -C /opt/offy-run
-sudo cp .env.production /opt/offy-run/.env   # 其中 DATABASE_URL=/var/lib/offy/offy.db
-
-# 4. 数据目录 + systemd
-sudo useradd -r -s /usr/sbin/nologin offy
-sudo mkdir -p /var/lib/offy && sudo chown -R offy:offy /var/lib/offy
-sudo cp deploy/offy.service /etc/systemd/system/offy.service
-#    按需修改 service 里的 WorkingDirectory=/opt/offy-run
-sudo systemctl daemon-reload && sudo systemctl enable --now offy
+DEPLOY_SERVER=root@1.2.3.4 DEPLOY_DIR=/opt/offy ./scripts/deploy.sh
 ```
 
-`offy.service` 会在启动前自动 `node db/migrate.mjs` 应用迁移，然后 `node server.js`。
-HTTPS 同上（nginx + certbot，反代到 127.0.0.1:3000）。
+`scripts/deploy.sh` 用 rsync 把源码同步过去再在服务器上构建(原生模块要按 Linux
+编译)。它现在**要求 `.env.production` 存在** —— 以前文件不存在会静默跳过,于是
+服务器用着旧配置而部署照样"成功"。
 
----
+### 配置 HTTPS(nginx + certbot)
+
+同下节,反代配置见 `deploy/nginx.conf`,国家头见上一节与 `deploy/nginx-geoip2.conf`。
 
 ## 手工打包产物说明
 
