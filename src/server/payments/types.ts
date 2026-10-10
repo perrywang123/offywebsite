@@ -34,9 +34,20 @@ export type CheckoutRedirect =
   | { kind: "redirect"; url: string }
   | { kind: "approve"; orderId: string; approveUrl: string; returnUrl: string };
 
+/**
+ * 单个商品为什么买不了。结算被 4xx 拒绝时**必须指名商品**——否则顾客只能看到
+ * 一个裸错误码(此前购物袋渲染的就是 `checkout_failed` / `invalid_items`),
+ * 不知道是哪一件出了问题,也不知道该做什么。
+ */
+export interface CheckoutItemFailure {
+  code: string;
+  /** `unknown_items` = 商品不存在/没有可结算变体;`unavailable_items` = 已下架、售罄或仅有报价。 */
+  reason: "unknown_items" | "unavailable_items";
+}
+
 export type CreateCheckoutResult =
   | { ok: true; provider: ProviderName; redirect: CheckoutRedirect }
-  | { ok: false; status: 400 | 502 | 503; error: string };
+  | { ok: false; status: 400 | 502 | 503; error: string; items?: CheckoutItemFailure[] };
 
 export interface LineItemSnapshot {
   code: string;
@@ -64,7 +75,10 @@ export interface CaptureRequest {
 }
 
 export type CaptureResult =
-  | { ok: true; order: { orderNumber: string; status: string; totalCents: number; currency: string } }
+  | {
+      ok: true;
+      order: { orderNumber: string; status: string; totalCents: number; currency: string };
+    }
   | { ok: false; status: 400 | 404 | 409 | 502; error: string };
 
 export interface PaymentProvider {

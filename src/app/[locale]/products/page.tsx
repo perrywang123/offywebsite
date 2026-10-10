@@ -29,13 +29,15 @@ export default async function ProductsPage({ params }: { params: Promise<{ local
   return (
     <>
       <CategoryTabs series={series} active={undefined} locale={locale} />
-      <div className="mx-auto max-w-7xl px-6 py-12 lg:px-8">
+      {/* 版心/节奏统一(方案 §1.2:9 个页面根容器一句替换);`lg:py-12` 保留改动前
+          的 48px,只有窄屏与 768–1023 变。 */}
+      <div className="container-site section-y lg:py-12">
         <header className="mb-10">
           <p className="kicker mb-3">{t("kicker", { count: products.length })}</p>
-          <h1 className="font-display text-4xl font-semibold uppercase tracking-tight md:text-6xl">
+          <h1 className="font-display text-4xl font-semibold tracking-tight uppercase md:text-6xl">
             {t("title")}
           </h1>
-          <p className="mt-2 text-ink-soft">{t("subtitle")}</p>
+          <p className="text-ink-soft mt-2">{t("subtitle")}</p>
         </header>
 
         <ProductGrid products={products} locale={locale} />

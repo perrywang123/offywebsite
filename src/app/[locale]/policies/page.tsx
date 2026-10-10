@@ -48,24 +48,26 @@ export default async function PoliciesIndexPage() {
   const t = await getTranslations("policies");
 
   return (
-    <div className="container-site py-16 md:py-20">
+    <div className="container-site section-y lg:py-20">
       <header className="mx-auto max-w-[68ch]">
         <p className="kicker mb-4">{t("kicker")}</p>
-        <h1 className="font-display text-[clamp(1.75rem,1.4rem+1.4vw,3rem)] font-semibold leading-[1.1] tracking-tight">
+        {/* 页面 H1 从 28px 抬到 36px(方案 #54);`md:text-5xl` = 改动前 clamp 的上限,
+            所以 ≥1024px 与改动前完全一致。 */}
+        <h1 className="font-display text-4xl leading-[1.1] font-semibold tracking-tight md:text-5xl lg:text-[clamp(1.75rem,1.4rem+1.4vw,3rem)]">
           {t("legalLabel")}
         </h1>
-        <p className="mt-4 text-ink-soft">{t("indexIntro")}</p>
+        <p className="text-ink-soft mt-4">{t("indexIntro")}</p>
       </header>
 
       {/* 中文站不额外加"正文为英文"提示条:这一页只有政策名,而政策名 zh.json 里有
           中文;真正只有英文原文的是点进去之后的正文,那一页自己会提示。 */}
       <nav aria-label={t("navAriaLabel")} className="mx-auto mt-12 max-w-[68ch] pb-8">
-        <ul className="divide-y divide-cream-line border-y border-cream-line">
+        <ul className="divide-cream-line border-cream-line divide-y border-y">
           {INDEX_HANDLES.map((handle) => (
             <li key={handle}>
               <Link
                 href={`/policies/${handle}`}
-                className="focus-ring group flex items-center justify-between gap-4 py-5 font-display text-lg font-semibold tracking-tight transition-colors hover:text-ink-soft"
+                className="focus-ring group font-display hover:text-ink-soft flex items-center justify-between gap-4 py-5 text-lg font-semibold tracking-tight transition-colors"
               >
                 {t(`titles.${handle}`)}
                 {/* 进入下一层的指示符:纯装饰,aria-hidden,不引图标库 */}
@@ -81,8 +83,11 @@ export default async function PoliciesIndexPage() {
         </ul>
       </nav>
 
-      <div className="mx-auto mt-16 max-w-[68ch] border-t border-cream-line pt-8 text-xs uppercase tracking-[var(--tracking-12)] text-ink-soft">
-        <Link href="/" className="focus-ring transition-colors hover:text-ink">
+      <div className="border-cream-line text-ink-soft mx-auto mt-16 max-w-[68ch] border-t pt-8 text-xs tracking-[var(--tracking-12)] uppercase">
+        <Link
+          href="/"
+          className="focus-ring tap-target hover:text-ink transition-colors lg:min-h-0"
+        >
           ← {t("backToHome")}
         </Link>
       </div>

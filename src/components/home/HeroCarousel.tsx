@@ -42,29 +42,49 @@ export function HeroCarousel({
     return () => clearInterval(id);
   }, [slides.length, intervalMs]);
 
+  /**
+   * 屏 1 / 屏 2 原本整屏没有任何可点元素(只有屏 3-5 有「查看详情」)——
+   * 顾客在头图上点哪儿都没反应。这里把已经带 `href` 的这两屏整体包成链接;
+   * 屏 3-5 不包(它们内部已有自己的「查看详情」链接,嵌套 <a> 是非法的)。
+   * 可访问名来自链接内容(标语 / 促销语),不额外造 i18n key。
+   */
+  const wrapScreenLink = (s: HeroSlide, node: React.ReactNode) =>
+    s.href ? (
+      <Link href={s.href} className="absolute inset-0 block">
+        {node}
+      </Link>
+    ) : (
+      node
+    );
+
   /** 屏 2:促销屏 —— 背景图(4 张产品图已烤入)+ kicker + 两行超大促销语(实时文字)。 */
   const renderPromo = (s: HeroSlide) => (
     <>
-      <Image
-        src={s.image}
-        alt=""
-        fill
-        priority
-        sizes="100vw"
-        className="object-cover object-center"
-      />
-      {/* kicker(PSD 图层「OFFY Big Sale: Bonus Gift Included」bbox x398 y1337:
+      {wrapScreenLink(
+        s,
+        <>
+          <Image
+            src={s.image}
+            alt=""
+            fill
+            priority
+            sizes="100vw"
+            className="object-cover object-center"
+          />
+          {/* kicker(PSD 图层「OFFY Big Sale: Bonus Gift Included」bbox x398 y1337:
           x12.25% y51.35%,79.8px=2.46cqw,黑字) */}
-      <p className="absolute left-[12.25%] top-[51.35%] text-[clamp(11px,2.46cqw,36px)] font-normal uppercase leading-snug tracking-[var(--tracking-10)] text-ink">
-        {locale === "zh" ? s.promo!.kicker.zh : s.promo!.kicker.en}
-      </p>
-      {/* 两行超大促销语(PSD bbox x386 y1508 w2439 h438:x11.88% y59.72%,
+          <p className="text-ink absolute top-[51.35%] left-[12.25%] text-[clamp(11px,2.46cqw,36px)] leading-snug font-normal tracking-[var(--tracking-10)] uppercase">
+            {locale === "zh" ? s.promo!.kicker.zh : s.promo!.kicker.en}
+          </p>
+          {/* 两行超大促销语(PSD bbox x386 y1508 w2439 h438:x11.88% y59.72%,
           224.5px=6.91cqw,黑字;两行 ink 高 438 = 行高 + 大写字高(0.75em)
           → 行高≈1.20em)。PSD/效果图里是 'BUY ANY 3 OFFYs,' 的小写 s,
           所以这里不加 uppercase。 */}
-      <p className="absolute left-[11.88%] top-[59.72%] whitespace-pre-line text-[clamp(18px,6.91cqw,100px)] font-semibold leading-[1.2] tracking-tight text-ink">
-        {locale === "zh" ? s.promo!.text.zh : s.promo!.text.en}
-      </p>
+          <p className="text-ink absolute top-[59.72%] left-[11.88%] text-[clamp(18px,6.91cqw,100px)] leading-[1.2] font-semibold tracking-tight whitespace-pre-line">
+            {locale === "zh" ? s.promo!.text.zh : s.promo!.text.en}
+          </p>
+        </>,
+      )}
     </>
   );
 
@@ -88,7 +108,7 @@ export function HeroCarousel({
               x6.46% y64.51%,79.8px=2.46cqw) */}
           {subtitle && (
             <p
-              className={`pr-[18cqw] text-[clamp(11px,2.46cqw,36px)] font-normal uppercase leading-snug tracking-[var(--tracking-10)] ${
+              className={`pr-[18cqw] text-[clamp(11px,2.46cqw,36px)] leading-snug font-normal tracking-[var(--tracking-10)] uppercase ${
                 s.dark ? "text-cream/85" : "text-ink-soft"
               }`}
             >
@@ -104,10 +124,15 @@ export function HeroCarousel({
               字号在 PSD 的 47.2px=1.45cqw 基础上再小 2 号 → 18px 封顶(箭头 h-[0.85em]
               是 em 单位,会跟着一起缩)。
               高度从 PSD 的 4.94% 头图高(=3.11cqw)收到 2.6cqw:1440 下边框 37.4px、
-              文字 17.9px,上下各留 ~9.8px —— 比原来(边框 44.8px)矮一截但不贴字。 */}
+              文字 17.9px,上下各留 ~9.8px —— 比原来(边框 44.8px)矮一截但不贴字。
+              窄屏命中区下限 24 → 44px(方案 §1.1);`lg:min-h-0` 让 ≥1024px 的高度
+              回到 2.6cqw,桌面端不受影响。
+              注:44px 的胶囊在 375px 下会向下多探 ~10px 到主标题带(标题在 73%),
+              按钮在右端、标题尾巴在 `SERIES` 处可能轻微相交 —— 已列入需 375px
+              截图复核项(方案 M6)。 */}
           <Link
             href={s.href!}
-            className={`group absolute right-0 top-1/2 flex h-[2.6cqw] min-h-[24px] w-auto min-w-[15.35cqw] -translate-y-1/2 items-center justify-center gap-[0.83cqw] rounded-full border-[1.5px] px-[1.54cqw] text-[clamp(9px,1.24cqw,18px)] font-normal transition-colors ${
+            className={`group absolute top-1/2 right-0 flex h-[2.6cqw] min-h-[44px] w-auto min-w-[15.35cqw] -translate-y-1/2 items-center justify-center gap-[0.83cqw] rounded-full border-[1.5px] px-[1.54cqw] text-[clamp(12px,1.24cqw,18px)] font-normal transition-colors lg:min-h-0 ${
               s.dark
                 ? "border-cream text-cream hover:bg-cream hover:text-ink"
                 : "border-ink text-ink hover:bg-ink hover:text-cream"
@@ -116,7 +141,11 @@ export function HeroCarousel({
           >
             <span className="whitespace-nowrap uppercase">{t("heroDetailsCta")}</span>
             {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img src={arrowSrc} alt="" className="h-[0.85em] w-auto transition-colors group-hover:invert" />
+            <img
+              src={arrowSrc}
+              alt=""
+              className="h-[0.85em] w-auto transition-colors group-hover:invert"
+            />
           </Link>
         </div>
         {/* 主标题(PSD 例:OFFY PRINCESS SERIES bbox x208 y1777 w2647 h168:
@@ -132,7 +161,7 @@ export function HeroCarousel({
             看着糊在一起;73% 把间距拉到 3%,主标题底 84.6% 距滚动条(89.8%)仍有 5.2%。
             lg 以上维持 PSD 原值。 */}
         <p
-          className={`absolute left-[6.4%] top-[73%] w-[88%] font-semibold lg:top-[71.2%] uppercase leading-[1.05] tracking-tight text-[clamp(18px,6.91cqw,100px)] ${
+          className={`absolute top-[73%] left-[6.4%] w-[88%] text-[clamp(18px,6.91cqw,100px)] leading-[1.05] font-semibold tracking-tight uppercase lg:top-[71.2%] ${
             s.dark ? "text-cream" : "text-ink"
           }`}
         >
@@ -150,23 +179,25 @@ export function HeroCarousel({
           = 行高 + 大写字高 → 行高≈1.33em)。
           y 同样按 ink 顶换算行盒顶:实测偏低 1.58%,23.20% - 1.58% = 21.6%。
           en 文案用 "\n" 显式分两行(whitespace-pre-line)。 */}
-      {s.wordmark && (
-        <>
-          <div className="absolute inset-x-0 top-[8.81%] flex justify-center">
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img
-              src="/assets/brand/is-offy-wordmark.png"
-              alt="is.offy"
-              className="w-[15.78%] min-w-[80px] max-w-[264px]"
-            />
-          </div>
-          <div className="absolute inset-x-0 top-[21.6%] flex justify-center px-[4%]">
-            <p className="max-w-full whitespace-pre-line break-words text-center text-[clamp(15px,3.22cqw,46px)] font-semibold leading-[1.33] tracking-[var(--tracking-18)] text-ink">
-              {locale === "zh" ? s.text!.zh : s.text!.en}
-            </p>
-          </div>
-        </>
-      )}
+      {s.wordmark &&
+        wrapScreenLink(
+          s,
+          <>
+            <div className="absolute inset-x-0 top-[8.81%] flex justify-center">
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img
+                src="/assets/brand/is-offy-wordmark.png"
+                alt="is.offy"
+                className="w-[15.78%] max-w-[264px] min-w-[80px]"
+              />
+            </div>
+            <div className="absolute inset-x-0 top-[21.6%] flex justify-center px-[4%]">
+              <p className="text-ink max-w-full text-center text-[clamp(15px,3.22cqw,46px)] leading-[1.33] font-semibold tracking-[var(--tracking-18)] break-words whitespace-pre-line">
+                {locale === "zh" ? s.text!.zh : s.text!.en}
+              </p>
+            </div>
+          </>,
+        )}
       {s.title && renderSeriesOverlay(s)}
     </>
   );
@@ -192,46 +223,50 @@ export function HeroCarousel({
         else if (dx >= SWIPE_THRESHOLD) go(active - 1);
       }}
     >
-      <div
-        className="absolute inset-0"
-        style={{ containerType: "inline-size" }}
-      >
-      {slides.map((s, i) => {
-        const cls = `absolute inset-0 transition-opacity duration-1000 ease-editorial ${
-          i === active ? "opacity-100" : "pointer-events-none opacity-0"
-        }`;
-        return (
-          <div
-            key={s.image}
-            aria-hidden={i !== active}
-            className={cls}
-            style={{ backgroundColor: s.bg }}
-          >
-            {s.promo ? (
-              renderPromo(s)
-            ) : (
-              <>
-                <Image
-                  src={s.image}
-                  alt=""
-                  fill
-                  priority={i === 0}
-                  sizes="100vw"
-                  className="object-cover object-center"
-                />
-                {renderOverlay(s)}
-              </>
-            )}
-          </div>
-        );
-      })}
+      <div className="absolute inset-0" style={{ containerType: "inline-size" }}>
+        {slides.map((s, i) => {
+          const cls = `absolute inset-0 transition-opacity duration-1000 ease-editorial ${
+            i === active ? "opacity-100" : "pointer-events-none opacity-0"
+          }`;
+          return (
+            <div
+              key={s.image}
+              aria-hidden={i !== active}
+              className={cls}
+              style={{ backgroundColor: s.bg }}
+            >
+              {s.promo ? (
+                renderPromo(s)
+              ) : (
+                <>
+                  <Image
+                    src={s.image}
+                    alt=""
+                    fill
+                    priority={i === 0}
+                    sizes="100vw"
+                    className="object-cover object-center"
+                  />
+                  {renderOverlay(s)}
+                </>
+              )}
+            </div>
+          );
+        })}
 
-      {/* 控件层:覆盖整个图片(共享一组控件,按图片比例定位,不随屏切换) */}
-      <div className="pointer-events-none absolute inset-0 z-10">
+        {/* 控件层:覆盖整个图片(共享一组控件,按图片比例定位,不随屏切换) */}
+        <div className="pointer-events-none absolute inset-0 z-10">
           {/* 长条指示器(PSD 组 8:每条 367×24px=#f7f2f0,y89.8%,x 自 11.8% 起
               间隔 47px;active 100% / inactive 28% 透明。PSD 仅画 4 条,
-              经确认按 5 屏同样式顺延至 5 条) */}
-          <div className="absolute left-0 top-[89.8%] h-[1.18%] w-full" role="tablist" aria-label={t("heroSlidesLabel")}>
+              经确认按 5 屏同样式顺延至 5 条)。
+              条本身只有 ~2.8px 高(1.18% 头图高),命中区用伪元素扩到 40px +
+              条自身高度(方案:只**向上**扩 —— 向下扩会与 84.8% 的左右箭头抢命中区),
+              视觉尺寸一点不动(getBoundingClientRect 量不到伪元素,验收用真实 touch)。 */}
+          <div
+            className="absolute top-[89.8%] left-0 h-[1.18%] w-full"
+            role="tablist"
+            aria-label={t("heroSlidesLabel")}
+          >
             {slides.map((sl, di) => (
               <button
                 key={sl.image}
@@ -239,7 +274,7 @@ export function HeroCarousel({
                 aria-selected={di === active}
                 aria-label={t("heroGoToSlide", { n: di + 1 })}
                 onClick={() => go(di)}
-                className={`pointer-events-auto absolute top-0 h-full w-[11.3%] bg-[#f7f2f0] transition-opacity duration-500 ${
+                className={`pointer-events-auto absolute top-0 h-full w-[11.3%] bg-[#f7f2f0] transition-opacity duration-500 after:absolute after:inset-x-0 after:bottom-0 after:h-[calc(100%+2.5rem)] after:content-[''] ${
                   di === active ? "opacity-100" : "opacity-[0.28] hover:opacity-[0.5]"
                 }`}
                 style={{ left: `${11.82 + di * 12.74}%` }}
@@ -251,28 +286,38 @@ export function HeroCarousel({
               效果图实测两按钮间有约 8-12px 间距(gap-1)且角部微圆)。
               窄屏(lg 以下)下移到 84.8% 并缩到 2.7cqw:最长的标题
               (STREETWEAR SERIES,原始的 OFFY DRESS-UP SERIES)在窄屏会铺到 88% 宽,
-              箭头留在 76.3% 会压住标题尾巴;下移后与滚动条同带,横向不冲突。 */}
-          <div className="absolute right-[2.8%] top-[84.8%] flex gap-1 lg:top-[76.3%]">
+              箭头留在 76.3% 会压住标题尾巴;下移后与滚动条同带,横向不冲突。
+              窄屏命中区 20px → 44px(方案 §1.1「独立控件 ≥44×44」);
+              `lg:` 那两行原值保持不动,桌面端按钮尺寸一字不变。 */}
+          <div className="absolute top-[84.8%] right-[2.8%] flex gap-1 lg:top-[76.3%]">
             <button
               type="button"
               aria-label={t("heroPrevSlide")}
               onClick={() => go(active - 1)}
-              className="pointer-events-auto flex h-[clamp(20px,2.7cqw,38px)] w-[clamp(20px,2.7cqw,38px)] items-center justify-center rounded-[4px] bg-ink/50 transition-colors hover:bg-ink/70 lg:h-[clamp(30px,3.7cqw,48px)] lg:w-[clamp(30px,3.7cqw,48px)]"
+              className="bg-ink/50 hover:bg-ink/70 pointer-events-auto flex h-[clamp(44px,2.7cqw,48px)] w-[clamp(44px,2.7cqw,48px)] items-center justify-center rounded-[4px] transition-colors lg:h-[clamp(30px,3.7cqw,48px)] lg:w-[clamp(30px,3.7cqw,48px)]"
             >
               {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img src="/assets/hero/arrow-left.png" alt="" className="h-[clamp(6px,0.88cqw,12px)] w-auto lg:h-[clamp(8px,1.2cqw,15px)]" />
+              <img
+                src="/assets/hero/arrow-left.png"
+                alt=""
+                className="h-[clamp(6px,0.88cqw,12px)] w-auto lg:h-[clamp(8px,1.2cqw,15px)]"
+              />
             </button>
             <button
               type="button"
               aria-label={t("heroNextSlide")}
               onClick={() => go(active + 1)}
-              className="pointer-events-auto flex h-[clamp(20px,2.7cqw,38px)] w-[clamp(20px,2.7cqw,38px)] items-center justify-center rounded-[4px] bg-ink/50 transition-colors hover:bg-ink/70 lg:h-[clamp(30px,3.7cqw,48px)] lg:w-[clamp(30px,3.7cqw,48px)]"
+              className="bg-ink/50 hover:bg-ink/70 pointer-events-auto flex h-[clamp(44px,2.7cqw,48px)] w-[clamp(44px,2.7cqw,48px)] items-center justify-center rounded-[4px] transition-colors lg:h-[clamp(30px,3.7cqw,48px)] lg:w-[clamp(30px,3.7cqw,48px)]"
             >
               {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img src="/assets/hero/arrow-right.png" alt="" className="h-[clamp(6px,0.88cqw,12px)] w-auto lg:h-[clamp(8px,1.2cqw,15px)]" />
+              <img
+                src="/assets/hero/arrow-right.png"
+                alt=""
+                className="h-[clamp(6px,0.88cqw,12px)] w-auto lg:h-[clamp(8px,1.2cqw,15px)]"
+              />
             </button>
           </div>
-      </div>
+        </div>
       </div>
     </div>
   );

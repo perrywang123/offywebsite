@@ -37,11 +37,12 @@
   --color-info-bg: #e8eff3;
 
   /* ============ 字体（系统几何无衬线，映射 Sofia Pro） ============ */
-  --font-display: "Avenir Next", "Futura", "Century Gothic", "ITC Avant Garde Gothic",
-    "SF Pro Display", "Segoe UI", "PingFang SC", "Hiragino Sans GB",
-    "Microsoft YaHei", sans-serif;
-  --font-sans: -apple-system, "SF Pro Text", "Segoe UI", "Helvetica Neue",
-    "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", "Noto Sans SC", sans-serif;
+  --font-display:
+    "Avenir Next", "Futura", "Century Gothic", "ITC Avant Garde Gothic", "SF Pro Display",
+    "Segoe UI", "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", sans-serif;
+  --font-sans:
+    -apple-system, "SF Pro Text", "Segoe UI", "Helvetica Neue", "PingFang SC", "Hiragino Sans GB",
+    "Microsoft YaHei", "Noto Sans SC", sans-serif;
   --font-mono: ui-monospace, "SF Mono", Menlo, Consolas, "Liberation Mono", monospace;
 
   /* ============ 圆角 ============ */
@@ -63,30 +64,56 @@
   /* ============ 动效 ============ */
   --animate-fade-up: fade-up 0.7s var(--ease-out) both;
   @keyframes fade-up {
-    from { opacity: 0; transform: translateY(20px); }
-    to { opacity: 1; transform: translateY(0); }
+    from {
+      opacity: 0;
+      transform: translateY(20px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
   }
   --animate-marquee: marquee 30s linear infinite;
   @keyframes marquee {
-    from { transform: translateX(0); }
-    to { transform: translateX(-50%); }
+    from {
+      transform: translateX(0);
+    }
+    to {
+      transform: translateX(-50%);
+    }
   }
   --animate-pop: pop 0.4s var(--ease-pop);
   @keyframes pop {
-    0% { transform: scale(1); }
-    40% { transform: scale(1.35); }
-    100% { transform: scale(1); }
+    0% {
+      transform: scale(1);
+    }
+    40% {
+      transform: scale(1.35);
+    }
+    100% {
+      transform: scale(1);
+    }
   }
   --animate-page-enter: page-enter 0.3s var(--ease-inout) both;
   @keyframes page-enter {
-    from { opacity: 0; transform: translateY(8px); }
-    to { opacity: 1; transform: translateY(0); }
+    from {
+      opacity: 0;
+      transform: translateY(8px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
   }
   /* Ken Burns：hero 大图入场，缓慢从 1.06 回落到 1（对齐 dogguo 1.5s） */
   --animate-ken-burns: ken-burns 1.6s var(--ease-out) both;
   @keyframes ken-burns {
-    from { transform: scale(1.06); }
-    to { transform: scale(1); }
+    from {
+      transform: scale(1.06);
+    }
+    to {
+      transform: scale(1);
+    }
   }
 }
 
@@ -111,7 +138,9 @@
 }
 
 @media (min-width: 768px) {
-  :root { --header-h: 112px; }
+  :root {
+    --header-h: 112px;
+  }
 }
 
 /* ============ 英文站点:苹方优先承载拉丁字形 + 收窄中文调校的宽字距 ============
@@ -121,10 +150,12 @@
    把苹方放在最前,英文文字才会真正套用苹方;同时字距统一收窄一级,
    避免中文调校的宽字距在拉丁字母上显得过于松散。 */
 html[lang="en"] {
-  --font-display: "PingFang SC", "SF Pro Display", "Avenir Next", "Futura",
-    "Century Gothic", "Segoe UI", "Hiragino Sans GB", sans-serif;
-  --font-sans: "PingFang SC", -apple-system, "SF Pro Text", "Segoe UI",
-    "Helvetica Neue", "Hiragino Sans GB", sans-serif;
+  --font-display:
+    "PingFang SC", "SF Pro Display", "Avenir Next", "Futura", "Century Gothic", "Segoe UI",
+    "Hiragino Sans GB", sans-serif;
+  --font-sans:
+    "PingFang SC", -apple-system, "SF Pro Text", "Segoe UI", "Helvetica Neue", "Hiragino Sans GB",
+    sans-serif;
 
   --tracking-06: 0.04em;
   --tracking-10: 0.04em;
@@ -135,7 +166,9 @@ html[lang="en"] {
   --tracking-22: 0.1em;
 }
 
-html { scroll-behavior: smooth; }
+html {
+  scroll-behavior: smooth;
+}
 
 body {
   background: var(--background);
@@ -155,7 +188,29 @@ body {
     margin-inline: auto;
   }
   @media (min-width: 768px) {
-    .container-site { width: 92%; }
+    .container-site {
+      width: 92%;
+    }
+  }
+
+  /* ============ 移动端适配统一层(mobile-adaptation-plan §1) ============
+     阈值/值全部来自既有 spec:16px ← .container-site;48/80/112 ← Tailwind
+     4px 基;44px ← 02-ux-spec §5.2;11px ← .kicker。这里不新增字号/间距标度。 */
+
+  /* section 纵向节奏(48 / 80 / 112),取代各页散写的 py-20 md:py-28。
+     相邻 section 交界 = 48×2 = 96px(<768px)。 */
+  .section-y {
+    padding-block: 3rem;
+  }
+  @media (min-width: 768px) {
+    .section-y {
+      padding-block: 5rem;
+    }
+  }
+  @media (min-width: 1024px) {
+    .section-y {
+      padding-block: 7rem;
+    }
   }
 
   .kicker {
@@ -166,7 +221,9 @@ body {
     text-transform: uppercase;
     color: var(--color-brown-600);
   }
-  .kicker--on-dark { color: var(--color-butter); }
+  .kicker--on-dark {
+    color: var(--color-butter);
+  }
 
   .lede {
     font-size: 1.25rem;
@@ -175,7 +232,9 @@ body {
     color: var(--color-ink-soft);
   }
 
-  .hairline { border-color: var(--color-cream-line); }
+  .hairline {
+    border-color: var(--color-cream-line);
+  }
 
   .link-line {
     position: relative;
@@ -185,14 +244,90 @@ body {
   .link-line::after {
     content: "";
     position: absolute;
-    left: 0; bottom: -2px;
-    height: 1px; width: 100%;
+    left: 0;
+    bottom: -2px;
+    height: 1px;
+    width: 100%;
     background: var(--color-brown-600);
     transform: scaleX(1);
     transform-origin: left;
     transition: transform 300ms var(--ease-editorial);
   }
-  .link-line:hover::after { transform: scaleX(0); }
+  .link-line:hover::after {
+    transform: scaleX(0);
+  }
+  /* 触屏上没有 hover,按下即反馈(桌面 hover 行为不变) */
+  .link-line:active::after {
+    transform: scaleX(0);
+  }
+
+  /* ============ 触控命中区 ============
+     行内文字链的高度必须 ≥44px(02-ux-spec §5.2)。min-height 对
+     inline-block 无效,所以这里给 inline-flex;放在 .link-line 之后,
+     display 才会覆盖掉 .link-line 的 inline-block。
+     --quiet:视觉行高完全不动 —— padding 与等量负 margin 自相抵消,
+     16px 行盒padding 后正好 44px;`.75rem` 只有 40px,达不到 44px。 */
+  .tap-target,
+  .tap-target--quiet {
+    display: inline-flex;
+    align-items: center;
+    min-height: 2.75rem;
+  }
+  .tap-target--quiet {
+    padding-block: 0.875rem;
+    margin-block: -0.875rem;
+  }
+  /* `.link-line` 的下划线是相对**padding box** 定位的(`bottom: -2px`):
+     套上 --quiet 的 14px 纵向 padding 后,下划线会被推到文字下方 14px 处。
+     这里把 padding 补偿回去,视觉上仍然紧贴文字(面包屑 / 抽屉里的 Remove 都会同时用这两个类)。 */
+  .tap-target--quiet.link-line::after {
+    bottom: calc(-2px + 0.875rem);
+  }
+
+  /* ============ 横滑条 ============
+     吸附 + 隐藏滚动条;两端 12px 渐隐只在 <1024px 出现 —— 方案作用域是
+     "只改 <1024px,≥1024px 表现一律不变",所以桌面不加遮罩。 */
+  .hscroll {
+    display: flex;
+    overflow-x: auto;
+    overscroll-behavior-x: contain;
+    scroll-snap-type: x mandatory;
+    scrollbar-width: none;
+  }
+  .hscroll::-webkit-scrollbar {
+    display: none;
+  }
+  .hscroll > * {
+    flex: none;
+    scroll-snap-align: start;
+  }
+  @media (max-width: 1023.98px) {
+    .hscroll {
+      -webkit-mask-image: linear-gradient(
+        to right,
+        transparent 0,
+        #000 12px,
+        #000 calc(100% - 12px),
+        transparent 100%
+      );
+      mask-image: linear-gradient(
+        to right,
+        transparent 0,
+        #000 12px,
+        #000 calc(100% - 12px),
+        transparent 100%
+      );
+    }
+  }
+
+  /* ============ 底部/顶部安全区 ============
+     必须与 layout.tsx 的 viewportFit:"cover" 同时生效,否则 env() 恒为 0。 */
+  .safe-b {
+    padding-bottom: calc(1rem + env(safe-area-inset-bottom));
+  }
+  .safe-t {
+    padding-top: calc(1rem + env(safe-area-inset-top));
+  }
 
   /* ============ 政策正文(Shopify 书面政策)============
      正文由后台富文本经 lib/sanitize.ts 白名单消毒后 dangerouslySetInnerHTML 注入,
@@ -205,7 +340,9 @@ body {
     font-size: 1rem;
     line-height: 1.75;
   }
-  .policy-body > * + * { margin-top: 1.25em; }
+  .policy-body > * + * {
+    margin-top: 1.25em;
+  }
   .policy-body h1 {
     font-family: var(--font-display);
     font-size: clamp(1.5rem, 1.3rem + 1vw, 2rem);
@@ -224,29 +361,55 @@ body {
     padding-top: 1.75em;
     border-top: 1px solid var(--color-cream-line);
   }
-  .policy-body h3 { font-size: 1.0625rem; font-weight: 600; margin-top: 2em; }
+  .policy-body h3 {
+    font-size: 1.0625rem;
+    font-weight: 600;
+    margin-top: 2em;
+  }
   .policy-body h4,
   .policy-body h5,
-  .policy-body h6 { font-size: 1rem; font-weight: 600; margin-top: 1.75em; }
+  .policy-body h6 {
+    font-size: 1rem;
+    font-weight: 600;
+    margin-top: 1.75em;
+  }
   .policy-body h1:first-child,
   .policy-body h2:first-child,
-  .policy-body h3:first-child { margin-top: 0; padding-top: 0; border-top: 0; }
+  .policy-body h3:first-child {
+    margin-top: 0;
+    padding-top: 0;
+    border-top: 0;
+  }
   .policy-body b,
-  .policy-body strong { font-weight: 600; }
+  .policy-body strong {
+    font-weight: 600;
+  }
   .policy-body a {
     color: var(--color-ink);
     text-decoration: underline;
     text-decoration-color: var(--color-sand);
     text-underline-offset: 3px;
   }
-  .policy-body a:hover { text-decoration-color: var(--color-ink); }
+  .policy-body a:hover {
+    text-decoration-color: var(--color-ink);
+  }
   .policy-body ul,
-  .policy-body ol { padding-left: 1.25rem; }
-  .policy-body ul { list-style: disc; }
-  .policy-body ol { list-style: decimal; }
-  .policy-body li + li { margin-top: 0.5em; }
+  .policy-body ol {
+    padding-left: 1.25rem;
+  }
+  .policy-body ul {
+    list-style: disc;
+  }
+  .policy-body ol {
+    list-style: decimal;
+  }
+  .policy-body li + li {
+    margin-top: 0.5em;
+  }
   .policy-body li > ul,
-  .policy-body li > ol { margin-top: 0.5em; }
+  .policy-body li > ol {
+    margin-top: 0.5em;
+  }
   .policy-body blockquote {
     border-left: 2px solid var(--color-cream-line);
     padding-left: 1.25rem;
@@ -309,12 +472,35 @@ body {
 .js .reveal {
   opacity: 0;
   transform: translateY(24px);
-  transition: opacity 0.7s var(--ease-out), transform 0.7s var(--ease-out);
+  transition:
+    opacity 0.7s var(--ease-out),
+    transform 0.7s var(--ease-out);
   transition-delay: var(--reveal-delay, 0ms);
 }
-.js .reveal.is-in { opacity: 1; transform: none; }
-.js .reveal[data-variant="left"] { transform: translateX(-24px); }
-.js .reveal[data-variant="right"] { transform: translateX(24px); }
+.js .reveal.is-in {
+  opacity: 1;
+  transform: none;
+}
+/* `:not(.is-in)` 不能省:上面 `.is-in` 与下面两条的优先级同为 (0,3,0),
+   而这两条在文件里更靠后 —— 少了 `:not()` 就会在揭示完成后永久保留
+   ±24px 位移,窄屏下直接变成横向溢出(方案 #44 / RC-10)。 */
+.js .reveal[data-variant="left"]:not(.is-in) {
+  transform: translateX(-24px);
+}
+.js .reveal[data-variant="right"]:not(.is-in) {
+  transform: translateX(24px);
+}
+@media (max-width: 1023.98px) {
+  /* 把 `:not()` 补上之后还剩一个窄屏专属问题:**尚未揭示**的元素带着 ±24px
+     横移,而它通常在首屏之外(IntersectionObserver 还没触发),于是页面在加载时
+     就已经横向溢出(实测 /about scrollWidth 383 > 375),手机上能左右晃。
+     窄屏改走纵向位移:揭示动画还在,但横向永不溢出。
+     ≥1024px 一律不动(方案 §4 总原则)。 */
+  .js .reveal[data-variant="left"]:not(.is-in),
+  .js .reveal[data-variant="right"]:not(.is-in) {
+    transform: translateY(20px);
+  }
+}
 .js .reveal[data-variant="clip"] {
   opacity: 1;
   transform: none;
@@ -322,18 +508,28 @@ body {
   transition: clip-path 0.9s var(--ease-editorial);
   transition-delay: var(--reveal-delay, 0ms);
 }
-.js .reveal[data-variant="clip"].is-in { clip-path: inset(0 0 0 0); }
+.js .reveal[data-variant="clip"].is-in {
+  clip-path: inset(0 0 0 0);
+}
 
 /* 商品预告浮窗(quick view):淡入 + 轻微放大,尊重 prefers-reduced-motion */
 .quick-view-panel {
   animation: quick-view-in 0.22s var(--ease-out) both;
 }
 @keyframes quick-view-in {
-  from { opacity: 0; transform: scale(0.96); }
-  to { opacity: 1; transform: scale(1); }
+  from {
+    opacity: 0;
+    transform: scale(0.96);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
 }
 @media (prefers-reduced-motion: reduce) {
-  .quick-view-panel { animation: none; }
+  .quick-view-panel {
+    animation: none;
+  }
 }
 
 /* 隐藏横向滚动条（子 tab 跟随滑动） */
@@ -341,23 +537,48 @@ body {
   -ms-overflow-style: none;
   scrollbar-width: none;
 }
-.no-scrollbar::-webkit-scrollbar { display: none; }
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
 
 /* ============ 购物车抽屉 ============ */
-.cart-drawer { transform: translateX(100%); transition: transform 0.36s var(--ease-editorial); }
-.cart-drawer[data-open="true"] { transform: translateX(0); }
-.cart-overlay { opacity: 0; transition: opacity 0.25s var(--ease-out); }
-.cart-overlay[data-open="true"] { opacity: 1; }
+.cart-drawer {
+  transform: translateX(100%);
+  transition: transform 0.36s var(--ease-editorial);
+}
+.cart-drawer[data-open="true"] {
+  transform: translateX(0);
+}
+.cart-overlay {
+  opacity: 0;
+  transition: opacity 0.25s var(--ease-out);
+}
+.cart-overlay[data-open="true"] {
+  opacity: 1;
+}
 
 /* 数字等宽 */
-.tabular-nums { font-variant-numeric: tabular-nums; }
+.tabular-nums {
+  font-variant-numeric: tabular-nums;
+}
 
 @media (prefers-reduced-motion: reduce) {
-  html { scroll-behavior: auto; }
+  html {
+    scroll-behavior: auto;
+  }
   .js .reveal,
-  .js .mask-line > span { opacity: 1 !important; transform: none !important; clip-path: none !important; }
-  .cart-drawer, .cart-overlay { transition: none !important; }
-  *[class*="animate-"] { animation: none !important; }
+  .js .mask-line > span {
+    opacity: 1 !important;
+    transform: none !important;
+    clip-path: none !important;
+  }
+  .cart-drawer,
+  .cart-overlay {
+    transition: none !important;
+  }
+  *[class*="animate-"] {
+    animation: none !important;
+  }
 }
 
 /* 胶片颗粒噪点（叠加在 hero / 叙事大图上，提升质感） */

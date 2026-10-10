@@ -16,13 +16,16 @@ export async function Footer({ series, locale }: { series: Series[]; locale: str
   const t = await getTranslations("common");
   const tp = await getTranslations("policies");
 
+  // `.tap-target--quiet`:页脚这些文字链原本只有 ~16px 高(实测 343×16),低于
+  // WCAG 2.5.8 的 24×24 底线;这个类的 padding 与等量负 margin 自相抵消,
+  // 命中区变成 44px 而**视觉行高完全不动**(方案 §1.1 / 验收断言 3)。
   const linkCls =
-    "focus-ring focus-ring--on-dark transition-colors hover:text-paper";
+    "tap-target--quiet focus-ring focus-ring--on-dark transition-colors hover:text-paper";
   /** 两个主入口:与 kicker 同一套排版语言(display 字体 + 大写 + 宽字距),只是大一号。 */
   const panelLinkCls = `${linkCls} font-display text-lg font-semibold uppercase tracking-[var(--tracking-14)] text-cream`;
   /** 二级入口:明显更小、颜色更弱,是"下一层"而不是主入口,所以不与上面两条同级。 */
   const subLinkCls =
-    "focus-ring focus-ring--on-dark inline-flex items-center gap-1.5 text-xs uppercase tracking-[var(--tracking-10)] text-cream/50 transition-colors hover:text-cream";
+    "tap-target--quiet focus-ring focus-ring--on-dark inline-flex items-center gap-1.5 text-xs uppercase tracking-[var(--tracking-10)] text-cream/50 transition-colors hover:text-cream";
 
   return (
     <footer className="bg-ink text-cream">
@@ -31,20 +34,28 @@ export async function Footer({ series, locale }: { series: Series[]; locale: str
           该列 ≥320px。 */}
       <div className="container-site grid gap-10 py-16 md:grid-cols-2 md:gap-8 lg:grid-cols-4">
         <div>
-          <p className="max-w-xs text-sm leading-relaxed text-cream/70">{t("footer.blurb")}</p>
+          <p className="text-cream/70 max-w-xs text-sm leading-relaxed">{t("footer.blurb")}</p>
         </div>
         <nav aria-label={t("nav.home") + " / " + t("nav.shop")}>
           <p className="kicker kicker--on-dark mb-4">{t("footer.menuHeading")}</p>
-          <div className="flex flex-col gap-3 text-xs uppercase tracking-[var(--tracking-14)] text-cream/70">
-            <Link href="/" className={linkCls}>{t("nav.home")}</Link>
-            <Link href="/products" className={linkCls}>{t("nav.shop")}</Link>
-            <Link href="/collections" className={linkCls}>{t("nav.collections")}</Link>
-            <Link href="/about" className={linkCls}>{t("nav.about")}</Link>
+          <div className="text-cream/70 flex flex-col gap-3 text-xs tracking-[var(--tracking-14)] uppercase">
+            <Link href="/" className={linkCls}>
+              {t("nav.home")}
+            </Link>
+            <Link href="/products" className={linkCls}>
+              {t("nav.shop")}
+            </Link>
+            <Link href="/collections" className={linkCls}>
+              {t("nav.collections")}
+            </Link>
+            <Link href="/about" className={linkCls}>
+              {t("nav.about")}
+            </Link>
           </div>
         </nav>
         <nav aria-label={t("footer.collectionsHeading")}>
           <p className="kicker kicker--on-dark mb-4">{t("footer.collectionsHeading")}</p>
-          <div className="flex flex-col gap-3 text-xs uppercase tracking-[var(--tracking-10)] text-cream/70">
+          <div className="text-cream/70 flex flex-col gap-3 text-xs tracking-[var(--tracking-10)] uppercase">
             {series.slice(0, 6).map((s) => (
               <Link key={s.slug} href={`/collections/${s.slug}`} className={linkCls}>
                 {locale === "zh" ? s.name.zh : s.name.en}
@@ -67,7 +78,7 @@ export async function Footer({ series, locale }: { series: Series[]; locale: str
               {t("footer.contactLabel")}
             </Link>
           </div>
-          <div className="mt-5 border-t border-cream/10 pt-4">
+          <div className="border-cream/10 mt-5 border-t pt-4">
             <Link href="/policies" className={subLinkCls}>
               {tp("legalLabel")}
               <span aria-hidden className="text-cream/40">
@@ -79,8 +90,8 @@ export async function Footer({ series, locale }: { series: Series[]; locale: str
       </div>
 
       {/* 版权细条 */}
-      <div className="border-t border-cream/10 py-6">
-        <div className="container-site flex flex-wrap items-center justify-between gap-4 text-xs text-cream/50">
+      <div className="border-cream/10 border-t py-6">
+        <div className="container-site text-cream/50 flex flex-wrap items-center justify-between gap-4 text-xs">
           {/* © 行已并入上面的法律声明块(Excel 第 20 行),这里不再重复;
               右侧保留品牌 slogan。 */}
           <span className="sr-only">{t("brand")}</span>

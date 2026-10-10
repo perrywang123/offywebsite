@@ -44,22 +44,31 @@ const COUNTRIES: Array<[string, string]> = [
 function PaymentLogo({ provider }: { provider: Provider }) {
   if (provider === "paypal") {
     return (
-      <span className="flex h-10 w-14 shrink-0 items-center justify-center rounded-soft bg-[#0070ba] text-xs font-semibold italic text-paper">
+      <span className="rounded-soft text-paper flex h-10 w-14 shrink-0 items-center justify-center bg-[#0070ba] text-xs font-semibold italic">
         PayPal
       </span>
     );
   }
   if (provider === "shopify") {
     return (
-      <span className="flex h-10 w-14 shrink-0 items-center justify-center rounded-soft bg-[#5a863e] text-[10px] font-semibold text-paper">
+      <span className="rounded-soft text-paper flex h-10 w-14 shrink-0 items-center justify-center bg-[#5a863e] text-[11px] font-semibold">
         Shopify
       </span>
     );
   }
   return (
-    <span className="flex h-10 w-14 shrink-0 items-center justify-center rounded-soft border border-ink-muted/40 text-ink-soft">
+    <span className="rounded-soft border-ink-muted/40 text-ink-soft flex h-10 w-14 shrink-0 items-center justify-center border">
       <svg width="20" height="14" viewBox="0 0 24 16" aria-hidden>
-        <rect x="1" y="1" width="22" height="14" rx="2" fill="none" stroke="currentColor" strokeWidth="1.5" />
+        <rect
+          x="1"
+          y="1"
+          width="22"
+          height="14"
+          rx="2"
+          fill="none"
+          stroke="currentColor"
+          strokeWidth="1.5"
+        />
         <path d="M1 5h22" stroke="currentColor" strokeWidth="1.5" />
         <rect x="5" y="8" width="4" height="3" rx="1" fill="currentColor" />
       </svg>
@@ -97,10 +106,16 @@ export default function CheckoutPage() {
 
   const items = lines
     .map((line) => ({ line, product: catalog[line.code] }))
-    .filter((x): x is { line: { code: string; quantity: number }; product: CartCatalogEntry } => Boolean(x.product));
+    .filter((x): x is { line: { code: string; quantity: number }; product: CartCatalogEntry } =>
+      Boolean(x.product),
+    );
   // 逐行按该行自己的币种显示;小计由 cartTotal 汇总(混币时不硬加,只置位提示)。
   const subtotal = cartTotal(
-    items.map((x) => ({ priceCents: x.product.priceCents, currency: x.product.currency, quantity: x.line.quantity })),
+    items.map((x) => ({
+      priceCents: x.product.priceCents,
+      currency: x.product.currency,
+      quantity: x.line.quantity,
+    })),
   );
 
   useEffect(() => {
@@ -146,24 +161,31 @@ export default function CheckoutPage() {
     } ${submitting ? "pointer-events-none opacity-60" : ""}`;
 
   return (
-    <div className="mx-auto max-w-5xl px-6 py-12 lg:px-8">
-      <h1 className="mb-8 font-display text-4xl font-semibold">{t("title")}</h1>
+    <div className="container-site section-y lg:py-12">
+      <h1 className="font-display mb-8 text-4xl font-semibold">{t("title")}</h1>
 
       {notice === "cancelled" && (
-        <div className="mb-6 rounded-card bg-info-bg p-4 text-sm text-info">{t("cancelBanner")}</div>
+        <div className="rounded-card bg-info-bg text-info mb-6 p-4 text-sm">
+          {t("cancelBanner")}
+        </div>
       )}
       {notice === "failed" && (
-        <div className="mb-6 rounded-card bg-error-bg p-4 text-sm text-error">{t("failBanner")}</div>
+        <div className="rounded-card bg-error-bg text-error mb-6 p-4 text-sm">
+          {t("failBanner")}
+        </div>
       )}
 
       {!catalogLoaded && lines.length > 0 ? (
-        <p className="text-center text-sm text-ink-muted">
-          {tCart("loading")}
-        </p>
+        <p className="text-ink-muted text-center text-sm">{tCart("loading")}</p>
       ) : items.length === 0 ? (
         <div className="text-center">
           <p className="text-ink-muted">{t("empty")}</p>
-          <Link href="/products" className="link-line mt-4 inline-block text-sm">
+          {/* 空态 CTA 原来是 141×20px 的文字链(方案 #43):与抽屉/购物袋页的空态
+              统一成同一颗胶囊按钮,触屏上才有 48px 的命中区。 */}
+          <Link
+            href="/products"
+            className="bg-ink text-cream mt-6 inline-flex h-12 items-center justify-center rounded-full px-6 text-sm font-medium"
+          >
             {t("emptyCta")} →
           </Link>
         </div>
@@ -171,89 +193,132 @@ export default function CheckoutPage() {
         <div className="grid gap-10 lg:grid-cols-[2fr_1fr]">
           <form onSubmit={handleSubmit} className="space-y-6">
             {/* 联系方式 */}
-            <fieldset className="rounded-2xl bg-paper p-6">
+            <fieldset className="bg-paper rounded-2xl p-6">
               <legend className="kicker mb-4">{t("contact")}</legend>
               <div className="grid gap-4 sm:grid-cols-2">
                 <label className="block">
-                  <span className="mb-2 block text-sm text-ink-soft">{t("email")}</span>
+                  <span className="text-ink-soft mb-2 block text-sm">{t("email")}</span>
                   <input
-                    type="email" required value={email} readOnly={submitting}
+                    type="email"
+                    required
+                    value={email}
+                    readOnly={submitting}
                     onChange={(e) => setEmail(e.target.value)}
-                    placeholder={t("emailPlaceholder")} className={inputCls}
+                    autoComplete="email"
+                    placeholder={t("emailPlaceholder")}
+                    className={inputCls}
                   />
                 </label>
                 <label className="block">
-                  <span className="mb-2 block text-sm text-ink-soft">{t("phone")}</span>
+                  <span className="text-ink-soft mb-2 block text-sm">{t("phone")}</span>
                   <input
-                    type="tel" value={phone} readOnly={submitting}
+                    type="tel"
+                    value={phone}
+                    readOnly={submitting}
                     onChange={(e) => setPhone(e.target.value)}
-                    placeholder={t("phonePh")} className={inputCls}
+                    autoComplete="tel"
+                    placeholder={t("phonePh")}
+                    className={inputCls}
                   />
                 </label>
               </div>
             </fieldset>
 
             {/* 收货信息 */}
-            <fieldset className="rounded-2xl bg-paper p-6">
+            <fieldset className="bg-paper rounded-2xl p-6">
               <legend className="kicker mb-4">{t("shipping")}</legend>
               <div className="grid gap-4 sm:grid-cols-2">
                 <label className="block sm:col-span-2">
-                  <span className="mb-2 block text-sm text-ink-soft">{t("fullName")}</span>
+                  <span className="text-ink-soft mb-2 block text-sm">{t("fullName")}</span>
                   <input
-                    type="text" required value={fullName} readOnly={submitting}
+                    type="text"
+                    required
+                    value={fullName}
+                    readOnly={submitting}
                     onChange={(e) => setFullName(e.target.value)}
-                    placeholder={t("fullNamePh")} className={inputCls}
+                    autoComplete="name"
+                    placeholder={t("fullNamePh")}
+                    className={inputCls}
                   />
                 </label>
                 <label className="block">
-                  <span className="mb-2 block text-sm text-ink-soft">{t("country")}</span>
+                  <span className="text-ink-soft mb-2 block text-sm">{t("country")}</span>
                   <select
-                    value={country} disabled={submitting}
-                    onChange={(e) => setCountry(e.target.value)} className={inputCls}
+                    value={country}
+                    disabled={submitting}
+                    onChange={(e) => setCountry(e.target.value)}
+                    autoComplete="country"
+                    className={inputCls}
                   >
                     {COUNTRIES.map(([code, label]) => (
-                      <option key={code} value={code}>{label}</option>
+                      <option key={code} value={code}>
+                        {label}
+                      </option>
                     ))}
                   </select>
                 </label>
                 <label className="block">
-                  <span className="mb-2 block text-sm text-ink-soft">{t("postalCode")}</span>
+                  <span className="text-ink-soft mb-2 block text-sm">{t("postalCode")}</span>
                   <input
-                    type="text" required value={postalCode} readOnly={submitting}
+                    type="text"
+                    required
+                    value={postalCode}
+                    readOnly={submitting}
                     onChange={(e) => setPostalCode(e.target.value)}
-                    placeholder={t("postalCodePh")} className={inputCls}
+                    autoComplete="postal-code"
+                    inputMode="numeric"
+                    placeholder={t("postalCodePh")}
+                    className={inputCls}
                   />
                 </label>
                 <label className="block sm:col-span-2">
-                  <span className="mb-2 block text-sm text-ink-soft">{t("address1")}</span>
+                  <span className="text-ink-soft mb-2 block text-sm">{t("address1")}</span>
                   <input
-                    type="text" required value={address1} readOnly={submitting}
+                    type="text"
+                    required
+                    value={address1}
+                    readOnly={submitting}
                     onChange={(e) => setAddress1(e.target.value)}
-                    placeholder={t("address1Ph")} className={inputCls}
+                    autoComplete="address-line1"
+                    placeholder={t("address1Ph")}
+                    className={inputCls}
                   />
                 </label>
                 <label className="block sm:col-span-2">
-                  <span className="mb-2 block text-sm text-ink-soft">{t("address2")}</span>
+                  <span className="text-ink-soft mb-2 block text-sm">{t("address2")}</span>
                   <input
-                    type="text" value={address2} readOnly={submitting}
+                    type="text"
+                    value={address2}
+                    readOnly={submitting}
                     onChange={(e) => setAddress2(e.target.value)}
-                    placeholder={t("address2Ph")} className={inputCls}
+                    autoComplete="address-line2"
+                    placeholder={t("address2Ph")}
+                    className={inputCls}
                   />
                 </label>
                 <label className="block">
-                  <span className="mb-2 block text-sm text-ink-soft">{t("city")}</span>
+                  <span className="text-ink-soft mb-2 block text-sm">{t("city")}</span>
                   <input
-                    type="text" required value={city} readOnly={submitting}
+                    type="text"
+                    required
+                    value={city}
+                    readOnly={submitting}
                     onChange={(e) => setCity(e.target.value)}
-                    placeholder={t("cityPh")} className={inputCls}
+                    autoComplete="address-level2"
+                    placeholder={t("cityPh")}
+                    className={inputCls}
                   />
                 </label>
                 <label className="block">
-                  <span className="mb-2 block text-sm text-ink-soft">{t("state")}</span>
+                  <span className="text-ink-soft mb-2 block text-sm">{t("state")}</span>
                   <input
-                    type="text" value={state} readOnly={submitting}
+                    type="text"
+                    value={state}
+                    readOnly={submitting}
                     onChange={(e) => setState(e.target.value)}
-                    placeholder={t("statePh")} className={inputCls}
+                    autoComplete="address-level1"
+                    placeholder={t("statePh")}
+                    className={inputCls}
                   />
                 </label>
               </div>
@@ -267,20 +332,31 @@ export default function CheckoutPage() {
                   恰好是坏的那一个,顾客点结算直接 502。按用户要求只留 Shopify。
                   单选结构保留(而不是写死一段说明),这样将来补上密钥要恢复多选时改动最小。 */}
               <label className={cardClass(true)}>
-                <input type="radio" name="payment" value="shopify" checked readOnly className="sr-only" />
-                <span className="h-4 w-4 shrink-0 rounded-full border border-brown-600">
-                  <span className="mx-auto mt-[3px] block h-2 w-2 rounded-full bg-brown-600" />
+                <input
+                  type="radio"
+                  name="payment"
+                  value="shopify"
+                  checked
+                  readOnly
+                  className="sr-only"
+                />
+                <span className="border-brown-600 h-4 w-4 shrink-0 rounded-full border">
+                  <span className="bg-brown-600 mx-auto mt-[3px] block h-2 w-2 rounded-full" />
                 </span>
                 <PaymentLogo provider="shopify" />
                 <span className="flex-1">
-                  <span className="block text-base font-medium text-ink">{t("paymentShopify")}</span>
-                  <span className="mt-0.5 block text-xs text-ink-muted">{t("paymentShopifySub")}</span>
+                  <span className="text-ink block text-base font-medium">
+                    {t("paymentShopify")}
+                  </span>
+                  <span className="text-ink-muted mt-0.5 block text-xs">
+                    {t("paymentShopifySub")}
+                  </span>
                 </span>
               </label>
             </fieldset>
 
             {error && (
-              <p className="text-sm text-error">
+              <p className="text-error text-sm">
                 {t("errorPrefix")}
                 {error === "checkout_failed"
                   ? t("errorCheckoutFailed")
@@ -291,31 +367,39 @@ export default function CheckoutPage() {
             )}
 
             <button
-              type="submit" disabled={submitting} aria-busy={submitting}
-              className="h-12 w-full rounded-full bg-accent text-sm font-medium text-cream transition-colors hover:bg-accent-deep disabled:opacity-70"
+              type="submit"
+              disabled={submitting}
+              aria-busy={submitting}
+              className="bg-accent text-cream hover:bg-accent-deep h-12 w-full rounded-full text-sm font-medium transition-colors disabled:opacity-70"
             >
               {submitting ? t("jumping") : t("payWithShopify")}
             </button>
-            <p className="text-center text-xs text-ink-muted">{t("paymentNote")}</p>
+            <p className="text-ink-muted text-center text-xs">{t("paymentNote")}</p>
           </form>
 
-          <aside className="h-fit rounded-card bg-paper p-6">
+          <aside className="rounded-card bg-paper order-first h-fit p-6 lg:order-none">
             <p className="mb-4 font-semibold">{t("summary")}</p>
             <ul className="space-y-3 text-sm">
               {items.map(({ line, product }) => (
-                <li key={line.code} className="flex justify-between">
-                  <span>{locale === "zh" ? product.name.zh : product.name.en} × {line.quantity}</span>
-                  <span className="tabular-nums">
+                <li key={line.code} className="flex justify-between gap-3">
+                  <span className="min-w-0">
+                    {locale === "zh" ? product.name.zh : product.name.en} × {line.quantity}
+                  </span>
+                  <span className="shrink-0 tabular-nums">
                     {formatPrice(product.priceCents * line.quantity, product.currency, locale)}
                   </span>
                 </li>
               ))}
             </ul>
-            <div className="mt-4 flex justify-between border-t border-cream-line pt-4 font-medium">
+            <div className="border-cream-line mt-4 flex justify-between border-t pt-4 font-medium">
               <span>{t("summary")}</span>
-              <span className="tabular-nums">{formatPrice(subtotal.cents, subtotal.currency, locale)}</span>
+              <span className="tabular-nums">
+                {formatPrice(subtotal.cents, subtotal.currency, locale)}
+              </span>
             </div>
-            {subtotal.mixed && <p className="mt-2 text-xs text-ink-muted">{tCart("mixedCurrency")}</p>}
+            {subtotal.mixed && (
+              <p className="text-ink-muted mt-2 text-xs">{tCart("mixedCurrency")}</p>
+            )}
           </aside>
         </div>
       )}

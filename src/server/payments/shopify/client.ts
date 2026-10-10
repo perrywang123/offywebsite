@@ -80,8 +80,8 @@ function languageCode(language: CartLanguage): string {
 /** 导出仅为单测断言:国家必须是访客国家,且同时进 @inContext 与 buyerIdentity。 */
 export function cartMutation(country: string, language: CartLanguage): string {
   return `
-mutation CartCreate($lines: [CartLineInput!]!) @inContext(country: ${country}, language: ${languageCode(language)}) {
-  cartCreate(input: { lines: $lines, buyerIdentity: { countryCode: ${country} } }) {
+mutation CartCreate($lines: [CartLineInput!]!, $attributes: [AttributeInput!]) @inContext(country: ${country}, language: ${languageCode(language)}) {
+  cartCreate(input: { lines: $lines, buyerIdentity: { countryCode: ${country} }, attributes: $attributes }) {
     cart { id checkoutUrl }
     userErrors { field message }
   }
@@ -101,16 +101,22 @@ interface CartCreateData {
  * @param country ISO-3166 alpha-2 of the visitor; omitted → `SHOPIFY_MARKET_COUNTRY`.
  *                Invalid values fall back to the default market rather than
  *                being interpolated into the GraphQL enum literal.
+ * @param returnUrl 订单完成后希望顾客回到的站内地址。CartInput 没有 returnUrl
+ *                字段,所以走官方支持的 `attributes`(已用本店 Storefront 探针
+ *                验证 `attributes: [AttributeInput!]` 在本 schema 上存在);
+ *                商家/后台据此配置回跳,落点页 `/checkout/return` 负责清空袋子。
  */
 export async function cartCreate(
   lines: CartLineInput[],
   fetchImpl: typeof fetch = fetch,
   language: CartLanguage = "en",
   country: string = marketCountry(),
+  returnUrl?: string,
 ): Promise<ShopifyCart> {
+  const attributes = returnUrl ? [{ key: "return_url", value: returnUrl }] : [];
   const data = await storefrontFetch<CartCreateData>(
     cartMutation(normalizeCountry(country), language),
-    { lines },
+    { lines, attributes },
     fetchImpl,
   );
   const { cart, userErrors } = data.cartCreate;

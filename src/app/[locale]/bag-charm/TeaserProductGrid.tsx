@@ -4,6 +4,7 @@ import { useRef, useState, useEffect } from "react";
 import { createPortal } from "react-dom";
 import Image from "next/image";
 import { Reveal } from "@/components/Reveal";
+import { useScrollLock } from "@/hooks/useScrollLock";
 
 export interface TeaserProductItem {
   code: string;
@@ -76,6 +77,10 @@ export function TeaserProductGrid({
   useEffect(() => {
     setMounted(true);
   }, []);
+
+  // 浮窗打开期间锁住页面滚动(方案 #53)。浮窗本身走 Portal 挂到 body,
+  // `fixed inset-0` 可以保留 —— 它不在 template.tsx 的 transform 子树里。
+  useScrollLock(Boolean(activeCode));
 
   useEffect(() => {
     const mq = window.matchMedia("(hover: hover) and (pointer: fine)");
@@ -184,21 +189,21 @@ export function TeaserProductGrid({
       onClick={closeAll}
       onMouseMove={handleOverlayMouseMove}
     >
-      <div className="absolute inset-0 bg-ink/20 backdrop-blur-sm motion-reduce:backdrop-blur-none" />
+      <div className="bg-ink/20 absolute inset-0 backdrop-blur-sm motion-reduce:backdrop-blur-none" />
       <div
         ref={panelRef}
-        className="quick-view-panel relative z-10 max-h-[90vh] w-full max-w-md overflow-y-auto overflow-x-hidden rounded-card border border-cream-line bg-white/30 shadow-card-hover backdrop-blur-xl"
+        className="quick-view-panel rounded-card border-cream-line shadow-card-hover relative z-10 max-h-[90vh] w-full max-w-md overflow-x-hidden overflow-y-auto overscroll-contain border bg-white/30 backdrop-blur-xl"
         onClick={(e) => e.stopPropagation()}
       >
         <button
           type="button"
           aria-label={closeLabel}
           onClick={closeAll}
-          className="absolute right-3 top-3 z-10 flex h-8 w-8 items-center justify-center rounded-full bg-ink/80 text-cream transition-colors hover:bg-ink"
+          className="bg-ink/80 text-cream hover:bg-ink absolute top-3 right-3 z-10 flex h-11 w-11 items-center justify-center rounded-full transition-colors lg:h-8 lg:w-8"
         >
           ✕
         </button>
-        <div className="relative aspect-[877/1078] w-full bg-cream-deep/40">
+        <div className="bg-cream-deep/40 relative aspect-[877/1078] w-full">
           <Image
             src={activeItem.image}
             alt={activeItem.code}
@@ -207,7 +212,7 @@ export function TeaserProductGrid({
             className="object-contain p-5"
           />
         </div>
-        <div className="px-5 py-4 text-center text-sm font-medium tracking-wide text-ink">
+        <div className="text-ink px-5 py-4 text-center text-sm font-medium tracking-wide">
           {activeItem.code}
         </div>
       </div>
@@ -224,23 +229,27 @@ export function TeaserProductGrid({
               onMouseEnter={() => handleCardMouseEnter(item.code)}
               onMouseLeave={handleCardMouseLeave}
             >
-              <div className="relative aspect-[877/1078] overflow-hidden rounded-card bg-cream-deep">
+              <div className="rounded-card bg-cream-deep relative aspect-[877/1078] overflow-hidden">
                 <Image
                   src={item.image}
                   alt={item.code}
                   fill
                   sizes="(max-width: 768px) 50vw, 33vw"
-                  className="object-contain p-2 transition-transform duration-500 ease-editorial group-hover:scale-105"
+                  className="ease-editorial object-contain p-2 transition-transform duration-500 group-hover:scale-105"
                 />
               </div>
-              <div className="flex items-center justify-between gap-3 pt-3">
-                <span className="text-sm font-medium text-ink">{item.code}</span>
+              <div className="flex flex-col items-start gap-1 pt-3 sm:flex-row sm:items-center sm:justify-between sm:gap-3">
+                {/* SKU 折行(方案 #47):12 字符的款号在窄屏只剩 ~150px,
+                    text-sm 会被折成两行;降到 12px(交互式 caps 档)并等宽数字。 */}
+                <span className="text-ink text-xs font-medium tabular-nums md:text-sm">
+                  {item.code}
+                </span>
                 <button
                   type="button"
                   aria-haspopup="dialog"
                   aria-expanded={activeCode === item.code}
                   onClick={() => toggleOnClick(item.code)}
-                  className="shrink-0 text-sm text-ink-soft underline-offset-4 transition-colors hover:text-ink hover:underline"
+                  className="tap-target--quiet text-ink-soft hover:text-ink shrink-0 text-sm underline-offset-4 transition-colors hover:underline"
                 >
                   {viewDetailLabel} →
                 </button>

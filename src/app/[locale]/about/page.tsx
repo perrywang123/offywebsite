@@ -29,11 +29,15 @@ export default async function AboutPage({ params }: { params: Promise<{ locale: 
 
   return (
     <div>
-      {/* 页首:主标语 + 副行(原主标语 Imagine with Love. Create with Companion. 降为副行) */}
-      <section className="mx-auto max-w-7xl px-6 py-20 text-center lg:px-8">
+      {/* 页首:主标语 + 副行(原主标语 Imagine with Love. Create with Companion. 降为副行)。
+          版心/节奏统一到 `.container-site` + `.section-y`(方案 #56):原来 4 个 section
+          各自写 `mx-auto max-w-7xl` 再叠一层 `px-6`,与全站 92% 版心两套并存。
+          纵向 `lg:py-20` 保留改动前的 80px —— 只有窄屏(48px)与 768–1023(80px)变。
+          封面 H1 48px **不动**(方案 E5:救小字,不砍大字)。 */}
+      <section className="container-site section-y text-center lg:py-20">
         <Reveal>
           <p className="kicker mb-5">{t("storyKicker")}</p>
-          <h1 className="font-display text-5xl font-semibold leading-[1.05] tracking-tight md:text-7xl">
+          <h1 className="font-display text-5xl leading-[1.05] font-semibold tracking-tight md:text-7xl">
             {t("title")}
           </h1>
           <p className="lede mt-6">{t("tagline")}</p>
@@ -41,26 +45,46 @@ export default async function AboutPage({ params }: { params: Promise<{ locale: 
       </section>
 
       {/* 起源:图集 + Where She Came From + 12 段正文(文案表 row 4) */}
-      <section className="mx-auto grid max-w-7xl items-start gap-12 px-6 py-20 md:grid-cols-2 lg:px-8">
+      <section className="container-site section-y grid items-start gap-12 md:grid-cols-2 lg:py-20">
         <Reveal variant="left">
           <div className="relative mx-auto aspect-[3/4] w-full max-w-sm" data-slot="story-image">
-            <div className="absolute inset-0 overflow-hidden rounded-card bg-paper shadow-card">
-              <Image src="/assets/news/news-01.jpg" alt="is.offy" fill sizes="(max-width:768px) 90vw, 40vw" className="object-cover" />
+            <div className="rounded-card bg-paper shadow-card absolute inset-0 overflow-hidden">
+              <Image
+                src="/assets/news/news-01.jpg"
+                alt="is.offy"
+                fill
+                sizes="(max-width:768px) 90vw, 40vw"
+                className="object-cover"
+              />
             </div>
-            <div className="absolute -bottom-4 -right-4 w-2/5 overflow-hidden rounded-soft bg-paper shadow-card">
+            <div className="rounded-soft bg-paper shadow-card absolute -right-4 -bottom-4 w-2/5 overflow-hidden">
               <div className="relative aspect-[3/4]">
-                <Image src="/assets/news/news-05.jpg" alt="is.offy" fill sizes="20vw" className="object-cover" />
+                <Image
+                  src="/assets/news/news-05.jpg"
+                  alt="is.offy"
+                  fill
+                  sizes="20vw"
+                  className="object-cover"
+                />
               </div>
             </div>
           </div>
         </Reveal>
         <Reveal variant="right">
-          <h2 className="mb-6 font-display text-3xl font-semibold tracking-tight md:text-4xl">{t("storyHeading")}</h2>
-          {/* 末段用 brown-600 强调:沿用改版前 storyP3 的收尾处理 */}
+          <h2 className="font-display mb-6 text-3xl font-semibold tracking-tight md:text-4xl">
+            {t("storyHeading")}
+          </h2>
+          {/* 末段用 brown-600 强调:沿用改版前 storyP3 的收尾处理。
+              正文段落 20px(`.lede`)→ 16px(方案 #55):`.lede` 只留给上面的 hero
+              副标题。12 段正文本身就是 4752px,长度是内容问题,不在本轮。 */}
           {storyParagraphs.map((paragraph, index) => (
             <p
               key={paragraph}
-              className={index === storyParagraphs.length - 1 ? "mt-5 text-lg font-medium text-brown-600" : "lede mb-4"}
+              className={
+                index === storyParagraphs.length - 1
+                  ? "text-brown-600 mt-5 text-lg font-medium"
+                  : "mb-4 text-base leading-relaxed"
+              }
             >
               {paragraph}
             </p>
@@ -69,12 +93,12 @@ export default async function AboutPage({ params }: { params: Promise<{ locale: 
       </section>
 
       {/* 后续计划(文案表 row 7:换成首页那块 —— NEW IPS AHEAD + 角色插画卡) */}
-      <section className="mx-auto max-w-7xl px-6 py-20 lg:px-8">
+      <section className="container-site section-y lg:py-20">
         <Reveal className="mb-10">
-          <h2 className="font-display text-3xl font-semibold uppercase tracking-tight md:text-4xl">
+          <h2 className="font-display text-3xl font-semibold tracking-tight uppercase md:text-4xl">
             {tHome("comingTitle")}
           </h2>
-          <p className="mt-3 text-ink-soft">{tHome("comingSub")}</p>
+          <p className="text-ink-soft mt-3">{tHome("comingSub")}</p>
         </Reveal>
         <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
           {upcomingIps.map((ip) => (
@@ -86,19 +110,27 @@ export default async function AboutPage({ params }: { params: Promise<{ locale: 
       </section>
 
       {/* 定制 CTA */}
-      <section className="mx-auto max-w-3xl px-6 py-20 text-center lg:px-8">
-        <Reveal>
-          <p className="kicker mb-3">{t("customKicker")}</p>
-          <h2 className="font-display text-3xl font-semibold tracking-tight md:text-4xl">{t("customHeading")}</h2>
-          <p className="mx-auto mt-4 max-w-xl text-ink-soft">{t("customBody")}</p>
-          <div className="mt-6 flex flex-wrap justify-center gap-2">
-            {collabLooks.map((code) => (
-              <span key={code} className="rounded-full border border-sand px-3 py-1 text-xs uppercase tracking-[var(--tracking-12)] text-ink-soft">
-                {code}
-              </span>
-            ))}
-          </div>
-        </Reveal>
+      <section className="container-site section-y text-center lg:py-20">
+        {/* 阅读宽度上限放在 `.container-site` **内层**(方案 §1.1:内层不再自带 px-*) */}
+        <div className="mx-auto max-w-3xl">
+          <Reveal>
+            <p className="kicker mb-3">{t("customKicker")}</p>
+            <h2 className="font-display text-3xl font-semibold tracking-tight md:text-4xl">
+              {t("customHeading")}
+            </h2>
+            <p className="text-ink-soft mx-auto mt-4 max-w-xl">{t("customBody")}</p>
+            <div className="mt-6 flex flex-wrap justify-center gap-2">
+              {collabLooks.map((code) => (
+                <span
+                  key={code}
+                  className="border-sand text-ink-soft rounded-full border px-3 py-1 text-xs tracking-[var(--tracking-12)] uppercase"
+                >
+                  {code}
+                </span>
+              ))}
+            </div>
+          </Reveal>
+        </div>
       </section>
     </div>
   );

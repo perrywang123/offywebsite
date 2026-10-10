@@ -21,8 +21,18 @@ vi.mock("@/i18n/navigation", () => ({
 import { CategoryTabs } from "./CategoryTabs";
 
 const series = [
-  { slug: "princess-lady", name: { zh: "公主lady系列", en: "Princess Lady" }, tagline: { zh: "", en: "" }, heroImage: "/assets/hero/hero-01.jpg" },
-  { slug: "playful-life", name: { zh: "趣味生活系列", en: "Playful Life" }, tagline: { zh: "", en: "" }, heroImage: "/assets/hero/hero-03.jpg" },
+  {
+    slug: "princess-lady",
+    name: { zh: "公主lady系列", en: "Princess Lady" },
+    tagline: { zh: "", en: "" },
+    heroImage: "/assets/hero/hero-01.jpg",
+  },
+  {
+    slug: "playful-life",
+    name: { zh: "趣味生活系列", en: "Playful Life" },
+    tagline: { zh: "", en: "" },
+    heroImage: "/assets/hero/hero-03.jpg",
+  },
 ] as const;
 
 describe("CategoryTabs", () => {
@@ -61,5 +71,27 @@ describe("CategoryTabs", () => {
     render(<CategoryTabs series={[...series]} active={undefined} locale="zh" />);
     expect(screen.getByRole("link", { name: "公主lady系列" })).toBeInTheDocument();
     expect(screen.getByRole("link", { name: "全部" })).toBeInTheDocument();
+  });
+
+  it("keeps a 44px tap target on the tabs below lg only (#25)", () => {
+    render(<CategoryTabs series={[...series]} active={undefined} locale="en" />);
+    const all = screen.getByRole("link", { name: "All" });
+    expect(all.className).toContain("tap-target");
+    // 桌面端(≥1024px)strip 高度必须与改动前一致
+    expect(all.className).toContain("lg:min-h-0");
+  });
+
+  it("centers the active tab horizontally without scrolling the page (#29 / R15)", () => {
+    const original = Element.prototype.scrollIntoView;
+    const spy = vi.fn();
+    Element.prototype.scrollIntoView = spy;
+    try {
+      render(<CategoryTabs series={[...series]} active="playful-life" locale="en" />);
+      expect(spy).toHaveBeenCalledTimes(1);
+      // block:"nearest" 必须显式给出,否则整页会被纵向滚走
+      expect(spy.mock.calls[0][0]).toEqual({ inline: "center", block: "nearest" });
+    } finally {
+      Element.prototype.scrollIntoView = original;
+    }
   });
 });

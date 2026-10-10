@@ -102,9 +102,7 @@ describe("HeroCarousel", () => {
 
   it("renders the promo slide (bg image with products baked in + live kicker & two-line promo text)", () => {
     const { container } = render(<HeroCarousel slides={slides} locale="zh" />);
-    const srcs = Array.from(container.querySelectorAll("img")).map((i) =>
-      i.getAttribute("src"),
-    );
+    const srcs = Array.from(container.querySelectorAll("img")).map((i) => i.getAttribute("src"));
     expect(srcs).toContain("/assets/hero/hero-promo.jpg");
     expect(screen.getByText("OFFY大促加赠")).toBeInTheDocument();
     // 两行大字:whitespace-pre-line 保留显式 \n 换行
@@ -124,9 +122,7 @@ describe("HeroCarousel", () => {
 
   it("uses the white CTA arrow on the dark (fashion) slide and ink arrow elsewhere", () => {
     const { container } = render(<HeroCarousel slides={slides} locale="zh" />);
-    const srcs = Array.from(container.querySelectorAll("img")).map((i) =>
-      i.getAttribute("src"),
-    );
+    const srcs = Array.from(container.querySelectorAll("img")).map((i) => i.getAttribute("src"));
     expect(srcs).toContain("/assets/hero/cta-arrow-white.png");
     expect(srcs).toContain("/assets/hero/cta-arrow.png");
   });
@@ -180,5 +176,39 @@ describe("HeroCarousel", () => {
     fireEvent.touchStart(region, { touches: [{ clientX: 100 }] });
     fireEvent.touchEnd(region, { changedTouches: [{ clientX: 300 }] });
     expect(dots[0]).toHaveAttribute("aria-selected", "true");
+  });
+
+  it("makes the brand / promo screens fully clickable once they carry an href (P1-1)", () => {
+    const clickable: HeroSlide[] = [
+      { ...slides[0], href: "/about" },
+      { ...slides[1], href: "/products" },
+      slides[2],
+      slides[3],
+      slides[4],
+    ];
+    render(<HeroCarousel slides={clickable} locale="zh" intervalMs={60000} />);
+    expect(screen.getByRole("link", { name: /让想象落地/, hidden: true })).toHaveAttribute(
+      "href",
+      "/about",
+    );
+    expect(screen.getByRole("link", { name: /OFFY大促加赠/, hidden: true })).toHaveAttribute(
+      "href",
+      "/products",
+    );
+    // 屏 3-5 不整屏包链接(内部已有自己的「查看详情」,嵌套 <a> 非法)
+    expect(screen.getAllByRole("link", { name: "heroDetailsCta", hidden: true })).toHaveLength(3);
+  });
+
+  it("keeps ≥44px hit areas on the hero controls (arrows + indicator) at narrow widths", () => {
+    render(<HeroCarousel slides={slides} locale="zh" intervalMs={60000} />);
+    for (const name of ["heroPrevSlide", "heroNextSlide"]) {
+      const btn = screen.getByRole("button", { name });
+      expect(btn.className).toContain("clamp(44px");
+      // 桌面端(lg)尺寸必须保持原值
+      expect(btn.className).toContain("lg:h-[clamp(30px,3.7cqw,48px)]");
+    }
+    // 2.8px 高的长条指示器靠伪元素把命中区扩到条上方 40px,视觉尺寸不变
+    const dot = screen.getAllByRole("tab", { hidden: true })[0];
+    expect(dot.className).toContain("after:h-[calc(100%+2.5rem)]");
   });
 });

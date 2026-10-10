@@ -37,8 +37,7 @@ export async function generateMetadata({
   return {
     title,
     // 中文站也用中文元数据(中文用户会搜"Offy 退货政策"),但描述里点明正文为英文
-    description:
-      locale === "zh" ? `${title} · 正文为英文原文` : `${title} of is.offy`,
+    description: locale === "zh" ? `${title} · 正文为英文原文` : `${title} of is.offy`,
     alternates: { canonical: publicPath(locale, `/policies/${handle}`) },
     // 不指向 Shopify 的 url 字段:那是 checkout.shopify.com 域的结账内副本,不是店铺公开页
   };
@@ -60,10 +59,11 @@ export default async function PolicyPage({
   const isZh = locale === "zh";
 
   return (
-    <div className="container-site py-16 md:py-20">
+    <div className="container-site section-y lg:py-20">
       <header className="mx-auto max-w-[68ch]">
         <p className="kicker mb-4">{t("kicker")}</p>
-        <h1 className="font-display text-[clamp(1.75rem,1.4rem+1.4vw,3rem)] font-semibold leading-[1.1] tracking-tight">
+        {/* 页面 H1 从 28px 抬到 36px(方案 #54);`md:text-5xl` = 改动前 clamp 的上限 */}
+        <h1 className="font-display text-4xl leading-[1.1] font-semibold tracking-tight md:text-5xl lg:text-[clamp(1.75rem,1.4rem+1.4vw,3rem)]">
           {title}
         </h1>
       </header>
@@ -71,9 +71,9 @@ export default async function PolicyPage({
       {/* 语言说明:仅中文站。政策正文只有英文,不声明会让中文用户以为看到了中文版;
           样式用白卡而不是 bg-cream-deep —— 后者 #f5f5f5 与页面底 #efefef 几乎不可分。 */}
       {isZh && (
-        <aside className="mx-auto mt-8 max-w-[68ch] rounded-soft border border-cream-line bg-paper px-4 py-3">
+        <aside className="rounded-soft border-cream-line bg-paper mx-auto mt-8 max-w-[68ch] border px-4 py-3">
           <p className="kicker">{t("noticeTitle")}</p>
-          <p className="mt-2 text-sm leading-relaxed text-ink-soft">{t("notice")}</p>
+          <p className="text-ink-soft mt-2 text-sm leading-relaxed">{t("notice")}</p>
         </aside>
       )}
 
@@ -90,8 +90,11 @@ export default async function PolicyPage({
         </article>
       )}
 
-      <div className="mx-auto mt-16 max-w-[68ch] border-t border-cream-line pt-8 text-xs uppercase tracking-[var(--tracking-12)] text-ink-soft">
-        <Link href="/" className="focus-ring transition-colors hover:text-ink">
+      <div className="border-cream-line text-ink-soft mx-auto mt-16 max-w-[68ch] border-t pt-8 text-xs tracking-[var(--tracking-12)] uppercase">
+        <Link
+          href="/"
+          className="focus-ring tap-target hover:text-ink transition-colors lg:min-h-0"
+        >
           ← {t("backToHome")}
         </Link>
       </div>
@@ -112,11 +115,11 @@ async function ContactSection({ locale }: { locale: string }) {
         {CONTACT_INFO.rows.map((row) => (
           <div key={row.label.en} className="contents">
             <dt className="kicker self-start">{isZh ? row.label.zh : row.label.en}</dt>
-            <dd className="text-base text-ink">
+            <dd className="text-ink text-base">
               {row.href ? (
                 <a
                   href={row.href}
-                  className="focus-ring link-line break-words"
+                  className="focus-ring link-line tap-target break-words lg:min-h-0"
                   {...(row.href.startsWith("http")
                     ? { target: "_blank", rel: "noopener noreferrer" }
                     : {})}
@@ -130,7 +133,7 @@ async function ContactSection({ locale }: { locale: string }) {
           </div>
         ))}
       </dl>
-      <p className="mt-10 border-t border-cream-line pt-8 text-sm leading-relaxed text-ink-soft">
+      <p className="border-cream-line text-ink-soft mt-10 border-t pt-8 text-sm leading-relaxed">
         {t("contactNote")}
       </p>
     </section>

@@ -31,10 +31,30 @@ export interface NewsItem {
 export const newsFeature = { image: "/assets/news/news-01.jpg", productCode: "warm-biscuit" };
 
 export const newsItems: NewsItem[] = [
-  { id: "daily-cute", title: { zh: "日常犯可爱", en: "Cute, Never Basic" }, image: "/assets/news/news-04.jpg", productCode: "bunny-hug" },
-  { id: "weekend", title: { zh: "周末出门玩", en: "Weekend in Motion" }, image: "/assets/news/news-03.jpg", productCode: "ace" },
-  { id: "fashion-life", title: { zh: "时尚潮流生活", en: "Chill in Style" }, image: "/assets/news/news-08.jpg", productCode: "wander" },
-  { id: "fun-offy", title: { zh: "趣味潮流OFFY", en: "Born for Streets" }, image: "/assets/news/news-02.jpg", productCode: "offy_redrush" },
+  {
+    id: "daily-cute",
+    title: { zh: "日常犯可爱", en: "Cute, Never Basic" },
+    image: "/assets/news/news-04.jpg",
+    productCode: "bunny-hug",
+  },
+  {
+    id: "weekend",
+    title: { zh: "周末出门玩", en: "Weekend in Motion" },
+    image: "/assets/news/news-03.jpg",
+    productCode: "ace",
+  },
+  {
+    id: "fashion-life",
+    title: { zh: "时尚潮流生活", en: "Chill in Style" },
+    image: "/assets/news/news-08.jpg",
+    productCode: "wander",
+  },
+  {
+    id: "fun-offy",
+    title: { zh: "趣味潮流OFFY", en: "Born for Streets" },
+    image: "/assets/news/news-02.jpg",
+    productCode: "offy_redrush",
+  },
 ];
 
 /**
@@ -90,17 +110,28 @@ export const heroSlides: HeroSlideData[] = [
     image: "/assets/hero/hero-brand.jpg",
     bg: "#bcc2c6",
     wordmark: true,
-    text: { zh: "设计师玩具（大）差异化价值", en: "Designer Plush Art Toys\nMeet who you love to be." },
+    // 品牌屏/促销屏原本整屏不可点(只有屏 3-5 有「查看详情」)。补 href 后
+    // HeroCarousel 会把整屏包成链接 —— 头图是首页最大的一块面积,
+    // 点哪儿都没反应是最扎眼的移动端缺陷(方案 §2 C / P1-1)。
+    href: "/about",
+    text: {
+      zh: "设计师玩具（大）差异化价值",
+      en: "Designer Plush Art Toys\nMeet who you love to be.",
+    },
   },
   {
     image: "/assets/hero/hero-promo.jpg",
     bg: "#f7f2ef",
+    href: "/products",
     promo: {
       // kicker/促销语按 PSD 图层原文:'OFFY Big Sale: Bonus Gift Included' +
       // 'BUY ANY 3 OFFYs,\rGET A FREE BIG TOTE'(断行在逗号后,注意 'OFFYs' 的
       // 小写 s —— 效果图里就是小写,所以这行不做 uppercase)。
       kicker: { zh: "OFFY大促加赠", en: "OFFY Big Sale: Bonus Gift Included" },
-      text: { zh: "即日起 任意购买\n3个公仔以上 送offy宝宝", en: "BUY ANY 3 OFFYs,\nGET A FREE BIG TOTE" },
+      text: {
+        zh: "即日起 任意购买\n3个公仔以上 送offy宝宝",
+        en: "BUY ANY 3 OFFYs,\nGET A FREE BIG TOTE",
+      },
     },
   },
   {

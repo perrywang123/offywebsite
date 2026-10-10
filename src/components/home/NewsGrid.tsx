@@ -48,7 +48,7 @@ export function NewsGrid({
         <Reveal>
           <Link
             href={featureHref}
-            className="group relative block aspect-[3/4] overflow-hidden rounded-card bg-cream-deep lg:aspect-auto lg:h-full lg:min-h-[32rem]"
+            className="group rounded-card bg-cream-deep relative block aspect-[3/4] overflow-hidden lg:aspect-auto lg:h-full lg:min-h-[32rem]"
             style={{ containerType: "inline-size" }}
           >
             <Image
@@ -56,19 +56,23 @@ export function NewsGrid({
               alt={texts.featureTitle}
               fill
               sizes="(max-width: 1024px) 100vw, 50vw"
-              className="object-cover transition-transform duration-500 ease-editorial group-hover:scale-105"
+              className="ease-editorial object-cover transition-transform duration-500 group-hover:scale-105"
             />
-            {/* PSD:文案压在图片上方、居中(不是左下角),图片本身不加暗渐变 */}
-            <div className="absolute inset-x-0 top-0 flex flex-col items-center px-[14%] pt-[6.6%] text-center">
-              <span className="text-[4.77cqw] font-normal uppercase leading-none tracking-[var(--tracking-10)] text-ink">
+            {/* PSD:文案压在图片上方、居中(不是左下角),图片本身不加暗渐变。
+                窄屏文字框 14% → 8%:字号**不缩**(主卡大标题是设计定稿的 9.59cqw),
+                改用更宽的文字框解决 `ROMANTICIZING EVERYDAY LIFE` 在 343px 卡宽下
+                溢出(方案 #10:改文字框,不改字号)。所有 cqw 字号都带上下限,
+                治"窄屏线性缩水到 7.9px"那一类(方案 §1.1 规则 2)。 */}
+            <div className="absolute inset-x-0 top-0 flex flex-col items-center px-[8%] pt-[6.6%] text-center sm:px-[14%]">
+              <span className="text-ink text-[max(11px,4.77cqw)] leading-none font-normal tracking-[var(--tracking-10)] uppercase">
                 {texts.badge}
               </span>
-              <h3 className="mt-[3.5cqw] font-display text-[9.59cqw] font-semibold uppercase leading-[1.12] tracking-tight text-ink">
+              <h3 className="font-display text-ink mt-[3.5cqw] text-[max(30px,9.59cqw)] leading-[1.12] font-semibold tracking-tight uppercase">
                 {texts.featureTitle}
               </h3>
             </div>
             {/* PSD 矩形3拷贝6:底部居中黑色胶囊,白字,宽 52.4% 卡宽、高 15.56cqw */}
-            <span className="absolute inset-x-0 bottom-[10%] mx-auto flex h-[15.56cqw] w-[52.4%] items-center justify-center rounded-full bg-ink text-[4.65cqw] font-normal uppercase leading-none tracking-[var(--tracking-10)] text-cream">
+            <span className="bg-ink text-cream absolute inset-x-0 bottom-[10%] mx-auto flex h-[15.56cqw] w-[52.4%] items-center justify-center rounded-full text-[max(11px,4.65cqw)] leading-none font-normal tracking-[var(--tracking-10)] uppercase">
               {texts.cta}
             </span>
           </Link>
@@ -80,7 +84,7 @@ export function NewsGrid({
             <Reveal key={item.id} delay={Math.min(i, 3) * 70}>
               <Link
                 href={`/products/${item.productCode}`}
-                className="group relative block aspect-[3/4] overflow-hidden rounded-card bg-cream-deep"
+                className="group rounded-card bg-cream-deep relative block aspect-[3/4] overflow-hidden"
                 style={{ containerType: "inline-size" }}
               >
                 <Image
@@ -88,13 +92,19 @@ export function NewsGrid({
                   alt={locale === "zh" ? item.title.zh : item.title.en}
                   fill
                   sizes="(max-width: 1024px) 50vw, 25vw"
-                  className="object-cover transition-transform duration-500 ease-editorial group-hover:scale-105"
+                  className="ease-editorial object-cover transition-transform duration-500 group-hover:scale-105"
                 />
                 {/* PSD 矩形3拷贝2..5:文案进底部居中黑色胶囊(原来在图下方/左下角)。
                     PSD 里各胶囊宽度不同(494..566 / 827),是跟着文字宽度走的,
-                    所以这里用 w-auto + 左右 9cqw 内边距让胶囊包住文字,避免截断。 */}
-                <span className="absolute inset-x-0 bottom-[8.4%] mx-auto flex h-[13.4%] w-auto max-w-[92%] items-center justify-center rounded-full bg-ink px-[9cqw] text-[4.84cqw] font-normal uppercase leading-none tracking-[var(--tracking-10)] text-cream">
-                  <span className="whitespace-nowrap">{locale === "zh" ? item.title.zh : item.title.en}</span>
+                    所以这里用 w-auto + 左右内边距让胶囊包住文字,避免截断。
+                    下限 11px(方案 §1.1 规则 2):375px 副卡宽 163.5px 时 4.84cqw
+                    只有 7.91px;下限抬高后可用宽度变紧,所以左右内边距 9cqw → 6cqw,
+                    并且内层由 whitespace-nowrap 改 truncate(方案 R14:
+                    `WEEKEND IN MOTION` 在 11px 下约 124px,可用宽只有 121px)。 */}
+                <span className="bg-ink text-cream absolute inset-x-0 bottom-[8.4%] mx-auto flex h-[13.4%] w-auto max-w-[92%] items-center justify-center rounded-full px-[6cqw] text-[max(11px,4.84cqw)] leading-none font-normal tracking-[var(--tracking-10)] uppercase">
+                  <span className="truncate">
+                    {locale === "zh" ? item.title.zh : item.title.en}
+                  </span>
                 </span>
               </Link>
             </Reveal>

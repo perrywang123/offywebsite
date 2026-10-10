@@ -43,14 +43,14 @@ export default async function CollectionsPage({ params }: { params: Promise<{ lo
   );
 
   return (
-    <div className="mx-auto max-w-7xl px-6 py-12 lg:px-8">
+    <div className="container-site section-y lg:py-12">
       <header className="mb-10">
         <p className="kicker mb-3">{t("seriesKicker")}</p>
         {/* 用系列页专属 key,不与 /products 共用 —— 两个页面的标题/副标题文案不同。 */}
-        <h1 className="font-display text-4xl font-semibold uppercase tracking-tight md:text-5xl">
+        <h1 className="font-display text-4xl font-semibold tracking-tight uppercase md:text-5xl">
           {t("seriesTitle")}
         </h1>
-        <p className="mt-3 max-w-[52ch] text-sm uppercase leading-relaxed tracking-[var(--tracking-10)] text-ink-soft">
+        <p className="text-ink-soft mt-3 max-w-[52ch] text-sm leading-relaxed tracking-[var(--tracking-10)] uppercase">
           {t("seriesSubtitle")}
         </p>
       </header>
@@ -60,25 +60,30 @@ export default async function CollectionsPage({ params }: { params: Promise<{ lo
       <div className="flex flex-col gap-6">
         {series.map((s, i) => (
           <Reveal key={s.slug} delay={Math.min(i, 5) * 60}>
-            <Link href={`/collections/${s.slug}`} className="group relative block aspect-[3250/2041] overflow-hidden rounded-card bg-paper">
+            <Link
+              href={`/collections/${s.slug}`}
+              className="group rounded-card bg-paper relative block aspect-[3250/2041] overflow-hidden"
+            >
               <Image
                 src={s.image}
                 alt={locale === "zh" ? s.name.zh : s.name.en}
                 fill
                 sizes="(max-width:768px) 100vw, 1200px"
-                className="object-cover transition-transform duration-500 ease-editorial group-hover:scale-105"
+                className="ease-editorial object-cover transition-transform duration-500 group-hover:scale-105"
               />
-              <div className="absolute inset-0 bg-gradient-to-t from-ink/50 via-transparent to-transparent" />
+              <div className="from-ink/50 absolute inset-0 bg-gradient-to-t via-transparent to-transparent" />
               <div className="absolute inset-x-6 bottom-6 flex items-end justify-between md:inset-x-10 md:bottom-9">
                 <div>
-                  <p className="text-[11px] font-semibold uppercase tracking-[var(--tracking-18)] text-cream/80 md:text-xs">
+                  <p className="text-cream/80 text-[11px] font-semibold tracking-[var(--tracking-18)] uppercase md:text-xs">
                     {String(i + 1).padStart(2, "0")}
                   </p>
-                  <p className="mt-1 font-display text-2xl font-semibold text-cream md:text-4xl">
+                  <p className="font-display text-cream mt-1 text-2xl font-semibold md:text-4xl">
                     {locale === "zh" ? s.name.zh : s.name.en}
                   </p>
                 </div>
-                <p className="text-xs text-cream/70 md:text-sm">{t("looksCount", { count: s.count })}</p>
+                <p className="text-cream/70 text-xs md:text-sm">
+                  {t("looksCount", { count: s.count })}
+                </p>
               </div>
             </Link>
           </Reveal>

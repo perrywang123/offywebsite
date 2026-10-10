@@ -142,6 +142,25 @@ export function flagEmoji(code: string): string {
  * 本地化国名 —— 这样新增区域不用改代码。
  */
 export function regionBadgeLabel(code: string, locale = "en"): string {
+  return `AVAILABLE IN ${regionName(code, locale)} ONLY`;
+}
+
+/**
+ * 窄屏用的短徽章文案("🇺🇸 US ONLY")。
+ *
+ * 商品卡在 375px 下宽 163.5px、可用文字区更窄,完整句
+ * "AVAILABLE IN THE U.S. ONLY" 在 11px 下约 190px —— 每一种国家都折 2 行
+ * (方案 #4/#18/#27)。短文案改用 ISO 码:美国/英国沿用 PSD 的 US / UK 措辞
+ * (GB 归一成 UK,与完整句的 "THE UK" 一致),不做本地化 —— 国家码是全球通用缩写。
+ */
+export function regionBadgeShortLabel(code: string): string {
+  const cc = normalizeCountryCode(code);
+  const short: Record<string, string> = { US: "US", GB: "UK" };
+  return `${short[cc] ?? cc} ONLY`;
+}
+
+/** 徽章里的地区名:美/英沿用 PSD 措辞,其余走 Intl.DisplayNames 本地化国名。 */
+function regionName(code: string, locale = "en"): string {
   const cc = normalizeCountryCode(code);
   const special: Record<string, string> = { US: "THE U.S.", GB: "THE UK" };
   let name = special[cc];
@@ -157,5 +176,5 @@ export function regionBadgeLabel(code: string, locale = "en"): string {
       name = cc;
     }
   }
-  return `AVAILABLE IN ${name} ONLY`;
+  return name;
 }

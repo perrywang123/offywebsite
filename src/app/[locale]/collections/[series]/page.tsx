@@ -37,7 +37,7 @@ export default async function SeriesPage({
       <CategoryTabs series={seriesList} active={slug} locale={locale} />
 
       {/* 分类大图 hero(系列专属头图,与首页轮播图一致) */}
-      <section className="relative flex min-h-[62vh] items-end overflow-hidden bg-ink">
+      <section className="bg-ink relative flex min-h-[62vh] items-end overflow-hidden">
         <div className="animate-ken-burns absolute inset-0">
           <Image
             src={series.heroImage}
@@ -48,21 +48,21 @@ export default async function SeriesPage({
             className="object-cover object-center"
           />
         </div>
-        <div className="absolute inset-0 bg-gradient-to-t from-ink/85 via-ink/25 to-transparent" />
+        <div className="from-ink/85 via-ink/25 absolute inset-0 bg-gradient-to-t to-transparent" />
         <div className="grain absolute inset-0 opacity-[0.05]" />
-        <div className="relative z-10 mx-auto w-full max-w-7xl px-6 pb-14 lg:px-8">
+        <div className="container-site relative z-10 pb-14">
           <p className="kicker kicker--on-dark mb-3">
             {t("seriesHeroKicker", { n: String(idx + 1).padStart(2, "0"), count: products.length })}
           </p>
-          <h1 className="max-w-3xl font-display text-5xl font-semibold uppercase leading-[0.95] tracking-tight text-cream md:text-7xl">
+          <h1 className="font-display text-cream max-w-3xl text-5xl leading-[0.95] font-semibold tracking-tight uppercase md:text-7xl">
             {name}
           </h1>
-          <p className="mt-4 max-w-md text-lg text-cream/80">{tagline}</p>
+          <p className="text-cream/80 mt-4 max-w-md text-lg">{tagline}</p>
         </div>
       </section>
 
       {/* 产品网格 */}
-      <section className="mx-auto max-w-7xl px-6 py-16 md:py-20 lg:px-8">
+      <section className="container-site section-y lg:py-20">
         <Reveal className="mb-8 flex items-end justify-between">
           <p className="kicker">{t("looksCount", { count: products.length })}</p>
         </Reveal>

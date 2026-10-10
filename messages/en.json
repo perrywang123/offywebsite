@@ -39,7 +39,9 @@
       "openAria": "Open bag",
       "loading": "Loading your bag…",
       "checkoutRedirecting": "Redirecting to checkout…",
-      "checkoutFallback": "Checkout is taking longer than expected — opening our checkout page instead."
+      "checkoutFallback": "Checkout is taking longer than expected — opening our checkout page instead.",
+      "checkoutBlocked": "These items can't be checked out right now: {items}. Remove them from your bag and try again.",
+      "checkoutBlockedGeneric": "Some items in your bag can't be checked out right now. Please review your bag and try again."
     },
     "footer": {
       "rights": "All rights reserved",
@@ -163,6 +165,8 @@
     "items": "Items",
     "successTitle": "Payment successful — thank you",
     "successBody": "We'll get your Offy ready to ship soon.",
+    "returnTitle": "Thank you — your bag is now empty",
+    "returnBody": "If you've just completed your order, a confirmation email from Shopify is on its way.",
     "successOrder": "Order number",
     "cancelTitle": "Payment cancelled",
     "cancelBody": "Your items are still waiting in your bag.",

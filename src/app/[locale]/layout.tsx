@@ -1,5 +1,5 @@
 import { notFound } from "next/navigation";
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { hasLocale, NextIntlClientProvider } from "next-intl";
 import { getTranslations, setRequestLocale } from "next-intl/server";
 import { routing, publicPath } from "@/i18n/routing";
@@ -13,6 +13,15 @@ import "../globals.css";
 
 // 近实时:每 60s 重新生成,导航栏/页脚的系列名随 Shopify Collection 标题变化。
 export const revalidate = 60;
+
+/** 视口:`viewportFit: "cover"` 是 `.safe-b` / `.safe-t` 里 env(safe-area-inset-*)
+ *  能取到非零值的前提(否则刘海与 home indicator 区域一律按 0 处理,
+ *  抽屉底部的 Checkout 会被 home indicator 压住)。 */
+export const viewport: Viewport = {
+  width: "device-width",
+  initialScale: 1,
+  viewportFit: "cover",
+};
 
 /** 全站根元数据:标题模板/描述/OG/hreflang。 */
 export async function generateMetadata({
@@ -34,9 +43,7 @@ export async function generateMetadata({
       canonical: publicPath(locale),
       // hreflang 只列 `routing.locales` 里真实存在的语言。中文已从路由表移除,
       // 这里若还挂着 `zh: "/zh"` 会把爬虫指向一个已不存在的地址。
-      languages: Object.fromEntries(
-        routing.locales.map((l) => [l, publicPath(l)]),
-      ),
+      languages: Object.fromEntries(routing.locales.map((l) => [l, publicPath(l)])),
     },
     openGraph: {
       siteName: "is.offy",
@@ -72,7 +79,7 @@ export default async function LocaleLayout({
 
   return (
     <html lang={locale} suppressHydrationWarning>
-      <body className="min-h-screen bg-cream font-sans text-ink antialiased">
+      <body className="bg-cream text-ink min-h-screen font-sans antialiased">
         <script
           dangerouslySetInnerHTML={{ __html: "document.documentElement.classList.add('js')" }}
         />

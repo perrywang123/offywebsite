@@ -10,7 +10,9 @@ export function NewsletterForm() {
   const t = useTranslations("home.newsletter");
   const [email, setEmail] = useState("");
   const [status, setStatus] = useState<Status>("idle");
-  const [messageKey, setMessageKey] = useState<"success" | "duplicate" | "invalidEmail" | "networkError" | "">("");
+  const [messageKey, setMessageKey] = useState<
+    "success" | "duplicate" | "invalidEmail" | "networkError" | ""
+  >("");
 
   async function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -51,7 +53,7 @@ export function NewsletterForm() {
           onChange={(event) => setEmail(event.target.value)}
           placeholder={t("placeholder")}
           aria-label={t("emailAria")}
-          className="flex-1 rounded-full border border-slate-300 px-5 py-3 text-sm outline-none focus:border-slate-900"
+          className="flex-1 rounded-full border border-slate-300 px-5 py-3 text-base outline-none focus:border-slate-900 md:text-sm"
         />
         <Button type="submit" disabled={status === "submitting"}>
           {status === "submitting" ? t("submitting") : t("submit")}

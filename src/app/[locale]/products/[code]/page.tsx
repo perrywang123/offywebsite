@@ -4,12 +4,18 @@ import { notFound, permanentRedirect } from "next/navigation";
 import { getTranslations } from "next-intl/server";
 import { Link } from "@/i18n/navigation";
 import { publicPath } from "@/i18n/routing";
-import { getLiveProductByCode, getLiveProductsBySeries, getLiveSeriesList } from "@/server/catalog/live";
+import {
+  getLiveProductByCode,
+  getLiveProductsBySeries,
+  getLiveSeriesList,
+} from "@/server/catalog/live";
 import { getProductHandleAlias } from "@/lib/catalog";
 import { env } from "@/lib/env";
 import { pickCountry } from "@/lib/geo";
 import { formatPrice } from "@/lib/pricing";
 import { AddToCartButton } from "@/components/cart/AddToCartButton";
+import { ProductGallery } from "@/components/product/ProductGallery";
+import { StickyBuyBar } from "@/components/product/StickyBuyBar";
 import { Reveal } from "@/components/Reveal";
 
 // 近实时：每 60s 重新生成，从 Shopify 拉取最新图片/描述/价格/标题/库存。
@@ -63,9 +69,7 @@ export default async function ProductDetailPage({
   const series = seriesList.find((s) => s.slug === product.series);
   // Shopify 单语言:zh 描述暂缺时回退英文原文(后续 Translate & Adapt 接管)
   const description =
-    locale === "zh"
-      ? product.description.zh || product.description.en
-      : product.description.en;
+    locale === "zh" ? product.description.zh || product.description.en : product.description.en;
   // 结构化描述段落(descriptionHtml):加粗导语 + 正文,优先于整段 description 展示
   const descriptionBlocks =
     locale === "zh"
@@ -76,150 +80,202 @@ export default async function ProductDetailPage({
   );
 
   return (
-    <div className="mx-auto max-w-7xl px-6 py-12 lg:px-8">
-      <nav className="mb-6 text-sm text-ink-muted">
-        <Link href="/products" className="link-line">{t("shopBreadcrumb")}</Link>
-        {" / "}
-        <Link href={`/collections/${product.series}`} className="link-line">
-          {series ? (locale === "zh" ? series.name.zh : series.name.en) : product.series}
-        </Link>
-      </nav>
+    <>
+      {/* 版心改 `.container-site`(16px / 8%),不再自带 `px-6`:两套边距会让
+          PDP 的 logo 与标题左边缘对不齐(方案 #22)。纵向 py-12 → 窄屏 24px,
+          md 起恢复 48px(≥1024px 与改动前一致)。 */}
+      <div className="container-site py-6 md:py-12">
+        <nav className="text-ink-muted mb-6 flex items-center gap-2 text-sm">
+          {/* 面包屑原来只有 32×20px 命中区(方案 #23);--quiet 保证视觉行高不动 */}
+          <Link href="/products" className="link-line tap-target--quiet">
+            {t("shopBreadcrumb")}
+          </Link>
+          <span aria-hidden>/</span>
+          <Link href={`/collections/${product.series}`} className="link-line tap-target--quiet">
+            {series ? (locale === "zh" ? series.name.zh : series.name.en) : product.series}
+          </Link>
+        </nav>
 
-      <div className="grid gap-12 lg:grid-cols-[6fr_5fr]">
-        {/* 图区 */}
-        <div className="lg:sticky lg:top-24 lg:self-start">
-          <div className="overflow-hidden rounded-card bg-paper p-2 shadow-soft">
-            <div className="relative aspect-[3/4] overflow-hidden rounded-[calc(var(--radius-card)-8px)] bg-cream-deep">
-              <Image
-                src={product.images[0]}
+        {/* `min-w-0` 不能省:窄屏下两列都是单列栅格项,而图区里那两条横滑条
+            (自图集 / 同系列缩略图,6 × 56px + gap = 386px)的 min-content 会顺着
+            栅格项的 `min-width:auto` 把整条轨道撑到 386px —— 375px 的屏直接横向
+            溢出(实测 scrollWidth 402)。栅格项显式 min-w-0 后轨道回到版心宽度,
+            超出的部分交给 `.hscroll` 自己横滑。 */}
+        <div className="grid gap-6 md:gap-12 lg:grid-cols-[6fr_5fr]">
+          {/* 图区 */}
+          <div className="min-w-0 lg:sticky lg:top-24 lg:self-start">
+            <div className="rounded-card bg-paper shadow-soft overflow-hidden p-2">
+              {/* 主图改为**可切换的自图集**:Shopify 侧 images(first: 10) 早就取回了
+                  最多 10 张,此前只渲染 images[0](方案「PDP 其实只有一张图」)。 */}
+              <ProductGallery
+                images={product.images}
                 alt={locale === "zh" ? product.name.zh : product.name.en}
-                fill
-                priority
                 sizes="(max-width:1024px) 100vw, 55vw"
-                className="object-contain"
               />
             </div>
-          </div>
 
-          {/* 形象选择器（3:4 小卡） */}
-          {siblings.length > 0 && (
-            <div className="mt-4 flex gap-2.5 overflow-x-auto pb-2">
-              {siblings.slice(0, 6).map((sibling) => (
-                <Link
-                  key={sibling.code}
-                  href={`/products/${sibling.code}`}
-                  title={locale === "zh" ? sibling.name.zh : sibling.name.en}
-                  className="relative h-20 w-14 shrink-0 overflow-hidden rounded-soft border border-sand transition-colors hover:border-brown-500"
-                >
-                  <Image src={sibling.images[0]} alt={sibling.name.en} fill sizes="56px" className="object-cover" />
-                </Link>
-              ))}
-            </div>
-          )}
-        </div>
-
-        {/* 信息区:按"标题/价格" → "营销文案" → "规格信息(情绪标签/尺寸,
-            用分隔线与上方文案区隔开)" → "行动按钮" 的节奏分组,
-            整体用 space-y 统一纵向间距,不再逐个元素各自零散设置 mt-*。 */}
-        <div className="space-y-8">
-          <div>
-            <p className="kicker mb-3">{series ? (locale === "zh" ? series.name.zh : series.name.en) : product.series}</p>
-            <h1 className="font-display text-3xl font-semibold tracking-tight md:text-4xl">
-              {locale === "zh" ? product.name.zh : product.name.en}
-            </h1>
-            {product.isUpcoming ? (
-              <p className="mt-3 text-sm font-medium uppercase tracking-[var(--tracking-14)] text-brown-600">
-                {tHome("revealing")}
-              </p>
-            ) : (
-              <p className="mt-3 font-display text-2xl font-medium text-ink tabular-nums md:text-3xl">
-                {formatPrice(product.priceCents, product.currency, locale)}
-              </p>
+            {/* 同系列形象选择器（3:4 小卡）。窄屏 6 张 56px 卡 + gap 塞不进 343px,
+                改走 `.hscroll`(吸附 + 隐藏滚动条 + 两端渐隐);每张补**常显名称**
+                —— `title` 在触屏上永远不会显示(方案 #15/#17)。 */}
+            {siblings.length > 0 && (
+              <div className="hscroll mt-4 gap-2.5 pb-2">
+                {siblings.slice(0, 6).map((sibling) => (
+                  <Link
+                    key={sibling.code}
+                    href={`/products/${sibling.code}`}
+                    title={locale === "zh" ? sibling.name.zh : sibling.name.en}
+                    className="flex shrink-0 flex-col items-center gap-1"
+                  >
+                    <span className="rounded-soft border-sand hover:border-brown-500 active:border-brown-600 aria-[current=page]:border-brown-600 aria-[current=page]:ring-brown-100 relative block h-20 w-14 overflow-hidden border transition-colors aria-[current=page]:ring-2">
+                      <Image
+                        src={sibling.images[0]}
+                        alt={sibling.name.en}
+                        fill
+                        sizes="56px"
+                        className="object-cover"
+                      />
+                    </span>
+                    <span className="text-ink-soft w-14 truncate text-center text-[11px] leading-tight">
+                      {locale === "zh" ? sibling.name.zh : sibling.name.en}
+                    </span>
+                  </Link>
+                ))}
+              </div>
             )}
           </div>
 
-          {descriptionBlocks && descriptionBlocks.length > 0 ? (
-            <div className="space-y-3">
-              {descriptionBlocks.map((block, i) => (
-                <p
-                  key={i}
-                  className={`text-sm leading-relaxed text-ink ${block.bold ? "font-bold" : ""}`}
-                >
-                  {block.text}
+          {/* 信息区:按"标题/价格" → "营销文案" → "规格信息(情绪标签/尺寸,
+            用分隔线与上方文案区隔开)" → "行动按钮" 的节奏分组,
+            整体用 space-y 统一纵向间距,不再逐个元素各自零散设置 mt-*。 */}
+          <div className="min-w-0 space-y-8">
+            <div>
+              <p className="kicker mb-3">
+                {series ? (locale === "zh" ? series.name.zh : series.name.en) : product.series}
+              </p>
+              <h1 className="font-display text-4xl font-semibold tracking-tight">
+                {locale === "zh" ? product.name.zh : product.name.en}
+              </h1>
+              {product.isUpcoming ? (
+                <p className="text-brown-600 mt-3 text-sm font-medium tracking-[var(--tracking-14)] uppercase">
+                  {tHome("revealing")}
                 </p>
-              ))}
+              ) : (
+                <p className="font-display text-ink mt-3 text-2xl font-medium tabular-nums md:text-3xl">
+                  {formatPrice(product.priceCents, product.currency, locale)}
+                </p>
+              )}
             </div>
-          ) : (
-            description && (
-              <div>
-                <p className="mb-2 text-sm font-medium text-ink-soft">{t("description")}</p>
-                <p className="text-sm leading-relaxed text-ink">{description}</p>
-              </div>
-            )
-          )}
 
-          {/* Mood tags 已下线:它取自本地表的 `SERIES_TAGS` 硬编码(按系列统一给
+            {descriptionBlocks && descriptionBlocks.length > 0 ? (
+              <div className="space-y-3">
+                {descriptionBlocks.map((block, i) => (
+                  <p
+                    key={i}
+                    className={`text-ink text-sm leading-relaxed ${block.bold ? "font-bold" : ""}`}
+                  >
+                    {block.text}
+                  </p>
+                ))}
+              </div>
+            ) : (
+              description && (
+                <div>
+                  <p className="text-ink-soft mb-2 text-sm font-medium">{t("description")}</p>
+                  <p className="text-ink text-sm leading-relaxed">{description}</p>
+                </div>
+              )
+            )}
+
+            {/* Mood tags 已下线:它取自本地表的 `SERIES_TAGS` 硬编码(按系列统一给
               "公主/优雅" 这类词),**从来没有从 Shopify 拉过** —— 实时路径里
               `emotionTags: local?.emotionTags ?? tags` 恒成立,Shopify 侧也没有
               对应字段。展示一个不是商家真实维护的标签会误导顾客,故整块移除。
               数据层保留 emotionTags 字段(其它地方仍可能引用),只是详情页不再渲染。 */}
-          {product.dimensions && (
-            <div className="space-y-6 border-t border-cream-line pt-8">
-              {product.dimensions && (
-                <div>
-                  <p className="mb-2 text-sm font-medium text-ink-soft">{t("dimensions")}</p>
-                  <dl className="divide-y divide-cream-line border-y border-cream-line text-sm">
-                    {(
-                      [
-                        ["dimension.height", product.dimensions.heightCm],
-                        ["dimension.length", product.dimensions.lengthCm],
-                        ["dimension.head", product.dimensions.headCm],
-                        ["dimension.arm", product.dimensions.armCm],
-                        ["dimension.leg", product.dimensions.legCm],
-                      ] as const
-                    ).map(([key, value]) => (
-                      <div key={key} className="flex justify-between py-3">
-                        <dt className="text-ink-muted">{t(key)}</dt>
-                        <dd className="font-medium text-ink tabular-nums">{value}{t("dimension.cm")}</dd>
-                      </div>
-                    ))}
-                  </dl>
-                </div>
+            {product.dimensions && (
+              <div className="border-cream-line space-y-6 border-t pt-8">
+                {product.dimensions && (
+                  <div>
+                    <p className="text-ink-soft mb-2 text-sm font-medium">{t("dimensions")}</p>
+                    <dl className="divide-cream-line border-cream-line divide-y border-y text-sm">
+                      {(
+                        [
+                          ["dimension.height", product.dimensions.heightCm],
+                          ["dimension.length", product.dimensions.lengthCm],
+                          ["dimension.head", product.dimensions.headCm],
+                          ["dimension.arm", product.dimensions.armCm],
+                          ["dimension.leg", product.dimensions.legCm],
+                        ] as const
+                      ).map(([key, value]) => (
+                        <div key={key} className="flex justify-between py-3">
+                          <dt className="text-ink-muted">{t(key)}</dt>
+                          <dd className="text-ink font-medium tabular-nums">
+                            {value}
+                            {t("dimension.cm")}
+                          </dd>
+                        </div>
+                      ))}
+                    </dl>
+                  </div>
+                )}
+              </div>
+            )}
+
+            <div>
+              {product.isUpcoming ? (
+                <p className="bg-cream-deep text-ink-muted rounded-full px-6 py-3 text-center text-sm">
+                  {t("upcomingNotice")}
+                </p>
+              ) : (
+                // 窄屏由吸底购买条接手(`max-md:hidden`),避免同屏两个"加入购物袋"
+                <AddToCartButton code={product.code} className="w-full max-md:hidden" />
               )}
             </div>
-          )}
-
-          <div>
-            {product.isUpcoming ? (
-              <p className="rounded-full bg-cream-deep px-6 py-3 text-center text-sm text-ink-muted">
-                {t("upcomingNotice")}
-              </p>
-            ) : (
-              <AddToCartButton code={product.code} className="w-full" />
-            )}
           </div>
         </div>
+
+        {/* 相关 */}
+        {siblings.length > 0 && (
+          <section className="mt-10 md:mt-20">
+            <Reveal className="mb-6">
+              <p className="kicker mb-2">{t("moreKicker")}</p>
+              <h2 className="font-display text-2xl font-semibold tracking-tight">{t("related")}</h2>
+            </Reveal>
+            {/* 窄屏 3 列 → 2 列:3 列时每格只有 98.3px,商品名被砍到 14 个字符以内
+              (方案 #16);sizes 也要跟着改,否则按 33vw 过采。 */}
+            <div className="grid grid-cols-2 gap-x-4 gap-y-10 sm:grid-cols-3 md:grid-cols-6">
+              {siblings.slice(0, 6).map((sibling) => (
+                <Link key={sibling.code} href={`/products/${sibling.code}`} className="group">
+                  <div className="rounded-soft bg-paper relative aspect-[3/4] overflow-hidden">
+                    <Image
+                      src={sibling.images[0]}
+                      alt={sibling.name.en}
+                      fill
+                      sizes="(max-width:768px) 50vw, 16vw"
+                      className="object-cover transition-transform duration-300 group-hover:scale-105"
+                    />
+                  </div>
+                  <p className="text-ink-soft mt-2 truncate text-xs">
+                    {locale === "zh" ? sibling.name.zh : sibling.name.en}
+                  </p>
+                </Link>
+              ))}
+            </div>
+          </section>
+        )}
       </div>
 
-      {/* 相关 */}
-      {siblings.length > 0 && (
-        <section className="mt-20">
-          <Reveal className="mb-6">
-            <p className="kicker mb-2">{t("moreKicker")}</p>
-            <h2 className="font-display text-2xl font-semibold tracking-tight">{t("related")}</h2>
-          </Reveal>
-          <div className="grid grid-cols-3 gap-4 md:grid-cols-6">
-            {siblings.slice(0, 6).map((sibling) => (
-              <Link key={sibling.code} href={`/products/${sibling.code}`} className="group">
-                <div className="relative aspect-[3/4] overflow-hidden rounded-soft bg-paper">
-                  <Image src={sibling.images[0]} alt={sibling.name.en} fill sizes="(max-width:768px) 33vw, 16vw" className="object-cover transition-transform duration-300 group-hover:scale-105" />
-                </div>
-                <p className="mt-2 truncate text-xs text-ink-soft">{locale === "zh" ? sibling.name.zh : sibling.name.en}</p>
-              </Link>
-            ))}
-          </div>
-        </section>
-      )}
-    </div>
+      {/* 吸底购买条:必须在 `.container-site` 之外、且是页面内容最后一个流内子元素
+          —— sticky + bottom:0 靠"自然位置在视口下方时上提贴住视口底"工作,
+          若塞进信息区的列里,它的 containing block 只有那一列高,滚过半屏就失效。
+          祖先链上不得有 overflow-hidden(方案 R3);`md:hidden` 保证桌面端不存在。 */}
+      <StickyBuyBar
+        code={product.code}
+        priceCents={product.priceCents}
+        currency={product.currency}
+        locale={locale}
+        isAvailable={product.isAvailable}
+        isUpcoming={product.isUpcoming}
+      />
+    </>
   );
 }

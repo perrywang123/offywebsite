@@ -20,7 +20,10 @@ const shippingSchema = z.object({
 
 const bodySchema = z.object({
   provider: z.enum(["stripe", "paypal", "shopify"]).optional(),
-  items: z.array(z.object({ code: z.string(), quantity: z.number() })).min(1).max(50),
+  items: z
+    .array(z.object({ code: z.string(), quantity: z.number() }))
+    .min(1)
+    .max(50),
   locale: z.string().optional(),
   email: z.string().email().optional(),
   shipping: shippingSchema.optional(),
@@ -53,5 +56,10 @@ export async function POST(request: Request) {
   if (result.ok) {
     return NextResponse.json({ provider: result.provider, redirect: result.redirect });
   }
-  return NextResponse.json({ error: result.error }, { status: result.status });
+  // 4xx 必须带上「哪些商品、为什么」—— 客户端据此在原地指名商品并让顾客重试,
+  // 而不是把裸错误码(invalid_items / checkout_failed)印到界面上(方案 P0-3)。
+  return NextResponse.json(
+    result.items ? { error: result.error, items: result.items } : { error: result.error },
+    { status: result.status },
+  );
 }

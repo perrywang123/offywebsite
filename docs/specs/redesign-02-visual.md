@@ -12,16 +12,16 @@
 
 调研来源：[Limely 案例页](https://www.limely.co.uk/inspiration/project/dogguo.com)、[Thingtesting 产品页](https://thingtesting.com/brands/dogguo#1)、[dogguo.com 首页](https://dogguo.com/)（抓取 HTML + Typekit 字体 + Shopify theme CSS 实测）。关键实证数据如下：
 
-| 维度 | dogguo.com 实测结论 |
-| --- | --- |
-| **整体风格** | 「premium 宠物用品」的 **editorial 杂志式**独立站：大图叙事、大量留白、`Shop the look` 情绪/场景卖货、克制不炫技。平台 Shopify。 |
-| **配色** | 暖中性底：主题 CSS 定义 `--color-light: #f7f2ef`（暖奶油/米白，全站主底）；品牌暖棕 `#784415`（页内 inline 直接出现，作标题/强调块）；黑 `#000`（正文/结构）；纯白 `#fff`（卡面）；点缀绿 `#65a754`。另在首页出现「TREND: LIGHT BLUE & BROWN TONES」——**浅蓝 + 棕** 是其趋势色组合。 |
-| **字体** | **Sofia Pro**（Adobe Typekit kit `vsp7yhd`）——干净的几何人文无衬线（不是衬线、不是粗黑），fallback `Open Sans`。它的「杂志感」来自**排版节奏与留白**，而非衬线字体。 |
-| **布局/栅格** | 全宽（full-bleed）hero + 内容容器居中；区块用「分类 tile + 商品 feed + 场景叙事」三段推进；`TREND:`、`NEW:` 这类**全大写加宽字距的 editorial kicker**贯穿全站。 |
-| **商品展示** | 白底产品图「浮」在奶油底上；商品卡信息极简（名称 + 价格两行封顶）；分类用 tile 卡片（COLLARS / LEASHES / DOG BEDS…）；`Shop the look` 把商品按「造型/场景」组织。 |
-| **首页 hero** | 透明导航叠加在大图/大色块上（滚动后导航变实底），hero 是一句**campaign 标题**（`NEW: THE WALK EDIT`）压在全幅生活方式图上，配单一 CTA。 |
-| **品牌叙事区** | 用 `Discover the latest`、`Shop your category`、`Shop the look`、`€5 discount on your first order`（newsletter 激励）等**编辑式小标题**串联情绪与卖货。 |
-| **电商细节** | 顶部公告条（免邮门槛）、预测搜索、语言/地区选择、购物袋抽屉、`Cart (0)`、社媒（Instagram/TikTok）图标、Swiper 轮播。 |
+| 维度           | dogguo.com 实测结论                                                                                                                                                                                                                                                                  |
+| -------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| **整体风格**   | 「premium 宠物用品」的 **editorial 杂志式**独立站：大图叙事、大量留白、`Shop the look` 情绪/场景卖货、克制不炫技。平台 Shopify。                                                                                                                                                     |
+| **配色**       | 暖中性底：主题 CSS 定义 `--color-light: #f7f2ef`（暖奶油/米白，全站主底）；品牌暖棕 `#784415`（页内 inline 直接出现，作标题/强调块）；黑 `#000`（正文/结构）；纯白 `#fff`（卡面）；点缀绿 `#65a754`。另在首页出现「TREND: LIGHT BLUE & BROWN TONES」——**浅蓝 + 棕** 是其趋势色组合。 |
+| **字体**       | **Sofia Pro**（Adobe Typekit kit `vsp7yhd`）——干净的几何人文无衬线（不是衬线、不是粗黑），fallback `Open Sans`。它的「杂志感」来自**排版节奏与留白**，而非衬线字体。                                                                                                                 |
+| **布局/栅格**  | 全宽（full-bleed）hero + 内容容器居中；区块用「分类 tile + 商品 feed + 场景叙事」三段推进；`TREND:`、`NEW:` 这类**全大写加宽字距的 editorial kicker**贯穿全站。                                                                                                                      |
+| **商品展示**   | 白底产品图「浮」在奶油底上；商品卡信息极简（名称 + 价格两行封顶）；分类用 tile 卡片（COLLARS / LEASHES / DOG BEDS…）；`Shop the look` 把商品按「造型/场景」组织。                                                                                                                    |
+| **首页 hero**  | 透明导航叠加在大图/大色块上（滚动后导航变实底），hero 是一句**campaign 标题**（`NEW: THE WALK EDIT`）压在全幅生活方式图上，配单一 CTA。                                                                                                                                              |
+| **品牌叙事区** | 用 `Discover the latest`、`Shop your category`、`Shop the look`、`€5 discount on your first order`（newsletter 激励）等**编辑式小标题**串联情绪与卖货。                                                                                                                              |
+| **电商细节**   | 顶部公告条（免邮门槛）、预测搜索、语言/地区选择、购物袋抽屉、`Cart (0)`、社媒（Instagram/TikTok）图标、Swiper 轮播。                                                                                                                                                                 |
 
 **一句话对齐方向**：把 dogguo 的「暖奶油底 + 暖棕强调 + 黑字 + 大量留白 + 大图叙事 + 全大写 kicker」这套 editorial 质感，套到 PLAYCORE 的「黑肤色小精灵把情绪穿在身上」品牌上；**削弱**现站的「Arial Black 街头波普 / 高饱和贴纸」倾向，**保留**品牌暖黑 + 奶油作为骨血。
 
@@ -44,53 +44,58 @@
 
 @theme {
   /* ============ 中性色：暖奶油底 + 暖黑墨（对齐 dogguo #f7f2ef / #000） ============ */
-  --color-cream: #f7f2ef;        /* 全站主底（dogguo --color-light 同值） */
-  --color-cream-deep: #efe7df;   /* 交替 section 浅底 */
-  --color-cream-line: #e8ded3;   /* 细线/分隔（比 sand 更轻） */
-  --color-sand: #d9cbbb;         /* 描边 / 禁用底 */
-  --color-paper: #ffffff;        /* 卡面 / 商品白底 / 弹层 */
+  --color-cream: #f7f2ef; /* 全站主底（dogguo --color-light 同值） */
+  --color-cream-deep: #efe7df; /* 交替 section 浅底 */
+  --color-cream-line: #e8ded3; /* 细线/分隔（比 sand 更轻） */
+  --color-sand: #d9cbbb; /* 描边 / 禁用底 */
+  --color-paper: #ffffff; /* 卡面 / 商品白底 / 弹层 */
 
-  --color-ink: #1d1915;          /* 主文字/标题/主按钮（暖近黑，替代纯黑大面积） */
-  --color-ink-soft: #554c43;     /* 次级文字（暖灰棕） */
-  --color-ink-muted: #8d8175;    /* 弱文字/说明/占位 */
+  --color-ink: #1d1915; /* 主文字/标题/主按钮（暖近黑，替代纯黑大面积） */
+  --color-ink-soft: #554c43; /* 次级文字（暖灰棕） */
+  --color-ink-muted: #8d8175; /* 弱文字/说明/占位 */
 
   /* ============ 品牌暖棕（对齐 dogguo #784415） ============ */
-  --color-brown-700: #5b3411;    /* 深棕：hover / 结构强调 */
-  --color-brown-600: #784415;    /* 品牌主棕：标题强调 / 色块 / kicker */
-  --color-brown-500: #9a6a3a;    /* 浅棕：链接 hover / 次级强调 */
-  --color-brown-100: #ecdfd0;    /* 棕浅底：徽章 / 标签底 */
+  --color-brown-700: #5b3411; /* 深棕：hover / 结构强调 */
+  --color-brown-600: #784415; /* 品牌主棕：标题强调 / 色块 / kicker */
+  --color-brown-500: #9a6a3a; /* 浅棕：链接 hover / 次级强调 */
+  --color-brown-100: #ecdfd0; /* 棕浅底：徽章 / 标签底 */
 
   /* ============ 克制点缀（替代旧 pop-* 高饱和） ============ */
-  --color-accent: #b65a37;       /* 陶土橙：唯一「行动」色（加购/结账/促销） */
-  --color-accent-deep: #9a4629;  /* 陶土橙 hover */
-  --color-sky: #a7c4d1;          /* 浅蓝（dogguo 趋势色）：氛围/信息/中性强调 */
-  --color-sky-deep: #6d95a8;     /* 深蓝灰：链接/选中态 */
-  --color-leaf: #65a754;         /* 叶绿（dogguo 同值）：库存/环保系列 */
-  --color-butter: #e6c98a;       /* 奶油黄：极少量高亮/引号点缀 */
+  --color-accent: #b65a37; /* 陶土橙：唯一「行动」色（加购/结账/促销） */
+  --color-accent-deep: #9a4629; /* 陶土橙 hover */
+  --color-sky: #a7c4d1; /* 浅蓝（dogguo 趋势色）：氛围/信息/中性强调 */
+  --color-sky-deep: #6d95a8; /* 深蓝灰：链接/选中态 */
+  --color-leaf: #65a754; /* 叶绿（dogguo 同值）：库存/环保系列 */
+  --color-butter: #e6c98a; /* 奶油黄：极少量高亮/引号点缀 */
 
   /* ============ 语义色（暖化处理） ============ */
-  --color-success: #4c8a4a;  --color-success-bg: #eaf3e6;
-  --color-error: #b3402f;    --color-error-bg: #f8e9e4;
-  --color-warning: #a87f2e;  --color-warning-bg: #f5ecd8;
-  --color-info: #5b7f9a;     --color-info-bg: #e8eff3;
+  --color-success: #4c8a4a;
+  --color-success-bg: #eaf3e6;
+  --color-error: #b3402f;
+  --color-error-bg: #f8e9e4;
+  --color-warning: #a87f2e;
+  --color-warning-bg: #f5ecd8;
+  --color-info: #5b7f9a;
+  --color-info-bg: #e8eff3;
 
   /* ============ 字体（系统几何无衬线，映射 dogguo 的 Sofia Pro） ============ */
-  --font-display: "Avenir Next", "Futura", "Century Gothic", "ITC Avant Garde Gothic",
-                  "SF Pro Display", "Segoe UI", "PingFang SC", "Hiragino Sans GB",
-                  "Microsoft YaHei", sans-serif;
-  --font-sans: -apple-system, "SF Pro Text", "Segoe UI", "Helvetica Neue",
-               "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", "Noto Sans SC", sans-serif;
+  --font-display:
+    "Avenir Next", "Futura", "Century Gothic", "ITC Avant Garde Gothic", "SF Pro Display",
+    "Segoe UI", "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", sans-serif;
+  --font-sans:
+    -apple-system, "SF Pro Text", "Segoe UI", "Helvetica Neue", "PingFang SC", "Hiragino Sans GB",
+    "Microsoft YaHei", "Noto Sans SC", sans-serif;
   --font-mono: ui-monospace, "SF Mono", Menlo, Consolas, "Liberation Mono", monospace;
 
   /* ============ 圆角（soft editorial） ============ */
-  --radius-soft: 0.75rem;    /* 12px：缩略图/徽章/输入 */
-  --radius-card: 1.25rem;    /* 20px：商品卡/框架卡 */
-  --radius-block: 1.75rem;   /* 28px：大色块/叙事容器 */
+  --radius-soft: 0.75rem; /* 12px：缩略图/徽章/输入 */
+  --radius-card: 1.25rem; /* 20px：商品卡/框架卡 */
+  --radius-block: 1.75rem; /* 28px：大色块/叙事容器 */
 
   /* ============ 阴影（柔和暖影） ============ */
   --shadow-soft: 0 1px 0 rgba(29, 25, 21, 0.04);
   --shadow-card: 0 1px 2px rgba(29, 25, 21, 0.04), 0 8px 24px rgba(29, 25, 21, 0.05);
-  --shadow-card-hover: 0 2px 6px rgba(29, 25, 21, 0.05), 0 16px 40px rgba(29, 25, 21, 0.10);
+  --shadow-card-hover: 0 2px 6px rgba(29, 25, 21, 0.05), 0 16px 40px rgba(29, 25, 21, 0.1);
 
   /* ============ 缓动 ============ */
   --ease-editorial: cubic-bezier(0.16, 1, 0.3, 1);
@@ -101,7 +106,9 @@
   --foreground: #1d1915;
 }
 
-html { scroll-behavior: smooth; }
+html {
+  scroll-behavior: smooth;
+}
 
 body {
   background: var(--background);
@@ -116,13 +123,15 @@ body {
   /* 全大写 editorial kicker：`NEW:` / `TREND:` / `EDIT 01` —— dogguo 的杂志化标签 */
   .kicker {
     font-family: var(--font-display);
-    font-size: 0.6875rem;         /* 11px */
+    font-size: 0.6875rem; /* 11px */
     font-weight: 600;
     letter-spacing: 0.22em;
     text-transform: uppercase;
     color: var(--color-brown-600);
   }
-  .kicker--on-dark { color: var(--color-butter); }
+  .kicker--on-dark {
+    color: var(--color-butter);
+  }
 
   /* 导语（lede）：大号、轻字重、宽松行高的编辑式导语 */
   .lede {
@@ -133,7 +142,9 @@ body {
   }
 
   /* 细线分隔 */
-  .hairline { border-color: var(--color-cream-line); }
+  .hairline {
+    border-color: var(--color-cream-line);
+  }
 
   /* 下划线链接（editorial 式，替代纯 underline 贴纸感） */
   .link-line {
@@ -144,14 +155,18 @@ body {
   .link-line::after {
     content: "";
     position: absolute;
-    left: 0; bottom: -2px;
-    height: 1px; width: 100%;
+    left: 0;
+    bottom: -2px;
+    height: 1px;
+    width: 100%;
     background: var(--color-brown-600);
     transform: scaleX(1);
     transform-origin: left;
     transition: transform 300ms var(--ease-editorial);
   }
-  .link-line:hover::after { transform: scaleX(0); }
+  .link-line:hover::after {
+    transform: scaleX(0);
+  }
 
   /* 媒体占位块：所有缺失 hero/宣传图的位置统一放它（详见 §5） */
   .media-placeholder {
@@ -161,8 +176,7 @@ body {
     justify-content: center;
     overflow: hidden;
     background-color: var(--color-cream-deep);
-    background-image:
-      radial-gradient(var(--color-sand) 1px, transparent 1px);
+    background-image: radial-gradient(var(--color-sand) 1px, transparent 1px);
     background-size: 18px 18px;
     color: var(--color-ink-muted);
   }
@@ -178,10 +192,14 @@ body {
 }
 
 /* 数字等宽，价格显示用 */
-.tabular-nums { font-variant-numeric: tabular-nums; }
+.tabular-nums {
+  font-variant-numeric: tabular-nums;
+}
 
 @media (prefers-reduced-motion: reduce) {
-  *, *::before, *::after {
+  *,
+  *::before,
+  *::after {
     animation-duration: 0.01ms !important;
     transition-duration: 0.01ms !important;
     scroll-behavior: auto !important;
@@ -191,38 +209,39 @@ body {
 
 ### 2.2 旧 token → 新 token 对照表（实现时全局替换）
 
-| 旧（globals.css 现值） | 新（本 spec） | 说明 |
-| --- | --- | --- |
-| `ink-900` | `ink` | 主文字/主按钮 |
-| `ink-700` | `ink-soft` | 次级文字 |
-| `ink-500` | `ink-muted` | 弱文字 |
-| `cocoa-600` | `brown-600` | 品牌主棕 |
-| `cocoa-400` | `brown-500` | 浅棕 |
-| `cream-50` | `cream` | 主底 |
-| `cream-100` | `cream-deep` | 浅底/交替 section |
-| `sand-200` | `sand` | 描边/禁用 |
-| `paper` | `paper` | 不变 |
-| `pop-coral` | `accent` | 行动色（降饱和） |
-| `pop-yellow` | `butter` | 高亮（降饱和） |
-| `pop-blue` | `sky-deep` | 链接/信息 |
-| `pop-pink` | `brown-100` | 可爱强调并入暖棕 |
-| `pop-green` | `leaf` | 库存/环保 |
-| `success / error / warning` | 同名新值 | 暖化 |
+| 旧（globals.css 现值）      | 新（本 spec） | 说明              |
+| --------------------------- | ------------- | ----------------- |
+| `ink-900`                   | `ink`         | 主文字/主按钮     |
+| `ink-700`                   | `ink-soft`    | 次级文字          |
+| `ink-500`                   | `ink-muted`   | 弱文字            |
+| `cocoa-600`                 | `brown-600`   | 品牌主棕          |
+| `cocoa-400`                 | `brown-500`   | 浅棕              |
+| `cream-50`                  | `cream`       | 主底              |
+| `cream-100`                 | `cream-deep`  | 浅底/交替 section |
+| `sand-200`                  | `sand`        | 描边/禁用         |
+| `paper`                     | `paper`       | 不变              |
+| `pop-coral`                 | `accent`      | 行动色（降饱和）  |
+| `pop-yellow`                | `butter`      | 高亮（降饱和）    |
+| `pop-blue`                  | `sky-deep`    | 链接/信息         |
+| `pop-pink`                  | `brown-100`   | 可爱强调并入暖棕  |
+| `pop-green`                 | `leaf`        | 库存/环保         |
+| `success / error / warning` | 同名新值      | 暖化              |
 
 ### 2.3 字阶与排版规则（相对旧 spec 的关键改动）
 
-| 层级 | 建议类 | 字重（**改变点**） | 用途 |
-| --- | --- | --- | --- |
+| 层级          | 建议类                             | 字重（**改变点**）                                      | 用途                                                             |
+| ------------- | ---------------------------------- | ------------------------------------------------------- | ---------------------------------------------------------------- |
 | Campaign 主标 | `text-5xl md:text-7xl lg:text-8xl` | **`font-semibold`（600）英文 / `font-bold`（700）中文** | 首页 hero 大标题。**放弃 `font-black` Arial Black 的街头厚重感** |
-| Section 标题 | `text-3xl md:text-5xl` | `font-semibold` | 各 section |
-| 页面 H1 | `text-4xl md:text-5xl` | `font-semibold` | 目录/详情/系列/故事 |
-| 商品名 | `text-base` | `font-medium` | 商品卡 |
-| 价格 | `text-base md:text-lg` | `font-medium` + `tabular-nums` | 商品卡/详情 |
-| kicker | `.kicker`（见上） | `600` + `0.22em` + uppercase | `NEW:` / `TREND:` / `EDIT 01` / 系列编号 |
-| 正文 | `text-base` | `400` / 行高 `1.75` | 段落 |
-| 辅助 | `text-sm` | `400` | 导航/说明/表单 |
+| Section 标题  | `text-3xl md:text-5xl`             | `font-semibold`                                         | 各 section                                                       |
+| 页面 H1       | `text-4xl md:text-5xl`             | `font-semibold`                                         | 目录/详情/系列/故事                                              |
+| 商品名        | `text-base`                        | `font-medium`                                           | 商品卡                                                           |
+| 价格          | `text-base md:text-lg`             | `font-medium` + `tabular-nums`                          | 商品卡/详情                                                      |
+| kicker        | `.kicker`（见上）                  | `600` + `0.22em` + uppercase                            | `NEW:` / `TREND:` / `EDIT 01` / 系列编号                         |
+| 正文          | `text-base`                        | `400` / 行高 `1.75`                                     | 段落                                                             |
+| 辅助          | `text-sm`                          | `400`                                                   | 导航/说明/表单                                                   |
 
 **排版硬规则：**
+
 1. 中文标题字重**不超 `700`**；英文标题**默认 `600`**，只有 campaign 主标可用 `700`。杜绝 `font-black`。
 2. 标题 `tracking-tight`（`-0.02em` 英文 / `-0.01em` 中文）；正文 `tracking-normal`。
 3. 所有「编辑式分类/专题」统一走 `.kicker`，不散落 `uppercase tracking-*` 手写。
@@ -237,15 +256,18 @@ body {
 ### 3.0 全局框架（Header / Footer / 公告条）
 
 **公告条（Announcement bar）**（新增，dogguo 电商细节）：
+
 - 全宽 `bg-brown-600 text-cream`，`h-9`，`text-xs` 居中，一行文案 + 可点链接。
 - 文案示例：`全场满 $99 免运费 · Free shipping over $99`（复用 `common` 的 i18n，新增 key）。
 
 **Header（透明 → 实底，关键改动）**：
+
 - 首页 hero 之上**透明**（`bg-transparent`，图标/字用 `text-ink` 或 `text-cream` 视 hero 底色而定）；滚动后或非首页**实底** `bg-cream/85 backdrop-blur border-b border-cream-line`。
 - 结构：左 **`PLAYCORE`（logo 字，`font-display font-semibold tracking-tight`）**，中导航（`HOME / SHOP / SERIES / OUR STORY`，`text-sm uppercase tracking-[0.14em]`），右（语言切换 + 搜索 + 购物袋 `Cart (n)`）。
 - 品牌名以 **PLAYCORE 凭空幻想** 为主（logo 区显示 `PLAYCORE`，中文名可作 tooltip/副标），放弃现站「Offy」作 logo 短名（IP 名降级为 hero 副标/故事层）。
 
 **Footer（暖黑 → 改为「editorial 纸墨」底）**：
+
 - 改为 `bg-ink text-cream`（保留暖黑）但排版更杂志：上区 4 列（品牌/叙事一句话 + 导航 + 客服/联系 + newsletter），列间距大、用 `cream-line/20` 细线分隔。
 - 品牌区大号 `PLAYCORE` + 中英 slogan 两行；导航用 `uppercase tracking-[0.14em] text-xs`。
 - 底部细条：`© 2026 PLAYCORE · 让想象落地，让陪伴发生` + 社媒图标 + 语言。
@@ -281,22 +303,27 @@ body {
 - 移动端：单列，标题在上、产品拼贴在下方。
 
 **[2]「DISCOVER THE LATEST」商品 feed**：
+
 - section 头：左侧 `.kicker`「DISCOVER THE LATEST」+ `H2`「New In / 新品」，右侧 `.link-line`「View All →」。
 - 内容：`ProductGrid`（8 个精选，`grid-cols-2 lg:grid-cols-4`），卡样式见 §4.2。
 
 **[3]「SHOP YOUR CATEGORY」分类 tile**：
+
 - 6 tile（`grid-cols-2 md:grid-cols-3 lg:grid-cols-6`），每 tile = **产品图底 + 覆盖渐隐 + 底部 caps 标签**，替代现站纯色块 tile。
 - tile 结构：`aspect-[3/4]` 产品图（`object-cover`）铺满 + 底部 `bg-gradient-to-t from-ink/45 to-transparent` + 白字 `uppercase tracking-[0.14em] text-xs` 系列名 + `0n` 编号。hover：图 `scale-105`。
 - 若某系列无主推图，则用 `media-placeholder`（见 §5）垫底，文字照常。
 
 **[4]「STORY」品牌叙事块**（保留暖黑全宽，换字体与节奏）：
+
 - `bg-ink text-cream py-24 md:py-32` 居中，`.kicker--on-dark`「OUR STORY」+ `text-3xl md:text-5xl font-semibold` 主句 + 暖棕/奶油黄引号 `「你挑选的不只是一只玩偶，而是与你共鸣的她」` + `link-line` 白字「Read the story」。
 
 **[5]「SHOP THE MOOD」情绪专题**（新增，dogguo `Shop the look` 的本地化）：
+
 - 横向 `overflow-x-auto` 或 `grid md:grid-cols-3`，每张「mood 卡」= 系列标题（caps）+ 1 张产品图 + 一句情绪文案 + `Shop this mood →`。
 - 用「情绪」而非「系列」命名专题：`SPORTY / OUTDOOR / ELEGANT / PLAYFUL`，把「穿搭=情绪」的品牌点打出来。
 
 **[6] Newsletter 激励条**：
+
 - 全宽 `bg-brown-100`（浅棕）或 `bg-cream-deep`，左右两栏：左 `H2`「Join the Offy circle」+ 副文案；右 `NewsletterForm`（输入 + 主按钮并排，`rounded-full`）。
 
 ### 3.2 商店目录（`products/page.tsx`）
@@ -336,6 +363,7 @@ body {
 ### 3.4 系列页（`collections/page.tsx` + `collections/[series]/page.tsx`）
 
 **系列列表页**：
+
 ```
 [1] 页头：.kicker「SERIES」+ H1 + lede
 [2] 系列卡网格（grid sm:grid-cols-2 lg:grid-cols-3）：
@@ -345,6 +373,7 @@ body {
 - 用「图 + 覆盖标题」替代现「纯白卡 + 文字 + 下划线」；hover 图放大 + 阴影。
 
 **系列详情页**：
+
 ```
 [1] 页头：.kicker「SERIES 0n」+ H1 系列名 + tagline（lede）
 [2] 系列「编辑导语」区块（可选）：一句系列情绪文案居中大字
@@ -407,16 +436,17 @@ body {
 - 外框 `rounded-card bg-paper p-2 shadow-soft`，内图 `rounded-[calc(var(--radius-card)-8px)] overflow-hidden aspect-[3/4] object-cover`，**白底图四周留 8px 边**——这是「有质感」的关键：白底产品图不再是死白大块，而是奶油底上的「内页印版」。
 - hover：内图 `scale-[1.03]`（`300ms var(--ease-editorial)`）+ 外框 `shadow-card-hover`。
 - 信息区：`pt-3`，名称 `text-base font-medium truncate`，价格 `text-sm font-medium text-ink-soft`（弱化价格、强化情绪，更 editorial）。
-- 徽章只在 `featured` 时显示，样式改为 `bg-brown-100 text-brown-700 text-[10px] uppercase tracking-[0.14em] rounded-full px-2 py-0.5`（**放弃珊瑚「POP」贴纸**）。
+- 徽章只在 `featured` 时显示，样式改为 `bg-brown-100 text-brown-700 text-[11px] uppercase tracking-[0.14em] rounded-full px-2 py-0.5`（**放弃珊瑚「POP」贴纸**）。
+  > 2026-10-11 移动端适配修订：字号由 `text-[10px]` 改为 **`text-[11px]`**。11px 是站内既有下限（`.kicker` = 0.6875rem），10px 低于可读下限；同一规则也适用于区域限定徽章与购物袋角标。见 `openspec/changes/2026-10-11-mobile-adaptation/`。
 
 ### 4.3 按钮（`Button` / CTA）
 
-| 变体 | 底 | 文字 | hover |
-| --- | --- | --- | --- |
-| 主（Primary） | `bg-ink` | `text-cream` | `bg-brown-700` |
-| 行动（Accent，仅加购/结账） | `bg-accent` | `text-cream` | `bg-accent-deep` |
-| 次级（Secondary） | `bg-transparent` | `text-ink` | `border-ink`（描边由 sand 变 ink） |
-| 文字/下划线 | 透明 | `text-ink` + `.link-line` | 下划线收回 |
+| 变体                        | 底               | 文字                      | hover                              |
+| --------------------------- | ---------------- | ------------------------- | ---------------------------------- |
+| 主（Primary）               | `bg-ink`         | `text-cream`              | `bg-brown-700`                     |
+| 行动（Accent，仅加购/结账） | `bg-accent`      | `text-cream`              | `bg-accent-deep`                   |
+| 次级（Secondary）           | `bg-transparent` | `text-ink`                | `border-ink`（描边由 sand 变 ink） |
+| 文字/下划线                 | 透明             | `text-ink` + `.link-line` | 下划线收回                         |
 
 - 高度统一 `h-12 px-6 rounded-full text-sm font-medium`；hover 只做颜色/描边变化 + `translate-y-[-1px]`，**不做立体硬阴影贴纸**。
 - 文案「Add to Bag / 加入购物袋」（保留现 key 值语义，可改字面）。
@@ -447,7 +477,8 @@ body {
 
 - 输入：`h-12 rounded-soft border border-sand bg-paper px-4 text-base`；focus `border-brown-600 ring-2 ring-brown-100 outline-none`。
 - 错误：`border-error` + 下方 `text-sm text-error`。
-- 数量步进：`rounded-full border border-sand`，± 按钮 `w-10 h-10 text-ink-soft hover:text-ink`。
+- 数量步进：`rounded-full border border-sand`，± 按钮 `h-11 w-11 text-ink-soft hover:text-ink lg:h-8 lg:w-8`。
+  > 2026-10-11 移动端适配修订：原 `w-10 h-10`（40px）与 `02-ux-spec.md §5.2` 的「触控目标 ≥44×44」自相矛盾，窄屏统一为 **`h-11 w-11`（44px）**，两个按钮之间留 `gap-1` 并把数量显示区加宽到 `w-9`；≥1024px 用 `lg:` 恢复 `h-8 w-8`（与改动前的渲染一致）。购物袋页 `/cart` 用同一套值。见 `openspec/changes/2026-10-11-mobile-adaptation/`。
 
 ---
 
@@ -467,11 +498,11 @@ body {
 
 **规则：任何需要 lifestyle/hero 图的位置，统一用以下三选一，且标记 `data-slot` 便于后续替换。**
 
-| 方案 | 做法 | 适用 |
-| --- | --- | --- |
-| A. 纯色块 + 大字 | `bg-cream-deep`（或 `bg-brown-100` / `bg-ink`）+ 超大标题 + `.kicker` | 全宽 hero、叙事收尾 CTA |
-| B. 产品图拼贴 | 1 大 + 2 小错位产品图（§5.1-3） | hero 图区、系列页头、故事页 |
-| C. `media-placeholder` 组件 | 圆点纹理底 + 居中大写 `data-label` 文案 | 任何「未来替换成 lifestyle 图」的空位 |
+| 方案                        | 做法                                                                  | 适用                                  |
+| --------------------------- | --------------------------------------------------------------------- | ------------------------------------- |
+| A. 纯色块 + 大字            | `bg-cream-deep`（或 `bg-brown-100` / `bg-ink`）+ 超大标题 + `.kicker` | 全宽 hero、叙事收尾 CTA               |
+| B. 产品图拼贴               | 1 大 + 2 小错位产品图（§5.1-3）                                       | hero 图区、系列页头、故事页           |
+| C. `media-placeholder` 组件 | 圆点纹理底 + 居中大写 `data-label` 文案                               | 任何「未来替换成 lifestyle 图」的空位 |
 
 - 每个占位容器加 `data-slot="hero-image"` / `data-slot="story-image"` 之类的标记，并在文件内注释「TODO: 替换为 lifestyle 图」。替换时只动这个容器，不动文字排版。
 - `media-placeholder` 的 `data-label` 文案示例：`HERO IMAGE — TBD` / `LIFESTYLE — REPLACE ME` / `COMING SOON`。
@@ -490,14 +521,14 @@ body {
 
 ### 6.1 评分
 
-| 维度 | 得分 | 评语 |
-| --- | --- | --- |
-| 色彩与调性 | 14 / 20 | 暖黑+奶油底是对的骨血，但 `pop-coral/yellow/pink` 高饱和贴纸感过重，偏离 dogguo 的克制 editorial。 |
-| 字体与排版 | 8 / 20 | **最大短板**：全站 `font-black` + Arial Black 街头风，与 dogguo 的 Sofia Pro 轻字重杂志感相反；缺全大写 kicker 体系。 |
-| 布局与栅格 | 13 / 20 | 有「hero/featured/series/story/lookbook」骨架，但节奏偏「模板+PPT 色块」，缺 editorial 叙事节奏与 `Shop the look` 式情绪卖货。 |
-| 图片与叙事 | 7 / 20 | **硬伤**：首页 hero、lookbook、about 直接引用 `/assets/ins/`（违反硬约束）；缺 hero/宣传图占位策略。 |
-| 组件与动效 | 16 / 20 | 组件齐全（Button/Badge/Card/Drawer/Picker），动效克制可取；细节偏贴纸（硬阴影、POP 角标、圆头像选择器）。 |
-| **总分** | **58 / 100** | 骨架可用、执行及格，但「质感/气质」与 dogguo 目标差距主要在**字体、配色克制度、ins 图违规、叙事结构**四处。 |
+| 维度       | 得分         | 评语                                                                                                                           |
+| ---------- | ------------ | ------------------------------------------------------------------------------------------------------------------------------ |
+| 色彩与调性 | 14 / 20      | 暖黑+奶油底是对的骨血，但 `pop-coral/yellow/pink` 高饱和贴纸感过重，偏离 dogguo 的克制 editorial。                             |
+| 字体与排版 | 8 / 20       | **最大短板**：全站 `font-black` + Arial Black 街头风，与 dogguo 的 Sofia Pro 轻字重杂志感相反；缺全大写 kicker 体系。          |
+| 布局与栅格 | 13 / 20      | 有「hero/featured/series/story/lookbook」骨架，但节奏偏「模板+PPT 色块」，缺 editorial 叙事节奏与 `Shop the look` 式情绪卖货。 |
+| 图片与叙事 | 7 / 20       | **硬伤**：首页 hero、lookbook、about 直接引用 `/assets/ins/`（违反硬约束）；缺 hero/宣传图占位策略。                           |
+| 组件与动效 | 16 / 20      | 组件齐全（Button/Badge/Card/Drawer/Picker），动效克制可取；细节偏贴纸（硬阴影、POP 角标、圆头像选择器）。                      |
+| **总分**   | **58 / 100** | 骨架可用、执行及格，但「质感/气质」与 dogguo 目标差距主要在**字体、配色克制度、ins 图违规、叙事结构**四处。                    |
 
 ### 6.2 P0（必须先做，一票否决）
 

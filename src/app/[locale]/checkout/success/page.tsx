@@ -24,9 +24,33 @@ export default async function CheckoutSuccessPage({
   const tCart = await getTranslations("common");
 
   const db = getDb();
-  let order: { orderNumber: string; totalCents: number; currency: string; email: string; id: number; shippingJson: string | null } | undefined;
-  let items: Array<{ id: number; nameZh: string; nameEn: string; quantity: number; lineTotalCents: number }> = [];
-  let shipping: { fullName: string; country: string; city: string; state?: string; address1: string; address2?: string; postalCode: string; phone?: string } | null = null;
+  let order:
+    | {
+        orderNumber: string;
+        totalCents: number;
+        currency: string;
+        email: string;
+        id: number;
+        shippingJson: string | null;
+      }
+    | undefined;
+  let items: Array<{
+    id: number;
+    nameZh: string;
+    nameEn: string;
+    quantity: number;
+    lineTotalCents: number;
+  }> = [];
+  let shipping: {
+    fullName: string;
+    country: string;
+    city: string;
+    state?: string;
+    address1: string;
+    address2?: string;
+    postalCode: string;
+    phone?: string;
+  } | null = null;
 
   const found = getOrderForConfirmation(
     { stripeSessionId: session_id, paypalOrderId: paypal_order_id },
@@ -43,18 +67,21 @@ export default async function CheckoutSuccessPage({
   }
 
   return (
-    <div className="mx-auto max-w-2xl px-6 py-24">
+    // E9(顺手对齐):版心走 `.container-site`,`py-24` 在窄屏收到 48px;`md:` 起
+    // 恢复 96px,≥1024px 与改动前一致。这张页只有 Stripe/PayPal 回跳会到
+    // (当前 provider 固定 shopify),不单独立项。
+    <div className="container-site py-12 md:py-24">
       <ClearCartOnSuccess />
       {order ? (
         <div className="text-center">
-          <div className="mx-auto mb-6 flex h-16 w-16 items-center justify-center rounded-full bg-leaf text-3xl text-cream">
+          <div className="bg-leaf text-cream mx-auto mb-6 flex h-16 w-16 items-center justify-center rounded-full text-3xl">
             ✓
           </div>
           <h1 className="font-display text-4xl font-semibold">{t("successTitle")}</h1>
           <p className="kicker mt-6">{t("successOrder")}</p>
           <p className="font-mono text-xl tabular-nums">{order.orderNumber}</p>
-          <div className="mt-8 rounded-card bg-paper p-6 text-left">
-            <ul className="divide-y divide-cream-line">
+          <div className="rounded-card bg-paper mt-8 p-6 text-left">
+            <ul className="divide-cream-line divide-y">
               {items.map((item) => (
                 <li key={item.id} className="flex justify-between py-3 text-sm">
                   <span>
@@ -66,31 +93,37 @@ export default async function CheckoutSuccessPage({
                 </li>
               ))}
             </ul>
-            <div className="mt-2 flex justify-between border-t border-cream-line pt-3 font-medium">
+            <div className="border-cream-line mt-2 flex justify-between border-t pt-3 font-medium">
               <span>{tCart("cart.total")}</span>
-              <span className="tabular-nums">{formatPrice(order.totalCents, order.currency, locale)}</span>
+              <span className="tabular-nums">
+                {formatPrice(order.totalCents, order.currency, locale)}
+              </span>
             </div>
           </div>
           {shipping && (
-            <div className="mt-6 rounded-card bg-paper p-5 text-left text-sm">
+            <div className="rounded-card bg-paper mt-6 p-5 text-left text-sm">
               <p className="kicker mb-3">{t("shipping")}</p>
               <p className="font-medium">{shipping.fullName}</p>
-              <p className="mt-1 text-ink-soft">
+              <p className="text-ink-soft mt-1">
                 {shipping.address1}
                 {shipping.address2 ? `, ${shipping.address2}` : ""}
               </p>
               <p className="text-ink-soft">
-                {shipping.city}{shipping.state ? `, ${shipping.state}` : ""} {shipping.postalCode}
+                {shipping.city}
+                {shipping.state ? `, ${shipping.state}` : ""} {shipping.postalCode}
               </p>
-              <p className="text-ink-soft">{shipping.country}{shipping.phone ? ` · ${shipping.phone}` : ""}</p>
+              <p className="text-ink-soft">
+                {shipping.country}
+                {shipping.phone ? ` · ${shipping.phone}` : ""}
+              </p>
             </div>
           )}
-          <p className="mt-4 text-sm text-ink-muted">
+          <p className="text-ink-muted mt-4 text-sm">
             {t("successEmail")} {order.email}
           </p>
           <Link
             href="/products"
-            className="mt-8 inline-flex h-12 items-center justify-center rounded-full bg-ink px-6 text-sm font-medium text-cream"
+            className="bg-ink text-cream mt-8 inline-flex h-12 items-center justify-center rounded-full px-6 text-sm font-medium"
           >
             {t("continue")}
           </Link>
@@ -98,7 +131,7 @@ export default async function CheckoutSuccessPage({
       ) : (
         <div className="text-center">
           <h1 className="font-display text-3xl font-semibold">{t("pendingTitle")}</h1>
-          <p className="mt-3 text-ink-soft">{t("pendingBody")}</p>
+          <p className="text-ink-soft mt-3">{t("pendingBody")}</p>
         </div>
       )}
     </div>

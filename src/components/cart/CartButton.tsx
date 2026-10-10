@@ -11,15 +11,23 @@ export function CartButton() {
     <button
       type="button"
       onClick={open}
-      className="inline-flex h-10 items-center gap-1.5 rounded-full border border-sand bg-paper px-3 text-xs uppercase tracking-[var(--tracking-12)] text-ink transition-colors hover:border-ink"
+      className="border-sand bg-paper text-ink hover:border-ink inline-flex h-11 items-center gap-1.5 rounded-full border px-3 text-xs tracking-[var(--tracking-12)] uppercase transition-colors lg:h-10"
       aria-label={t("cart.openAria")}
     >
       <svg width="15" height="15" viewBox="0 0 24 24" fill="none" aria-hidden>
-        <path d="M6 8h12l-1 12H7L6 8Z" stroke="currentColor" strokeWidth="1.8" strokeLinejoin="round" />
+        <path
+          d="M6 8h12l-1 12H7L6 8Z"
+          stroke="currentColor"
+          strokeWidth="1.8"
+          strokeLinejoin="round"
+        />
         <path d="M9 8V6a3 3 0 0 1 6 0v2" stroke="currentColor" strokeWidth="1.8" />
       </svg>
       <span>{t("cart.title")}</span>
-      <span key={count} className="animate-pop inline-flex h-4 min-w-4 items-center justify-center rounded-full bg-accent px-1 text-[10px] font-semibold text-cream">
+      <span
+        key={count}
+        className="animate-pop bg-accent text-cream inline-flex h-4 min-w-4 items-center justify-center rounded-full px-1 text-[11px] font-semibold"
+      >
         {count}
       </span>
     </button>

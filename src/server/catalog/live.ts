@@ -45,7 +45,10 @@ const SERIES_SHOPIFY_HANDLE: Record<SeriesSlug, string> = {
 };
 
 const SHOPIFY_HANDLE_TO_SERIES: Partial<Record<string, SeriesSlug>> = Object.fromEntries(
-  (Object.entries(SERIES_SHOPIFY_HANDLE) as [SeriesSlug, string][]).map(([slug, handle]) => [handle, slug]),
+  (Object.entries(SERIES_SHOPIFY_HANDLE) as [SeriesSlug, string][]).map(([slug, handle]) => [
+    handle,
+    slug,
+  ]),
 );
 
 /**
@@ -83,7 +86,14 @@ export type LiveProductInput = Pick<
   ShopifyCollectionProductItem,
   "handle" | "title" | "priceCents" | "currency" | "image" | "available"
 > &
-  Partial<ShopifyCollectionProductItem>;
+  Partial<ShopifyCollectionProductItem> & {
+    /**
+     * 完整图集(可选)。Collection 列表查询只带单张主图,所以这个字段由调用方
+     * 按需补;详情页路径(`fetchProductData` 的 `images(first: 10)`)本来就
+     * 有最多 10 张,可以直接透传 —— 不补时行为与改动前完全一致(单图)。
+     */
+    images?: string[];
+  };
 
 /**
  * 决定一个商品最终展示的「金额 + 币种」。
@@ -113,20 +123,36 @@ function resolvePrice(
   return { priceCents: localCents ?? 0, currency: "USD" };
 }
 
-export function toLiveProduct(item: LiveProductInput, series: SeriesSlug, sortOrder: number): Product {
+export function toLiveProduct(
+  item: LiveProductInput,
+  series: SeriesSlug,
+  sortOrder: number,
+): Product {
   const tags = SERIES_TAGS[series];
   const local = getProductByCode(item.handle);
   const { priceCents, currency } = resolvePrice(item.priceCents, item.currency, local?.priceCents);
+  // 图集优先用调用方给的完整数组;拿不到就退回"单张主图 → 本地图 → 占位图"
+  // 这条老路径(与改动前逐字一致)。数据层早已取回最多 10 张
+  // (shopify/products.ts 的 images(first: 10)),此前在这里被收成了单图。
+  const images =
+    item.images && item.images.length > 0
+      ? item.images
+      : item.image
+        ? [item.image]
+        : (local?.images ?? [FALLBACK_IMAGE]);
   return {
     code: item.handle,
     slug: item.handle,
     series,
-    name: { en: item.title || local?.name.en || item.handle, zh: CURATED_ZH_PRODUCT_NAMES[item.handle] ?? item.title },
+    name: {
+      en: item.title || local?.name.en || item.handle,
+      zh: CURATED_ZH_PRODUCT_NAMES[item.handle] ?? item.title,
+    },
     description: local?.description ?? { zh: "", en: "" },
     priceCents,
     currency,
     dimensions: local?.dimensions ?? null,
-    images: item.image ? [item.image] : (local?.images ?? [FALLBACK_IMAGE]),
+    images,
     emotionTags: local?.emotionTags ?? tags,
     // 没有可靠的实时"新品"信号(Shopify 侧无对应约定字段),沿用本地已知商品的
     // 精选标记(驱动卡片上的"新品"小标签);全新上架、本地未记录的商品默认不显示。
@@ -153,10 +179,16 @@ export async function getLiveSeriesList(): Promise<Series[]> {
       const handle = SERIES_SHOPIFY_HANDLE[local.slug];
       const remote = byHandle.get(handle);
       if (!remote) return local;
-      return { ...local, name: { en: remote.title || local.name.en, zh: SERIES_ZH_NAME[local.slug] } };
+      return {
+        ...local,
+        name: { en: remote.title || local.name.en, zh: SERIES_ZH_NAME[local.slug] },
+      };
     });
   } catch (error) {
-    console.error("getLiveSeriesList: Shopify unreachable, falling back to local series list", error);
+    console.error(
+      "getLiveSeriesList: Shopify unreachable, falling back to local series list",
+      error,
+    );
     return seriesList;
   }
 }
@@ -164,13 +196,19 @@ export async function getLiveSeriesList(): Promise<Series[]> {
 /** 单个系列的实时商品清单(完整反映 Shopify 当前的 Collection 成员,而非本地
  * 快照);价格按 `country`(访客所在国家)对应的市场币种返回。任一环节失败均
  * 整体回退该系列的本地静态清单(美元快照),保证页面始终可渲染。 */
-export async function getLiveProductsBySeries(slug: SeriesSlug, country: string): Promise<Product[]> {
+export async function getLiveProductsBySeries(
+  slug: SeriesSlug,
+  country: string,
+): Promise<Product[]> {
   const handle = SERIES_SHOPIFY_HANDLE[slug];
   try {
     const items = await fetchShopifyCollectionProducts(handle, country);
     return items.map((item, i) => toLiveProduct(item, slug, i * 10));
   } catch (error) {
-    console.error(`getLiveProductsBySeries(${slug}): Shopify unreachable, falling back to local roster`, error);
+    console.error(
+      `getLiveProductsBySeries(${slug}): Shopify unreachable, falling back to local roster`,
+      error,
+    );
     return getProductsBySeries(slug);
   }
 }
@@ -207,7 +245,10 @@ export async function getLiveNewLooksProducts(country: string, perSeries = 2): P
           .slice(0, perSeries)
           .map((item, i) => toLiveProduct(item, slug, i * 10));
       } catch (error) {
-        console.error(`getLiveNewLooksProducts(${slug}): Shopify unreachable, falling back to local roster`, error);
+        console.error(
+          `getLiveNewLooksProducts(${slug}): Shopify unreachable, falling back to local roster`,
+          error,
+        );
         return getProductsBySeries(slug)
           .filter((p) => p.isAvailable)
           .slice(0, perSeries);
@@ -227,7 +268,10 @@ export async function getLiveNewLooksProducts(country: string, perSeries = 2): P
  * 只要仍在 Shopify 发布中就能正确解析);查无此商品或请求失败时回退本地
  * 静态目录(含该 code 根本不存在于本地的情况,此时返回 undefined)。
  */
-export async function getLiveProductByCode(code: string, country: string): Promise<Product | undefined> {
+export async function getLiveProductByCode(
+  code: string,
+  country: string,
+): Promise<Product | undefined> {
   const local = getProductByCode(code);
   try {
     const data = await fetchProductData(code, fetch, country);
@@ -238,7 +282,11 @@ export async function getLiveProductByCode(code: string, country: string): Promi
       .find((s): s is SeriesSlug => Boolean(s));
     const series: SeriesSlug = matchedSlug ?? local?.series ?? "princess-lady";
     const tags = SERIES_TAGS[series];
-    const { priceCents, currency } = resolvePrice(data.priceCents, data.currency, local?.priceCents);
+    const { priceCents, currency } = resolvePrice(
+      data.priceCents,
+      data.currency,
+      local?.priceCents,
+    );
 
     return {
       code,
@@ -248,7 +296,9 @@ export async function getLiveProductByCode(code: string, country: string): Promi
         en: data.title || local?.name.en || code,
         zh: CURATED_ZH_PRODUCT_NAMES[code] ?? local?.name.zh ?? data.title ?? code,
       },
-      description: data.description ? { en: data.description, zh: data.description } : (local?.description ?? { zh: "", en: "" }),
+      description: data.description
+        ? { en: data.description, zh: data.description }
+        : (local?.description ?? { zh: "", en: "" }),
       descriptionBlocks:
         data.descriptionBlocks.length > 0
           ? { en: data.descriptionBlocks, zh: data.descriptionBlocks }
@@ -269,7 +319,10 @@ export async function getLiveProductByCode(code: string, country: string): Promi
       skuCode: data.sku ?? undefined,
     };
   } catch (error) {
-    console.error(`getLiveProductByCode(${code}): Shopify unreachable, falling back to local`, error);
+    console.error(
+      `getLiveProductByCode(${code}): Shopify unreachable, falling back to local`,
+      error,
+    );
     return local;
   }
 }

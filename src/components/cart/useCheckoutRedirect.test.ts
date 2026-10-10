@@ -30,7 +30,11 @@ beforeEach(() => {
 
 afterEach(() => {
   vi.unstubAllGlobals();
-  Object.defineProperty(window, "location", { configurable: true, writable: true, value: realLocation });
+  Object.defineProperty(window, "location", {
+    configurable: true,
+    writable: true,
+    value: realLocation,
+  });
 });
 
 const ITEMS = [{ code: "noir", quantity: 2 }];
@@ -64,7 +68,12 @@ function notJson(): Response {
 
 describe("useCheckoutRedirect · 成功路径", () => {
   it("POST /api/payments/checkout(provider=shopify + code/quantity + locale),拿到 url 后整页跳过去", async () => {
-    const fetchMock = mockFetch(async () => ok({ provider: "shopify", redirect: { kind: "redirect", url: "https://offy.myshopify.com/cart/c/abc" } }));
+    const fetchMock = mockFetch(async () =>
+      ok({
+        provider: "shopify",
+        redirect: { kind: "redirect", url: "https://offy.myshopify.com/cart/c/abc" },
+      }),
+    );
     const { result } = renderHook(() => useCheckoutRedirect());
 
     await act(async () => {
@@ -75,7 +84,11 @@ describe("useCheckoutRedirect · 成功路径", () => {
     const [url, init] = fetchMock.mock.calls[0];
     expect(url).toBe("/api/payments/checkout");
     expect(init?.method).toBe("POST");
-    expect(JSON.parse(String(init?.body))).toEqual({ provider: "shopify", items: ITEMS, locale: "en" });
+    expect(JSON.parse(String(init?.body))).toEqual({
+      provider: "shopify",
+      items: ITEMS,
+      locale: "en",
+    });
     expect(assign).toHaveBeenCalledWith("https://offy.myshopify.com/cart/c/abc");
     // 成功就不该再走 /checkout 兜底
     expect(mockPush).not.toHaveBeenCalled();
@@ -85,7 +98,17 @@ describe("useCheckoutRedirect · 成功路径", () => {
   });
 
   it("kind=approve 时跳 approveUrl(PayPal 风格的响应形状)", async () => {
-    mockFetch(async () => ok({ provider: "paypal", redirect: { kind: "approve", orderId: "o1", approveUrl: "https://paypal.example/approve", returnUrl: "/checkout" } }));
+    mockFetch(async () =>
+      ok({
+        provider: "paypal",
+        redirect: {
+          kind: "approve",
+          orderId: "o1",
+          approveUrl: "https://paypal.example/approve",
+          returnUrl: "/checkout",
+        },
+      }),
+    );
     const { result } = renderHook(() => useCheckoutRedirect());
 
     await act(async () => {
@@ -111,7 +134,12 @@ describe("useCheckoutRedirect · 防重复提交", () => {
     expect(fetchMock).toHaveBeenCalledTimes(1);
 
     await act(async () => {
-      resolveFetch(ok({ provider: "shopify", redirect: { kind: "redirect", url: "https://offy.myshopify.com/cart/c/once" } }));
+      resolveFetch(
+        ok({
+          provider: "shopify",
+          redirect: { kind: "redirect", url: "https://offy.myshopify.com/cart/c/once" },
+        }),
+      );
     });
     expect(assign).toHaveBeenCalledTimes(1);
   });
@@ -131,9 +159,17 @@ describe("useCheckoutRedirect · 防重复提交", () => {
 
 describe("useCheckoutRedirect · 失败兜底", () => {
   const cases: Array<[string, () => Promise<Response>]> = [
-    ["网络错误(fetch reject)", async () => { throw new Error("network down"); }],
+    [
+      "网络错误(fetch reject)",
+      async () => {
+        throw new Error("network down");
+      },
+    ],
     ["非 2xx(502 shopify_error)", async () => failed(502, { error: "shopify_error" })],
-    ["200 但没有 redirect.url", async () => ok({ provider: "shopify", redirect: { kind: "redirect" } })],
+    [
+      "200 但没有 redirect.url",
+      async () => ok({ provider: "shopify", redirect: { kind: "redirect" } }),
+    ],
     ["响应体不是 JSON(前置层返回 HTML)", async () => notJson()],
   ];
 
@@ -176,7 +212,10 @@ describe("useCheckoutRedirect · 失败兜底", () => {
         first = false;
         throw new Error("network down");
       }
-      return ok({ provider: "shopify", redirect: { kind: "redirect", url: "https://offy.myshopify.com/cart/c/retry" } });
+      return ok({
+        provider: "shopify",
+        redirect: { kind: "redirect", url: "https://offy.myshopify.com/cart/c/retry" },
+      });
     });
     const { result } = renderHook(() => useCheckoutRedirect());
 
@@ -197,5 +236,104 @@ describe("useCheckoutRedirect · 失败兜底", () => {
       vi.advanceTimersByTime(CHECKOUT_FALLBACK_DELAY_MS * 2);
     });
     expect(mockPush).not.toHaveBeenCalled();
+  });
+});
+
+describe("useCheckoutRedirect · 4xx 点名商品(留在原地,不跳兜底页)", () => {
+  beforeEach(() => {
+    vi.useFakeTimers();
+  });
+
+  afterEach(() => {
+    vi.useRealTimers();
+  });
+
+  it("400 + items:把 blocked 交给调用方,**不** push /checkout(B3 / P0-3)", async () => {
+    mockFetch(async () =>
+      failed(400, {
+        error: "unavailable_items",
+        items: [{ code: "glimmer", reason: "unavailable_items" }],
+      }),
+    );
+    const { result } = renderHook(() => useCheckoutRedirect());
+
+    await act(async () => {
+      await result.current.startCheckout(ITEMS);
+    });
+
+    expect(result.current.blocked).toEqual([{ code: "glimmer", reason: "unavailable_items" }]);
+    expect(result.current.failed).toBe(false);
+    // 顾客留在原地,可以立刻重试
+    expect(result.current.pending).toBe(false);
+    expect(assign).not.toHaveBeenCalled();
+
+    // 关键:4xx 不跳 /checkout(那是"这层打不开"的兜底,不是"商品买不了")
+    await act(async () => {
+      vi.advanceTimersByTime(CHECKOUT_FALLBACK_DELAY_MS * 3);
+    });
+    expect(mockPush).not.toHaveBeenCalled();
+  });
+
+  it("400 但响应里没有 items:blocked=[](渲染通用文案),仍然不跳转", async () => {
+    mockFetch(async () => failed(400, { error: "invalid_request" }));
+    const { result } = renderHook(() => useCheckoutRedirect());
+
+    await act(async () => {
+      await result.current.startCheckout(ITEMS);
+    });
+
+    expect(result.current.blocked).toEqual([]);
+    expect(result.current.failed).toBe(false);
+    await act(async () => {
+      vi.advanceTimersByTime(CHECKOUT_FALLBACK_DELAY_MS * 3);
+    });
+    expect(mockPush).not.toHaveBeenCalled();
+  });
+
+  it("被拒后原地重试成功:清掉 blocked 并正常跳到 Shopify", async () => {
+    let first = true;
+    mockFetch(async () => {
+      if (first) {
+        first = false;
+        return failed(400, {
+          error: "unavailable_items",
+          items: [{ code: "glimmer", reason: "unavailable_items" }],
+        });
+      }
+      return ok({
+        provider: "shopify",
+        redirect: { kind: "redirect", url: "https://offy.myshopify.com/cart/c/retry" },
+      });
+    });
+    const { result } = renderHook(() => useCheckoutRedirect());
+
+    await act(async () => {
+      await result.current.startCheckout(ITEMS);
+    });
+    expect(result.current.blocked).not.toBeNull();
+
+    await act(async () => {
+      await result.current.startCheckout(ITEMS);
+    });
+
+    expect(result.current.blocked).toBeNull();
+    expect(assign).toHaveBeenCalledWith("https://offy.myshopify.com/cart/c/retry");
+    expect(mockPush).not.toHaveBeenCalled();
+  });
+
+  it("5xx 仍然走兜底(与 4xx 区分开:R12 两个调用点都靠这个区分)", async () => {
+    mockFetch(async () => failed(503, { error: "shopify_unavailable" }));
+    const { result } = renderHook(() => useCheckoutRedirect());
+
+    await act(async () => {
+      await result.current.startCheckout(ITEMS);
+    });
+
+    expect(result.current.blocked).toBeNull();
+    expect(result.current.failed).toBe(true);
+    await act(async () => {
+      vi.advanceTimersByTime(CHECKOUT_FALLBACK_DELAY_MS);
+    });
+    expect(mockPush).toHaveBeenCalledWith("/checkout");
   });
 });

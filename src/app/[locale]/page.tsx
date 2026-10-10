@@ -57,9 +57,7 @@ export default async function HomePage({ params }: { params: Promise<{ locale: s
 
       {/* ============ 促销条:多条促销语滚动(2026 首页文案表第 2-3 行) ============ */}
       <Marquee>
-        <span className="mr-8 text-xs uppercase tracking-[var(--tracking-18)]">
-          {promoLine}
-        </span>
+        <span className="mr-8 text-xs tracking-[var(--tracking-18)] uppercase">{promoLine}</span>
       </Marquee>
 
       {/* ============ 最新资讯 · 揭晓(网站素材0926/2、最新咨询:整模块满幅底图,
@@ -73,18 +71,20 @@ export default async function HomePage({ params }: { params: Promise<{ locale: s
           sizes="100vw"
           className="object-contain object-top"
         />
-        <div className="container-site relative py-20 md:py-28">
+        <div className="container-site section-y relative">
           {/* 标题区(最新资讯.psd 组「最新咨询·标题」):PSD 里是一行居中
               'NEWS·The Latest from OFFY'(80.8px=2.49vw,黑字,just=2 居中),
               其下居中 'Browse All Series'(36px=1.11vw)+ 一条与文字等宽的
-              下划线(矩形「直线 1」)。原来「逛全部系列」在网格底部,现上移。 */}
+              下划线(矩形「直线 1」)。原来「逛全部系列」在网格底部,现上移。
+              字号下限抬到 30/12px(方案 §1.1 规则 1:所有 clamp 下限 = 档位值)。
+              `lg:` 保留改动前的原值 —— 下限只影响窄屏,桌面端算式一字不变。 */}
           <Reveal className="mb-12 text-center">
-            <h2 className="font-display text-[clamp(20px,2.49vw,54px)] font-semibold uppercase leading-tight tracking-tight">
+            <h2 className="font-display text-[clamp(30px,2.49vw,54px)] leading-tight font-semibold tracking-tight uppercase lg:text-[clamp(20px,2.49vw,54px)]">
               {t("newsKicker")}·{t("newsTitle")}
             </h2>
             <Link
               href="/products"
-              className="link-line mt-5 inline-block text-[clamp(11px,1.11vw,24px)] uppercase tracking-[var(--tracking-10)]"
+              className="link-line tap-target mt-5 text-[clamp(12px,1.11vw,24px)] tracking-[var(--tracking-10)] uppercase lg:min-h-0 lg:text-[clamp(11px,1.11vw,24px)]"
             >
               {t("browseAll")}
             </Link>
@@ -116,9 +116,9 @@ export default async function HomePage({ params }: { params: Promise<{ locale: s
           sizes="100vw"
           className="object-contain object-top"
         />
-        <div className="container-site relative py-20 md:py-28">
+        <div className="container-site section-y relative">
           <Reveal className="mb-12 text-center">
-            <h2 className="font-display text-[clamp(30px,2.6vw,60px)] font-semibold uppercase tracking-tight">
+            <h2 className="font-display text-[clamp(30px,2.6vw,60px)] font-semibold tracking-tight uppercase">
               {t("categoryTitle")}
             </h2>
           </Reveal>
@@ -126,7 +126,7 @@ export default async function HomePage({ params }: { params: Promise<{ locale: s
             <h3 className="font-display text-2xl font-semibold tracking-tight md:text-3xl">
               {t("discoverTitle")}
             </h3>
-            <Link href="/products" className="link-line text-sm">
+            <Link href="/products" className="link-line tap-target text-sm lg:min-h-0">
               {t("castViewAll")}
             </Link>
           </Reveal>
@@ -144,11 +144,15 @@ export default async function HomePage({ params }: { params: Promise<{ locale: s
               按访客国家展示;该国没有限定款时整块隐藏,不留空标题。 */}
           {regionals.length > 0 && (
             <>
-              <p className="mt-16 text-sm text-ink-soft">{t("regionalTitle")}</p>
+              <p className="text-ink-soft mt-10 text-sm sm:mt-16">{t("regionalTitle")}</p>
               <div className="mt-6 grid grid-cols-2 gap-x-4 gap-y-10 sm:gap-x-6 lg:grid-cols-3 lg:gap-x-8">
                 {regionals.map((p) => (
                   <Reveal key={p.code}>
-                    <ProductCard product={p} locale={locale} sizes="(max-width: 768px) 50vw, 33vw" />
+                    <ProductCard
+                      product={p}
+                      locale={locale}
+                      sizes="(max-width: 768px) 50vw, 33vw"
+                    />
                   </Reveal>
                 ))}
               </div>
@@ -156,24 +160,39 @@ export default async function HomePage({ params }: { params: Promise<{ locale: s
           )}
 
           {/* ============ 产品汇总-选购同款造型(圆形名册,紧接本模块) ============ */}
-          <p className="mt-16 text-sm text-ink-soft">{t("rosterTitle")}</p>
+          <p className="text-ink-soft mt-10 text-sm sm:mt-16">{t("rosterTitle")}</p>
           <Reveal className="mt-6">
             {/* 圆圈原本是写死的 h-16 w-16(64px)。手机 375px 宽时 6 列 × 64px = 384px
                 已经超出容器,grid 的 gap 根本挤不出来 —— 圆圈直接贴在一起。改成按单元格
-                缩放 + max-w-16 封顶:窄屏自动缩小(间距才是真的),宽屏仍是原来的 64px。 */}
-            <div className="grid grid-cols-6 gap-4 sm:grid-cols-8 sm:gap-3 lg:grid-cols-12">
+                缩放 + max-w-16 封顶:窄屏自动缩小(间距才是真的),宽屏仍是原来的 64px。
+                窄屏(375px)6 列 → 4 列:每格 (343 − 3×12) / 4 = 76.75px,并给每个圆
+                补一个**常显**名称(原来只有 hover/`title`,触屏上等于没有名字)。 */}
+            <div className="grid grid-cols-4 gap-3 sm:grid-cols-8 sm:gap-3 lg:grid-cols-12">
               {roster.map((p) => (
                 <Link
                   key={p.code}
                   href={`/products/${p.code}`}
                   title={locale === "zh" ? p.name.zh : p.name.en}
-                  className="group relative aspect-square w-full max-w-16 overflow-hidden rounded-full border border-sand bg-cream-deep transition-colors hover:border-brown-600"
+                  className="group flex flex-col items-center gap-1.5"
                 >
-                  {p.isUpcoming ? (
-                    <span className="flex h-full w-full items-center justify-center text-xs font-semibold text-ink-muted">?</span>
-                  ) : (
-                    <Image src={p.images[0]} alt={p.name.en} fill sizes="64px" className="object-cover transition-transform duration-500 group-hover:scale-110" />
-                  )}
+                  <span className="border-sand bg-cream-deep group-hover:border-brown-600 relative block aspect-square w-full max-w-16 overflow-hidden rounded-full border transition-colors">
+                    {p.isUpcoming ? (
+                      <span className="text-ink-muted flex h-full w-full items-center justify-center text-xs font-semibold">
+                        ?
+                      </span>
+                    ) : (
+                      <Image
+                        src={p.images[0]}
+                        alt={p.name.en}
+                        fill
+                        sizes="64px"
+                        className="object-cover transition-transform duration-500 group-hover:scale-110"
+                      />
+                    )}
+                  </span>
+                  <span className="text-ink-soft w-full truncate text-center text-[11px] leading-tight">
+                    {locale === "zh" ? p.name.zh : p.name.en}
+                  </span>
                 </Link>
               ))}
             </div>
@@ -184,7 +203,7 @@ export default async function HomePage({ params }: { params: Promise<{ locale: s
       {/* ============ OFFY 新品抢先看(PSD:Stay tuned 标题区 + 玩偶图左上文字块;
           网站素材0926/4、更多新品，敬请期待:整模块满幅底图,顶部居中的
           STAY TUNED. 淡化字标正好被标题区盖住) ============ */}
-      <section className="relative overflow-hidden bg-[#f7f7f9] py-20 md:py-28">
+      <section className="section-y relative overflow-hidden bg-[#f7f7f9]">
         <Image
           src="/assets/home/upcoming-bg.jpg"
           alt=""
@@ -199,10 +218,10 @@ export default async function HomePage({ params }: { params: Promise<{ locale: s
               这里按 PSD 调正。再上面那层超大淡化 'Stay / tuned.'(203.2px,
               x36.42% y4.43%)是底图 upcoming-bg.jpg 里烤好的水印,不重复渲染。 */}
           <Reveal className="container-site mx-auto mb-14 text-center">
-            <p className="text-[clamp(11px,1.11vw,24px)] font-normal uppercase leading-none tracking-[var(--tracking-10)]">
+            <p className="text-[clamp(12px,1.11vw,24px)] leading-none font-normal tracking-[var(--tracking-10)] uppercase lg:text-[clamp(11px,1.11vw,24px)]">
               {t("stayTuned")}
             </p>
-            <h2 className="mt-4 font-display text-[clamp(22px,3.14vw,68px)] font-semibold uppercase leading-none tracking-tight">
+            <h2 className="font-display mt-4 text-[clamp(30px,3.14vw,68px)] leading-none font-semibold tracking-tight uppercase">
               {t("teaserSub")}
             </h2>
           </Reveal>
@@ -223,17 +242,19 @@ export default async function HomePage({ params }: { params: Promise<{ locale: s
               <div className="container-site">
                 <div className="pt-[8%]">
                   {/* PSD 'Fashionable Bag  / Charm Collection' 127.2px = 3.91vw */}
-                  <h3 className="font-display text-[clamp(20px,3.91vw,84px)] font-semibold uppercase leading-[1.1] tracking-tight">
+                  <h3 className="font-display text-[clamp(30px,3.91vw,84px)] leading-[1.1] font-semibold tracking-tight uppercase">
                     {locale === "zh" ? teaserSeries.name.zh : teaserSeries.name.en}
                   </h3>
-                  {/* PSD 'Follow @is.offy on Instagram  / for drop dates.' 64.8px = 1.99vw */}
-                  <p className="mt-[3.5%] text-[clamp(11px,1.99vw,42px)] leading-snug text-ink">
+                  {/* PSD 'Follow @is.offy on Instagram  / for drop dates.' 64.8px = 1.99vw
+                      (下限按 §1.1 规则 1 收到辅助文案档 14px) */}
+                  <p className="text-ink mt-[3.5%] text-[clamp(14px,1.99vw,42px)] leading-snug">
                     {locale === "zh" ? teaserSeries.note.zh : teaserSeries.note.en}
                   </p>
-                  {/* PSD 矩形3拷贝8:x6.83% w18.39% h6.31%;文字 'View details' 61.6px=1.89vw 白字 */}
+                  {/* PSD 矩形3拷贝8:x6.83% w18.39% h6.31%;文字 'View details' 61.6px=1.89vw 白字。
+                      高度下限 38 → 44px:窄屏下这是首页唯一通向 /bag-charm 的入口(方案 #2)。 */}
                   <Link
                     href="/bag-charm"
-                    className="mt-[6%] inline-flex h-[clamp(38px,6.31vw,124px)] items-center justify-center rounded-full bg-ink px-[clamp(18px,4.5vw,90px)] text-[clamp(11px,1.89vw,40px)] font-normal uppercase leading-none tracking-[var(--tracking-10)] text-cream transition-colors duration-300 hover:bg-accent"
+                    className="bg-ink text-cream hover:bg-accent mt-[6%] inline-flex h-[clamp(44px,6.31vw,124px)] items-center justify-center rounded-full px-[clamp(18px,4.5vw,90px)] text-[clamp(11px,1.89vw,40px)] leading-none font-normal tracking-[var(--tracking-10)] uppercase transition-colors duration-300"
                   >
                     {t("teaserCta")}
                   </Link>
@@ -245,16 +266,21 @@ export default async function HomePage({ params }: { params: Promise<{ locale: s
       </section>
 
       {/* ============ 联名定制(PSD:主标题 + 14 OF 头像图 + CTA) ============ */}
-      <section className="container-site py-20">
+      <section className="container-site section-y lg:py-20">
         {/* 主标题(头像图上方居中,不叠加压图) */}
         <Reveal className="pb-10 text-center">
-          <h2 className="font-display text-[clamp(26px,2.4vw,48px)] font-semibold uppercase tracking-tight">{t("collabTitle")}</h2>
-          <p className="mt-3 text-ink-soft">{t("collabSub")}</p>
+          <h2 className="font-display text-[clamp(30px,2.4vw,48px)] font-semibold tracking-tight uppercase lg:text-[clamp(26px,2.4vw,48px)]">
+            {t("collabTitle")}
+          </h2>
+          <p className="text-ink-soft mt-3">{t("collabSub")}</p>
           {/* 联名洽谈邮箱:原为 hello@playcoretoys.com —— 那是旧实体域名,与政策正文里的
             Whimcore Cultural Creative Co., Limited 不是同一家,站上留着会出现两套联系信息。 */}
           {/* 按 Excel 第 18 行:文案改 Explore Collaboration,跳转从 mailto 改成 CONTACT US
               (站内的联系信息页 /policies/contact)。 */}
-          <Link href="/policies/contact" className="focus-ring link-line mt-4 inline-block text-sm">
+          <Link
+            href="/policies/contact"
+            className="focus-ring link-line tap-target mt-4 text-sm lg:min-h-0"
+          >
             {t("collabCta")}
           </Link>
         </Reveal>
@@ -266,24 +292,32 @@ export default async function HomePage({ params }: { params: Promise<{ locale: s
       </section>
 
       {/* ============ 订阅(NEVER MISS OFFY)——移至联名下方 ============ */}
-      <section className="bg-cream-deep py-20">
+      <section className="section-y bg-cream-deep lg:py-20">
         <div className="container-site grid items-center gap-10 md:grid-cols-2">
           <Reveal variant="up">
             <p className="kicker mb-3">{t("subscribeKicker")}</p>
-            <h2 className="font-display text-[clamp(24px,2vw,40px)] font-semibold uppercase tracking-tight">{t("subscribeTitle")}</h2>
-            <p className="mt-3 text-ink-soft">{t("subscribeSub")}</p>
+            <h2 className="font-display text-[clamp(30px,2vw,40px)] font-semibold tracking-tight uppercase lg:text-[clamp(24px,2vw,40px)]">
+              {t("subscribeTitle")}
+            </h2>
+            <p className="text-ink-soft mt-3">{t("subscribeSub")}</p>
           </Reveal>
-          <Reveal variant="up"><NewsletterForm /></Reveal>
+          <Reveal variant="up">
+            <NewsletterForm />
+          </Reveal>
         </div>
       </section>
 
       {/* ============ 后续计划(后续计划.psd:标题 + 双卡;移动端上下排布,桌面左右并排)。
           PSD 里没有 kicker,标题只有 NEW IPS AHEAD + 一行说明,故去掉了原来的
           「THE NEXT CHAPTER」小标;卡片内部结构见 UpcomingCard。 ============ */}
-      <section className="container-site py-20">
+      <section className="container-site section-y lg:py-20">
         <Reveal className="mb-10">
-          <h2 className="font-display text-[clamp(26px,2.53vw,81px)] font-semibold uppercase tracking-tight">{t("comingTitle")}</h2>
-          <p className="mt-[1.4%] text-[clamp(12px,1.13vw,36px)] uppercase tracking-[var(--tracking-10)] text-ink-soft">{t("comingSub")}</p>
+          <h2 className="font-display text-[clamp(30px,2.53vw,81px)] font-semibold tracking-tight uppercase lg:text-[clamp(26px,2.53vw,81px)]">
+            {t("comingTitle")}
+          </h2>
+          <p className="text-ink-soft mt-[1.4%] text-[clamp(12px,1.13vw,36px)] tracking-[var(--tracking-10)] uppercase">
+            {t("comingSub")}
+          </p>
         </Reveal>
         <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
           {upcomingIps.map((ip) => (

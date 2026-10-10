@@ -8,12 +8,20 @@ const mockPush = vi.fn();
 
 vi.mock("next-intl", () => ({
   useLocale: () => "zh",
-  useTranslations: () => (key: string) => key,
+  // 带 values 的调用把值拼进返回值,便于断言"文案里真的点名了商品"。
+  useTranslations: () => (key: string, values?: Record<string, unknown>) =>
+    values ? `${key}:${JSON.stringify(values)}` : key,
 }));
 
 vi.mock("@/i18n/navigation", () => ({
-  Link: ({ href, children, ...rest }: { href: string; children: React.ReactNode } & Record<string, unknown>) => (
-    <a href={href} {...rest}>{children}</a>
+  Link: ({
+    href,
+    children,
+    ...rest
+  }: { href: string; children: React.ReactNode } & Record<string, unknown>) => (
+    <a href={href} {...rest}>
+      {children}
+    </a>
   ),
   // 直达 Shopify 失败时的兜底跳转(next-intl 的 router),断言用。
   useRouter: () => ({ push: mockPush }),
@@ -74,6 +82,68 @@ describe("CartDrawer a11y (dialog)", () => {
   });
 });
 
+describe("CartDrawer · 关闭路径与滚动锁 (P0-2 / #37)", () => {
+  beforeEach(() => {
+    mockUseCart.mockReset();
+    mockClose.mockClear();
+    document.documentElement.style.overflow = "";
+  });
+
+  it("gives the ✕ a ≥44px hit area below lg, and leaves the mask ≥40px clickable", () => {
+    mockUseCart.mockReturnValue(baseCart());
+    render(<CartDrawer />);
+    const closeBtn = screen.getByRole("button", { name: "close" });
+    expect(closeBtn.className).toContain("h-11");
+    expect(closeBtn.className).toContain("w-11");
+    // 抽屉不再占满整宽:遮罩必须留得下可点区域(否则手机上进得来出不去)
+    const aside = screen.getByRole("dialog");
+    expect(aside.className).toContain("w-[88%]");
+    // 桌面端尺寸不变
+    expect(closeBtn.className).toContain("lg:h-8");
+    expect(aside.className).toContain("max-w-md");
+  });
+
+  it("closes when the overlay is clicked", async () => {
+    mockUseCart.mockReturnValue(baseCart());
+    const { container } = render(<CartDrawer />);
+    const overlay = container.querySelector(".cart-overlay") as HTMLElement;
+    await userEvent.setup().click(overlay);
+    expect(mockClose).toHaveBeenCalled();
+  });
+
+  it("locks the page while open and restores it on close", () => {
+    mockUseCart.mockReturnValue(baseCart({ isOpen: true }));
+    const { rerender } = render(<CartDrawer />);
+    expect(document.documentElement.style.overflow).toBe("hidden");
+
+    mockUseCart.mockReturnValue(baseCart({ isOpen: false }));
+    rerender(<CartDrawer />);
+    expect(document.documentElement.style.overflow).toBe("");
+  });
+
+  it("lets the list scroll on its own without chaining to the page", () => {
+    mockUseCart.mockReturnValue(
+      baseCart({
+        lines: [{ code: "noir", quantity: 1 }],
+        catalog: {
+          noir: {
+            code: "noir",
+            name: { zh: "诺尔", en: "NOIR" },
+            images: ["https://cdn/n.jpg"],
+            priceCents: 4500,
+            currency: "USD",
+            available: true,
+          },
+        },
+      }),
+    );
+    const { container } = render(<CartDrawer />);
+    expect(container.querySelector("ul.overflow-y-auto")?.className).toContain(
+      "overscroll-contain",
+    );
+  });
+});
+
 describe("CartDrawer × live catalog (/api/products-backed)", () => {
   beforeEach(() => {
     mockUseCart.mockReset();
@@ -85,7 +155,14 @@ describe("CartDrawer × live catalog (/api/products-backed)", () => {
       baseCart({
         lines: [{ code: "noir", quantity: 2 }],
         catalog: {
-          noir: { code: "noir", name: { zh: "诺尔", en: "NOIR" }, images: ["https://cdn.shopify.com/noir.jpg"], priceCents: 4500, currency: "USD", available: true },
+          noir: {
+            code: "noir",
+            name: { zh: "诺尔", en: "NOIR" },
+            images: ["https://cdn.shopify.com/noir.jpg"],
+            priceCents: 4500,
+            currency: "USD",
+            available: true,
+          },
         },
       }),
     );
@@ -114,7 +191,14 @@ describe("CartDrawer × live catalog (/api/products-backed)", () => {
       baseCart({
         lines: [{ code: "noir", quantity: 2 }],
         catalog: {
-          noir: { code: "noir", name: { zh: "诺尔", en: "NOIR" }, images: ["https://cdn.shopify.com/noir.jpg"], priceCents: 3790, currency: "GBP", available: true },
+          noir: {
+            code: "noir",
+            name: { zh: "诺尔", en: "NOIR" },
+            images: ["https://cdn.shopify.com/noir.jpg"],
+            priceCents: 3790,
+            currency: "GBP",
+            available: true,
+          },
         },
       }),
     );
@@ -174,15 +258,25 @@ describe("CartDrawer · Checkout 直达 Shopify(不再先进 /checkout)", () => 
 
   afterEach(() => {
     vi.unstubAllGlobals();
-    Object.defineProperty(window, "location", { configurable: true, writable: true, value: realLocation });
+    Object.defineProperty(window, "location", {
+      configurable: true,
+      writable: true,
+      value: realLocation,
+    });
   });
 
   it("点击 Checkout 直接 POST /api/payments/checkout,并整页跳转到返回的 Shopify url", async () => {
-    const fetchMock = vi.fn<(input: RequestInfo | URL, init?: RequestInit) => Promise<Response>>(async () => ({
-      ok: true,
-      status: 200,
-      json: async () => ({ provider: "shopify", redirect: { kind: "redirect", url: "https://offy.myshopify.com/cart/c/abc" } }),
-    } as unknown as Response));
+    const fetchMock = vi.fn<(input: RequestInfo | URL, init?: RequestInit) => Promise<Response>>(
+      async () =>
+        ({
+          ok: true,
+          status: 200,
+          json: async () => ({
+            provider: "shopify",
+            redirect: { kind: "redirect", url: "https://offy.myshopify.com/cart/c/abc" },
+          }),
+        }) as unknown as Response,
+    );
     vi.stubGlobal("fetch", fetchMock);
     mockUseCart.mockReturnValue(cartWithItem());
     const user = userEvent.setup();
@@ -190,7 +284,9 @@ describe("CartDrawer · Checkout 直达 Shopify(不再先进 /checkout)", () => 
 
     await user.click(screen.getByRole("button", { name: "checkout" }));
 
-    await waitFor(() => expect(assign).toHaveBeenCalledWith("https://offy.myshopify.com/cart/c/abc"));
+    await waitFor(() =>
+      expect(assign).toHaveBeenCalledWith("https://offy.myshopify.com/cart/c/abc"),
+    );
     const [url, init] = fetchMock.mock.calls[0];
     expect(url).toBe("/api/payments/checkout");
     expect(init?.method).toBe("POST");
@@ -230,7 +326,10 @@ describe("CartDrawer · Checkout 直达 Shopify(不再先进 /checkout)", () => 
       resolveFetch({
         ok: true,
         status: 200,
-        json: async () => ({ provider: "shopify", redirect: { kind: "redirect", url: "https://offy.myshopify.com/cart/c/once" } }),
+        json: async () => ({
+          provider: "shopify",
+          redirect: { kind: "redirect", url: "https://offy.myshopify.com/cart/c/once" },
+        }),
       } as Response);
     });
 
@@ -239,9 +338,12 @@ describe("CartDrawer · Checkout 直达 Shopify(不再先进 /checkout)", () => 
   });
 
   it("失败(网络错误)时回退跳转 /checkout,并显示可见提示 —— 不静默、不卡住", async () => {
-    vi.stubGlobal("fetch", vi.fn(async () => {
-      throw new Error("network down");
-    }));
+    vi.stubGlobal(
+      "fetch",
+      vi.fn(async () => {
+        throw new Error("network down");
+      }),
+    );
     mockUseCart.mockReturnValue(cartWithItem());
     const user = userEvent.setup();
     render(<CartDrawer />);
@@ -259,11 +361,14 @@ describe("CartDrawer · Checkout 直达 Shopify(不再先进 /checkout)", () => 
   });
 
   it("接口返回非 2xx 时同样回退 /checkout(不把错误页当成结算页跳过去)", async () => {
-    vi.stubGlobal("fetch", vi.fn(async () => ({
-      ok: false,
-      status: 502,
-      json: async () => ({ error: "shopify_error" }),
-    })));
+    vi.stubGlobal(
+      "fetch",
+      vi.fn(async () => ({
+        ok: false,
+        status: 502,
+        json: async () => ({ error: "shopify_error" }),
+      })),
+    );
     mockUseCart.mockReturnValue(cartWithItem());
     const user = userEvent.setup();
     render(<CartDrawer />);
@@ -276,11 +381,14 @@ describe("CartDrawer · Checkout 直达 Shopify(不再先进 /checkout)", () => 
   });
 
   it("200 但没有 redirect.url 时也回退 /checkout", async () => {
-    vi.stubGlobal("fetch", vi.fn(async () => ({
-      ok: true,
-      status: 200,
-      json: async () => ({ provider: "shopify", redirect: { kind: "redirect" } }),
-    })));
+    vi.stubGlobal(
+      "fetch",
+      vi.fn(async () => ({
+        ok: true,
+        status: 200,
+        json: async () => ({ provider: "shopify", redirect: { kind: "redirect" } }),
+      })),
+    );
     mockUseCart.mockReturnValue(cartWithItem());
     const user = userEvent.setup();
     render(<CartDrawer />);
@@ -290,5 +398,61 @@ describe("CartDrawer · Checkout 直达 Shopify(不再先进 /checkout)", () => 
     await waitFor(() => expect(screen.getByRole("alert")).toBeInTheDocument());
     await waitFor(() => expect(mockPush).toHaveBeenCalledWith("/checkout"), { timeout: 3000 });
     expect(assign).not.toHaveBeenCalled();
+  });
+
+  it("售罄被 400 拦下时:点名商品、留在原地可重试,且全站不渲染裸错误码 (P0-3 / B3)", async () => {
+    vi.stubGlobal(
+      "fetch",
+      vi.fn(async () => ({
+        ok: false,
+        status: 400,
+        json: async () => ({
+          error: "unavailable_items",
+          items: [{ code: "noir", reason: "unavailable_items" }],
+        }),
+      })),
+    );
+    mockUseCart.mockReturnValue(cartWithItem());
+    const user = userEvent.setup();
+    render(<CartDrawer />);
+
+    await user.click(screen.getByRole("button", { name: "checkout" }));
+
+    const alert = await screen.findByRole("alert");
+    // 可行动文案里**点名了商品**(zh locale 下用中文商品名),而不是一个错误码
+    expect(alert.textContent).toContain("checkoutBlocked");
+    expect(alert.textContent).toContain("诺尔");
+    // 面板里没有原文里的那段通用兜底文案(它描述的是另一类失败)
+    expect(screen.queryByText(/^checkoutFallback/)).toBeNull();
+
+    // 4xx 不跳转:顾客留在袋子里,按钮复活可以原地重试
+    expect(assign).not.toHaveBeenCalled();
+    expect(mockPush).not.toHaveBeenCalled();
+    expect(screen.getByRole("button", { name: "checkout" })).toBeEnabled();
+
+    // 验收断言:界面上任何位置都不得出现原始码
+    expect(document.body.textContent ?? "").not.toMatch(
+      /invalid_items|checkout_failed|unavailable_items|unknown_items/,
+    );
+  });
+
+  it("4xx 且响应里没带 items 时渲染通用文案(仍然不跳转)", async () => {
+    vi.stubGlobal(
+      "fetch",
+      vi.fn(async () => ({
+        ok: false,
+        status: 400,
+        json: async () => ({ error: "invalid_request" }),
+      })),
+    );
+    mockUseCart.mockReturnValue(cartWithItem());
+    const user = userEvent.setup();
+    render(<CartDrawer />);
+
+    await user.click(screen.getByRole("button", { name: "checkout" }));
+
+    await waitFor(() => expect(screen.getByRole("alert")).toBeInTheDocument());
+    expect(screen.getByRole("alert").textContent).toContain("checkoutBlockedGeneric");
+    expect(mockPush).not.toHaveBeenCalled();
   });
 });

@@ -1,5 +1,12 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import { flagEmoji, normalizeCountryCode, parseRegionList, pickCountry, regionBadgeLabel } from "./geo";
+import {
+  flagEmoji,
+  normalizeCountryCode,
+  parseRegionList,
+  pickCountry,
+  regionBadgeLabel,
+  regionBadgeShortLabel,
+} from "./geo";
 
 // geoip-lite 在 import 时就会同步把 ~115MB 的数据库读进内存,而单测既不该付这个
 // 代价,也不该依赖真实库的数据(库随 MaxMind 更新,今天的公网 IP 明天可能换国家)。
@@ -172,6 +179,15 @@ describe("区域限定徽章", () => {
   it("其它国家用 Intl.DisplayNames 取国名,新增区域无需改代码", () => {
     expect(regionBadgeLabel("DE")).toBe("AVAILABLE IN GERMANY ONLY");
     expect(regionBadgeLabel("HK")).toBe("AVAILABLE IN HONG KONG ONLY");
+  });
+
+  it("窄屏短徽章用 ISO 缩写,并把 GB 归一成 UK(与完整句措辞一致)", () => {
+    expect(regionBadgeShortLabel("US")).toBe("US ONLY");
+    expect(regionBadgeShortLabel("UK")).toBe("UK ONLY");
+    expect(regionBadgeShortLabel("GB")).toBe("UK ONLY");
+    expect(regionBadgeShortLabel("HK")).toBe("HK ONLY");
+    // 短文案必须真的比完整句短,否则换了个寂寞
+    expect(regionBadgeShortLabel("US").length).toBeLessThan(regionBadgeLabel("US").length);
   });
 
   it("pickCountry 也会把 UK 归一成 GB(两个出口都要)", () => {

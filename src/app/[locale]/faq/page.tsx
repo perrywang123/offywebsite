@@ -25,52 +25,56 @@ export default async function FaqPage({ params }: { params: Promise<{ locale: st
   const isZh = locale === "zh";
 
   return (
-    <div className="container-site py-16 md:py-20">
+    <div className="container-site section-y lg:py-20">
       <header className="mx-auto max-w-[68ch]">
         <p className="kicker mb-4">{t("kicker")}</p>
-        <h1 className="font-display text-[clamp(1.75rem,1.4rem+1.4vw,3rem)] font-semibold leading-[1.1] tracking-tight">
+        {/* 页面 H1 从 28px 抬到 36px(方案 #54:把小的抬上来,而不是把 About 的
+            48 压下去)。`md:text-5xl` = 48 与改动前 clamp 的上限一致,所以
+            ≥1024px 的计算结果不变。 */}
+        <h1 className="font-display text-4xl leading-[1.1] font-semibold tracking-tight md:text-5xl lg:text-[clamp(1.75rem,1.4rem+1.4vw,3rem)]">
           {t("title")}
         </h1>
-        <p className="mt-4 text-ink-soft">{t("intro")}</p>
+        <p className="text-ink-soft mt-4">{t("intro")}</p>
       </header>
 
       {/* 语言说明:仅中文站。与政策页同一个理由与同一套样式。 */}
       {isZh && (
-        <aside className="mx-auto mt-8 max-w-[68ch] rounded-soft border border-cream-line bg-paper px-4 py-3">
+        <aside className="rounded-soft border-cream-line bg-paper mx-auto mt-8 max-w-[68ch] border px-4 py-3">
           <p className="kicker">{t("noticeTitle")}</p>
-          <p className="mt-2 text-sm leading-relaxed text-ink-soft">{t("notice")}</p>
+          <p className="text-ink-soft mt-2 text-sm leading-relaxed">{t("notice")}</p>
         </aside>
       )}
 
       <div className="mx-auto mt-12 max-w-[68ch] pb-8">
         {faqParts.map((part) => (
           <section key={part.title} className="mt-12 first:mt-0">
-            <h2
-              lang="en"
-              className="font-display text-xl font-semibold tracking-tight md:text-2xl"
-            >
+            <h2 lang="en" className="font-display text-xl font-semibold tracking-tight md:text-2xl">
               {part.title}
             </h2>
-            <div className="mt-5 divide-y divide-cream-line border-y border-cream-line">
+            <div className="divide-cream-line border-cream-line mt-5 divide-y border-y">
               {part.items.map((item) => (
-                <details key={item.q} className="group py-4">
+                /* 纵向内边距从 <details> 挪到 <summary>(方案 #50):原来 py-4 加在
+                   外层,summary 自身只有 28px 高,点在它上下那圈"看不见的 padding"
+                   上没有反应 —— 是个假可点区域。挪进来后视觉完全不变,
+                   命中区 28 → 60px。 */
+                <details key={item.q} className="group">
                   <summary
                     lang="en"
-                    className="focus-ring flex cursor-pointer list-none items-start justify-between gap-4 text-base font-medium text-ink marker:content-none"
+                    className="focus-ring text-ink flex cursor-pointer list-none items-start justify-between gap-4 py-4 text-base font-medium marker:content-none"
                   >
                     <span>{item.q}</span>
                     {/* 展开指示:纯 CSS,不引图标库 */}
                     <span
                       aria-hidden
-                      className="mt-1 shrink-0 text-ink-muted transition-transform group-open:rotate-45"
+                      className="text-ink-muted mt-1 shrink-0 transition-transform group-open:rotate-45"
                     >
                       ＋
                     </span>
                   </summary>
                   <div lang="en" className="policy-body mt-3 max-w-none text-[0.9375rem]">
-                    {item.a.split("\n").map((line, i) =>
-                      line.trim() === "" ? null : <p key={i}>{line}</p>,
-                    )}
+                    {item.a
+                      .split("\n")
+                      .map((line, i) => (line.trim() === "" ? null : <p key={i}>{line}</p>))}
                   </div>
                 </details>
               ))}
@@ -79,8 +83,11 @@ export default async function FaqPage({ params }: { params: Promise<{ locale: st
         ))}
       </div>
 
-      <div className="mx-auto mt-16 max-w-[68ch] border-t border-cream-line pt-8 text-xs uppercase tracking-[var(--tracking-12)] text-ink-soft">
-        <Link href="/" className="focus-ring transition-colors hover:text-ink">
+      <div className="border-cream-line text-ink-soft mx-auto mt-16 max-w-[68ch] border-t pt-8 text-xs tracking-[var(--tracking-12)] uppercase">
+        <Link
+          href="/"
+          className="focus-ring tap-target hover:text-ink transition-colors lg:min-h-0"
+        >
           ← {t("backToHome")}
         </Link>
       </div>
