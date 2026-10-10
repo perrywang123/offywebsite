@@ -6,6 +6,7 @@ import { getLiveProductByCode } from "../catalog/live";
 import { checkoutSessions } from "../db/schema";
 import { getDb, type Db } from "../db/client";
 import { getStripe } from "../stripe/client";
+import { publicPath } from "@/i18n/routing";
 
 /** 拿不到访客国家时(未配置 geo 头/直接调用)回落的市场。 */
 const DEFAULT_MARKET_COUNTRY = env.SHOPIFY_MARKET_COUNTRY;
@@ -70,8 +71,11 @@ export async function createCheckoutSession(
 
   const stripe = stripeClient ?? getStripe();
   const clientReferenceId = `session_${randomUUID()}`;
-  const successUrl = `${env.SITE_URL}/${locale}/checkout/success?session_id={CHECKOUT_SESSION_ID}`;
-  const cancelUrl = `${env.SITE_URL}/${locale}/cart`;
+  // 用 publicPath 而不是手写 `/${locale}`:默认语言(as-needed)下前缀会多一次
+  // 307 才收敛,回跳链路上白多一跳。{CHECKOUT_SESSION_ID} 是 Stripe 的占位符,
+  // publicPath 只做拼接,不会破坏它。
+  const successUrl = `${env.SITE_URL}${publicPath(locale, "/checkout/success?session_id={CHECKOUT_SESSION_ID}")}`;
+  const cancelUrl = `${env.SITE_URL}${publicPath(locale, "/cart")}`;
 
   // Snapshot the authoritative line items (code/name/unit price/qty) so the
   // webhook can write order_items without re-querying Stripe.

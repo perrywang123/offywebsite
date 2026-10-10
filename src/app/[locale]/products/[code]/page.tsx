@@ -3,6 +3,7 @@ import { headers } from "next/headers";
 import { notFound, permanentRedirect } from "next/navigation";
 import { getTranslations } from "next-intl/server";
 import { Link } from "@/i18n/navigation";
+import { publicPath } from "@/i18n/routing";
 import { getLiveProductByCode, getLiveProductsBySeries, getLiveSeriesList } from "@/server/catalog/live";
 import { getProductHandleAlias } from "@/lib/catalog";
 import { env } from "@/lib/env";
@@ -27,7 +28,7 @@ export async function generateMetadata({
   return {
     title: name,
     description: product.description.en || name,
-    alternates: { canonical: `/${locale}/products/${product.code}` },
+    alternates: { canonical: publicPath(locale, `/products/${product.code}`) },
     openGraph: {
       title: name,
       description: product.description.en || name,
@@ -45,8 +46,10 @@ export default async function ProductDetailPage({
   // Shopify 改过 handle 的商品:旧 URL 发 308 到当前地址,而不是 404
   // (外链/收藏/搜索结果不该因为商家改了个 handle 就全断)。映射表见
   // lib/catalog/products.ts 的 productHandleAliases。
+  // 用 publicPath 而不是拼 `/${locale}`:英文站无前缀,直跳 `/products/x`,
+  // 少一跳 next-intl 的前缀收敛。
   const alias = getProductHandleAlias(code);
-  if (alias) permanentRedirect(`/${locale}/products/${alias}`);
+  if (alias) permanentRedirect(publicPath(locale, `/products/${alias}`));
   // 实时拉取:标题/图片/价格/描述/库存/结算变体 ID 均为 Shopify 当前真实值,
   // 而非本地手写死的快照;Shopify 不可达时内部自动回退本地数据。
   // 价格按访客所在国家的市场币种返回(读 headers() → 本页按请求渲染)。

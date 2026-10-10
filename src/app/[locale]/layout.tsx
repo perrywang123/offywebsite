@@ -2,7 +2,7 @@ import { notFound } from "next/navigation";
 import type { Metadata } from "next";
 import { hasLocale, NextIntlClientProvider } from "next-intl";
 import { getTranslations, setRequestLocale } from "next-intl/server";
-import { routing } from "@/i18n/routing";
+import { routing, publicPath } from "@/i18n/routing";
 import { env } from "@/lib/env";
 import { getLiveSeriesList } from "@/server/catalog/live";
 import { CartProvider } from "@/components/cart/CartProvider";
@@ -14,7 +14,7 @@ import "../globals.css";
 // 近实时:每 60s 重新生成,导航栏/页脚的系列名随 Shopify Collection 标题变化。
 export const revalidate = 60;
 
-/** 全站根元数据:标题模板/描述/OG/hreflang(zh↔en 互为替代语言)。 */
+/** 全站根元数据:标题模板/描述/OG/hreflang。 */
 export async function generateMetadata({
   params,
 }: {
@@ -30,8 +30,13 @@ export async function generateMetadata({
     },
     description: t("tagline"),
     alternates: {
-      canonical: `/${locale}`,
-      languages: { zh: "/zh", en: "/en" },
+      // 英文站无前缀:canonical 是 `/` 而不是 `/en`(后者现在只做 308 跳转)。
+      canonical: publicPath(locale),
+      // hreflang 只列 `routing.locales` 里真实存在的语言。中文已从路由表移除,
+      // 这里若还挂着 `zh: "/zh"` 会把爬虫指向一个已不存在的地址。
+      languages: Object.fromEntries(
+        routing.locales.map((l) => [l, publicPath(l)]),
+      ),
     },
     openGraph: {
       siteName: "is.offy",

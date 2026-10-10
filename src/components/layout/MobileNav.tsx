@@ -4,13 +4,17 @@ import { useEffect, useState } from "react";
 import { useLocale, useTranslations } from "next-intl";
 import { Link } from "@/i18n/navigation";
 import type { Series } from "@/lib/catalog";
-import { LanguageSwitcher } from "./LanguageSwitcher";
 
 /**
  * 移动端抽屉导航(<768px):汉堡按钮 + 右侧滑入面板。
- * 含主导航链接、系列子链接与语言切换;Esc / 遮罩点击 / 链接跳转均关闭。
+ * 含主导航链接与系列子链接;Esc / 遮罩点击 / 链接跳转均关闭。
  * `series` 由 [`Header`](src/components/layout/Header.tsx) 转发(根布局实时
  * 拉取的 `getLiveSeriesList()` 结果),保证系列名与 Shopify 实时一致。
+ *
+ * 语言切换按钮已摘除(站点当前对外英文单语,见 src/i18n/routing.ts):
+ * 恢复多语言时,加回顶部 `import { LanguageSwitcher } from "./LanguageSwitcher";`
+ * 并在 `</nav>` 之后放回原来的页脚块
+ * `<div className="mt-auto border-t border-cream-line px-6 py-4"><LanguageSwitcher /></div>`。
  */
 export function MobileNav({ series }: { series: Series[] }) {
   const t = useTranslations("common");
@@ -92,9 +96,6 @@ export function MobileNav({ series }: { series: Series[] }) {
                 {t("nav.about")}
               </Link>
             </nav>
-            <div className="mt-auto border-t border-cream-line px-6 py-4">
-              <LanguageSwitcher />
-            </div>
           </aside>
         </div>
       )}

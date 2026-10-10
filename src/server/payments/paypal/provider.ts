@@ -19,6 +19,7 @@ import type {
 } from "../types";
 import { captureOrder, createOrder, getOrder, voidOrder } from "./client";
 import { amountMatches, assertCurrencyUsd, extractApproveUrl } from "./verify";
+import { publicPath } from "@/i18n/routing";
 
 /** 拿不到访客国家时(未配置 geo 头/直接调用)回落的市场。 */
 const DEFAULT_MARKET_COUNTRY = env.SHOPIFY_MARKET_COUNTRY;
@@ -72,8 +73,8 @@ export class PayPalPaymentProvider implements PaymentProvider {
     }));
 
     const requestId = `create_${randomUUID()}`;
-    const returnUrl = `${env.SITE_URL}/${input.locale}/checkout/paypal-return`;
-    const cancelUrl = `${env.SITE_URL}/${input.locale}/checkout?paypal=cancelled`;
+    const returnUrl = `${env.SITE_URL}${publicPath(input.locale, "/checkout/paypal-return")}`;
+    const cancelUrl = `${env.SITE_URL}${publicPath(input.locale, "/checkout?paypal=cancelled")}`;
 
     try {
       const purchaseUnit: Record<string, unknown> = {

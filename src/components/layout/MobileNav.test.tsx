@@ -14,9 +14,8 @@ vi.mock("@/i18n/navigation", () => ({
   usePathname: () => "/",
 }));
 
-vi.mock("./LanguageSwitcher", () => ({
-  LanguageSwitcher: () => <button type="button">EN</button>,
-}));
+// 注:本站当前对外英文单语,LanguageSwitcher 已从 MobileNav 摘除,
+// 因此这里不再 mock "./LanguageSwitcher"。
 
 import { MobileNav } from "./MobileNav";
 

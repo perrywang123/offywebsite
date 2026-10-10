@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { getTranslations } from "next-intl/server";
 import { Link } from "@/i18n/navigation";
+import { publicPath } from "@/i18n/routing";
 import { CONTACT_INFO, POLICY_HANDLES, getPolicy, isPolicyHandle } from "@/server/catalog/policies";
 
 /**
@@ -38,7 +39,7 @@ export async function generateMetadata({
     // 中文站也用中文元数据(中文用户会搜"Offy 退货政策"),但描述里点明正文为英文
     description:
       locale === "zh" ? `${title} · 正文为英文原文` : `${title} of is.offy`,
-    alternates: { canonical: `/${locale}/policies/${handle}` },
+    alternates: { canonical: publicPath(locale, `/policies/${handle}`) },
     // 不指向 Shopify 的 url 字段:那是 checkout.shopify.com 域的结账内副本,不是店铺公开页
   };
 }

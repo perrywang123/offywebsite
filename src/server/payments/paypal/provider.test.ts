@@ -49,7 +49,9 @@ describe("PayPalPaymentProvider.createCheckout", () => {
         kind: "approve",
         orderId: "ORDER123",
         approveUrl: "https://www.sandbox.paypal.com/checkoutnow?token=ABC",
-        returnUrl: "http://localhost:3000/en/checkout/paypal-return?orderId=ORDER123",
+        // 默认语言(as-needed)下对外路径不带前缀 —— 以前这里是 /en/checkout/...,
+        // 会让 PayPal 回跳多一次 307 才收敛。
+        returnUrl: "http://localhost:3000/checkout/paypal-return?orderId=ORDER123",
       },
     });
     const sessions = db.select().from(schema.checkoutSessions).all();
