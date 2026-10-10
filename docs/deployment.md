@@ -162,8 +162,23 @@ DEPLOY_SERVER=root@1.2.3.4 DEPLOY_DIR=/opt/offy ./scripts/deploy.sh
 ```
 
 `scripts/deploy.sh` 用 rsync 把源码同步过去再在服务器上构建(原生模块要按 Linux
-编译)。它现在**要求 `.env.production` 存在** —— 以前文件不存在会静默跳过,于是
-服务器用着旧配置而部署照样"成功"。
+编译)。
+
+**配置默认不经过这个脚本**:它只同步源码(rsync 明确排除 `.env`),服务器上那份
+`.env` 由你自己维护 —— 手工粘贴或其他方式都行,`deploy/update.sh` 会在部署前
+校验它。想临时从本地推一次配置时显式指定:
+
+```bash
+DEPLOY_ENV_FILE=.env.production ./scripts/deploy.sh
+```
+
+**真实配置永远不进 git。** `.gitignore` 覆盖 `.env` / `.env.production` /
+`.env.*.local`;仓库只跟踪 `.env.example` 与 `.env.production.example` 两个模板,
+内容全是 `REPLACE_WITH_*` 占位符。可以随时自查:
+
+```bash
+git ls-files | grep -i env      # 只应看到两个 *.example 和 src/lib/env.ts
+```
 
 ### 配置 HTTPS(nginx + certbot)
 
