@@ -13,35 +13,92 @@
 - **路径 B（裸 Node）**：安装 Node.js ≥ 20 与 nginx。
 - 域名解析到服务器 IP（A 记录）。
 
-## 区域限定(按访客国家展示)
+## 区域限定与币种(按访客国家)
 
-首页「区域限定」那一栏是**按访客所在国家**变化的:Shopify 侧的区域限定不是 tag
-也不是 metafield,而是**只把商品发布到某些 Market**,所以服务端会拿同一份
-Storefront 查询换不同 `@inContext(country:)` 跑一遍再比对(实测该店 37 个商品
-里 6 个是限定款)。实现见 `src/server/catalog/regional.ts`,探测结果缓存 1 小时。
+**这一节决定两件事,不止一件**:首页「区域限定」那一栏展示哪些商品,**以及全站
+价格用什么币种**。两者都来自同一个国家判定,配不好会同时错。
 
-**要让它生效,站点必须能知道访客的国家。** 应用按以下顺序读请求头
-(见 `src/lib/geo.ts`):
+### 国家是怎么判定的
+
+应用按以下顺序读请求头(见 `src/lib/geo.ts`):
 
 ```
 cf-ipcountry → x-vercel-ip-country → x-country-code → x-geo-country → x-forwarded-country
 ```
 
-一个都拿不到时按 `SHOPIFY_MARKET_COUNTRY`(默认 `US`)展示 —— 也就是"按美国市场
-展示",不会白屏。三种接法:
+**一个都拿不到时按 `SHOPIFY_MARKET_COUNTRY`(默认 `US`)展示** —— 不会白屏,但
+币种是错的,「区域限定」那一栏也不是访客所在地区的。这是最容易漏配、且从页面上
+看不出来的一环。
+
+> 非 ISO 写法会被归一化:`UK` → `GB`。Shopify Markets 只认 ISO-3166 alpha-2,
+> 传 `UK` 会让它落回默认市场(币种和区域限定同时失效),所以 `pickCountry`
+> 在返回前统一归一化。
+
+### 三种接法
 
 | 做法 | 说明 |
 | --- | --- |
-| 域名挂 Cloudflare | 最省事,CF 自动注入 `cf-ipcountry`,什么都不用配 |
-| nginx + GeoIP2 | 需要 `ngx_http_geoip2_module` + MaxMind GeoLite2-Country.mmdb,配置见 `deploy/nginx.conf` 里的注释 |
-| 都不做 | 全部访客按默认市场展示,那一栏仍有内容 |
+| **A. 域名挂 Cloudflare** | 最省事,CF 自动注入 `cf-ipcountry`,什么都不用配 |
+| **B. 裸 nginx + GeoIP2** | 需要 `libnginx-mod-http-geoip2` + MaxMind GeoLite2-Country.mmdb,见下 |
+| **C. 都不做** | 全部访客按默认市场展示,币种恒为 USD |
+
+### B 的具体步骤(裸 nginx)
+
+```bash
+apt install libnginx-mod-http-geoip2 geoipupdate
+# 在 /etc/geoipupdate/GeoIP.conf 填 MaxMind 的 AccountID / LicenseKey
+geoipupdate
+
+cp deploy/nginx-geoip2.conf /etc/nginx/conf.d/offy-geoip2.conf
+# deploy/nginx.conf 里那行 proxy_set_header X-Country-Code 已经带上,
+# 但只有模块和 mmdb 就位后它才能生效
+
+nginx -t && systemctl reload nginx     # 顺序不能反
+```
+
+⚠️ **顺序很重要**:模块或 mmdb 没就位就让 `nginx -t` 过不去。先 `nginx -t`
+再 reload —— reload 失败时 nginx 会继续跑旧配置,不会把你整个站打挂。
+
+`deploy/nginx-geoip2.conf` 里带完整的前置说明与安装命令。
+
+### 部署后必须验证
+
+```bash
+# 1. 国家头到底有没有传到应用(最关键的一步)
+curl -s -o /dev/null -D - https://你的域名/api/products | grep -i country
+
+# 2. 币种是否随国家变化 —— 换两个地区的网络,或直接伪造头:
+curl -s -H "cf-ipcountry: GB" https://你的域名/api/products | head -c 200
+curl -s -H "cf-ipcountry: HK" https://你的域名/api/products | head -c 200
+#    期望:一个 GBP、一个 HKD,而不是两边都是 USD
+```
+
+第 1 步没有输出 = 头没传进来 = **所有访客都在看美国市场**,先去修 A 或 B。
+
+### 数据来源与缓存
+
+Shopify 侧的区域限定不是 tag 也不是 metafield,而是**只把商品发布到某些
+Market**,所以服务端会拿同一份 Storefront 查询换不同 `@inContext(country:)`
+跑一遍再比对(实测该店 35 个商品里 6 个是限定款)。实现见
+`src/server/catalog/regional.ts`,探测结果缓存 1 小时。
 
 可选:`SHOPIFY_REGIONS` 指定要比对的国家(逗号分隔),留空用内置默认
 `US,CA,GB,SG,HK,MY,AU,JP,KR,DE,FR,TW`。
 
 > 注意:读请求头会让首页转为**按请求渲染**(不再走 ISR 静态缓存)。这是按国家
 > 变化的必要代价;Shopify 的数据请求仍有各自的缓存窗口,所以不会每个请求都打
-> Shopify。
+> Shopify。每个国家的 data cache 键是独立的,不会互相串味。
+
+### 兜底表会漂移,用脚本盯住
+
+`src/lib/catalog/products.ts` 是 Shopify 不可达时的兜底。商家改价/改名后它会
+过时,所以:
+
+```bash
+pnpm check:catalog      # 比 handle / 名称 / 价格 / 系列归属,有漂移则退出非零
+```
+
+建议放进部署流程 —— 兜底表显示错价(尤其 0 价)比整站降级更难被发现。
 
 ---
 
