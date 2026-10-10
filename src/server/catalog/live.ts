@@ -18,6 +18,12 @@ import { fetchProductData } from "../shopify/products";
  * `next: { revalidate: 60 }` 近实时缓存节奏),本地静态数据降级为"Shopify 连不上
  * 时的兜底",不再是主数据源。
  *
+ * 价格维度(币种 + 金额):所有 `getLive*` 函数都要求传入**访客所在国家**
+ * (`pickCountry(headers, env.SHOPIFY_MARKET_COUNTRY)`),由它决定这次查询命中
+ * Shopify Markets 的哪个市场 —— 实测 US→USD 49.90、GB→GBP 37.90、HK→HKD 369.00、
+ * JP/DE→SGD 49.90。金额与币种一并如实采用(见 `resolvePrice`),绝不假设"价格
+ * 就是美元";本地兜底价是美元快照,回退时会同时把币种标成 USD。
+ *
  * 下游使用方:
  * - 展示页(首页/商品页/系列页/商品详情页/导航栏/sitemap/公开 API)用
  *   `getLive*` 系列函数渲染"看得到"的内容。
@@ -79,17 +85,46 @@ export type LiveProductInput = Pick<
 > &
   Partial<ShopifyCollectionProductItem>;
 
+/**
+ * 决定一个商品最终展示的「金额 + 币种」。
+ *
+ * 全站跟随访客所在市场:Shopify 按 `@inContext(country:)` 返回的金额与币种
+ * 一律**如实采用**(US→USD 49.90、GB→GBP 37.90、HK→HKD 369.00、JP/DE→SGD 49.90)。
+ * 旧代码写的是 `currency === "USD" ? 实时价 : (本地价 ?? 0)`,非美元时丢弃实时价:
+ * 首页「区域限定」块按访客国家查询,而本地静态表里没有 NOIR/BOOTS 这类只在
+ * 单一市场发布的商品,于是英国访客看到 `NOIR $0.00`、香港访客看到 `BOOTS $0.00`。
+ *
+ * 只有一种情况需要回退到本地价:Shopify 连响应里的币种都没给出(拿不到币种就
+ * 无从判断金额面值)。此时必须**同时**把币种标成 USD —— 本地静态表是美元快照,
+ * 绝不能把美元金额挂在访客市场的币种下静默输出(那就是币种串味)。
+ *
+ * `$0` 本身是合法金额(实测 JP/DE 市场的 offy-sticker-sheet 就是 SGD 0.0),
+ * 所以这里不做 "> 0" 之类的猜测,只看有没有币种。
+ */
+function resolvePrice(
+  liveCents: number,
+  liveCurrency: string | undefined,
+  localCents: number | undefined,
+): { priceCents: number; currency: string } {
+  const cc = liveCurrency?.trim().toUpperCase();
+  if (cc && /^[A-Z]{3}$/.test(cc)) {
+    return { priceCents: Number.isFinite(liveCents) ? liveCents : 0, currency: cc };
+  }
+  return { priceCents: localCents ?? 0, currency: "USD" };
+}
+
 export function toLiveProduct(item: LiveProductInput, series: SeriesSlug, sortOrder: number): Product {
   const tags = SERIES_TAGS[series];
   const local = getProductByCode(item.handle);
+  const { priceCents, currency } = resolvePrice(item.priceCents, item.currency, local?.priceCents);
   return {
     code: item.handle,
     slug: item.handle,
     series,
     name: { en: item.title || local?.name.en || item.handle, zh: CURATED_ZH_PRODUCT_NAMES[item.handle] ?? item.title },
     description: local?.description ?? { zh: "", en: "" },
-    // 只有确认是 USD 才采纳 Shopify 实时价,避免把非美元金额当美元显示(币种串味)。
-    priceCents: item.currency === "USD" ? item.priceCents : (local?.priceCents ?? 0),
+    priceCents,
+    currency,
     dimensions: local?.dimensions ?? null,
     images: item.image ? [item.image] : (local?.images ?? [FALLBACK_IMAGE]),
     emotionTags: local?.emotionTags ?? tags,
@@ -127,11 +162,12 @@ export async function getLiveSeriesList(): Promise<Series[]> {
 }
 
 /** 单个系列的实时商品清单(完整反映 Shopify 当前的 Collection 成员,而非本地
- * 快照);任一环节失败均整体回退该系列的本地静态清单,保证页面始终可渲染。 */
-export async function getLiveProductsBySeries(slug: SeriesSlug): Promise<Product[]> {
+ * 快照);价格按 `country`(访客所在国家)对应的市场币种返回。任一环节失败均
+ * 整体回退该系列的本地静态清单(美元快照),保证页面始终可渲染。 */
+export async function getLiveProductsBySeries(slug: SeriesSlug, country: string): Promise<Product[]> {
   const handle = SERIES_SHOPIFY_HANDLE[slug];
   try {
-    const items = await fetchShopifyCollectionProducts(handle);
+    const items = await fetchShopifyCollectionProducts(handle, country);
     return items.map((item, i) => toLiveProduct(item, slug, i * 10));
   } catch (error) {
     console.error(`getLiveProductsBySeries(${slug}): Shopify unreachable, falling back to local roster`, error);
@@ -139,10 +175,11 @@ export async function getLiveProductsBySeries(slug: SeriesSlug): Promise<Product
   }
 }
 
-/** 全量实时商品(3 个系列拼合),用于 /products 全量页、sitemap、公开 API。 */
-export async function getLiveProducts(): Promise<Product[]> {
+/** 全量实时商品(3 个系列拼合),用于 /products 全量页、sitemap、公开 API。
+ * 价格按 `country`(访客所在国家)对应的市场币种返回。 */
+export async function getLiveProducts(country: string): Promise<Product[]> {
   const slugs = Object.keys(SERIES_SHOPIFY_HANDLE) as SeriesSlug[];
-  const perSeries = await Promise.all(slugs.map((s) => getLiveProductsBySeries(s)));
+  const perSeries = await Promise.all(slugs.map((s) => getLiveProductsBySeries(s, country)));
   return perSeries.flat();
 }
 
@@ -151,13 +188,14 @@ export async function getLiveProducts(): Promise<Product[]> {
  * 3 系列共 6 款)——按 Shopify 商品 createdAt 降序排序,而不是 Collection
  * 后台的手工排列顺序;商家新上架一款商品,下一次请求即进入本模块。
  * 过滤不可售款(售罄/下架不占位)。Shopify 不可达时按系列回退本地清单前 N 款。
+ * 价格按 `country`(访客所在国家)对应的市场币种返回。
  */
-export async function getLiveNewLooksProducts(perSeries = 2): Promise<Product[]> {
+export async function getLiveNewLooksProducts(country: string, perSeries = 2): Promise<Product[]> {
   const slugs = Object.keys(SERIES_SHOPIFY_HANDLE) as SeriesSlug[];
   const perSeriesResults = await Promise.all(
     slugs.map(async (slug) => {
       try {
-        const items = await fetchShopifyCollectionProducts(SERIES_SHOPIFY_HANDLE[slug]);
+        const items = await fetchShopifyCollectionProducts(SERIES_SHOPIFY_HANDLE[slug], country);
         return items
           .filter((item) => item.available)
           .sort((a, b) => {
@@ -182,15 +220,17 @@ export async function getLiveNewLooksProducts(perSeries = 2): Promise<Product[]>
 /**
  * 按 code(= Shopify handle)实时解析单个商品 —— 展示页(商品详情)与结算三条
  * 通道(Stripe/PayPal/Shopify)共用同一入口,保证"买得到"和"看得到"同步实时。
+ * 价格按 `country`(访客所在国家)对应的市场币种返回;结算必须传访客国家,
+ * 否则 Shopify 会按默认市场(US)计价,结账页金额与站上显示不一致。
  * 优先直接按 handle 查询 Shopify(不依赖该商品当前是否仍归属某个已知系列,
  * 即使是未归类的孤儿商品——如本次核实到的 royal-grey/gurardian-angel——
  * 只要仍在 Shopify 发布中就能正确解析);查无此商品或请求失败时回退本地
  * 静态目录(含该 code 根本不存在于本地的情况,此时返回 undefined)。
  */
-export async function getLiveProductByCode(code: string): Promise<Product | undefined> {
+export async function getLiveProductByCode(code: string, country: string): Promise<Product | undefined> {
   const local = getProductByCode(code);
   try {
-    const data = await fetchProductData(code);
+    const data = await fetchProductData(code, fetch, country);
     if (!data) return local;
 
     const matchedSlug = data.collectionHandles
@@ -198,6 +238,7 @@ export async function getLiveProductByCode(code: string): Promise<Product | unde
       .find((s): s is SeriesSlug => Boolean(s));
     const series: SeriesSlug = matchedSlug ?? local?.series ?? "princess-lady";
     const tags = SERIES_TAGS[series];
+    const { priceCents, currency } = resolvePrice(data.priceCents, data.currency, local?.priceCents);
 
     return {
       code,
@@ -212,7 +253,8 @@ export async function getLiveProductByCode(code: string): Promise<Product | unde
         data.descriptionBlocks.length > 0
           ? { en: data.descriptionBlocks, zh: data.descriptionBlocks }
           : local?.descriptionBlocks,
-      priceCents: data.currency === "USD" ? data.priceCents : (local?.priceCents ?? 0),
+      priceCents,
+      currency,
       dimensions: local?.dimensions ?? null,
       images: data.images.length > 0 ? data.images : (local?.images ?? [FALLBACK_IMAGE]),
       emotionTags: local?.emotionTags ?? tags,

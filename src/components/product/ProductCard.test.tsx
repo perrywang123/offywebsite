@@ -34,6 +34,7 @@ function make(overrides: Partial<Product> = {}): Product {
     name: { zh: "网球甜心", en: "Tennis Ace" },
     description: { zh: "", en: "" },
     priceCents: 4500,
+    currency: "USD",
     dimensions: null,
     images: ["/assets/products/p10.png"],
     emotionTags: { zh: [], en: [] },

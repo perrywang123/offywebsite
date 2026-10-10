@@ -58,7 +58,7 @@ describe("getLiveProductsBySeries", () => {
       { handle: "offy_redrush", title: "RED RUSH", priceCents: 0, currency: "USD", image: "https://cdn/1.jpg", available: true, variantId: "gid://shopify/ProductVariant/1", sku: null },
       { handle: "noir", title: "NOIR", priceCents: 4500, currency: "USD", image: "https://cdn/2.jpg", available: true, variantId: "gid://shopify/ProductVariant/2", sku: null },
     ]);
-    const list = await getLiveProductsBySeries("outdoor-sporty");
+    const list = await getLiveProductsBySeries("outdoor-sporty", "US");
     expect(list).toHaveLength(2);
     expect(list.map((p) => p.code)).toEqual(["offy_redrush", "noir"]);
     // 全新商品(本地无记录):中文名回退 Shopify 标题,变体 ID 来自实时数据
@@ -78,7 +78,7 @@ describe("getLiveProductsBySeries", () => {
       { handle: "ace", title: "CLUB 28", priceCents: 4590, currency: "USD", image: "https://cdn/ace.jpg", available: true, variantId: "v1", sku: "CLUB-28" },
       { handle: "offy_redrush", title: "NEON RUSH", priceCents: 0, currency: "USD", image: "https://cdn/1.jpg", available: true, variantId: "v2", sku: null },
     ]);
-    const list = await getLiveProductsBySeries("outdoor-sporty");
+    const list = await getLiveProductsBySeries("outdoor-sporty", "US");
     const ace = list.find((p) => p.code === "ace")!;
     expect(ace.skuCode).toBe("CLUB-28");
     expect(ace.code).toBe("ace"); // 路由/购物车用的 code 不受 sku 改名影响
@@ -87,18 +87,44 @@ describe("getLiveProductsBySeries", () => {
     expect(redrush.skuCode).toBeUndefined();
   });
 
-  it("does not adopt a non-USD price as if it were USD", async () => {
+  it("adopts a non-USD market price together with its currency (regression: the old code dropped it and fell back to the local USD price, so a UK visitor saw NOIR $0.00)", async () => {
+    // 旧行为(已废弃):`priceCents: item.currency === "USD" ? item.priceCents : (local?.priceCents ?? 0)`
+    // —— 非 USD 时丢弃实时价。NOIR 本地无记录 → `?? 0` → 首页「区域限定」显示 $0.00。
+    // 新语义:如实采用 Shopify 返回的金额与币种,由展示层按币种格式化。
     mockedCollectionProducts.mockResolvedValue([
-      { handle: "noir", title: "NOIR", priceCents: 1000, currency: "HKD", image: null, available: true, variantId: null },
+      { handle: "noir", title: "NOIR", priceCents: 3790, currency: "GBP", image: null, available: true, variantId: null },
     ]);
-    const list = await getLiveProductsBySeries("outdoor-sporty");
-    expect(list[0]?.priceCents).toBe(0);
+    const list = await getLiveProductsBySeries("outdoor-sporty", "GB");
+    expect(list[0]?.priceCents).toBe(3790);
+    expect(list[0]?.currency).toBe("GBP");
+  });
+
+  it("passes the visitor's country through to the Shopify collection query", async () => {
+    mockedCollectionProducts.mockResolvedValue([]);
+    await getLiveProductsBySeries("outdoor-sporty", "HK");
+    expect(mockedCollectionProducts).toHaveBeenCalledWith("outdoor-sporty系列", "HK");
+  });
+
+  it("falls back to the local USD price (and marks it USD) when Shopify returns no currency at all", async () => {
+    // 本地兜底表的快照价是美元,所以回退时必须把币种一并说明成 USD —— 绝不静默
+    // 把美元金额标成访客市场的币种。
+    mockedCollectionProducts.mockResolvedValue([
+      { handle: "swan-princess", title: "SWAN PRINCESS", priceCents: 4590, currency: "", image: null, available: true, variantId: null },
+    ]);
+    const list = await getLiveProductsBySeries("princess-lady", "GB");
+    expect(list[0]?.priceCents).toBe(4590);
+    expect(list[0]?.currency).toBe("USD");
   });
 
   it("falls back to the local roster for that series when Shopify is unreachable", async () => {
     mockedCollectionProducts.mockRejectedValue(new Error("timeout"));
-    const list = await getLiveProductsBySeries("outdoor-sporty");
-    expect(list.map((p) => p.code)).toEqual(["offy_redrush"]);
+    const list = await getLiveProductsBySeries("outdoor-sporty", "GB");
+    // 该系列本地兜底 9 款(按 sortOrder);此前只有 1 款,导致详情页的
+    // "More from this series" 在回退模式下整块消失(线上实测现象)。
+    expect(list).toHaveLength(9);
+    expect(list.map((p) => p.code)).toContain("offy_redrush");
+    // 本地快照价是美元
+    expect(list.every((p) => p.currency === "USD")).toBe(true);
   });
 });
 
@@ -109,7 +135,7 @@ describe("getLiveProducts", () => {
       if (handle === "outdoor-sporty系列") return [{ handle: "noir", title: "NOIR", priceCents: 4500, currency: "USD", image: "x", available: true, variantId: "v2" }];
       return [{ handle: "fable", title: "FABLE", priceCents: 4500, currency: "USD", image: "x", available: true, variantId: "v3" }];
     });
-    const all = await getLiveProducts();
+    const all = await getLiveProducts("US");
     expect(all.map((p) => p.code).sort()).toEqual(["fable", "noir", "swan-princess"]);
   });
 });
@@ -142,7 +168,7 @@ describe("getLiveNewLooksProducts", () => {
       }
       return [item("c-only", "2026-07-01T00:00:00Z")];
     });
-    const looks = await getLiveNewLooksProducts(2);
+    const looks = await getLiveNewLooksProducts("US", 2);
     // 每系列取最新 2 款,按系列顺序拼合;某系列不足 2 款则有多少给多少
     expect(looks.map((p) => p.code)).toEqual(["a-new", "a-mid", "b-new", "b-old", "c-only"]);
   });
@@ -156,7 +182,7 @@ describe("getLiveNewLooksProducts", () => {
         item("older-available", "2026-01-01T00:00:00Z"),
       ];
     });
-    const looks = await getLiveNewLooksProducts(2);
+    const looks = await getLiveNewLooksProducts("US", 2);
     expect(looks.map((p) => p.code)).toEqual(["newest-available", "older-available"]);
     expect(looks.every((p) => p.isAvailable)).toBe(true);
   });
@@ -166,18 +192,19 @@ describe("getLiveNewLooksProducts", () => {
       if (handle !== "frontpage") return [];
       return [item("no-date", null), item("dated", "2026-06-01T00:00:00Z")];
     });
-    const looks = await getLiveNewLooksProducts(1);
+    const looks = await getLiveNewLooksProducts("US", 1);
     expect(looks.map((p) => p.code)).toEqual(["dated"]);
   });
 
   it("falls back to the first N local products of that series when Shopify is unreachable", async () => {
     mockedCollectionProducts.mockRejectedValue(new Error("timeout"));
-    const looks = await getLiveNewLooksProducts(2);
-    // 本地清单按 sortOrder 取每系列前 2 款(均为可售);本地 outdoor-sporty 仅 1 款 → 共 5 款
+    const looks = await getLiveNewLooksProducts("US", 2);
+    // 本地清单按 sortOrder 取每系列前 2 款(均为可售)→ 3 系列各 2 款 = 6 款
     expect(looks.map((p) => p.code)).toEqual([
       "swan-princess",
       "black-pearl",
       "offy_redrush",
+      "alpine",
       "prep-school",
       "country-getaway",
     ]);
@@ -197,7 +224,7 @@ describe("getLiveProductByCode", () => {
       available: true,
       collectionHandles: ["outdoor-sporty系列"],
     });
-    const product = await getLiveProductByCode("noir");
+    const product = await getLiveProductByCode("noir", "US");
     expect(product).toBeDefined();
     expect(product!.series).toBe("outdoor-sporty");
     expect(product!.shopifyVariantId).toBe("gid://shopify/ProductVariant/99");
@@ -217,7 +244,7 @@ describe("getLiveProductByCode", () => {
       available: true,
       collectionHandles: [], // 已不在任何已知系列的 Collection 里
     });
-    const product = await getLiveProductByCode("royal-grey");
+    const product = await getLiveProductByCode("royal-grey", "US");
     expect(product).toBeDefined();
     // 本地仍有该 handle 的记录(series: princess-lady),无实时系列匹配时沿用它
     expect(product!.series).toBe("princess-lady");
@@ -225,31 +252,48 @@ describe("getLiveProductByCode", () => {
 
   it("falls back to the local catalog entry when Shopify is unreachable", async () => {
     mockedProductData.mockRejectedValue(new Error("timeout"));
-    const product = await getLiveProductByCode("swan-princess");
+    const product = await getLiveProductByCode("swan-princess", "US");
     expect(product?.code).toBe("swan-princess");
     expect(product?.priceCents).toBe(4590);
   });
 
   it("returns undefined for a code that exists neither live nor locally", async () => {
     mockedProductData.mockResolvedValue(null);
-    const product = await getLiveProductByCode("totally-unknown-code");
+    const product = await getLiveProductByCode("totally-unknown-code", "US");
     expect(product).toBeUndefined();
   });
 
-  it("does not adopt a non-USD live price as if it were USD, falling back to the local USD price", async () => {
+  it("does not adopt a non-USD live price as if it were USD; it adopts amount *and* currency", async () => {
     mockedProductData.mockResolvedValue({
       title: "SWAN PRINCESS",
       description: "x",
       descriptionBlocks: [],
       images: ["https://cdn/x.jpg"],
-      priceCents: 10,
-      currency: "HKD",
+      priceCents: 3290,
+      currency: "GBP",
       variantId: "v",
       available: true,
       collectionHandles: ["frontpage"],
     });
-    const product = await getLiveProductByCode("swan-princess");
+    const product = await getLiveProductByCode("swan-princess", "GB");
+    // 旧行为是丢弃 3290 并回落到本地 USD 价 4590(以美元印英镑市场的访客);
+    // 新语义:金额与币种一起如实采用。
+    expect(product?.priceCents).toBe(3290);
+    expect(product?.currency).toBe("GBP");
+  });
+
+  it("passes the visitor's country through to the per-handle Shopify query", async () => {
+    mockedProductData.mockResolvedValue(null);
+    await getLiveProductByCode("noir", "DE");
+    // 第二个参数是注入的 fetch(便于测试),第三个才是市场国家
+    expect(mockedProductData).toHaveBeenCalledWith("noir", fetch, "DE");
+  });
+
+  it("marks a local-only fallback price as USD", async () => {
+    mockedProductData.mockRejectedValue(new Error("timeout"));
+    const product = await getLiveProductByCode("swan-princess", "GB");
     expect(product?.priceCents).toBe(4590);
+    expect(product?.currency).toBe("USD");
   });
 
   it("surfaces the live Shopify SKU as skuCode on the detail-page resolution path too — this is exactly the bug reported: renaming a product in Shopify (e.g. Ace → CLUB 28) must update the displayed product code, not just the title", async () => {
@@ -265,7 +309,7 @@ describe("getLiveProductByCode", () => {
       collectionHandles: ["outdoor-sporty系列"],
       sku: "CLUB-28",
     });
-    const product = await getLiveProductByCode("ace");
+    const product = await getLiveProductByCode("ace", "US");
     expect(product?.name.en).toBe("CLUB 28");
     expect(product?.skuCode).toBe("CLUB-28");
     // code(路由/购物车/结算标识符)始终是 handle,不随改名/改 SKU 变化

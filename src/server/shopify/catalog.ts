@@ -54,6 +54,12 @@ function marketCountry(): string {
   return /^[A-Z]{2}$/.test(c) ? c : "US";
 }
 
+/** 归一化国家码:非两位大写字母一律回落到 SHOPIFY_MARKET_COUNTRY。 */
+function normalizeCountry(country: string): string {
+  const cc = country.trim().toUpperCase();
+  return /^[A-Z]{2}$/.test(cc) ? cc : marketCountry();
+}
+
 // Storefront `products` 只返回已发布到该 Headless 渠道且 Active 的商品 → 上/下架天然同步。
 // @inContext(country) 字面量让价格按市场币种返回（US → USD）。
 function listQuery(country: string): string {
@@ -92,7 +98,7 @@ export async function listShopifyProducts(
 ): Promise<ShopifyListItem[]> {
   // 国家必须进缓存键:同 URL 不同 body 会被 Next 的数据缓存串味(本文件开头
   // 记录的线上事故)。区域限定要按十几个国家各查一次,这里尤其关键。
-  const cc = /^[A-Z]{2}$/.test(country) ? country.toUpperCase() : marketCountry();
+  const cc = normalizeCountry(country);
   const res = await fetchImpl(storefrontEndpoint(`products-list:${cc}`), {
     method: "POST",
     headers: {
@@ -218,21 +224,27 @@ interface CollectionProductNode {
  * List the current, live product roster of a Shopify collection by handle —
  * this is the single source of truth for "which products belong to this
  * series right now" (replaces any hardcoded per-series product list).
+ * Prices are returned in the **visitor's market currency**.
  * Throws on transport errors or an unknown collection handle so the caller
  * can fall back to the local static roster.
+ *
+ * @param country ISO-3166 alpha-2 of the visitor; omitted → `SHOPIFY_MARKET_COUNTRY`.
  */
 export async function fetchShopifyCollectionProducts(
   collectionHandle: string,
+  country: string = marketCountry(),
   fetchImpl: typeof fetch = fetch,
 ): Promise<ShopifyCollectionProductItem[]> {
-  const res = await fetchImpl(storefrontEndpoint(`collection-products:${collectionHandle}`), {
+  const cc = normalizeCountry(country);
+  // 缓存键必须同时含 collection handle(避免系列间串味)与国家(避免市场币种串味)。
+  const res = await fetchImpl(storefrontEndpoint(`collection-products:${collectionHandle}:${cc}`), {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
       "X-Shopify-Storefront-Access-Token": env.SHOPIFY_STOREFRONT_TOKEN ?? "",
     },
     body: JSON.stringify({
-      query: collectionProductsQuery(marketCountry()),
+      query: collectionProductsQuery(cc),
       variables: { handle: collectionHandle },
     }),
     next: { revalidate: 60 },

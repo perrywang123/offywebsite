@@ -16,7 +16,16 @@ export class StripePaymentProvider implements PaymentProvider {
   }
 
   async createCheckout(input: CreateCheckoutInput): Promise<CreateCheckoutResult> {
-    const result = await createCheckoutSession(input.items, input.locale, undefined, undefined, input.shipping);
+    // country 决定价格用哪个市场的币种;Stripe 通道自身仍是 USD-only(见
+    // create-checkout-session.ts 里的 currency_not_supported 守卫)。
+    const result = await createCheckoutSession(
+      input.items,
+      input.locale,
+      undefined,
+      undefined,
+      input.shipping,
+      input.country,
+    );
     if (result.ok) {
       return { ok: true, provider: "stripe", redirect: { kind: "redirect", url: result.url } };
     }

@@ -117,4 +117,24 @@ describe("fetchProductData", () => {
     const data = await fetchProductData("x", mockFetch({}, false));
     expect(data).toBeNull();
   });
+
+  it("prices by the visitor's market: country goes into both @inContext and the cache key", async () => {
+    const f = mockFetch({
+      data: {
+        product: {
+          title: "NOIR",
+          availableForSale: true,
+          images: { nodes: [] },
+          variants: { nodes: [{ id: "v", price: { amount: "37.9", currencyCode: "GBP" } }] },
+          collections: { nodes: [] },
+        },
+      },
+    });
+    const data = await fetchProductData("noir", f, "gb");
+    const [url, init] = (f as unknown as ReturnType<typeof vi.fn>).mock.calls[0] as [string, RequestInit];
+    expect(url).toContain("ck=product:noir:GB");
+    expect(String(init.body)).toContain("@inContext(country: GB)");
+    expect(data?.priceCents).toBe(3790);
+    expect(data?.currency).toBe("GBP");
+  });
 });

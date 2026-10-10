@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import { useLocale, useTranslations } from "next-intl";
 import { Link } from "@/i18n/navigation";
-import { formatUsdCents } from "@/lib/pricing";
+import { cartTotal, formatPrice } from "@/lib/pricing";
 import { useCart, type CartCatalogEntry } from "@/components/cart/CartProvider";
 
 type Provider = "paypal" | "stripe" | "shopify";
@@ -62,7 +62,9 @@ export default function CheckoutPage() {
   const t = useTranslations("checkout");
   const tCart = useTranslations("common.cart");
 
-  const [provider, setProvider] = useState<Provider>("paypal");
+  // 默认必须是唯一可用的那条:此前默认 paypal,而 PayPal/Stripe 在本环境都是 502,
+  // 顾客不动选项直接点结算就会失败。
+  const [provider] = useState<Provider>("shopify");
   const [email, setEmail] = useState("");
   const [fullName, setFullName] = useState("");
   const [phone, setPhone] = useState("");
@@ -79,7 +81,10 @@ export default function CheckoutPage() {
   const items = lines
     .map((line) => ({ line, product: catalog[line.code] }))
     .filter((x): x is { line: { code: string; quantity: number }; product: CartCatalogEntry } => Boolean(x.product));
-  const subtotal = items.reduce((sum, x) => sum + x.product.priceCents * x.line.quantity, 0);
+  // 逐行按该行自己的币种显示;小计由 cartTotal 汇总(混币时不硬加,只置位提示)。
+  const subtotal = cartTotal(
+    items.map((x) => ({ priceCents: x.product.priceCents, currency: x.product.currency, quantity: x.line.quantity })),
+  );
 
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
@@ -240,33 +245,14 @@ export default function CheckoutPage() {
             {/* 支付方式 */}
             <fieldset className="space-y-3">
               <legend className="kicker mb-2">{t("paymentTitle")}</legend>
-              <label className={cardClass(provider === "paypal")}>
-                <input type="radio" name="payment" value="paypal" checked={provider === "paypal"} onChange={() => setProvider("paypal")} className="sr-only" />
-                <span className={`h-4 w-4 shrink-0 rounded-full border ${provider === "paypal" ? "border-brown-600" : "border-sand"}`}>
-                  {provider === "paypal" && <span className="mx-auto mt-[3px] block h-2 w-2 rounded-full bg-brown-600" />}
-                </span>
-                <PaymentLogo provider="paypal" />
-                <span className="flex-1">
-                  <span className="block text-base font-medium text-ink">{t("paymentPaypal")}</span>
-                  <span className="mt-0.5 block text-xs text-ink-muted">{t("paymentPaypalSub")}</span>
-                </span>
-                <span className="absolute right-3 top-3 rounded-full bg-butter px-2 py-0.5 text-[10px] font-semibold uppercase tracking-[var(--tracking-14)] text-ink">{t("paymentRecommended")}</span>
-              </label>
-              <label className={cardClass(provider === "stripe")}>
-                <input type="radio" name="payment" value="stripe" checked={provider === "stripe"} onChange={() => setProvider("stripe")} className="sr-only" />
-                <span className={`h-4 w-4 shrink-0 rounded-full border ${provider === "stripe" ? "border-brown-600" : "border-sand"}`}>
-                  {provider === "stripe" && <span className="mx-auto mt-[3px] block h-2 w-2 rounded-full bg-brown-600" />}
-                </span>
-                <PaymentLogo provider="stripe" />
-                <span className="flex-1">
-                  <span className="block text-base font-medium text-ink">{t("paymentCard")}</span>
-                  <span className="mt-0.5 block text-xs text-ink-muted">{t("paymentCardSub")}</span>
-                </span>
-              </label>
-              <label className={cardClass(provider === "shopify")}>
-                <input type="radio" name="payment" value="shopify" checked={provider === "shopify"} onChange={() => setProvider("shopify")} className="sr-only" />
-                <span className={`h-4 w-4 shrink-0 rounded-full border ${provider === "shopify" ? "border-brown-600" : "border-sand"}`}>
-                  {provider === "shopify" && <span className="mx-auto mt-[3px] block h-2 w-2 rounded-full bg-brown-600" />}
+              {/* 只提供 Shopify 托管结算:另外两条通道(Stripe/PayPal)实测在本环境不可用
+                  —— Stripe 报 Invalid API Key、PayPal 报 token_request_failed,而且默认选中的
+                  恰好是坏的那一个,顾客点结算直接 502。按用户要求只留 Shopify。
+                  单选结构保留(而不是写死一段说明),这样将来补上密钥要恢复多选时改动最小。 */}
+              <label className={cardClass(true)}>
+                <input type="radio" name="payment" value="shopify" checked readOnly className="sr-only" />
+                <span className="h-4 w-4 shrink-0 rounded-full border border-brown-600">
+                  <span className="mx-auto mt-[3px] block h-2 w-2 rounded-full bg-brown-600" />
                 </span>
                 <PaymentLogo provider="shopify" />
                 <span className="flex-1">
@@ -291,13 +277,7 @@ export default function CheckoutPage() {
               type="submit" disabled={submitting} aria-busy={submitting}
               className="h-12 w-full rounded-full bg-accent text-sm font-medium text-cream transition-colors hover:bg-accent-deep disabled:opacity-70"
             >
-              {submitting
-                ? t("jumping")
-                : provider === "paypal"
-                  ? t("payWithPaypal")
-                  : provider === "shopify"
-                    ? t("payWithShopify")
-                    : t("payWithCard")}
+              {submitting ? t("jumping") : t("payWithShopify")}
             </button>
             <p className="text-center text-xs text-ink-muted">{t("paymentNote")}</p>
           </form>
@@ -308,14 +288,17 @@ export default function CheckoutPage() {
               {items.map(({ line, product }) => (
                 <li key={line.code} className="flex justify-between">
                   <span>{locale === "zh" ? product.name.zh : product.name.en} × {line.quantity}</span>
-                  <span>{formatUsdCents(product.priceCents * line.quantity, locale)}</span>
+                  <span className="tabular-nums">
+                    {formatPrice(product.priceCents * line.quantity, product.currency, locale)}
+                  </span>
                 </li>
               ))}
             </ul>
             <div className="mt-4 flex justify-between border-t border-cream-line pt-4 font-medium">
               <span>{t("summary")}</span>
-              <span className="tabular-nums">{formatUsdCents(subtotal, locale)}</span>
+              <span className="tabular-nums">{formatPrice(subtotal.cents, subtotal.currency, locale)}</span>
             </div>
+            {subtotal.mixed && <p className="mt-2 text-xs text-ink-muted">{tCart("mixedCurrency")}</p>}
           </aside>
         </div>
       )}

@@ -1,6 +1,9 @@
 import Image from "next/image";
+import { headers } from "next/headers";
 import { notFound } from "next/navigation";
 import { getTranslations } from "next-intl/server";
+import { env } from "@/lib/env";
+import { pickCountry } from "@/lib/geo";
 import { getLiveProductsBySeries, getLiveSeriesList } from "@/server/catalog/live";
 import { ProductGrid } from "@/components/product/ProductGrid";
 import { CategoryTabs } from "@/components/layout/CategoryTabs";
@@ -15,6 +18,8 @@ export default async function SeriesPage({
 }) {
   const { locale, series: slug } = await params;
   const t = await getTranslations("catalog");
+  // 价格按访客所在国家的市场币种(读 headers() → 本页按请求渲染)。
+  const country = pickCountry(await headers(), env.SHOPIFY_MARKET_COUNTRY);
 
   // 实时拉取:系列名称/该系列下的商品清单均来自 Shopify 当前真实状态,
   // 不再依赖本地手写死的快照;Shopify 不可达时内部自动回退本地数据。
@@ -22,7 +27,7 @@ export default async function SeriesPage({
   const series = seriesList.find((s) => s.slug === slug);
   if (!series) notFound();
 
-  const products = await getLiveProductsBySeries(series.slug);
+  const products = await getLiveProductsBySeries(series.slug, country);
   const idx = seriesList.findIndex((s) => s.slug === slug);
   const name = locale === "zh" ? series.name.zh : series.name.en;
   const tagline = locale === "zh" ? series.tagline.zh : series.tagline.en;

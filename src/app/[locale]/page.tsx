@@ -26,18 +26,23 @@ export default async function HomePage({ params }: { params: Promise<{ locale: s
   const promoMessages = tCommon.raw("promoMessages") as string[];
   const promoLine = promoMessages.join("  —  is.offy  —  ");
 
+  // 先确定访客国家,再按它查询:所有价格(含区域限定)都用同一个市场上下文,
+  // 保证首页上的金额/币种与结账页一致(见 server/catalog/live.ts 的 resolvePrice)。
+  // 注意:读 headers() 会让本页转为按请求渲染(dynamic)——这是 route A 的必要代价。
+  const visitorCountry = pickCountry(await headers(), env.SHOPIFY_MARKET_COUNTRY);
+
   // 实时拉取 Shopify:每次请求都反映当前真实的系列成员/价格/图片,不再依赖
   // 本地手写死的商品快照;Shopify 不可达时内部自动回退本地数据。
   // New Looks:每个系列按 Shopify 创建时间取最新 2 款(3 系列共 6 款)。
-  const looks = await getLiveNewLooksProducts(2);
-  const roster = await getLiveProducts();
+  const looks = await getLiveNewLooksProducts(visitorCountry, 2);
+  const roster = await getLiveProducts(visitorCountry);
 
   // ——— 区域限定(路线 A:按访客所在国家展示)———
   // 国家来自前置层注入的请求头(Cloudflare cf-ipcountry / nginx GeoIP2 等),
   // 拿不到就按 SHOPIFY_MARKET_COUNTRY 展示。Shopify 侧的区域限定是「只发布到
   // 某些 Market」,判定要按国家各查一次再比对,详见 server/catalog/regional.ts。
-  // 注意:读 headers() 会让本页转为按请求渲染(dynamic)——这是 route A 的必要代价。
-  const visitorCountry = pickCountry(await headers(), env.SHOPIFY_MARKET_COUNTRY);
+  // 价格来源已随本次改造改为"如实采用该国市场的金额与币种":英国访客看到
+  // NOIR £37.90、香港访客看到 BOOTS HK$369.00,而不再是 $0.00。
   const regionals = (await getRegionalProducts(visitorCountry)).map((item, i) => ({
     ...toLiveProduct(item, getProductByCode(item.handle)?.series ?? "princess-lady", i * 10),
     badge: visitorCountry,
@@ -113,11 +118,9 @@ export default async function HomePage({ params }: { params: Promise<{ locale: s
         />
         <div className="container-site relative py-20 md:py-28">
           <Reveal className="mb-12 text-center">
-            <p className="kicker mb-3">{t("categorySub")}</p>
             <h2 className="font-display text-[clamp(30px,2.6vw,60px)] font-semibold uppercase tracking-tight">
               {t("categoryTitle")}
             </h2>
-            <p className="mt-3 text-ink-soft">{t("castSub")}</p>
           </Reveal>
           <Reveal className="mb-8 flex items-end justify-between">
             <h3 className="font-display text-2xl font-semibold tracking-tight md:text-3xl">
@@ -246,9 +249,11 @@ export default async function HomePage({ params }: { params: Promise<{ locale: s
           <p className="mt-3 text-ink-soft">{t("collabSub")}</p>
           {/* 联名洽谈邮箱:原为 hello@playcoretoys.com —— 那是旧实体域名,与政策正文里的
             Whimcore Cultural Creative Co., Limited 不是同一家,站上留着会出现两套联系信息。 */}
-          <a href="mailto:contact@whimcoreofficial.com" className="focus-ring link-line mt-4 inline-block text-sm">
+          {/* 按 Excel 第 18 行:文案改 Explore Collaboration,跳转从 mailto 改成 CONTACT US
+              (站内的联系信息页 /policies/contact)。 */}
+          <Link href="/policies/contact" className="focus-ring link-line mt-4 inline-block text-sm">
             {t("collabCta")}
-          </a>
+          </Link>
         </Reveal>
         {/* 14 OF 造型头像图(PSD 矢量智能对象,透明底) */}
         <Reveal className="relative">

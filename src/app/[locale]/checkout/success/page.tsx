@@ -4,7 +4,7 @@ import { Link } from "@/i18n/navigation";
 import { orderItems } from "@/server/db/schema";
 import { getDb } from "@/server/db/client";
 import { getOrderForConfirmation } from "@/server/orders/order-service";
-import { formatUsdCents } from "@/lib/pricing";
+import { formatPrice } from "@/lib/pricing";
 import { ClearCartOnSuccess } from "@/components/cart/ClearCart";
 
 /**
@@ -24,7 +24,7 @@ export default async function CheckoutSuccessPage({
   const tCart = await getTranslations("common");
 
   const db = getDb();
-  let order: { orderNumber: string; totalCents: number; email: string; id: number; shippingJson: string | null } | undefined;
+  let order: { orderNumber: string; totalCents: number; currency: string; email: string; id: number; shippingJson: string | null } | undefined;
   let items: Array<{ id: number; nameZh: string; nameEn: string; quantity: number; lineTotalCents: number }> = [];
   let shipping: { fullName: string; country: string; city: string; state?: string; address1: string; address2?: string; postalCode: string; phone?: string } | null = null;
 
@@ -60,13 +60,15 @@ export default async function CheckoutSuccessPage({
                   <span>
                     {locale === "zh" ? item.nameZh : item.nameEn} × {item.quantity}
                   </span>
-                  <span className="tabular-nums">{formatUsdCents(item.lineTotalCents, locale)}</span>
+                  <span className="tabular-nums">
+                    {formatPrice(item.lineTotalCents, order.currency, locale)}
+                  </span>
                 </li>
               ))}
             </ul>
             <div className="mt-2 flex justify-between border-t border-cream-line pt-3 font-medium">
               <span>{tCart("cart.total")}</span>
-              <span className="tabular-nums">{formatUsdCents(order.totalCents, locale)}</span>
+              <span className="tabular-nums">{formatPrice(order.totalCents, order.currency, locale)}</span>
             </div>
           </div>
           {shipping && (

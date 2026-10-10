@@ -26,15 +26,24 @@ export interface ShopifyProductData {
  * `server/shopify/catalog.ts` 顶部注释的完整复现记录)。此处尤其关键:
  * 不同商品详情页/结算请求会在短时间内并发查询不同 handle,一旦串味会导致
  * "用户看到/买到错误的商品",必须保证每个 handle 的缓存键互不相同。
+ *
+ * 国家同样必须进缓存键:同一个 handle 在 US 返回 USD 49.90、在 GB 返回
+ * GBP 37.90,只用 handle 当键会让英国访客拿到美国市场的美元金额(或反之)。
  */
-function storefrontEndpoint(handle: string): string {
-  return `https://${env.SHOPIFY_STORE_DOMAIN}/api/${env.SHOPIFY_API_VERSION}/graphql.json?ck=product:${encodeURIComponent(handle)}`;
+function storefrontEndpoint(handle: string, country: string): string {
+  return `https://${env.SHOPIFY_STORE_DOMAIN}/api/${env.SHOPIFY_API_VERSION}/graphql.json?ck=product:${encodeURIComponent(handle)}:${country}`;
 }
 
 /** CountryCode 是 GraphQL 枚举，必须作为字面量注入（用变量传会不生效）。仅允许两位字母。 */
 function marketCountry(): string {
   const c = env.SHOPIFY_MARKET_COUNTRY;
   return /^[A-Z]{2}$/.test(c) ? c : "US";
+}
+
+/** 归一化国家码:非两位大写字母一律回落到 SHOPIFY_MARKET_COUNTRY。 */
+function normalizeCountry(country: string): string {
+  const cc = country.trim().toUpperCase();
+  return /^[A-Z]{2}$/.test(cc) ? cc : marketCountry();
 }
 
 // 按 handle 查询，并用 @inContext(country) 让价格按 Shopify Markets 的市场币种返回
@@ -70,22 +79,27 @@ interface ProductNode {
 
 /**
  * Fetch display fields (title/description/images/price) for a Shopify product by
- * handle, in the configured market currency. Returns null when the product is
- * missing or the HTTP call is not OK. Network errors propagate; the enrich layer
- * wraps this in try/catch to fall back to local data.
+ * handle, priced in the **visitor's market currency** (`@inContext(country:)`).
+ * Returns null when the product is missing or the HTTP call is not OK. Network
+ * errors propagate; the enrich layer wraps this in try/catch to fall back to
+ * local data.
+ *
+ * @param country ISO-3166 alpha-2 of the visitor; omitted → `SHOPIFY_MARKET_COUNTRY`.
  */
 export async function fetchProductData(
   handle: string,
   fetchImpl: typeof fetch = fetch,
+  country: string = marketCountry(),
 ): Promise<ShopifyProductData | null> {
-  const res = await fetchImpl(storefrontEndpoint(handle), {
+  const cc = normalizeCountry(country);
+  const res = await fetchImpl(storefrontEndpoint(handle, cc), {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
       "X-Shopify-Storefront-Access-Token": env.SHOPIFY_STOREFRONT_TOKEN ?? "",
     },
     body: JSON.stringify({
-      query: productQuery(marketCountry()),
+      query: productQuery(cc),
       variables: { handle },
     }),
     // Near-real-time: cache, refresh at most every 60s.

@@ -1,9 +1,13 @@
 import Image from "next/image";
-import { notFound } from "next/navigation";
+import { headers } from "next/headers";
+import { notFound, permanentRedirect } from "next/navigation";
 import { getTranslations } from "next-intl/server";
 import { Link } from "@/i18n/navigation";
 import { getLiveProductByCode, getLiveProductsBySeries, getLiveSeriesList } from "@/server/catalog/live";
-import { formatUsdCents } from "@/lib/pricing";
+import { getProductHandleAlias } from "@/lib/catalog";
+import { env } from "@/lib/env";
+import { pickCountry } from "@/lib/geo";
+import { formatPrice } from "@/lib/pricing";
 import { AddToCartButton } from "@/components/cart/AddToCartButton";
 import { Reveal } from "@/components/Reveal";
 
@@ -16,7 +20,8 @@ export async function generateMetadata({
   params: Promise<{ locale: string; code: string }>;
 }): Promise<import("next").Metadata> {
   const { locale, code } = await params;
-  const product = await getLiveProductByCode(code);
+  const country = pickCountry(await headers(), env.SHOPIFY_MARKET_COUNTRY);
+  const product = await getLiveProductByCode(code, country);
   if (!product) return {};
   const name = locale === "zh" ? product.name.zh : product.name.en;
   return {
@@ -37,9 +42,16 @@ export default async function ProductDetailPage({
   params: Promise<{ locale: string; code: string }>;
 }) {
   const { locale, code } = await params;
+  // Shopify 改过 handle 的商品:旧 URL 发 308 到当前地址,而不是 404
+  // (外链/收藏/搜索结果不该因为商家改了个 handle 就全断)。映射表见
+  // lib/catalog/products.ts 的 productHandleAliases。
+  const alias = getProductHandleAlias(code);
+  if (alias) permanentRedirect(`/${locale}/products/${alias}`);
   // 实时拉取:标题/图片/价格/描述/库存/结算变体 ID 均为 Shopify 当前真实值,
   // 而非本地手写死的快照;Shopify 不可达时内部自动回退本地数据。
-  const product = await getLiveProductByCode(code);
+  // 价格按访客所在国家的市场币种返回(读 headers() → 本页按请求渲染)。
+  const country = pickCountry(await headers(), env.SHOPIFY_MARKET_COUNTRY);
+  const product = await getLiveProductByCode(code, country);
   if (!product) notFound();
 
   const t = await getTranslations("product");
@@ -56,7 +68,7 @@ export default async function ProductDetailPage({
     locale === "zh"
       ? (product.descriptionBlocks?.zh ?? product.descriptionBlocks?.en)
       : product.descriptionBlocks?.en;
-  const siblings = (await getLiveProductsBySeries(product.series)).filter(
+  const siblings = (await getLiveProductsBySeries(product.series, country)).filter(
     (p) => p.code !== product.code,
   );
 
@@ -118,7 +130,7 @@ export default async function ProductDetailPage({
               </p>
             ) : (
               <p className="mt-3 font-display text-2xl font-medium text-ink tabular-nums md:text-3xl">
-                {formatUsdCents(product.priceCents, locale)}
+                {formatPrice(product.priceCents, product.currency, locale)}
               </p>
             )}
           </div>

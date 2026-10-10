@@ -4,7 +4,7 @@ import { useEffect, useRef } from "react";
 import Image from "next/image";
 import { useLocale, useTranslations } from "next-intl";
 import { Link } from "@/i18n/navigation";
-import { formatUsdCents } from "@/lib/pricing";
+import { cartTotal, formatPrice } from "@/lib/pricing";
 import { useCart, type CartCatalogEntry } from "./CartProvider";
 
 export function CartDrawer() {
@@ -31,7 +31,11 @@ export function CartDrawer() {
     .map((line) => ({ line, product: catalog[line.code] }))
     .filter((x): x is { line: { code: string; quantity: number }; product: CartCatalogEntry } => Boolean(x.product));
 
-  const subtotal = items.reduce((sum, x) => sum + x.product.priceCents * x.line.quantity, 0);
+  // 逐行按**该行自己的币种**格式化(价格来自 /api/products,已按访客市场返回);
+  // 小计交给 cartTotal:它绝不会把不同币种的金额相加,而是置位 mixed 让我们提示。
+  const subtotal = cartTotal(
+    items.map((x) => ({ priceCents: x.product.priceCents, currency: x.product.currency, quantity: x.line.quantity })),
+  );
 
   if (!mounted) return null;
 
@@ -92,7 +96,9 @@ export function CartDrawer() {
                   </div>
                   <div className="flex flex-1 flex-col">
                     <p className="text-sm font-medium">{locale === "zh" ? product.name.zh : product.name.en}</p>
-                    <p className="text-sm text-ink-muted tabular-nums">{formatUsdCents(product.priceCents, locale)}</p>
+                    <p className="text-sm text-ink-muted tabular-nums">
+                      {formatPrice(product.priceCents, product.currency, locale)}
+                    </p>
                     <div className="mt-auto flex items-center justify-between">
                       <div className="flex items-center rounded-full border border-sand">
                         <button type="button" onClick={() => setQty(line.code, line.quantity - 1)} className="h-8 w-8 text-ink-soft">−</button>
@@ -110,7 +116,7 @@ export function CartDrawer() {
             <footer className="border-t border-cream-line bg-cream-deep p-6">
               <div className="mb-4 flex justify-between text-sm font-medium">
                 <span>{t("subtotal")}</span>
-                <span className="tabular-nums">{formatUsdCents(subtotal, locale)}</span>
+                <span className="tabular-nums">{formatPrice(subtotal.cents, subtotal.currency, locale)}</span>
               </div>
               <Link
                 href="/checkout"

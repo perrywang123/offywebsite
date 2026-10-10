@@ -1,7 +1,7 @@
 "use client";
 
 import { createContext, useContext, useEffect, useMemo, useState } from "react";
-import { addLine, cartCount, pruneLines, removeLine, setQuantity, type CartState } from "@/lib/cart";
+import { addLine, cartCount, removeLine, setQuantity, type CartState } from "@/lib/cart";
 
 const STORAGE_KEY = "offy.cart.v1";
 
@@ -11,6 +11,9 @@ export interface CartCatalogEntry {
   name: { en: string; zh: string };
   images: string[];
   priceCents: number;
+  /** ISO-4217 币种(小写下发,这里统一成大写)。价格按访客所在市场返回,
+   * 所以每次 `/api/products` 拉取到的币种可能随访客国家不同。 */
+  currency: string;
   available: boolean;
 }
 
@@ -18,7 +21,7 @@ interface ProductsApiItem {
   code: string;
   name: { en: string; zh: string };
   images: string[];
-  price: { amountCents: number };
+  price: { currency?: string; amountCents: number };
   available: boolean;
 }
 
@@ -55,40 +58,100 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
   // 但目录中已不存在的 code)。
   useEffect(() => {
     let cancelled = false;
-    fetch("/api/products")
-      .then((res) => (res.ok ? res.json() : null))
-      .then((data: { products?: ProductsApiItem[] } | null) => {
-        if (cancelled) return;
-        const map: Record<string, CartCatalogEntry> = {};
-        for (const p of data?.products ?? []) {
-          map[p.code] = { code: p.code, name: p.name, images: p.images, priceCents: p.price.amountCents, available: p.available };
-        }
-        setCatalog(map);
-        setCatalogLoaded(true);
 
+    const toEntry = (p: ProductsApiItem): CartCatalogEntry => ({
+      code: p.code,
+      name: p.name,
+      images: p.images,
+      priceCents: p.price.amountCents,
+      // 老版本 API 响应(以及任何缺失币种的响应)按 USD 兜底,与本地静态目录一致。
+      currency: (p.price.currency ?? "usd").toUpperCase(),
+      available: p.available,
+    });
+
+    /**
+     * 逐行确认购物车里存的 code 还有没有效。
+     *
+     * 目录(`/api/products`)只覆盖三个 collection 的成员,但**不属于任何 collection 的
+     * 已发布商品**(如 offy-sticker-sheet)在详情页照样能加购 —— 它们在目录里查不到,
+     * 旧逻辑会当成"僵尸行"直接剔除,顾客点了"已加入"进袋却是空的。所以目录里没有的
+     * 再按 code 直查一次,只有**明确 404** 才认定商品真的没了。
+     */
+    async function reconcile(
+      parsed: CartState,
+      map: Record<string, CartCatalogEntry>,
+    ): Promise<{ kept: CartState; extra: Record<string, CartCatalogEntry> }> {
+      const kept: CartState = [];
+      const extra: Record<string, CartCatalogEntry> = {};
+      for (const line of parsed) {
+        if (map[line.code]) {
+          kept.push(line);
+          continue;
+        }
         try {
-          const raw = localStorage.getItem(STORAGE_KEY);
-          if (raw) {
-            const parsed = JSON.parse(raw) as CartState;
-            setLines(pruneLines(parsed, (code) => Boolean(map[code])));
+          const res = await fetch(`/api/products/${encodeURIComponent(line.code)}`);
+          if (res.status === 404) continue; // 确认已下架 → 剔除
+          if (!res.ok) {
+            kept.push(line); // 403/429/5xx:不敢断定,保留
+            continue;
           }
+          const data = (await res.json()) as { product?: ProductsApiItem };
+          if (!data.product) continue;
+          extra[line.code] = toEntry(data.product);
+          kept.push(line);
         } catch {
-          /* ignore */
+          kept.push(line); // 网络失败:保留,别把"连不上"当成"商品没了"
         }
-        setHydrated(true);
-      })
-      .catch(() => {
-        if (cancelled) return;
-        // 目录拉取失败:仍按原始本地存储渲染购物车行(不做僵尸清理),避免把
-        // "网络暂时不可用"误判成"商品已下架"而清空用户的购物车。
-        try {
-          const raw = localStorage.getItem(STORAGE_KEY);
-          if (raw) setLines(JSON.parse(raw) as CartState);
-        } catch {
-          /* ignore */
+      }
+      return { kept, extra };
+    }
+
+    async function load() {
+      const map: Record<string, CartCatalogEntry> = {};
+      let catalogOk = false;
+      try {
+        const res = await fetch("/api/products");
+        // 关键:非 2xx 不能当成"目录是空的"。旧逻辑 `res.ok ? json() : null` 会让
+        // catalog 变 {} → pruneLines 剔掉所有行 → 再把空数组写回 localStorage,
+        // 于是任何 5xx/429/403(CDN、WAF、部署重启)都会**永久清空**用户的购物袋。
+        if (res.ok) {
+          const data = (await res.json()) as { products?: ProductsApiItem[] };
+          for (const p of data.products ?? []) map[p.code] = toEntry(p);
+          catalogOk = true;
         }
+      } catch {
+        /* 网络层失败,同样按"目录不可用"处理 */
+      }
+      if (cancelled) return;
+
+      setCatalog(map);
+      // 无论成功与否都要置位:否则购物袋页会永远停在 "Loading your bag…"
+      setCatalogLoaded(true);
+
+      let parsed: CartState = [];
+      try {
+        const raw = localStorage.getItem(STORAGE_KEY);
+        if (raw) parsed = JSON.parse(raw) as CartState;
+      } catch {
+        /* ignore */
+      }
+      if (cancelled) return;
+
+      if (!catalogOk) {
+        // 目录不可用:原样渲染本地存储的行,不做任何清理,等下次加载再对账。
+        setLines(parsed);
         setHydrated(true);
-      });
+        return;
+      }
+
+      const { kept, extra } = await reconcile(parsed, map);
+      if (cancelled) return;
+      if (Object.keys(extra).length > 0) setCatalog((prev) => ({ ...prev, ...extra }));
+      setLines(kept);
+      setHydrated(true);
+    }
+
+    void load();
     return () => {
       cancelled = true;
     };

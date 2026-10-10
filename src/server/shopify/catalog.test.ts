@@ -46,6 +46,17 @@ describe("listShopifyProducts", () => {
   it("throws on a non-OK HTTP response (so the page can fall back to local)", async () => {
     await expect(listShopifyProducts(mockFetch({}, false))).rejects.toThrow();
   });
+
+  it("asks Shopify for the visitor's market and keeps one cache key per country", async () => {
+    // 缓存串味是本文件开头记录的线上事故:同 URL 不同 body 会被 Next 的数据缓存
+    // 复用。按国家查询时,国家必须同时进 URL 缓存键与 @inContext 字面量,否则
+    // 香港访客会拿到美国市场的 USD 金额。
+    const f = mockFetch({ data: { products: { nodes: [] } } });
+    await listShopifyProducts(f, "gb");
+    const [url, init] = (f as unknown as ReturnType<typeof vi.fn>).mock.calls[0] as [string, RequestInit];
+    expect(url).toContain("ck=products-list%3AGB");
+    expect(String(init.body)).toContain("@inContext(country: GB)");
+  });
 });
 
 describe("fetchShopifyCollections", () => {
@@ -109,7 +120,7 @@ describe("fetchShopifyCollectionProducts", () => {
       },
     });
 
-    const items = await fetchShopifyCollectionProducts("outdoor-sporty系列", f);
+    const items = await fetchShopifyCollectionProducts("outdoor-sporty系列", "US", f);
     expect(items).toEqual([
       {
         handle: "noir",
@@ -139,6 +150,7 @@ describe("fetchShopifyCollectionProducts", () => {
   it("returns an empty array when the collection has no products", async () => {
     const items = await fetchShopifyCollectionProducts(
       "frontpage",
+      "US",
       mockFetch({ data: { collectionByHandle: { title: "x", products: { nodes: [] } } } }),
     );
     expect(items).toEqual([]);
@@ -146,11 +158,19 @@ describe("fetchShopifyCollectionProducts", () => {
 
   it("throws when the collection handle does not exist (so the caller can fall back to local)", async () => {
     await expect(
-      fetchShopifyCollectionProducts("nope", mockFetch({ data: { collectionByHandle: null } })),
+      fetchShopifyCollectionProducts("nope", "US", mockFetch({ data: { collectionByHandle: null } })),
     ).rejects.toThrow();
   });
 
   it("throws on a non-OK HTTP response", async () => {
-    await expect(fetchShopifyCollectionProducts("frontpage", mockFetch({}, false))).rejects.toThrow();
+    await expect(fetchShopifyCollectionProducts("frontpage", "US", mockFetch({}, false))).rejects.toThrow();
+  });
+
+  it("keeps collection + country in the cache key so one series' market prices cannot leak into another's", async () => {
+    const f = mockFetch({ data: { collectionByHandle: { title: "x", products: { nodes: [] } } } });
+    await fetchShopifyCollectionProducts("frontpage", "hk", f);
+    const [url, init] = (f as unknown as ReturnType<typeof vi.fn>).mock.calls[0] as [string, RequestInit];
+    expect(url).toContain("ck=collection-products%3Afrontpage%3AHK");
+    expect(String(init.body)).toContain("@inContext(country: HK)");
   });
 });

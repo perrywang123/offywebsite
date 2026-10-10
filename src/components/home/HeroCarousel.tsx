@@ -121,8 +121,9 @@ export function HeroCarousel({
         </div>
         {/* 主标题(PSD 例:OFFY PRINCESS SERIES bbox x208 y1777 w2647 h168:
             x6.4%,224.5px=6.91cqw)。中英文同字号 —— 新 PSD 直接给了英文稿
-            (OFFY DRESS-UP SERIES 宽 2723px = 83.8%),不再需要旧版「英文收窄到
-            4.6cqw」的权宜处理。
+            (PSD 里 OFFY DRESS-UP SERIES 宽 2723px = 83.8%),不再需要旧版「英文收窄到
+            4.6cqw」的权宜处理。标题文案后来按用户要求去掉了「OFFY」前缀,
+            最长屏现在是 STREETWEAR SERIES,字号规则不变。
             y:PSD 给的是字形 ink 顶(高 168 = 0.75em 大写字高),而 CSS top 定位
             的是行盒顶,两者相差约半行距+上伸部;实测在 1.05 行高下为 0.16em
             ≈ 1.7% 头图高,故 72.88% - 1.68% = 71.2%。
@@ -248,9 +249,9 @@ export function HeroCarousel({
           {/* 右下 ←/→ 箭头按钮(PSD y76.3-82.3%,与主标题同带;x89.8-97.2%;
               120×122px≈3.7cqw 方形,黑 50% 透明底 + 白色箭头图标;
               效果图实测两按钮间有约 8-12px 间距(gap-1)且角部微圆)。
-              窄屏(lg 以下)下移到 84.8% 并缩到 2.7cqw:最长的那屏标题
-              (OFFY DRESS-UP SERIES)在窄屏会铺到 88% 宽,箭头留在 76.3% 会压住
-              标题尾巴;下移后与滚动条同带,而滚动条只画到 74% 宽,横向不冲突。 */}
+              窄屏(lg 以下)下移到 84.8% 并缩到 2.7cqw:最长的标题
+              (STREETWEAR SERIES,原始的 OFFY DRESS-UP SERIES)在窄屏会铺到 88% 宽,
+              箭头留在 76.3% 会压住标题尾巴;下移后与滚动条同带,横向不冲突。 */}
           <div className="absolute right-[2.8%] top-[84.8%] flex gap-1 lg:top-[76.3%]">
             <button
               type="button"

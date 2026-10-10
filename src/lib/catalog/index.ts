@@ -1,8 +1,8 @@
-import { products, upcomingIps, collabLooks, teaserSeries } from "./products";
+import { products, productHandleAliases, upcomingIps, collabLooks, teaserSeries } from "./products";
 import { seriesList } from "./series";
 import type { Product } from "./types";
 
-export { products, upcomingIps, collabLooks, teaserSeries, seriesList };
+export { products, productHandleAliases, upcomingIps, collabLooks, teaserSeries, seriesList };
 export { getSeries, seriesMap } from "./series";
 export type { Product, Series, SeriesSlug, LocalizedString, Dimensions } from "./types";
 export type { UpcomingIp } from "./products";
@@ -13,6 +13,14 @@ export function getProducts(): Product[] {
 
 export function getProductByCode(code: string): Product | undefined {
   return products.find((p) => p.code.toLowerCase() === code.toLowerCase());
+}
+
+/**
+ * 商品改过 handle 时,把旧 handle 解析成当前 handle(详情页据此 308 跳转)。
+ * 大小写不敏感,未命中返回 undefined。
+ */
+export function getProductHandleAlias(code: string): string | undefined {
+  return productHandleAliases[code.toLowerCase()];
 }
 
 /** Reverse lookup: find the local product mapped to a given Shopify handle. */

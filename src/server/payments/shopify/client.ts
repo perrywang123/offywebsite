@@ -58,10 +58,29 @@ function marketCountry(): string {
   return /^[A-Z]{2}$/.test(c) ? c : "US";
 }
 
-// buyerIdentity.countryCode 驱动 Shopify Markets 的 presentment 币种（US → USD）。
-function cartMutation(country: string): string {
+/** 归一化国家码:非两位大写字母一律回落到 SHOPIFY_MARKET_COUNTRY。 */
+function normalizeCountry(country: string): string {
+  const cc = country.trim().toUpperCase();
+  return /^[A-Z]{2}$/.test(cc) ? cc : marketCountry();
+}
+
+/** 站点语言 → Storefront 的 LanguageCode 枚举字面量。 */
+export type CartLanguage = "en" | "zh";
+
+function languageCode(language: CartLanguage): string {
+  return language === "zh" ? "ZH_CN" : "EN";
+}
+
+// buyerIdentity.countryCode 驱动 Shopify Markets 的 presentment 币种:必须传
+// **访客所在国家**,与站上展示价格用的是同一个市场(US→USD、GB→GBP、
+// HK→HKD、JP/DE→SGD)。此前这里固定用 SHOPIFY_MARKET_COUNTRY(=US),于是英国
+// 访客在站上看到 £37.90、点结算却被送到美元结账页,金额与站上不一致。
+// language 也必须显式给:不给就用店铺默认语言 —— 实测该店默认是中文,于是英文站的顾客
+// 会被送到一个纯中文的结账页(标题「结账」、字段「联系方式/配送/发货方式」)。
+/** 导出仅为单测断言:国家必须是访客国家,且同时进 @inContext 与 buyerIdentity。 */
+export function cartMutation(country: string, language: CartLanguage): string {
   return `
-mutation CartCreate($lines: [CartLineInput!]!) @inContext(country: ${country}) {
+mutation CartCreate($lines: [CartLineInput!]!) @inContext(country: ${country}, language: ${languageCode(language)}) {
   cartCreate(input: { lines: $lines, buyerIdentity: { countryCode: ${country} } }) {
     cart { id checkoutUrl }
     userErrors { field message }
@@ -76,13 +95,21 @@ interface CartCreateData {
   };
 }
 
-/** Create a Shopify cart (in the configured market) and return its checkoutUrl. */
+/**
+ * Create a Shopify cart in the **visitor's market** and return its checkoutUrl.
+ *
+ * @param country ISO-3166 alpha-2 of the visitor; omitted → `SHOPIFY_MARKET_COUNTRY`.
+ *                Invalid values fall back to the default market rather than
+ *                being interpolated into the GraphQL enum literal.
+ */
 export async function cartCreate(
   lines: CartLineInput[],
   fetchImpl: typeof fetch = fetch,
+  language: CartLanguage = "en",
+  country: string = marketCountry(),
 ): Promise<ShopifyCart> {
   const data = await storefrontFetch<CartCreateData>(
-    cartMutation(marketCountry()),
+    cartMutation(normalizeCountry(country), language),
     { lines },
     fetchImpl,
   );

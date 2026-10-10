@@ -20,6 +20,9 @@ import type {
 import { captureOrder, createOrder, getOrder, voidOrder } from "./client";
 import { amountMatches, assertCurrencyUsd, extractApproveUrl } from "./verify";
 
+/** 拿不到访客国家时(未配置 geo 头/直接调用)回落的市场。 */
+const DEFAULT_MARKET_COUNTRY = env.SHOPIFY_MARKET_COUNTRY;
+
 export class PayPalPaymentProvider implements PaymentProvider {
   readonly name = "paypal" as const;
 
@@ -38,7 +41,7 @@ export class PayPalPaymentProvider implements PaymentProvider {
     // 保证新上架 Shopify 商品也能走通 PayPal 结算,不需要再手动维护本地清单。
     const validItems: { product: Product; quantity: number }[] = [];
     for (const item of input.items) {
-      const product = await getLiveProductByCode(item.code);
+      const product = await getLiveProductByCode(item.code, input.country ?? DEFAULT_MARKET_COUNTRY);
       if (!product || !product.isAvailable || product.isQuoteOnly) {
         return { ok: false, status: 400, error: "invalid_items" };
       }
@@ -46,6 +49,18 @@ export class PayPalPaymentProvider implements PaymentProvider {
     }
     if (validItems.length === 0) return { ok: false, status: 400, error: "invalid_request" };
     if (!this.isConfigured()) return { ok: false, status: 503, error: "paypal_unavailable" };
+
+    // ⚠️ 未完成的多币种改造(有意留白,不静默混币):PayPal 这条通道按 USD 计价,
+    // 且 capture 阶段会用 `assertCurrencyUsd` 强校验,而订单快照表还没有"下单市场
+    // 币种"这一列。解析出非 USD 价格时直接拒绝,而不是把 GBP/HKD 金额标成 USD 收。
+    // (2026-08 起结算渠道已确定只保留 Shopify,故这里不再扩展。)
+    const nonUsd = validItems.find(({ product }) => product.currency.toUpperCase() !== "USD");
+    if (nonUsd) {
+      console.warn(
+        `PayPalPaymentProvider: refusing to charge ${nonUsd.product.currency} as USD (code=${nonUsd.product.code}); PayPal channel is USD-only until the order snapshot records a currency.`,
+      );
+      return { ok: false, status: 400, error: "currency_not_supported" };
+    }
 
     const subtotalCents = validItems.reduce((sum, { product, quantity }) => sum + product.priceCents * quantity, 0);
     const lineItems: LineItemSnapshot[] = validItems.map(({ product, quantity }) => ({

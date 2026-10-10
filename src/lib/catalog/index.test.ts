@@ -10,9 +10,11 @@ import {
   toStripeLineItems,
 } from "./index";
 
-describe("catalog data integrity (19 Shopify-mapped products)", () => {
-  it("exposes exactly 19 products, one per Shopify-published item", () => {
-    expect(products).toHaveLength(19);
+describe("catalog data integrity (33 Shopify-mapped products)", () => {
+  it("exposes exactly 33 products, one per Shopify-published item", () => {
+    // 兜底表按 Shopify 的 US 市场同步:12(公主)+ 9(街头)+ 12(趣味)= 33。
+    // 用 `pnpm check:catalog` 与线上核对,漂移会被列出来。
+    expect(products).toHaveLength(33);
   });
 
   it("defines exactly 3 series aligned with Shopify Collections", () => {
@@ -50,18 +52,22 @@ describe("catalog data integrity (19 Shopify-mapped products)", () => {
     }
   });
 
-  it("series membership mirrors Shopify Collections (12 / 1 / 6)", () => {
+  it("series membership mirrors Shopify Collections (12 / 9 / 12)", () => {
     expect(getProductsBySeries("princess-lady")).toHaveLength(12);
-    expect(getProductsBySeries("outdoor-sporty")).toHaveLength(1);
-    expect(getProductsBySeries("playful-life")).toHaveLength(6);
+    expect(getProductsBySeries("outdoor-sporty")).toHaveLength(9);
+    expect(getProductsBySeries("playful-life")).toHaveLength(12);
   });
 
   it("prices mirror the Shopify store tiers", () => {
     const byPrice = (cents: number) => products.filter((p) => p.priceCents === cents).length;
     expect(byPrice(5190)).toBe(2);
-    expect(byPrice(4990)).toBe(3);
-    expect(byPrice(4590)).toBe(9);
-    expect(byPrice(0)).toBe(5);
+    expect(byPrice(5390)).toBe(1);
+    expect(byPrice(4990)).toBe(14);
+    expect(byPrice(4790)).toBe(3);
+    expect(byPrice(4590)).toBe(13);
+    // 兜底表里不允许出现 0 价:Shopify 侧 0 表示"价格没配",同步前本地有 5 条是 0,
+    // 回退模式下会把商品显示成 $0.00(线上实测踩到过)。
+    expect(byPrice(0)).toBe(0);
   });
 
   it("marks regional-exclusive products (cold-kitten/lemon-fizz US)", () => {

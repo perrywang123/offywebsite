@@ -11,6 +11,7 @@ function make(overrides: Partial<Product> = {}): Product {
     name: { zh: "街头小子 Offy", en: "Offy Street Player" },
     description: { zh: "本地描述", en: "local description" },
     priceCents: 4500,
+    currency: "USD",
     dimensions: null,
     images: ["/assets/products/p11.png"],
     emotionTags: { zh: ["街头"], en: ["street"] },
@@ -82,20 +83,35 @@ describe("enrichProduct", () => {
     expect(fetcher).not.toHaveBeenCalled();
   });
 
-  it("keeps the local USD price when Shopify currency is not USD, but still syncs name/images", async () => {
+  it("adopts a non-USD market price together with its currency instead of discarding it", async () => {
+    // 旧行为(已废弃):非 USD 时丢弃实时价、保留本地美元价 —— 于是访客市场的
+    // 真实金额被丢掉并以美元印出来。新语义:金额与币种一并采用。
     const fetcher = vi.fn().mockResolvedValue({
       title: "offy_redrush",
       description: "offy",
       images: ["https://cdn.shopify.com/x.jpg"],
-      priceCents: 10,
-      currency: "HKD",
+      priceCents: 3790,
+      currency: "GBP",
     });
     const result = await enrichProduct(make(), fetcher);
-    // 价格保留本地 USD，不被 HKD 覆盖
-    expect(result.priceCents).toBe(4500);
+    expect(result.priceCents).toBe(3790);
+    expect(result.currency).toBe("GBP");
     // 名称/图片仍同步
     expect(result.name.en).toBe("offy_redrush");
     expect(result.images).toEqual(["https://cdn.shopify.com/x.jpg"]);
+  });
+
+  it("keeps the local USD price (marked USD) when Shopify returns no currency at all", async () => {
+    const fetcher = vi.fn().mockResolvedValue({
+      title: "offy_redrush",
+      description: "offy",
+      images: [],
+      priceCents: 3790,
+      currency: "",
+    });
+    const result = await enrichProduct(make(), fetcher);
+    expect(result.priceCents).toBe(4500);
+    expect(result.currency).toBe("USD");
   });
 
   it("lets a legitimate USD $0 price override the local placeholder", async () => {

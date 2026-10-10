@@ -54,6 +54,14 @@ export const newsItems: NewsItem[] = [
  * (PSD: 时尚潮流生活→OFFY DRESS-UP SERIES,趣味生活系列→STREETWEAR SERIES·),
  * 与 resources/独立站首页文案.xlsx 的登记相反;此处按用户要求以 PSD 为准。
  * 唯一例外:PSD 该组标题尾部多打了一个 '·',经用户确认是笔误,已去掉。
+ *
+ * 标题文案的最终口径见 `独立站首页文案` Excel(2026-10):
+ *  · 去掉品牌前缀 —— 英文「OFFY」与中文「Offy 」都去掉了;
+ *  · **两屏文案对调**:PSD 把「DRESS-UP / Too Cute…」与「STREETWEAR / Weekend…」
+ *    贴错了屏(Excel 标注「文案匹配错了」),已按文案表换回 ——
+ *    街头屏(hero-streetwear)= STREETWEAR SERIES / Weekend in Motion,
+ *    趣味屏(hero-playful)= DRESS-UP SERIES / Too Cute to Dress Normal。
+ *    跳转链接本来就没错,只有文字贴错了。中文侧原本配对是对的,只去了前缀。
  * 中文标题与跳转链接未动(仍与文案表一致)。
  */
 export interface HeroSlideData {
@@ -99,22 +107,22 @@ export const heroSlides: HeroSlideData[] = [
     image: "/assets/hero/hero-princess.jpg",
     bg: "#fefefe",
     href: "/collections/princess-lady",
-    title: { zh: "Offy 公主系列", en: "OFFY Princess Series" },
+    title: { zh: "公主系列", en: "Princess Series" },
     subtitle: { zh: "生活需要仪式感", en: "Romanticize the Everyday" },
   },
   {
     image: "/assets/hero/hero-streetwear.jpg",
     bg: "#d1c0b6",
     href: "/collections/outdoor-sporty",
-    title: { zh: "Offy 时尚潮流生活", en: "OFFY DRESS-UP SERIES" },
-    subtitle: { zh: "周末出去玩", en: "Too Cute to Dress Normal" },
+    title: { zh: "时尚潮流生活", en: "STREETWEAR SERIES" },
+    subtitle: { zh: "周末出去玩", en: "Weekend in Motion" },
     dark: true,
   },
   {
     image: "/assets/hero/hero-playful.jpg",
     bg: "#fefefe",
     href: "/collections/playful-life",
-    title: { zh: "Offy 趣味生活系列", en: "STREETWEAR SERIES" },
-    subtitle: { zh: "日常犯可爱", en: "Weekend in Motion" },
+    title: { zh: "趣味生活系列", en: "DRESS-UP SERIES" },
+    subtitle: { zh: "日常犯可爱", en: "Too Cute to Dress Normal" },
   },
 ];

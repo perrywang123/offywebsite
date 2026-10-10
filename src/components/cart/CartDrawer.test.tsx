@@ -81,7 +81,7 @@ describe("CartDrawer × live catalog (/api/products-backed)", () => {
       baseCart({
         lines: [{ code: "noir", quantity: 2 }],
         catalog: {
-          noir: { code: "noir", name: { zh: "诺尔", en: "NOIR" }, images: ["https://cdn.shopify.com/noir.jpg"], priceCents: 4500, available: true },
+          noir: { code: "noir", name: { zh: "诺尔", en: "NOIR" }, images: ["https://cdn.shopify.com/noir.jpg"], priceCents: 4500, currency: "USD", available: true },
         },
       }),
     );
@@ -102,6 +102,24 @@ describe("CartDrawer × live catalog (/api/products-backed)", () => {
     );
     render(<CartDrawer />);
     expect(screen.getByText("empty")).toBeInTheDocument();
+  });
+
+  it("renders each line and the subtotal in the line's own market currency (GBP), not in USD", () => {
+    // 价格按访客所在市场返回(英国访客 → GBP),购物袋不能把它当成美元印出来。
+    mockUseCart.mockReturnValue(
+      baseCart({
+        lines: [{ code: "noir", quantity: 2 }],
+        catalog: {
+          noir: { code: "noir", name: { zh: "诺尔", en: "NOIR" }, images: ["https://cdn.shopify.com/noir.jpg"], priceCents: 3790, currency: "GBP", available: true },
+        },
+      }),
+    );
+    render(<CartDrawer />);
+    // 行价 £37.90(同一行在英文站是 £37.90、在中文站也是 £37.90)
+    expect(screen.getAllByText("£37.90").length).toBeGreaterThan(0);
+    // 小计 = 2 × £37.90,而且**没有**出现美元符号
+    expect(screen.getByText("£75.80")).toBeInTheDocument();
+    expect(screen.queryByText(/\$/)).not.toBeInTheDocument();
   });
 
   it("shows a loading state instead of a false 'empty cart' while the live catalog is still loading", () => {

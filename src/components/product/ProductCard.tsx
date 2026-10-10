@@ -2,7 +2,7 @@ import Image from "next/image";
 import { flagEmoji, regionBadgeLabel } from "@/lib/geo";
 import { Link } from "@/i18n/navigation";
 import type { Product } from "@/lib/catalog";
-import { formatUsdCents } from "@/lib/pricing";
+import { formatPrice } from "@/lib/pricing";
 
 export function ProductCard({
   product,
@@ -26,10 +26,11 @@ export function ProductCard({
   const secondImage = product.images[1];
   const revealLabel = locale === "zh" ? "待揭晓" : "Revealing soon";
   const badgeLabel = locale === "zh" ? "新品上市" : "New in";
-  // formatUsdCents 已按 locale 走 Intl.NumberFormat 本地化货币格式(zh-CN 下
-  // 自动输出 "US$" 前缀),不再需要手写 "xx.xx美元" 的特例分支——
+  // 价格按**访客所在市场**的币种格式化:同一个商品在美国是 $49.90、英国是
+  // £37.90、香港是 HK$369.00(金额与币种都来自 Shopify 的 @inContext 查询),
+  // 所以必须把 product.currency 一起传给格式化函数,不能再写死 USD。
   // 两处价格展示(caption="code" 与默认)统一走同一套格式化逻辑。
-  const price = formatUsdCents(product.priceCents, locale);
+  const price = formatPrice(product.priceCents, product.currency, locale);
 
   return (
     <div className="group">

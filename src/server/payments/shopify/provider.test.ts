@@ -1,8 +1,24 @@
 // @vitest-environment node
 import { describe, expect, it, vi } from "vitest";
+import { cartMutation } from "./client";
 import { ShopifyPaymentProvider } from "./provider";
 
 const MOTARO_VARIANT = "gid://shopify/ProductVariant/53491815579937";
+
+describe("cartMutation (checkout market)", () => {
+  it("prices the cart in the visitor's market — country goes into both @inContext and buyerIdentity", () => {
+    // 修复前这里固定注入 SHOPIFY_MARKET_COUNTRY(=US):英国访客在站上看到
+    // £37.90,点结算却被送到按 USD 计价的结账页。buyerIdentity.countryCode
+    // 是 Shopify Markets 决定 presentment 币种的依据,必须跟着访客走。
+    const gb = cartMutation("GB", "en");
+    expect(gb).toContain("@inContext(country: GB, language: EN)");
+    expect(gb).toContain("buyerIdentity: { countryCode: GB }");
+  });
+
+  it("keeps the zh storefront's checkout language", () => {
+    expect(cartMutation("HK", "zh")).toContain("@inContext(country: HK, language: ZH_CN)");
+  });
+});
 
 describe("ShopifyPaymentProvider.createCheckout", () => {
   it("creates a Shopify cart and returns the checkoutUrl as a redirect", async () => {

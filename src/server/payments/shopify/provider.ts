@@ -1,4 +1,4 @@
-import { isShopifyConfigured } from "../../../lib/env";
+import { env, isShopifyConfigured } from "../../../lib/env";
 import { getLiveProductByCode } from "../../catalog/live";
 import type {
   CaptureResult,
@@ -8,6 +8,12 @@ import type {
   PaymentProvider,
 } from "../types";
 import { cartCreate, type CartLineInput, type ShopifyCart } from "./client";
+
+/** CountryCode 是 GraphQL 枚举，必须作为字面量注入（用变量传不生效）。仅允许两位字母。 */
+function marketCountry(): string {
+  const c = env.SHOPIFY_MARKET_COUNTRY;
+  return /^[A-Z]{2}$/.test(c) ? c : "US";
+}
 
 type CreateCartFn = (lines: CartLineInput[]) => Promise<ShopifyCart>;
 
@@ -39,9 +45,13 @@ export class ShopifyPaymentProvider implements PaymentProvider {
   }
 
   async createCheckout(input: CreateCheckoutInput): Promise<CreateCheckoutResult> {
+    // 价格与结账都按**访客所在国家**的市场上下文解析:商品价来自
+    // `@inContext(country: 访客国家)`,购物车也用同一个国家建,否则站上显示的
+    // £37.90 会在结账页变成 $49.90。
+    const country = input.country;
     const lines: CartLineInput[] = [];
     for (const item of input.items) {
-      const product = await getLiveProductByCode(item.code);
+      const product = await getLiveProductByCode(item.code, country ?? marketCountry());
       if (!product || !product.isAvailable || product.isQuoteOnly || !product.shopifyVariantId) {
         return { ok: false, status: 400, error: "invalid_items" };
       }
@@ -51,7 +61,12 @@ export class ShopifyPaymentProvider implements PaymentProvider {
 
     if (!this.isConfigured()) return { ok: false, status: 503, error: "shopify_unavailable" };
 
-    const createCart = this.deps.createCart ?? ((l: CartLineInput[]) => cartCreate(l));
+    const createCart =
+      this.deps.createCart ??
+      ((l: CartLineInput[]) =>
+        country
+          ? cartCreate(l, fetch, input.locale, country)
+          : cartCreate(l, fetch, input.locale));
     try {
       const cart = await createCart(lines);
       return {

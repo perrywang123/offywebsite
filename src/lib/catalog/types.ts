@@ -33,8 +33,17 @@ export interface Product {
   description: LocalizedString;
   /** Structured description paragraphs from Shopify descriptionHtml (bold lead preserved). */
   descriptionBlocks?: LocalizedDescriptionBlocks;
-  /** Price in USD cents (integer) — never floating point. */
+  /** Price in minor units of `currency` (integer cents) — never floating point. */
   priceCents: number;
+  /**
+   * ISO-4217 code the `priceCents` amount is denominated in.
+   *
+   * 全站按**访客所在市场**展示价格:Shopify Storefront 的 `@inContext(country:)`
+   * 会按该国的 Market 返回金额 + 币种(US→USD 49.90、GB→GBP 37.90、
+   * HK→HKD 369.00、JP/DE→SGD 49.90),我们如实采用,不再假设"价格就是美元"。
+   * 本地静态兜底表(`lib/catalog/products.ts`)里的快照价是美元,故为 `"USD"`。
+   */
+  currency: string;
   dimensions: Dimensions | null;
   images: string[];
   emotionTags: LocalizedStringList;
