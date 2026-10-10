@@ -367,10 +367,12 @@ body {
 
 ```
 [1] 全宽 hero：.kicker「OUR STORY」+ H1 大 slogan（2 行）+ lede（替代现纯文字标题）
-[2] 图文交替段 A（Story）：图区 = 产品图拼贴/占位（3:4）+ 右文 storyP1/P2/P3（lede 大字）
-[3] 团队块：bg-ink 全宽，JIE / 桃子 两张「编辑名片」卡（名字 caps + 一句话），黄油色点缀名
-[4] 零售网络：细线列表（替代 3 张纯白卡）：上海 TX 淮海 / 杭州 in77 / 曼谷 Warehouse30_6，左侧 caps 城市、右侧地址
-[5] 未来 IP：MISS KITTY / PSYCHE 两张「Coming Soon」卡（图占位 + caps 标签）
+[2] 图文交替段 A（Story）：图区 = 产品图拼贴/占位（3:4）+ 右文 `about.storyParagraphs`
+    （**数组**，不再是 storyP1/P2/P3；文案见 `docs/our-story-source.md`）
+[3] ~~团队块：bg-ink 全宽，JIE / 桃子 两张「编辑名片」卡~~ **已按文案表整块删除**
+[4] ~~零售网络：细线列表：上海 TX 淮海 / 杭州 in77 / 曼谷 Warehouse30_6~~ **已按文案表整块删除**
+[5] 未来 IP：改为复用首页的 `UpcomingCard`（标题取 `home.comingTitle`），
+    插画来自 `后续计划.psd` 的智能对象；~~PSYCHE~~ 已定名 **Butterfly Sprite**
 [6] 定制合作 CTA：居中大字 + link-line
 ```
 
