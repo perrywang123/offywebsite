@@ -35,11 +35,15 @@ const slides: HeroSlide[] = [
     image: "/assets/hero/hero-01.jpg",
     bg: "#babbb9",
     wordmark: true,
+    // 真实数据(lib/content.ts 的 heroSlides)**5 屏都带 href** —— 夹具必须一致,
+    // 否则"5 屏整屏可点"这条断言测的是夹具而不是产品行为。
+    href: "/about",
     text: { zh: "让想象落地 让陪伴发生", en: "Line one\nLine two" },
   },
   {
     image: "/assets/hero/hero-promo.jpg",
     bg: "#f7f2ef",
+    href: "/products",
     promo: {
       kicker: { zh: "OFFY大促加赠", en: "OFFY MEGA GIVEAWAY" },
       text: { zh: "买三个公仔\n送包包", en: "Buy 3\nget a free tote" },
@@ -70,13 +74,40 @@ const slides: HeroSlide[] = [
 ];
 
 describe("HeroCarousel", () => {
-  it("renders a details CTA link on each series slide (3-5), not on slides 1-2", () => {
+  it("不渲染「查看详情」胶囊(老板诉求 1:隐藏,逻辑保留在开关后)", () => {
+    const { container } = render(<HeroCarousel slides={slides} locale="zh" />);
+    expect(screen.queryAllByRole("link", { name: "heroDetailsCta", hidden: true })).toHaveLength(0);
+    // 「查看详情」原来的箭头 PNG 是它唯一的图源,胶囊没了它也不该再被渲染
+    const srcs = Array.from(container.querySelectorAll("img")).map((i) => i.getAttribute("src"));
+    expect(srcs).not.toContain("/assets/hero/cta-arrow.png");
+    expect(srcs).not.toContain("/assets/hero/cta-arrow-white.png");
+  });
+
+  it("不渲染左右箭头按钮(老板诉求 1),手动切换仍剩指示条 + 触摸滑动", () => {
     render(<HeroCarousel slides={slides} locale="zh" />);
-    const ctas = screen.getAllByRole("link", { name: "heroDetailsCta", hidden: true });
-    expect(ctas).toHaveLength(3);
-    expect(ctas[0]).toHaveAttribute("href", "/collections/princess-lady");
-    expect(ctas[1]).toHaveAttribute("href", "/collections/outdoor-sporty");
-    expect(ctas[2]).toHaveAttribute("href", "/collections/playful-life");
+    expect(screen.queryAllByRole("button", { name: "heroPrevSlide" })).toHaveLength(0);
+    expect(screen.queryAllByRole("button", { name: "heroNextSlide" })).toHaveLength(0);
+    // 5 个 tab 指示条仍在,并且仍能直达任意屏
+    const dots = screen.getAllByRole("tab", { hidden: true });
+    expect(dots).toHaveLength(5);
+    fireEvent.click(dots[3]);
+    expect(dots[3]).toHaveAttribute("aria-selected", "true");
+  });
+
+  it("5 屏**全部**整屏可点(CTA 隐藏后不能留死区;href 集合 = 5 条)", () => {
+    const { container } = render(<HeroCarousel slides={slides} locale="zh" />);
+    const hrefs = Array.from(container.querySelectorAll("a")).map((a) => a.getAttribute("href"));
+    expect(hrefs.sort()).toEqual(
+      [
+        "/about",
+        "/products",
+        "/collections/princess-lady",
+        "/collections/outdoor-sporty",
+        "/collections/playful-life",
+      ].sort(),
+    );
+    // 每屏的整屏链接都是 absolute inset-0 的那层
+    expect(container.querySelectorAll("a.absolute.inset-0")).toHaveLength(5);
   });
 
   it("renders the is.offy hand-written wordmark image on slide 1", () => {
@@ -120,27 +151,13 @@ describe("HeroCarousel", () => {
     }
   });
 
-  it("uses the white CTA arrow on the dark (fashion) slide and ink arrow elsewhere", () => {
-    const { container } = render(<HeroCarousel slides={slides} locale="zh" />);
-    const srcs = Array.from(container.querySelectorAll("img")).map((i) => i.getAttribute("src"));
-    expect(srcs).toContain("/assets/hero/cta-arrow-white.png");
-    expect(srcs).toContain("/assets/hero/cta-arrow.png");
-  });
+  // 原「深色屏用白色 CTA 箭头」用例随 CTA 一起删除:箭头 PNG 只有 CTA 一个图源,
+  // CTA 默认不渲染时该断言已无对象(翻回开关后由真实浏览器截图复核)。
 
   it("localizes title/subtitle text for en", () => {
     render(<HeroCarousel slides={slides} locale="en" />);
     expect(screen.getByText("Princess Series")).toBeInTheDocument();
     expect(screen.getByText("Life needs a sense of ritual")).toBeInTheDocument();
-    expect(screen.getAllByRole("link", { name: "heroDetailsCta", hidden: true })).toHaveLength(3);
-  });
-
-  it("advances on next arrow and goes back on prev arrow", () => {
-    render(<HeroCarousel slides={slides} locale="zh" intervalMs={60000} />);
-    const dots = screen.getAllByRole("tab", { hidden: true });
-    fireEvent.click(screen.getByRole("button", { name: "heroNextSlide" }));
-    expect(dots[1]).toHaveAttribute("aria-selected", "true");
-    fireEvent.click(screen.getByRole("button", { name: "heroPrevSlide" }));
-    expect(dots[0]).toHaveAttribute("aria-selected", "true");
   });
 
   it("auto-advances to the next slide", () => {
@@ -178,37 +195,41 @@ describe("HeroCarousel", () => {
     expect(dots[0]).toHaveAttribute("aria-selected", "true");
   });
 
-  it("makes the brand / promo screens fully clickable once they carry an href (P1-1)", () => {
-    const clickable: HeroSlide[] = [
-      { ...slides[0], href: "/about" },
-      { ...slides[1], href: "/products" },
-      slides[2],
-      slides[3],
-      slides[4],
+  it("makes **all five** screens fully clickable with their own landing href (P1-1, 诉求 1 补偿)", () => {
+    // 改动前:只有屏 1/2 整屏包链接(屏 3-5 内部有自己的「查看详情」);
+    // 诉求 1 隐藏 CTA 后,屏 3-5 也必须整屏可点,否则 60% 的头图面积是死区。
+    const { container } = render(<HeroCarousel slides={slides} locale="zh" intervalMs={60000} />);
+    // 整屏链接 = `absolute inset-0` 那层,断言的是 href ↔ 屏内容的配对
+    const screens = Array.from(container.querySelectorAll("a.absolute.inset-0")).map((a) => ({
+      href: a.getAttribute("href"),
+      text: a.textContent ?? "",
+    }));
+    expect(screens).toHaveLength(5);
+    const pairs: Array<[string, RegExp]> = [
+      ["/about", /让想象落地/],
+      ["/products", /OFFY大促加赠/],
+      ["/collections/princess-lady", /公主系列/],
+      ["/collections/outdoor-sporty", /时尚潮流/],
+      ["/collections/playful-life", /趣味生活/],
     ];
-    render(<HeroCarousel slides={clickable} locale="zh" intervalMs={60000} />);
-    expect(screen.getByRole("link", { name: /让想象落地/, hidden: true })).toHaveAttribute(
-      "href",
-      "/about",
-    );
-    expect(screen.getByRole("link", { name: /OFFY大促加赠/, hidden: true })).toHaveAttribute(
-      "href",
-      "/products",
-    );
-    // 屏 3-5 不整屏包链接(内部已有自己的「查看详情」,嵌套 <a> 非法)
-    expect(screen.getAllByRole("link", { name: "heroDetailsCta", hidden: true })).toHaveLength(3);
+    const hrefs = screens.map((s) => s.href).sort();
+    expect(hrefs).toEqual(pairs.map(([href]) => href).sort());
+    for (const [href, text] of pairs) {
+      const screen = screens.find((s) => s.href === href);
+      expect(screen?.text).toMatch(text);
+    }
   });
 
-  it("keeps ≥44px hit areas on the hero controls (arrows + indicator) at narrow widths", () => {
+  it("keeps ≥44px hit areas on the hero controls (indicator bars) at narrow widths", () => {
     render(<HeroCarousel slides={slides} locale="zh" intervalMs={60000} />);
-    for (const name of ["heroPrevSlide", "heroNextSlide"]) {
-      const btn = screen.getByRole("button", { name });
-      expect(btn.className).toContain("clamp(44px");
-      // 桌面端(lg)尺寸必须保持原值
-      expect(btn.className).toContain("lg:h-[clamp(30px,3.7cqw,48px)]");
+    // 2.8px 高的长条指示器靠伪元素把命中区扩到条上方 —— 箭头隐藏后不再有
+    // "向下扩会抢箭头命中区"的约束,扩到 2.65rem(375px 下 ≈45.2px,过 44px 门槛)。
+    // 视觉尺寸一点不动(仍 h-[1.18%]),`lg:` 那两行原值保持不动。
+    const dots = screen.getAllByRole("tab", { hidden: true });
+    expect(dots).toHaveLength(5);
+    for (const dot of dots) {
+      expect(dot.className).toContain("after:h-[calc(100%+2.65rem)]");
+      expect(dot.className).toContain("h-full");
     }
-    // 2.8px 高的长条指示器靠伪元素把命中区扩到条上方 40px,视觉尺寸不变
-    const dot = screen.getAllByRole("tab", { hidden: true })[0];
-    expect(dot.className).toContain("after:h-[calc(100%+2.5rem)]");
   });
 });

@@ -4,7 +4,12 @@ import type { NewsItem } from "@/lib/content";
 import { Reveal } from "@/components/Reveal";
 
 export interface NewsGridTexts {
-  badge: string;
+  /**
+   * 主卡徽章(`NEW ARRIVALS` / `新品上市`)。2026-10 老板诉求 3 后主卡已不再渲染它,
+   * 字段保留为可选:一是翻回开关时无需改接口,二是它与 `ProductCard` 的 `New in`
+   * 是同一句文案的登记处(messages.json 的 `home.newsBadge` 也保留未删)。
+   */
+  badge?: string;
   featureTitle: string;
   cta: string;
   browseAll: string;
@@ -15,15 +20,17 @@ export interface NewsGridTexts {
  *
  * PSD 布局(左 1 张大主卡 1324×2062 + 右 2×2 四张副卡 827×1007,列宽比
  * 1324:1746 = 43:57,与现网格一致):
- *  - 主卡文字在图片**上方居中**:NEW ARRIVALS(img y6.6%) + ROMANTICIZING
- *    EVERYDAY LIFE(img y12.9%,两行);底部居中黑色胶囊按钮 VIEW DETAILS
- *    (矩形3拷贝6:宽 694/1324=52.4%,高 206/2062=10.0%)。
+ *  - 主卡文字在图片**上方居中**:ROMANTICIZING EVERYDAY LIFE(img y12.9%,两行);
+ *    底部居中黑色胶囊按钮 VIEW DETAILS(矩形3拷贝6:宽 694/1324=52.4%,
+ *    高 206/2062=10.0%)。PSD 里标题上方还有一行 NEW ARRIVALS(img y6.6%),
+ *    已按老板 2026-10 诉求 3 删除,但它的高度并进了标题 `mt`(位置保持不变)。
  *  - 副卡文字**全部移入图片底部居中的黑色胶囊按钮**(矩形3拷贝2..5:
  *    宽 525/827=63.5%,高 135/1007=13.4%),不再有图下方的文字说明。
  *
  * 字号 = PSD 图层 FontSize × transform 缩放,换算成相对所在卡片的 cqw
  * (卡片设 container-type: inline-size,随卡片宽度等比,移动端单列同样成立):
- *    主卡 徽章 63.2/1324=4.77cqw · 大标题 127/1324=9.59cqw · 按钮字 61.6/1324=4.65cqw
+ *    主卡 大标题 127/1324=9.59cqw · 按钮字 61.6/1324=4.65cqw
+ *    (已删的徽章档位 63.2/1324=4.77cqw 仍留在标题 mt 的算式里,见上)
  *    副卡 按钮字 40/827=4.84cqw
  * 字色:主卡文字黑(PSD fill 黑)、副卡按钮字白(PSD fill 白)。
  */
@@ -62,12 +69,15 @@ export function NewsGrid({
                 窄屏文字框 14% → 8%:字号**不缩**(主卡大标题是设计定稿的 9.59cqw),
                 改用更宽的文字框解决 `ROMANTICIZING EVERYDAY LIFE` 在 343px 卡宽下
                 溢出(方案 #10:改文字框,不改字号)。所有 cqw 字号都带上下限,
-                治"窄屏线性缩水到 7.9px"那一类(方案 §1.1 规则 2)。 */}
+                治"窄屏线性缩水到 7.9px"那一类(方案 §1.1 规则 2)。
+
+                2026-10 老板诉求 3:主卡顶部的 `NEW ARRIVALS` 徽章已删除。
+                它原来的占位没有被丢掉,而是**并进了大标题的上外边距** —— 这里是无
+                margin 折叠的 flex column,不补的话标题会上移
+                `max(11px,4.77cqw) + 3.5cqw`(375px ≈ 28px、1440px ≈ 42px),
+                压到主图人物头部;老板只要求删一行字,没要求重排构图。 */}
             <div className="absolute inset-x-0 top-0 flex flex-col items-center px-[8%] pt-[6.6%] text-center sm:px-[14%]">
-              <span className="text-ink text-[max(11px,4.77cqw)] leading-none font-normal tracking-[var(--tracking-10)] uppercase">
-                {texts.badge}
-              </span>
-              <h3 className="font-display text-ink mt-[3.5cqw] text-[max(30px,9.59cqw)] leading-[1.12] font-semibold tracking-tight uppercase">
+              <h3 className="font-display text-ink mt-[calc(max(11px,4.77cqw)+3.5cqw)] text-[max(30px,9.59cqw)] leading-[1.12] font-semibold tracking-tight uppercase">
                 {texts.featureTitle}
               </h3>
             </div>

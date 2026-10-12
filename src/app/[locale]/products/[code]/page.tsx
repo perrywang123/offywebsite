@@ -96,52 +96,27 @@ export default async function ProductDetailPage({
           </Link>
         </nav>
 
-        {/* `min-w-0` 不能省:窄屏下两列都是单列栅格项,而图区里那两条横滑条
-            (自图集 / 同系列缩略图,6 × 56px + gap = 386px)的 min-content 会顺着
-            栅格项的 `min-width:auto` 把整条轨道撑到 386px —— 375px 的屏直接横向
-            溢出(实测 scrollWidth 402)。栅格项显式 min-w-0 后轨道回到版心宽度,
-            超出的部分交给 `.hscroll` 自己横滑。 */}
+        {/* `min-w-0` 不能省:窄屏下两列都是单列栅格项,而图区里那条自图集横滑条
+            (Shopify `images(first: 10)` 最多 10 × 56px + 9 × 10px gap = 650px)的
+            min-content 会顺着栅格项的 `min-width:auto` 把整条轨道撑到 650px ——
+            375px 的屏直接横向溢出(实测 scrollWidth 402)。栅格项显式 min-w-0 后
+            轨道回到版心宽度,超出的部分交给 `.hscroll` 自己横滑。
+            注:同系列那排小图已按老板诉求删除后,这里剩的**唯一**一条横滑条就是
+            自图集,它比被删掉的那排(6 × 56 + 5 × 10 = 386px)**更宽**,
+            所以 min-w-0 更不能省。 */}
         <div className="grid gap-6 md:gap-12 lg:grid-cols-[6fr_5fr]">
           {/* 图区 */}
           <div className="min-w-0 lg:sticky lg:top-24 lg:self-start">
             <div className="rounded-card bg-paper shadow-soft overflow-hidden p-2">
-              {/* 主图改为**可切换的自图集**:Shopify 侧 images(first: 10) 早就取回了
-                  最多 10 张,此前只渲染 images[0](方案「PDP 其实只有一张图」)。 */}
+              {/* 主图是**可切换的自图集**:Shopify 侧 images(first: 10) 取回最多 10 张。
+                  同系列其它商品的小图条已删除(与页尾 More 网格字面重复),
+                  换款入口统一走页尾的「More from this series」。 */}
               <ProductGallery
                 images={product.images}
                 alt={locale === "zh" ? product.name.zh : product.name.en}
                 sizes="(max-width:1024px) 100vw, 55vw"
               />
             </div>
-
-            {/* 同系列形象选择器（3:4 小卡）。窄屏 6 张 56px 卡 + gap 塞不进 343px,
-                改走 `.hscroll`(吸附 + 隐藏滚动条 + 两端渐隐);每张补**常显名称**
-                —— `title` 在触屏上永远不会显示(方案 #15/#17)。 */}
-            {siblings.length > 0 && (
-              <div className="hscroll mt-4 gap-2.5 pb-2">
-                {siblings.slice(0, 6).map((sibling) => (
-                  <Link
-                    key={sibling.code}
-                    href={`/products/${sibling.code}`}
-                    title={locale === "zh" ? sibling.name.zh : sibling.name.en}
-                    className="flex shrink-0 flex-col items-center gap-1"
-                  >
-                    <span className="rounded-soft border-sand hover:border-brown-500 active:border-brown-600 aria-[current=page]:border-brown-600 aria-[current=page]:ring-brown-100 relative block h-20 w-14 overflow-hidden border transition-colors aria-[current=page]:ring-2">
-                      <Image
-                        src={sibling.images[0]}
-                        alt={sibling.name.en}
-                        fill
-                        sizes="56px"
-                        className="object-cover"
-                      />
-                    </span>
-                    <span className="text-ink-soft w-14 truncate text-center text-[11px] leading-tight">
-                      {locale === "zh" ? sibling.name.zh : sibling.name.en}
-                    </span>
-                  </Link>
-                ))}
-              </div>
-            )}
           </div>
 
           {/* 信息区:按"标题/价格" → "营销文案" → "规格信息(情绪标签/尺寸,

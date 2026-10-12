@@ -8,9 +8,12 @@ import type { Series } from "@/lib/catalog";
  * 硬编码取 `s.name.en`,中文站也显示英文名,是一个实际的本地化缺陷。
  *
  * 第 4 列原本是 CONTACT(硬编码 hello@playcoretoys.com + 小红书),后来换成
- * 一列 6 条平级链接(4 条政策 + 联系 + FAQ);按设计稿改成 **HELP & SUPPORT 面板**
- * —— 两个大字入口(FAQ / CONTACT US)+ 细分隔线 + 弱化的「法律与政策」二级入口。
+ * 一列 6 条平级链接(4 条政策 + 联系 + FAQ);现在收成 **HELP & SUPPORT 面板**
+ * —— 两个入口(FAQ / CONTACT US)+ 细分隔线 + 弱化的「法律与政策」二级入口。
  * 那 4 条政策不再逐条铺在页脚,统一收进二级页 `/policies`。
+ *
+ * 排版口径(2026-10 老板诉求 6):面板内的链接与 MENU / COLLECTIONS 两列
+ * **完全同一套类**(同字号/同字距/同色阶),不再单独放大。
  */
 export async function Footer({ series, locale }: { series: Series[]; locale: string }) {
   const t = await getTranslations("common");
@@ -21,9 +24,8 @@ export async function Footer({ series, locale }: { series: Series[]; locale: str
   // 命中区变成 44px 而**视觉行高完全不动**(方案 §1.1 / 验收断言 3)。
   const linkCls =
     "tap-target--quiet focus-ring focus-ring--on-dark transition-colors hover:text-paper";
-  /** 两个主入口:与 kicker 同一套排版语言(display 字体 + 大写 + 宽字距),只是大一号。 */
-  const panelLinkCls = `${linkCls} font-display text-lg font-semibold uppercase tracking-[var(--tracking-14)] text-cream`;
-  /** 二级入口:明显更小、颜色更弱,是"下一层"而不是主入口,所以不与上面两条同级。 */
+  /** 二级入口:明显更弱(半透明 cream + `›` 装饰符 + 分隔线之下),是"下一层"
+   * 而不是主入口 —— 层级靠颜色阶/装饰符/位置维持,不靠字号(见下方注释)。 */
   const subLinkCls =
     "tap-target--quiet focus-ring focus-ring--on-dark inline-flex items-center gap-1.5 text-xs uppercase tracking-[var(--tracking-10)] text-cream/50 transition-colors hover:text-cream";
 
@@ -63,21 +65,30 @@ export async function Footer({ series, locale }: { series: Series[]; locale: str
             ))}
           </div>
         </nav>
-        {/* HELP & SUPPORT —— 设计稿的四级层级:kicker(栏目名) → 两个大字入口
-            → 细分隔线 → 小字弱化的「法律与政策」。分隔线是 border-t 纯样式
-            (不放空的语义元素/图标库);`›` 是装饰,aria-hidden,屏幕阅读器读到的
-            链接名仍是 "Legal & Policies",不会念成 "greater than"。
+        {/* HELP & SUPPORT —— 排名与排版**与 MENU / COLLECTIONS 两列完全同一套**
+            (容器 `text-cream/70 flex flex-col gap-3 text-xs tracking-[var(--tracking-14)] uppercase`
+            + 链接 `linkCls`),落实 brand-site spec「same kicker, link size, tracking
+            and hover treatment as the existing MENU and COLLECTIONS groups」。
+            此前这里是 `font-display text-lg font-semibold text-cream` 的"大字入口",
+            与左两列并排时看着像没对齐 —— 那是 18px display 半粗 vs 12px sans 常规的
+            光学错觉,不是盒模型偏移(.tap-target--quiet 只有 block 轴 padding/负 margin,
+            横向为零),所以这里**只统一排版属性,不加任何 -ml-* 对齐 hack**。
+            层级仍由四个不依赖字号的杠杆维持:分组线(border-t) / 颜色阶
+            (主入口 cream/70 vs 二级 cream/50) / `›` 装饰符(aria-hidden) / 位置。
+            `›` 是装饰,屏幕阅读器读到的链接名仍是 "Legal & Policies"。
             aria-label 与 MENU / COLLECTIONS 两列同一写法,直接用栏目名。 */}
         <nav aria-label={t("footer.policiesHeading")}>
           <p className="kicker kicker--on-dark mb-4">{t("footer.policiesHeading")}</p>
-          <div className="flex flex-col items-start gap-3">
-            <Link href="/faq" className={panelLinkCls}>
+          <div className="text-cream/70 flex flex-col gap-3 text-xs tracking-[var(--tracking-14)] uppercase">
+            <Link href="/faq" className={linkCls}>
               {t("footer.faqLabel")}
             </Link>
-            <Link href="/policies/contact" className={panelLinkCls}>
+            <Link href="/policies/contact" className={linkCls}>
               {t("footer.contactLabel")}
             </Link>
           </div>
+          {/* 二级入口:`text-cream/50` ≈ 5.21:1,**过 AA**。不要再往下压 ——
+              `/40` ≈ 3.81:1 会跌破 AA(12px 属"正常文字",不适用大字例外)。 */}
           <div className="border-cream/10 mt-5 border-t pt-4">
             <Link href="/policies" className={subLinkCls}>
               {tp("legalLabel")}

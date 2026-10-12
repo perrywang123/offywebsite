@@ -22,20 +22,42 @@ function walk(dir: string, out: string[] = []): string[] {
   return out;
 }
 
+/**
+ * 去掉注释后再逐行扫描 —— 注释里的反面例子不算违规(例如"不要写 px-6")。
+ *
+ * 这里必须**真的剥掉块注释**而不是"看行首是不是 `*`":本仓的 JSX 注释块
+ * (`{/* ... *\/}`)里的说明文字不以 `*` 开头,行首判断会漏掉它们,于是
+ * "说明里提到过的类名"会被当成违规。返回的行号仍是原文件行号。
+ */
+function codeLines(source: string): Array<{ line: string; no: number }> {
+  const stripped = source.replace(/\/\*[\s\S]*?\*\//g, "");
+  return stripped
+    .split("\n")
+    .map((line, i) => ({ line: line.replace(/\/\/.*$/, ""), no: i + 1 }))
+    .filter(({ line }) => line.trim() !== "");
+}
+
 /** 逐行扫描,返回 `file:line: 该行内容`(便于直接定位)。 */
 function scan(pattern: RegExp): string[] {
   const hits: string[] = [];
   for (const file of walk(SRC)) {
-    const lines = readFileSync(file, "utf8").split("\n");
-    lines.forEach((line, i) => {
-      // 注释里的反面例子不算违规(例如"不要写 px-6")
-      if (/^\s*(\/\/|\*|\/\*)/.test(line)) return;
-      if (pattern.test(line))
-        hits.push(`${relative(process.cwd(), file)}:${i + 1}: ${line.trim()}`);
-    });
+    for (const { line, no } of codeLines(readFileSync(file, "utf8"))) {
+      if (pattern.test(line)) hits.push(`${relative(process.cwd(), file)}:${no}: ${line.trim()}`);
+    }
   }
   return hits;
 }
+
+/** 只扫某一个源文件(用于"某个页面不再渲染 X"这类定点守卫)。 */
+function scanFile(relPath: string, pattern: RegExp): string[] {
+  const hits: string[] = [];
+  for (const { line, no } of codeLines(readFileSync(join(process.cwd(), relPath), "utf8"))) {
+    if (pattern.test(line)) hits.push(`${relPath}:${no}: ${line.trim()}`);
+  }
+  return hits;
+}
+
+const HOME_PAGE = "src/app/[locale]/page.tsx";
 
 describe("移动端规范 · 源码断言 (B12)", () => {
   it("不出现 9px / 10px 字号(11px 是站内绝对下限)", () => {
@@ -58,5 +80,16 @@ describe("移动端规范 · 源码断言 (B12)", () => {
   it("紧凑按钮尺寸(32/36px)只在 `lg:` 前缀里出现 —— 窄屏必须 ≥44px,≥1024px 保持不变", () => {
     // `lg:h-8 lg:w-8` 这类"桌面恢复"写法是允许的;裸的 h-8 w-8 不允许。
     expect(scan(/(?<!lg:)h-(8|9) w-(8|9)/)).toEqual([]);
+  });
+
+  it("首页不再渲染滚动促销条 Marquee(老板诉求 2:组件与单测已删除)", () => {
+    expect(scanFile(HOME_PAGE, /<Marquee/)).toEqual([]);
+    expect(scanFile(HOME_PAGE, /promoMessages/)).toEqual([]);
+  });
+
+  it("首页不再引用三张底纹图(老板诉求 5:素材已删除,色值改写成 CSS)", () => {
+    // scanFile 已跳过整行注释,而这三处说明都写在 JSX 注释块里 ——
+    // 所以只要还有任何**代码行**提到这几个文件名,就说明底图引用回来了。
+    expect(scanFile(HOME_PAGE, /(news|category|upcoming)-bg\.jpg/)).toEqual([]);
   });
 });

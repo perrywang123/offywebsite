@@ -12,7 +12,6 @@ import { env } from "@/lib/env";
 import { Reveal } from "@/components/Reveal";
 
 export const revalidate = 60;
-import { Marquee } from "@/components/Marquee";
 import { HeroCarousel } from "@/components/home/HeroCarousel";
 import { NewsGrid } from "@/components/home/NewsGrid";
 import { UpcomingCard } from "@/components/home/UpcomingCard";
@@ -22,9 +21,6 @@ import { NewsletterForm } from "@/components/newsletter-form";
 export default async function HomePage({ params }: { params: Promise<{ locale: string }> }) {
   const { locale } = await params;
   const t = await getTranslations("home");
-  const tCommon = await getTranslations("common");
-  const promoMessages = tCommon.raw("promoMessages") as string[];
-  const promoLine = promoMessages.join("  —  is.offy  —  ");
 
   // 先确定访客国家,再按它查询:所有价格(含区域限定)都用同一个市场上下文,
   // 保证首页上的金额/币种与结账页一致(见 server/catalog/live.ts 的 resolvePrice)。
@@ -50,27 +46,29 @@ export default async function HomePage({ params }: { params: Promise<{ locale: s
 
   return (
     <>
-      {/* ============ 头图轮播(图片驱动:宽撑满,高=宽/1.789 等比,文字随图) ============ */}
-      <section className="relative overflow-hidden">
+      {/* ============ 头图轮播(图片驱动:宽撑满,高=宽/1.789 等比,文字随图) ============
+          `border-b border-cream-line`(#e3e3e3)是给头图 ↔ NEWS 这条硬接缝补的分隔线:
+          5 张头图素材的底边色差很大(hero-promo 底边 #f7f2ef 与 NEWS 的 #efefef 只差
+          Δ8,hero-streetwear 的 #4f4d50 差 Δ162),而每 5 秒切一次屏 —— 没有这条线,
+          接缝会跟着轮播来回跳。此处**不要**在 NEWS 顶部加渐变(见下方注释)。 */}
+      <section className="border-cream-line relative overflow-hidden border-b">
         <HeroCarousel slides={heroSlides} locale={locale} />
       </section>
 
-      {/* ============ 促销条:多条促销语滚动(2026 首页文案表第 2-3 行) ============ */}
-      <Marquee>
-        <span className="mr-8 text-xs tracking-[var(--tracking-18)] uppercase">{promoLine}</span>
-      </Marquee>
-
-      {/* ============ 最新资讯 · 揭晓(网站素材0926/2、最新咨询:整模块满幅底图,
-          主体与页面底色一致,顶部有一条柔和的过渡渐变带,把本模块与上方
-          头图/促销条在视觉上轻轻隔开) ============ */}
-      <section className="relative overflow-hidden">
-        <Image
-          src="/assets/home/news-bg.jpg"
-          alt=""
-          fill
-          sizes="100vw"
-          className="object-contain object-top"
-        />
+      {/* ============ 最新资讯 · 揭晓(网站素材0926/2、最新咨询)============
+          老板 2026-10 诉求 2:原头图下方的**滚动促销条(Marquee)已删除** ——
+          同一份 promoMessages 在 Header 的 sticky 促销条上全站每页常驻,首页这条
+          是重复曝光(且 `— is.offy —` 分隔符只存在于被删的那段 join 串里)。
+          诉求 5:原来的满幅底图 news-bg.jpg 已删除,改成**显式**写出的取色纯色底
+          `bg-[#efefef]`(实测:该图 96.31% 的像素就是 #efefef,四角一致、
+          行/列中位数极差 = 0,全图唯一内容只有 y5.0–13.6% 处的幽灵字
+          `BROWSE CATEGORIES / THAT INTEREST YOU`,与底色对比度仅 1.216:1,不是可读元素)。
+          必须显式声明而不是"靠 body 透色":body 上同时挂着 Tailwind 的 bg-cream
+          与 globals.css 里**无层级**的 body{background:var(--background)},
+          今天靠"无层级压过 @layer utilities"才显示为 #efefef —— 谁把那条规则挪进
+          @layer base,首页底色就整体变白。也不要写 `bg-background`:
+          --background 定义在 :root 而非 @theme,Tailwind v4 不生成该工具类。 */}
+      <section className="relative overflow-hidden bg-[#efefef]">
         <div className="container-site section-y relative">
           {/* 标题区(最新资讯.psd 组「最新咨询·标题」):PSD 里是一行居中
               'NEWS·The Latest from OFFY'(80.8px=2.49vw,黑字,just=2 居中),
@@ -93,7 +91,6 @@ export default async function HomePage({ params }: { params: Promise<{ locale: s
             feature={newsFeature}
             items={newsItems}
             texts={{
-              badge: t("newsBadge"),
               featureTitle: t("newsFeatureTitle"),
               cta: t("teaserCta"),
               browseAll: t("browseAll"),
@@ -104,18 +101,12 @@ export default async function HomePage({ params }: { params: Promise<{ locale: s
       </section>
 
       {/* ============ 按类别选购 + 最新曝光造型(设计稿:同一模块;
-          网站素材0926/3、按类别选购:整模块满幅底图,底色与页面同为浅灰,
-          顶部居中的 is.offy 淡化字标正好被标题区盖住。
-          底图按宽度等比缩放(object-contain),窄屏不再裁掉字标;
-          图下方的留白用底图底色补齐,视觉上与图连成一片) ============ */}
+          网站素材0926/3、按类别选购)。
+          诉求 5:满幅底图 category-bg.jpg 已删除 —— 实测该图 98.90% 的像素就是
+          `#f7f7f9`(四角一致、行/列中位数极差 = 0),唯一内容是顶部 y2.1–10.0%
+          处的 `is.offy` 幽灵字标,与底色对比度 1.154:1。当年写死的 `bg-[#f7f7f9]`
+          本来就是给 object-contain 的留白补的底色,与取色值**逐位相同**,故原样保留。 */}
       <section className="relative overflow-hidden bg-[#f7f7f9]">
-        <Image
-          src="/assets/home/category-bg.jpg"
-          alt=""
-          fill
-          sizes="100vw"
-          className="object-contain object-top"
-        />
         <div className="container-site section-y relative">
           <Reveal className="mb-12 text-center">
             <h2 className="font-display text-[clamp(30px,2.6vw,60px)] font-semibold tracking-tight uppercase">
@@ -201,22 +192,18 @@ export default async function HomePage({ params }: { params: Promise<{ locale: s
       </section>
 
       {/* ============ OFFY 新品抢先看(PSD:Stay tuned 标题区 + 玩偶图左上文字块;
-          网站素材0926/4、更多新品，敬请期待:整模块满幅底图,顶部居中的
-          STAY TUNED. 淡化字标正好被标题区盖住) ============ */}
+          网站素材0926/4、更多新品，敬请期待)。
+          诉求 5:满幅底图 upcoming-bg.jpg 已删除 —— 实测 98.29% 的像素就是
+          `#f7f7f9`,唯一内容是顶部 y4.5–15.8% 处的 `STAY / TUNED.` 幽灵字
+          (与底色对比度 1.103:1)。原注释说那层超大淡化字是"底图里烤好的水印,
+          不重复渲染" —— 底图既然删了,这句话不再成立,标题区自身仍是实时文字。 */}
       <section className="section-y relative overflow-hidden bg-[#f7f7f9]">
-        <Image
-          src="/assets/home/upcoming-bg.jpg"
-          alt=""
-          fill
-          sizes="100vw"
-          className="object-contain object-top"
-        />
         <div className="relative">
           {/* 标题区(更多新品，敬请期待.psd 组「更多新品，敬请期待标题」):
               PSD 里小字 'Stay tuned.' 在上(36px=1.11vw)、大字 'Upcoming Releases'
               在下(102.2px=3.14vw),两者都 just=2 居中 —— 与旧版大小颠倒,
-              这里按 PSD 调正。再上面那层超大淡化 'Stay / tuned.'(203.2px,
-              x36.42% y4.43%)是底图 upcoming-bg.jpg 里烤好的水印,不重复渲染。 */}
+              这里按 PSD 调正。PSD 里再上面那层超大淡化 'Stay / tuned.'
+              (203.2px,x36.42% y4.43%)原本由底图承载,随底图一并移除。 */}
           <Reveal className="container-site mx-auto mb-14 text-center">
             <p className="text-[clamp(12px,1.11vw,24px)] leading-none font-normal tracking-[var(--tracking-10)] uppercase lg:text-[clamp(11px,1.11vw,24px)]">
               {t("stayTuned")}

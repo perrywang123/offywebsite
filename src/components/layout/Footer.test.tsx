@@ -23,7 +23,10 @@ vi.mock("next-intl/server", async () => {
     import("../../../messages/zh.json"),
   ]);
   type Messages = typeof en;
-  const dictionaries: Record<"en" | "zh", Messages> = { en: enModule.default, zh: zhModule.default };
+  const dictionaries: Record<"en" | "zh", Messages> = {
+    en: enModule.default,
+    zh: zhModule.default,
+  };
   return {
     getTranslations: async (namespace: string) =>
       createTranslator({
@@ -135,19 +138,34 @@ describe("Footer · HELP & SUPPORT 面板", () => {
     expect(decor?.textContent).toBe("›");
   });
 
-  it("视觉层级:FAQ / Contact Us 是大字,Legal & Policies 更小更弱,字号类名不同", async () => {
+  it("视觉层级:FAQ / Contact Us 与 MENU 列**同一套排版**,只有 Legal & Policies 更小更弱", async () => {
     const { container } = await renderFooter("en");
     const nav = panel(container, "Help & Support");
     const faq = within(nav).getByRole("link", { name: "FAQ" });
     const contact = within(nav).getByRole("link", { name: "Contact Us" });
     const legal = within(nav).getByRole("link", { name: "Legal & Policies" });
 
-    expect(faq.className).toContain("text-lg");
-    expect(contact.className).toContain("text-lg");
+    // 老板诉求 6:面板与左两列完全同一套类(同字号/同字距/同色阶),不再放大成"大字入口"。
+    // 比较的是**与 MENU 列首链同类名**,而不是"含 text-cream"这种恒真子串断言
+    // (`text-cream/50` 也含子串 `text-cream`,旧的 `toContain("text-cream")` 是假绿)。
+    const menuNav = panel(container, "Menu");
+    const menuLink = within(menuNav).getAllByRole("link")[0];
+    const panelBox = within(nav).getByRole("link", { name: "FAQ" }).parentElement!;
+    const menuBox = menuLink.parentElement!;
+
+    expect(faq.className).toBe(menuLink.className);
+    expect(contact.className).toBe(menuLink.className);
+    expect(panelBox.className).toBe(menuBox.className);
+    // 负向对照:旧的"大字入口"排版必须彻底消失
+    expect(faq.className).not.toContain("text-lg");
+    expect(contact.className).not.toContain("text-lg");
+    expect(panelBox.className).not.toContain("items-start");
+    expect(faq.className).not.toContain("font-display");
+
+    // 二级入口更小更弱,且用 `/50` 而不是更低的透明度(≈5.21:1,过 AA;`/40` ≈ 3.81:1 不达标)
     expect(legal.className).toContain("text-xs");
-    // 弱化:半透明 cream,而不是主入口的实色 text-cream
     expect(legal.className).toContain("text-cream/50");
-    expect(faq.className).toContain("text-cream");
+    expect(faq.className).not.toContain("text-cream/50");
     // 分隔线是 border 纯样式,不放空的语义元素/图标库
     expect(nav.querySelector("div.border-t")).not.toBeNull();
   });

@@ -28,17 +28,36 @@ import type { NewsItem } from "@/lib/content";
 
 const feature = { image: "/assets/news/news-01.jpg", productCode: "warm-biscuit" };
 const items: NewsItem[] = [
-  { id: "a", title: { zh: "日常犯可爱", en: "Everyday cute" }, image: "/assets/news/news-04.jpg", productCode: "bunny-hug" },
-  { id: "b", title: { zh: "周末出门玩", en: "Weekend outing" }, image: "/assets/news/news-03.jpg", productCode: "ace" },
-  { id: "c", title: { zh: "时尚潮流生活", en: "Fashion Lifestyle" }, image: "/assets/news/news-08.jpg", productCode: "wander" },
-  { id: "d", title: { zh: "趣味潮流OFFY", en: "Playful trendy Offy" }, image: "/assets/news/news-02.jpg", productCode: "offy_redrush" },
+  {
+    id: "a",
+    title: { zh: "日常犯可爱", en: "Everyday cute" },
+    image: "/assets/news/news-04.jpg",
+    productCode: "bunny-hug",
+  },
+  {
+    id: "b",
+    title: { zh: "周末出门玩", en: "Weekend outing" },
+    image: "/assets/news/news-03.jpg",
+    productCode: "ace",
+  },
+  {
+    id: "c",
+    title: { zh: "时尚潮流生活", en: "Fashion Lifestyle" },
+    image: "/assets/news/news-08.jpg",
+    productCode: "wander",
+  },
+  {
+    id: "d",
+    title: { zh: "趣味潮流OFFY", en: "Playful trendy Offy" },
+    image: "/assets/news/news-02.jpg",
+    productCode: "offy_redrush",
+  },
 ];
-const texts = { badge: "新品上市", featureTitle: "仪式感生活", cta: "查看详情", browseAll: "逛全部系列" };
+const texts = { featureTitle: "仪式感生活", cta: "查看详情", browseAll: "逛全部系列" };
 
 describe("NewsGrid (editorial layout, data-driven: productCode + image + copy)", () => {
-  it("renders the feature card with badge/headline, and the whole card links to its bound product detail page", () => {
+  it("renders the feature card with headline, and the whole card links to its bound product detail page", () => {
     render(<NewsGrid feature={feature} items={items} texts={texts} locale="zh" />);
-    expect(screen.getByText("新品上市")).toBeInTheDocument();
     expect(screen.getByText("仪式感生活")).toBeInTheDocument();
     expect(screen.getByText("查看详情")).toBeInTheDocument();
     // 整张大卡(含图)是一个 Link,指向 feature.productCode 对应的商品详情页
@@ -49,6 +68,31 @@ describe("NewsGrid (editorial layout, data-driven: productCode + image + copy)",
     expect(screen.getByAltText("仪式感生活")).toHaveAttribute("src", "/assets/news/news-01.jpg");
   });
 
+  it("主卡不再渲染 NEW ARRIVALS 徽章,标题仍在(老板诉求 3)", () => {
+    // 徽章文案按现状传进来:组件必须**不再使用**它(接口保留为可选,字段不删)
+    render(
+      <NewsGrid
+        feature={feature}
+        items={items}
+        texts={{ ...texts, badge: "New Arrivals" }}
+        locale="en"
+      />,
+    );
+    expect(screen.queryByText("New Arrivals")).toBeNull();
+    expect(screen.getByRole("heading", { name: /仪式感生活/ })).toBeInTheDocument();
+  });
+
+  it("删徽章后大标题的位置由 mt 补偿钉住(`badge 高 + 原 3.5cqw`)", () => {
+    const { container } = render(
+      <NewsGrid feature={feature} items={items} texts={texts} locale="zh" />,
+    );
+    const h3 = screen.getByRole("heading", { name: /仪式感生活/ });
+    // 徽章原来的行高档位 = text-[max(11px,4.77cqw)] leading-none,必须原样并进 mt
+    expect(h3.className).toContain("mt-[calc(max(11px,4.77cqw)+3.5cqw)]");
+    // 主卡文字框里只剩标题一个子元素(徽章 <span> 已删)
+    expect(container.querySelectorAll("span.text-ink")).toHaveLength(0);
+  });
+
   it("renders the 2×2 secondary cards with localized titles, each linking to its own bound product", () => {
     render(<NewsGrid feature={feature} items={items} texts={texts} locale="zh" />);
     expect(screen.getByText("日常犯可爱")).toBeInTheDocument();
@@ -56,10 +100,22 @@ describe("NewsGrid (editorial layout, data-driven: productCode + image + copy)",
     expect(screen.getByText("时尚潮流生活")).toBeInTheDocument();
     expect(screen.getByText("趣味潮流OFFY")).toBeInTheDocument();
 
-    expect(screen.getByRole("link", { name: /日常犯可爱/ })).toHaveAttribute("href", "/products/bunny-hug");
-    expect(screen.getByRole("link", { name: /周末出门玩/ })).toHaveAttribute("href", "/products/ace");
-    expect(screen.getByRole("link", { name: /时尚潮流生活/ })).toHaveAttribute("href", "/products/wander");
-    expect(screen.getByRole("link", { name: /趣味潮流OFFY/ })).toHaveAttribute("href", "/products/offy_redrush");
+    expect(screen.getByRole("link", { name: /日常犯可爱/ })).toHaveAttribute(
+      "href",
+      "/products/bunny-hug",
+    );
+    expect(screen.getByRole("link", { name: /周末出门玩/ })).toHaveAttribute(
+      "href",
+      "/products/ace",
+    );
+    expect(screen.getByRole("link", { name: /时尚潮流生活/ })).toHaveAttribute(
+      "href",
+      "/products/wander",
+    );
+    expect(screen.getByRole("link", { name: /趣味潮流OFFY/ })).toHaveAttribute(
+      "href",
+      "/products/offy_redrush",
+    );
   });
 
   it("localizes secondary titles for en", () => {
@@ -72,7 +128,10 @@ describe("NewsGrid (editorial layout, data-driven: productCode + image + copy)",
     render(<NewsGrid feature={feature} items={items} texts={texts} locale="zh" />);
     expect(screen.queryByRole("link", { name: /逛全部系列/ })).not.toBeInTheDocument();
     // 主卡内的「查看详情」胶囊仍在,并跳绑定商品
-    expect(screen.getByRole("link", { name: /查看详情/ })).toHaveAttribute("href", "/products/warm-biscuit");
+    expect(screen.getByRole("link", { name: /查看详情/ })).toHaveAttribute(
+      "href",
+      "/products/warm-biscuit",
+    );
   });
 
   it("puts each feature/secondary caption inside its own card link (PSD: black pill over the image)", () => {
@@ -86,10 +145,21 @@ describe("NewsGrid (editorial layout, data-driven: productCode + image + copy)",
   it("changing only the data (productCode/image/copy) reflects immediately with no component changes needed", () => {
     const customFeature = { image: "/assets/news/custom.jpg", productCode: "swan-princess" };
     const customItems: NewsItem[] = [
-      { id: "x", title: { zh: "新文案", en: "New copy" }, image: "/assets/news/custom-2.jpg", productCode: "pink-mallow" },
+      {
+        id: "x",
+        title: { zh: "新文案", en: "New copy" },
+        image: "/assets/news/custom-2.jpg",
+        productCode: "pink-mallow",
+      },
     ];
     render(<NewsGrid feature={customFeature} items={customItems} texts={texts} locale="zh" />);
-    expect(screen.getByRole("link", { name: /仪式感生活/ })).toHaveAttribute("href", "/products/swan-princess");
-    expect(screen.getByRole("link", { name: /新文案/ })).toHaveAttribute("href", "/products/pink-mallow");
+    expect(screen.getByRole("link", { name: /仪式感生活/ })).toHaveAttribute(
+      "href",
+      "/products/swan-princess",
+    );
+    expect(screen.getByRole("link", { name: /新文案/ })).toHaveAttribute(
+      "href",
+      "/products/pink-mallow",
+    );
   });
 });
