@@ -8,7 +8,7 @@ export const seriesList: Series[] = [
   {
     slug: "princess-lady",
     name: { zh: "公主lady系列", en: "Princess Lady" },
-    tagline: { zh: "黑皮 OFFY 的优雅化身", en: "Her most elegant avatars" },
+    tagline: { zh: "让日常浪漫起来", en: "Romanticize the everyday" },
     heroImage: "/assets/hero/hero-02.jpg",
   },
   {

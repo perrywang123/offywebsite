@@ -355,6 +355,28 @@ describe("HeroCarousel", () => {
     expect(reachedLink).toHaveBeenCalledTimes(2);
   });
 
+  it("拖了但**没到切屏阈值**(24–39px):画面跟手过、弹回、不切屏,但 click 必须被吞(否则「拖一半跳走」)", () => {
+    // 这条是老板反馈的"拖一半跳走":切屏门槛是 40px,但吞 click 的标志过去也用 40px,
+    // 于是 30px 的拖拽 = 画面跟手 → 松手弹回 → **然后跳到该屏落地页**。
+    // 现在吞 click 用更低的 24px 独立门槛:24–39px 的拖拽不切屏、也不跳转。
+    render(<HeroCarousel slides={slides} locale="zh" intervalMs={5000} />);
+    const region = screen.getByTestId("hero-track").parentElement as HTMLElement;
+    const link = screen.getAllByRole("link", { hidden: true })[0];
+    let reachedLink = 0;
+    link.addEventListener("click", (e) => {
+      if (!e.defaultPrevented) reachedLink += 1;
+    });
+    const mouse = { pointerId: 1, pointerType: "mouse", isPrimary: true };
+    fireEvent.pointerDown(region, { ...mouse, clientX: 300 });
+    fireEvent.pointerMove(region, { ...mouse, clientX: 270 }); // dx = -30,未到 40
+    fireEvent.pointerUp(region, { ...mouse, clientX: 270 });
+    // 没切屏(位移不足、也不是快速轻扫)
+    expect(screen.getAllByRole("tab", { hidden: true })[0]?.getAttribute("aria-selected")).toBe("true");
+    // 但 click 被吞了 —— 这是本条的重点
+    fireEvent(link, createEvent.click(link, { detail: 1 }));
+    expect(reachedLink).toBe(0);
+  });
+
   it("暂停控件:原生 button、有 aria-label 与 aria-pressed,暂停后停、再按恢复", () => {
     vi.useFakeTimers();
     try {

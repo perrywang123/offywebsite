@@ -9,6 +9,17 @@ import type { HeroSlideData } from "@/lib/content";
 export type HeroSlide = HeroSlideData;
 
 const SWIPE_THRESHOLD = 40;
+/**
+ * 「吞掉 click」的独立门槛,比切屏门槛**更低**。
+ *
+ * 切屏要 40px 才判定(避免手抖误翻页),但**只要画面跟着手动过**,用户心理上
+ * 就已经在"拖"而不是"点"了 —— 松手后如果仍触发整屏 <a> 的跳转,就是
+ * "拖一半被弹回去、然后莫名其妙跳走"。
+ *
+ * 24px 这个值取在两者之间:高于真实点击时手指的漂移量(实测通常 <10px),
+ * 低于切屏门槛(所以 24–39px 的拖拽 = 画面跟手 + 弹回 + **不跳转**、也不切屏)。
+ */
+const CLICK_SWALLOW_THRESHOLD = 24;
 /** 松手速度阈值(px/ms):位移不到 40px 的**快速轻扫**也翻页(只用位移判会让用户觉得"我明明划了却没反应")。 */
 const SWIPE_VELOCITY = 0.5;
 /** 走速度判定要求的最小位移(px):防手抖,也防"两个事件挤在同一帧"被算成极速。 */
@@ -277,7 +288,10 @@ export function HeroCarousel({
     }
     // 动过就要吸附回位(拖出去再拖回原点时 dx≈0,但画面确实被拖离过原位)
     if (gesture.dragging || dx !== 0) settleTrack();
-    if (swiped || gesture.dragging) swallowClick.current = true;
+    // 注意这里用的是比 SWIPE_THRESHOLD 更低的 CLICK_SWALLOW_THRESHOLD:
+    // 拖了 24–39px 时不会切屏,但画面确实跟手动过 —— 此时松手必须吞掉 click,
+    // 否则会跳转到该屏的落地页(用户看到的是"拖一半被弹回,然后跳走了")。
+    if (swiped || Math.abs(dx) >= CLICK_SWALLOW_THRESHOLD) swallowClick.current = true;
   };
 
   /**
