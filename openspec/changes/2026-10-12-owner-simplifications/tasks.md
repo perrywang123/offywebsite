@@ -69,14 +69,14 @@
       （`--strict --changes` 也通过；修掉了 1 条 scenario 改名导致的 ERROR，见 design D2）
 - [x] 4.3 `pnpm test` / `pnpm typecheck` / `pnpm lint` 全绿。收尾复跑快照：
       **46 文件 / 369 测试**（比本 change 的基线 362 多 7 个），多出来的全部是并发的另一个
-      会话在 23:59–00:00 落地的新用例（pointer 拖拽、滑动吞 click、暂停控件、
+      会话在 23:59–00:00 落地的新用例（pointer 拖拽、滑动吞 click、暂停控件[已撤销]、
       reduced-motion 默认不自动播放）—— 它先写了测试（当时 6 个红），随后补齐
       `HeroCarousel.tsx` 的实现转绿
 - [ ] 4.4 **【重要，交接】** 4.3 里那个并发改动引入了本 change **没有覆盖**的新行为：
-      暂停/播放控件（原生 button + `aria-label` + `aria-pressed`）、桌面 pointer 拖拽、
+      暂停/播放控件[已撤销]（原生 button + `aria-label` + `aria-pressed`）、桌面 pointer 拖拽、
       `prefers-reduced-motion: reduce` 下默认不自动播放、以及组件内联的中英暂停文案
       （没有走 i18n 字典）。它需要**自己的一份 change**（方案 §8 已把这些登记为待办；
-      其中的暂停控件还触及 `Motion quality bar` 与 `Readability floor` 所在的同一条
+      其中的暂停控件[已撤销]还触及 `Motion quality bar` 与 `Readability floor` 所在的同一条
       reduced-motion 约定）。本 change 特意**没有**把这些写进 delta，以免替未定稿的实现
       背书；`Hero carousel with landing links` 的 `Arrow navigation` / `Auto-advance`
       两个 scenario 只做「箭头不在 DOM 里」「未暂停时会自动前进」的断言，与那份待写的

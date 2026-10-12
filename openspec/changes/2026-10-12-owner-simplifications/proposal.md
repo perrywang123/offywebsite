@@ -96,10 +96,10 @@ spec 验收会把这次改动判成违规。
 - 收尾时：`pnpm test` = **46 文件 / 369 测试全绿**，`pnpm typecheck` 与 `pnpm lint` 全绿。
   多出来的 7 个用例**不是本 change 写的** —— 是另一个并发会话在 23:59–00:00 往
   `HeroCarousel.test.tsx` / `HeroCarousel.tsx` 落地的（pointer 拖拽、滑动吞 click、
-  暂停控件、reduced-motion 默认不自动播放）。它先写测试（当时 6 个红）再补实现转绿。
+  暂停控件[已撤销]、reduced-motion 默认不自动播放）。它先写测试（当时 6 个红）再补实现转绿。
   本 change 全程只写 `openspec/`，一行 `src/` 都没碰。
 - **交接项**：那个并发改动需要**自己的一份 change**（见 `tasks.md` 4.4）。本 change 刻意
-  不把「暂停控件 / 拖拽 / reduced-motion 不自动播放」写进 delta，以免替一份未定稿的实现
+  不把「暂停控件[已撤销] / 拖拽 / reduced-motion 不自动播放」写进 delta，以免替一份未定稿的实现
   背书。
 
 **不改动的东西**

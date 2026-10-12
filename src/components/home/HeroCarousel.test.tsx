@@ -377,80 +377,40 @@ describe("HeroCarousel", () => {
     expect(reachedLink).toBe(0);
   });
 
-  it("暂停控件:原生 button、有 aria-label 与 aria-pressed,暂停后停、再按恢复", () => {
-    vi.useFakeTimers();
-    try {
-      render(<HeroCarousel slides={slides} locale="zh" intervalMs={5000} />);
-      const dots = screen.getAllByRole("tab", { hidden: true });
-      const pause = screen.getByRole("button", { name: "暂停自动轮播" });
-      // 可键盘访问 = 原生 button(type=button 避免未来套进 form 里变成提交按钮)
-      expect(pause.tagName).toBe("BUTTON");
-      expect(pause).toHaveAttribute("type", "button");
-      expect(pause).toHaveAttribute("aria-pressed", "false");
-
-      fireEvent.click(pause);
-      const play = screen.getByRole("button", { name: "播放自动轮播" });
-      expect(play).toHaveAttribute("aria-pressed", "true");
-      act(() => {
-        vi.advanceTimersByTime(20000);
-      });
-      expect(dots[0]).toHaveAttribute("aria-selected", "true"); // 4 个周期一次都没动
-
-      fireEvent.click(play);
-      expect(screen.getByRole("button", { name: "暂停自动轮播" })).toHaveAttribute(
-        "aria-pressed",
-        "false",
-      );
-      act(() => {
-        vi.advanceTimersByTime(5000);
-      });
-      expect(dots[1]).toHaveAttribute("aria-selected", "true"); // 恢复后重新开始计时
-    } finally {
-      vi.useRealTimers();
-    }
-  });
-
-  it("暂停控件文案随 locale 切换(en)", () => {
-    render(<HeroCarousel slides={slides} locale="en" intervalMs={60000} />);
-    expect(screen.getByRole("button", { name: "Pause autoplay" })).toBeInTheDocument();
-    fireEvent.click(screen.getByRole("button", { name: "Pause autoplay" }));
-    expect(screen.getByRole("button", { name: "Play autoplay" })).toBeInTheDocument();
-  });
-
-  it("prefers-reduced-motion: reduce 下默认不自动播放,但用户仍可手动开启", () => {
+  it("prefers-reduced-motion: reduce 下不自动播放(没有手动开关可覆盖)", () => {
     vi.useFakeTimers();
     const restoreMatchMedia = stubReducedMotion(true);
     try {
       render(<HeroCarousel slides={slides} locale="zh" intervalMs={5000} />);
       const dots = screen.getAllByRole("tab", { hidden: true });
-      // 默认就是"已暂停":控件直接呈现「播放」态且 aria-pressed=true
-      const play = screen.getByRole("button", { name: "播放自动轮播" });
-      expect(play).toHaveAttribute("aria-pressed", "true");
+      // 控件删除后,Reduce Motion 就是**唯一**的自动轮播开关:一直不自动播放
       act(() => {
-        vi.advanceTimersByTime(20000);
+        vi.advanceTimersByTime(20000); // 4 个周期
+      });
+      expect(dots[0]).toHaveAttribute("aria-selected", "true");
+      act(() => {
+        vi.advanceTimersByTime(60000); // 再等 12 个周期,仍停在第 1 屏
       });
       expect(dots[0]).toHaveAttribute("aria-selected", "true");
 
-      // 显式开启后照常轮播(Reduce Motion 是默认值,不是禁用)
-      fireEvent.click(play);
-      act(() => {
-        vi.advanceTimersByTime(5000);
-      });
-      expect(dots[1]).toHaveAttribute("aria-selected", "true");
+      // 降级只砍自动播放,不砍手动切换:指示条照常直达任意屏
+      fireEvent.click(dots[2]);
+      expect(dots[2]).toHaveAttribute("aria-selected", "true");
     } finally {
       restoreMatchMedia();
       vi.useRealTimers();
     }
   });
 
-  it("暂停控件命中区 ≥44px,且不新增整屏链接(仍是 5 条)", () => {
+  it("不渲染暂停/播放按钮(老板要求删除):头图里的 button 只剩 5 个指示条", () => {
     const { container } = render(<HeroCarousel slides={slides} locale="zh" intervalMs={60000} />);
-    const pause = screen.getByRole("button", { name: "暂停自动轮播" });
-    expect(pause.className).toContain("h-[clamp(44px,2.7cqw,48px)]");
-    expect(pause.className).toContain("w-[clamp(44px,2.7cqw,48px)]");
-    // 控件层是 pointer-events-none,子元素必须自己打开命中
-    expect(pause.className).toContain("pointer-events-auto");
-    // 导航入口没被这次改动改变
+    const buttons = Array.from(container.querySelectorAll("button"));
+    expect(buttons).toHaveLength(5);
+    for (const b of buttons) expect(b).toHaveAttribute("role", "tab");
+    // 暂停/播放是唯一的「有状态」按钮(aria-pressed)与唯一的纯内联 SVG 图标,都该没了
+    expect(container.querySelectorAll("button[aria-pressed]")).toHaveLength(0);
+    expect(container.querySelectorAll("svg")).toHaveLength(0);
+    // 导航入口没被这次改动改变(5 屏仍是各一条整屏链接)
     expect(container.querySelectorAll("a.absolute.inset-0")).toHaveLength(5);
   });
 

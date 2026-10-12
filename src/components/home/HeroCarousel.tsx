@@ -37,19 +37,6 @@ const SETTLE_MS = 280;
 const SETTLE_EASING = "cubic-bezier(0.22, 1, 0.36, 1)";
 
 /**
- * 暂停/播放控件的可访问名(zh / en)。
- *
- * 为什么不进 `messages/*.json`:本轮改动的文件范围被限定在
- * 本组件 + 它的单测(`home` 命名空间里也没有 pause/play 这类 key),
- * 所以按 `CategoryTabs.tsx` 的既有写法在组件内做双语映射。
- * 若日后允许改字典,应换成 `home.heroPauseAutoplay` / `home.heroPlayAutoplay`。
- */
-const AUTOPLAY_LABELS = {
-  zh: { pause: "暂停自动轮播", play: "播放自动轮播" },
-  en: { pause: "Pause autoplay", play: "Play autoplay" },
-} as const;
-
-/**
  * 老板 2026-10 诉求 1:头图隐藏「查看详情」胶囊与左右箭头。
  *
  * 口径是**开关控制不渲染**,而不是加 `hidden` / `sr-only` 类:
@@ -84,13 +71,14 @@ const INDICATOR_HIT_AREA_CLS = SHOW_HERO_ARROWS
  * 左右箭头与「查看详情」胶囊按老板 2026-10 诉求 1 **默认不渲染**(见下方两个开关),
  * 改为 5 屏全部整屏可点。
  *
- * 手动切换 / 无障碍(箭头隐藏后补齐的三件事,都在本文件内):
+ * 手动切换 / 无障碍(箭头隐藏后补齐的两件事,都在本文件内):
  *  1. **手势**:手指走 touch 事件、鼠标与触控笔走 pointer 事件(两者互斥分派,
  *     一次手势只切一屏),共用 40px 阈值 —— 桌面不再是"只能点 2.8px 细条";
- *  2. **暂停/播放控件**(WCAG 2.2.2):原生 button、`aria-label` 随状态切换、
- *     `aria-pressed` 暴露状态;`prefers-reduced-motion: reduce` 下默认不自动播放;
- *  3. **滑动吞 click**:整屏都是 `<a>`,手势判定为滑动后吞掉浏览器补发的 click,
+ *  2. **滑动吞 click**:整屏都是 `<a>`,手势判定为滑动后吞掉浏览器补发的 click,
  *     避免"想切屏结果跳走"(实测:不吞的话 300px 的拖动会照常触发导航)。
+ *
+ * 自动轮播:5 秒一屏无限循环,`prefers-reduced-motion: reduce` 下不自动播放。
+ * **不提供暂停/播放控件**(老板明确不要轮播上的这个按钮,勿再补回)。
  */
 export function HeroCarousel({
   slides,
@@ -105,23 +93,19 @@ export function HeroCarousel({
   const [active, setActive] = useState(0);
 
   /**
-   * 自动轮播的开关。`null` = 用户还没表态 → 跟随系统 Reduce Motion;
-   * 用户按过暂停/播放之后,他自己的选择优先(即使中途改了系统设置)。
-   *
+   * 系统是否要求 Reduce Motion。初始值恒为 false、挂载后由 effect 纠正 ——
    * 不用 `useState(() => matchMedia(...))`:SSR 读不到 matchMedia,惰性初始值会让
-   * 服务端与客户端首帧的 `aria-label` / `aria-pressed` 不一致(hydration 报错),
-   * 所以首帧一律按"播放中"渲染,再由 effect 纠正。
+   * 服务端与客户端首帧不一致(hydration 报错)。
    */
-  const [autoplayChoice, setAutoplayChoice] = useState<boolean | null>(null);
   const [reducedMotion, setReducedMotion] = useState(false);
   /** 手势进行中(按下未松手)→ 自动轮播暂停;进 effect 依赖,松手时重新计时。 */
   const [gestureActive, setGestureActive] = useState(false);
-  const playing = autoplayChoice ?? !reducedMotion;
-  const labels = AUTOPLAY_LABELS[locale === "zh" ? "zh" : "en"];
+  /** 是否自动轮播:只由系统 Reduce Motion 决定(没有手动开关)。 */
+  const playing = !reducedMotion;
 
   const go = (i: number) => setActive(((i % slides.length) + slides.length) % slides.length);
 
-  /** 系统开了 Reduce Motion:默认**不**自动播放(WCAG 2.2.2 的默认值),用户仍可按播放。 */
+  /** 系统开了 Reduce Motion:不自动播放(WCAG 2.2.2 的默认值,且没有开关可以覆盖)。 */
   useEffect(() => {
     const mq =
       typeof window !== "undefined" && typeof window.matchMedia === "function"
@@ -136,7 +120,7 @@ export function HeroCarousel({
   }, []);
 
   useEffect(() => {
-    // 拖拽期间暂停自动轮播(按下即停):否则拖到一半会被 5 秒计时器把屏抢走。
+    // 拖拽期间自动轮播暂停(按下即停):否则拖到一半会被 5 秒计时器把屏抢走。
     // `gestureActive` 进依赖数组 → 松手时 effect 重跑,计时**重新开始**(不是接着走)。
     if (!playing || gestureActive || slides.length <= 1) return;
     const id = setInterval(() => setActive((a) => (a + 1) % slides.length), intervalMs);
@@ -170,7 +154,7 @@ export function HeroCarousel({
 
   /**
    * 跟手位移的载体:包住 5 屏的轨道层。位移只写在这一个元素上(`transform`),
-   * 控件层(指示条 / 暂停钮)留在外面 —— 它们是按图片比例定位的共享控件,
+   * 控件层(指示条)留在外面 —— 它们是按图片比例定位的共享控件,
    * 跟着滑出去既会错位、也会被新加的 `overflow-hidden` 切掉。
    */
   const trackRef = useRef<HTMLDivElement | null>(null);
@@ -253,7 +237,7 @@ export function HeroCarousel({
       return;
     }
     drag.current = { startX: x, lastX: x, dragging: false, samples: [{ t: timeNow(), x }] };
-    setGestureActive(true); // 按下即暂停自动轮播
+    setGestureActive(true); // 按下即自动轮播暂停
     // 跟手期间必须关掉过渡:否则每一帧位移都会带 280ms 缓动去追手指,手感发飘
     const el = trackRef.current;
     if (el && !reducedMotion) el.style.transition = "none";
@@ -621,44 +605,12 @@ export function HeroCarousel({
               />
             ))}
           </div>
-          {/* 暂停/播放(WCAG 2.2.2):自动轮播 5s 无限循环,必须给用户一个"让它停下"的
-              机制 —— 原生 button 天然可键盘聚焦 + Enter/Space 激活(实测:键盘 Tab 到
-              它按 Enter 即暂停,再按 Space 恢复);`aria-label` 随状态在
-              「暂停自动轮播 / 播放自动轮播」之间切换,`aria-pressed` 表示"已暂停"
-              (true = 暂停中,按钮此刻显示的是播放三角)。
-              位置:指示条同一条带(y89.8%)的最右侧。指示条到 x74.08% 结束,右边
-              x74.1%-97.2% 是空的;`right-[2.8%]` + `-translate-y-1/2` 让命中区在
-              375px(头图高 235px)与 1440px 下都完整落在头图内。
-              ⚠️ 与左右箭头的冲突:箭头若翻回 true,窄屏它们在 y84.8%、同为 44px,
-              会与这里重叠 —— 恢复箭头前必须先给暂停钮换位置。 */}
-          {slides.length > 1 && (
-            <button
-              type="button"
-              aria-label={playing ? labels.pause : labels.play}
-              aria-pressed={!playing}
-              onClick={() => setAutoplayChoice(!playing)}
-              className="bg-ink/50 hover:bg-ink/70 text-cream pointer-events-auto absolute top-[89.8%] right-[2.8%] flex h-[clamp(44px,2.7cqw,48px)] w-[clamp(44px,2.7cqw,48px)] -translate-y-1/2 items-center justify-center rounded-[4px] transition-colors"
-            >
-              {playing ? (
-                // 暂停:两条竖杠(纯内联 SVG —— 不新增素材文件,也不多一次请求)
-                <svg aria-hidden="true" viewBox="0 0 12 12" className="h-3.5 w-3.5 fill-current">
-                  <rect x="2" y="1" width="3" height="10" rx="0.5" />
-                  <rect x="7" y="1" width="3" height="10" rx="0.5" />
-                </svg>
-              ) : (
-                <svg aria-hidden="true" viewBox="0 0 12 12" className="h-3.5 w-3.5 fill-current">
-                  <path d="M2.5 1 10.5 6 2.5 11Z" />
-                </svg>
-              )}
-            </button>
-          )}
           {/* 右下 ←/→ 箭头按钮(PSD y76.3-82.3%,与主标题同带;x89.8-97.2%;
               120×122px≈3.7cqw 方形,黑 50% 透明底 + 白色箭头图标)。
               **默认不渲染**(老板 2026-10 诉求 1):桌面鼠标失去了最直观的切换入口,
               但现在有两处补偿 —— 指示条(可点/可键盘聚焦/能直达任意屏)、
-              pointer 拖拽(鼠标与触控笔,与手指同一套 40px 判定)+ 暂停/播放钮。
-              几何与 44px 命中区原样保留,把 `SHOW_HERO_ARROWS` 翻回 true 即恢复
-              (注意先挪开暂停钮,见上):
+              pointer 拖拽(鼠标与触控笔,与手指同一套 40px 判定)。
+              几何与 44px 命中区原样保留,把 `SHOW_HERO_ARROWS` 翻回 true 即恢复:
               窄屏(lg 以下)在 84.8% 并缩到 2.7cqw(最长的标题在窄屏会铺到 88% 宽,
               留在 76.3% 会压住标题尾巴),`lg:` 那两行原值保持不动。 */}
           {SHOW_HERO_ARROWS && (
