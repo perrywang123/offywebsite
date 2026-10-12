@@ -60,3 +60,4 @@ next-env.d.ts
 
 # raw source material (large, local-only). Curated site assets live in public/assets/.
 /resources/
+tmp/

@@ -78,7 +78,9 @@ export default async function HomePage({ params }: { params: Promise<{ locale: s
               `lg:` 保留改动前的原值 —— 下限只影响窄屏,桌面端算式一字不变。 */}
           <Reveal className="mb-12 text-center">
             <h2 className="font-display text-[clamp(30px,2.49vw,54px)] leading-tight font-semibold tracking-tight uppercase lg:text-[clamp(20px,2.49vw,54px)]">
-              {t("newsKicker")}·{t("newsTitle")}
+              {/* 老板 2026-10 要求:去掉 "News·" 前缀,标题只留 "The Latest from OFFY"。
+                newsKicker 这个 i18n key 保留(两本字典 key 必须一致),只是不再渲染。 */}
+              {t("newsTitle")}
             </h2>
             <Link
               href="/products"
