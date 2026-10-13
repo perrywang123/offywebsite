@@ -4,12 +4,17 @@ import { describe, expect, it, vi, beforeEach } from "vitest";
 vi.mock("../shopify/catalog", () => ({
   fetchShopifyCollections: vi.fn(),
   fetchShopifyCollectionProducts: vi.fn(),
+  fetchShopifyProductsOutsideCollections: vi.fn(),
 }));
 vi.mock("../shopify/products", () => ({
   fetchProductData: vi.fn(),
 }));
 
-import { fetchShopifyCollectionProducts, fetchShopifyCollections } from "../shopify/catalog";
+import {
+  fetchShopifyCollectionProducts,
+  fetchShopifyCollections,
+  fetchShopifyProductsOutsideCollections,
+} from "../shopify/catalog";
 import { fetchProductData } from "../shopify/products";
 import {
   getLiveNewLooksProducts,
@@ -21,13 +26,43 @@ import {
 
 const mockedCollections = fetchShopifyCollections as unknown as ReturnType<typeof vi.fn>;
 const mockedCollectionProducts = fetchShopifyCollectionProducts as unknown as ReturnType<typeof vi.fn>;
+const mockedOutsideCollections = fetchShopifyProductsOutsideCollections as unknown as ReturnType<
+  typeof vi.fn
+>;
 const mockedProductData = fetchProductData as unknown as ReturnType<typeof vi.fn>;
 
 beforeEach(() => {
   mockedCollections.mockReset();
   mockedCollectionProducts.mockReset();
+  mockedOutsideCollections.mockReset();
   mockedProductData.mockReset();
+  // 默认:没有任何"不在系列里"的周边商品(各用例按需覆盖)
+  mockedOutsideCollections.mockResolvedValue([]);
 });
+
+/** 线上实测的两款周边(贴纸/帆布包):不属于任何 collection,按 createdAt 降序。 */
+const TOTE = {
+  handle: "offy-tote-bag",
+  title: "BUY 3 OFFY, GET A FREE TOTE BAG",
+  priceCents: 2000,
+  currency: "USD",
+  image: "https://cdn/tote.jpg",
+  available: true,
+  variantId: "gid://shopify/ProductVariant/tote",
+  sku: null,
+  createdAt: "2026-10-09T07:09:24Z",
+};
+const STICKER = {
+  handle: "offy-sticker-sheet",
+  title: "BUY ANY OFFY, GET A FREE STICKER",
+  priceCents: 100,
+  currency: "USD",
+  image: "https://cdn/sticker.jpg",
+  available: true,
+  variantId: "gid://shopify/ProductVariant/sticker",
+  sku: null,
+  createdAt: "2026-09-26T19:08:16Z",
+};
 
 describe("getLiveSeriesList", () => {
   it("overrides the English series name with the live Shopify collection title; keeps curated zh name", async () => {
@@ -126,6 +161,17 @@ describe("getLiveProductsBySeries", () => {
     // 本地快照价是美元
     expect(list.every((p) => p.currency === "USD")).toBe(true);
   });
+
+  it("resolves the `merch` sentinel through the products-outside-collections query, not through a Shopify collection handle", async () => {
+    // 详情页的「More from this series」对周边商品(贴纸/帆布包)走这里:
+    // 只能拿到其它周边,绝不会串到三大系列的公仔上。
+    mockedOutsideCollections.mockResolvedValue([TOTE, STICKER]);
+    const list = await getLiveProductsBySeries("merch", "GB");
+    expect(list.map((p) => p.code)).toEqual(["offy-tote-bag", "offy-sticker-sheet"]);
+    expect(list.every((p) => p.series === "merch")).toBe(true);
+    expect(mockedCollectionProducts).not.toHaveBeenCalled();
+    expect(mockedOutsideCollections).toHaveBeenCalledWith(expect.anything(), "GB");
+  });
 });
 
 describe("getLiveProducts", () => {
@@ -137,6 +183,61 @@ describe("getLiveProducts", () => {
     });
     const all = await getLiveProducts("US");
     expect(all.map((p) => p.code).sort()).toEqual(["fable", "noir", "swan-princess"]);
+  });
+
+  it("appends merch — published products outside every tracked collection — after all three series, newest first", async () => {
+    // 老板决策:有系列的(公仔)全部靠前;贴纸/帆布包这类不属于任何系列的周边
+    // 统一排在最后,组内按 Shopify createdAt 降序(数据层已按此排序)。
+    mockedCollectionProducts.mockImplementation(async (handle: string) => {
+      if (handle === "frontpage") return [{ handle: "swan-princess", title: "SWAN PRINCESS", priceCents: 4590, currency: "USD", image: "x", available: true, variantId: "v1" }];
+      if (handle === "outdoor-sporty系列") return [{ handle: "noir", title: "NOIR", priceCents: 4500, currency: "USD", image: "x", available: true, variantId: "v2" }];
+      return [{ handle: "fable", title: "FABLE", priceCents: 4500, currency: "USD", image: "x", available: true, variantId: "v3" }];
+    });
+    mockedOutsideCollections.mockResolvedValue([TOTE, STICKER]);
+
+    const all = await getLiveProducts("US");
+
+    expect(all.map((p) => p.code)).toEqual([
+      "swan-princess",
+      "noir",
+      "fable",
+      "offy-tote-bag",
+      "offy-sticker-sheet",
+    ]);
+    // 周边商品的 series 是哨兵值 "merch"(不是 princess-lady —— 那会让贴纸详情页
+    // 推荐公主系列公仔)
+    expect(all.filter((p) => p.series === "merch").map((p) => p.code)).toEqual([
+      "offy-tote-bag",
+      "offy-sticker-sheet",
+    ]);
+    expect(all.find((p) => p.code === "offy-tote-bag")).toMatchObject({
+      name: { en: "BUY 3 OFFY, GET A FREE TOTE BAG" },
+      priceCents: 2000,
+      currency: "USD",
+      // 变体 ID 必须带过来,否则周边商品"看得到买不了"
+      shopifyVariantId: "gid://shopify/ProductVariant/tote",
+      isAvailable: true,
+    });
+  });
+
+  it("asks for the products outside the three tracked collection handles, in the visitor's market", async () => {
+    mockedCollectionProducts.mockResolvedValue([]);
+    await getLiveProducts("HK");
+    expect(mockedOutsideCollections).toHaveBeenCalledWith(
+      expect.arrayContaining(["frontpage", "outdoor-sporty系列", "趣味生活系列"]),
+      "HK",
+    );
+  });
+
+  it("keeps the series roster intact and simply omits merch when that query fails", async () => {
+    mockedCollectionProducts.mockImplementation(async (handle: string) =>
+      handle === "frontpage"
+        ? [{ handle: "swan-princess", title: "SWAN PRINCESS", priceCents: 4590, currency: "USD", image: "x", available: true, variantId: "v1" }]
+        : [],
+    );
+    mockedOutsideCollections.mockRejectedValue(new Error("timeout"));
+    const all = await getLiveProducts("US");
+    expect(all.map((p) => p.code)).toEqual(["swan-princess"]);
   });
 });
 
@@ -248,6 +349,27 @@ describe("getLiveProductByCode", () => {
     expect(product).toBeDefined();
     // 本地仍有该 handle 的记录(series: princess-lady),无实时系列匹配时沿用它
     expect(product!.series).toBe("princess-lady");
+  });
+
+  it("labels a product that belongs to no tracked collection and is unknown locally as `merch` — not as princess-lady", async () => {
+    // 回归:线上贴纸页(offy-sticker-sheet)的「More from this series」曾推荐
+    // 公主系列公仔,因为这里把"无系列归属"硬塞成了 "princess-lady"。
+    mockedProductData.mockResolvedValue({
+      title: "BUY ANY OFFY, GET A FREE STICKER",
+      description: "x",
+      descriptionBlocks: [],
+      images: ["https://cdn/sticker.jpg"],
+      priceCents: 100,
+      currency: "USD",
+      variantId: "gid://shopify/ProductVariant/sticker",
+      available: true,
+      collectionHandles: [], // 不属于任何 collection
+    });
+    const product = await getLiveProductByCode("offy-sticker-sheet", "US");
+    expect(product).toBeDefined();
+    expect(product!.series).toBe("merch");
+    // 展示名等交给 series.ts 的哨兵定义;这里只断言归属不再乱塞
+    expect(product!.shopifyVariantId).toBe("gid://shopify/ProductVariant/sticker");
   });
 
   it("falls back to the local catalog entry when Shopify is unreachable", async () => {

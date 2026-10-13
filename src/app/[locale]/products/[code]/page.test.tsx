@@ -1,5 +1,5 @@
 import { render, screen } from "@testing-library/react";
-import { describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import type { Product, Series } from "@/lib/catalog/types";
 import en from "../../../../../messages/en.json";
 /**
@@ -17,6 +17,17 @@ import en from "../../../../../messages/en.json";
  * 上下文,故把这三样都换成测试替身(与 about、cart 页测试同法)。
  */
 const mockState = vi.hoisted(() => ({ locale: "en" as "en" | "zh" }));
+
+/**
+ * 数据层替身的可切换状态(默认走下面的 CURRENT/SIBLINGS 公仔用例;
+ * merch 用例在 beforeEach 里覆盖)。`requestedSeries` 记录详情页到底向数据层
+ * 要了哪个系列 —— 这是"周边商品不要推荐公主系列公仔"的护栏。
+ */
+const pdpState = vi.hoisted(() => ({
+  product: null as Product | null,
+  siblings: null as Product[] | null,
+  requestedSeries: [] as string[],
+}));
 
 vi.mock("next-intl/server", async () => {
   const [{ createTranslator }, enModule, zhModule] = await Promise.all([
@@ -128,8 +139,11 @@ const SERIES: Series[] = [
 ];
 
 vi.mock("@/server/catalog/live", () => ({
-  getLiveProductByCode: async () => CURRENT,
-  getLiveProductsBySeries: async () => SIBLINGS,
+  getLiveProductByCode: async () => pdpState.product ?? CURRENT,
+  getLiveProductsBySeries: async (slug: string) => {
+    pdpState.requestedSeries.push(slug);
+    return pdpState.siblings ?? SIBLINGS;
+  },
   getLiveSeriesList: async () => SERIES,
 }));
 
@@ -139,9 +153,18 @@ vi.mock("@/lib/geo", () => ({
 
 import ProductDetailPage from "./page";
 
-async function renderPdp(locale: "en" | "zh" = "en") {
+beforeEach(() => {
+  pdpState.requestedSeries = [];
+});
+
+afterEach(() => {
+  pdpState.product = null;
+  pdpState.siblings = null;
+});
+
+async function renderPdp(locale: "en" | "zh" = "en", code: string = CURRENT.code) {
   mockState.locale = locale;
-  const ui = await ProductDetailPage({ params: Promise.resolve({ locale, code: CURRENT.code }) });
+  const ui = await ProductDetailPage({ params: Promise.resolve({ locale, code }) });
   return render(ui);
 }
 
@@ -189,5 +212,70 @@ describe("PDP · 同系列小图条已移除(诉求 4)", () => {
       "href",
       "/collections/playful-life",
     );
+  });
+});
+
+/**
+ * merch(贴纸 / 帆布包等**不属于任何系列**的周边)—— 老板 2026-10 决策:
+ * 它们只在 All Looks 出现、排在最后,series 用哨兵值 "merch"。
+ *
+ * 这里守两件事:
+ *  ① 详情页的系列标签要显示 merch 的展示名,而不是原始 slug / 也不是公主系列;
+ *  ② 「More from this series」只能拿到其它周边(数据层按 "merch" 查),并且
+ *     面包屑不能给出 /collections/merch 这个 404 死链。
+ */
+const MERCH: Product = {
+  ...CURRENT,
+  code: "offy-sticker-sheet",
+  slug: "offy-sticker-sheet",
+  series: "merch",
+  name: { en: "BUY ANY OFFY, GET A FREE STICKER", zh: "买任意 OFFY 送贴纸" },
+  images: ["/assets/p/sticker-1.jpg"],
+  priceCents: 100,
+};
+
+const MERCH_SIBLINGS: Product[] = [
+  {
+    ...MERCH,
+    code: "offy-tote-bag",
+    slug: "offy-tote-bag",
+    name: { en: "BUY 3 OFFY, GET A FREE TOTE BAG", zh: "买 3 件 OFFY 送帆布包" },
+    images: ["/assets/p/tote-1.jpg"],
+  },
+];
+
+describe("PDP · 周边商品(series = merch)", () => {
+  beforeEach(() => {
+    pdpState.product = MERCH;
+    pdpState.siblings = MERCH_SIBLINGS;
+  });
+
+  it("系列标签显示 merch 的展示名,而不是裸 slug 或公主系列", async () => {
+    await renderPdp();
+    expect(screen.getAllByText("Goods").length).toBeGreaterThan(0);
+    expect(screen.queryByText("Princess Lady")).toBeNull();
+    expect(screen.queryByText("merch")).toBeNull();
+  });
+
+  it("中文站显示 merch 的中文展示名", async () => {
+    await renderPdp("zh");
+    expect(screen.getAllByText("周边").length).toBeGreaterThan(0);
+    expect(screen.queryByText("merch")).toBeNull();
+  });
+
+  it("面包屑不给 /collections/merch 死链(该路由不存在,会 404)", async () => {
+    const { container } = await renderPdp();
+    expect(container.querySelector('a[href="/collections/merch"]')).toBeNull();
+    // 商品列表入口仍在
+    expect(screen.getByRole("link", { name: /Shop/ })).toHaveAttribute("href", "/products");
+  });
+
+  it("「More from this series」按 merch 去取,只推荐其它周边、不推荐公仔", async () => {
+    const { container } = await renderPdp();
+    expect(pdpState.requestedSeries).toEqual(["merch"]);
+    expect(container.querySelector('a[href="/products/offy-tote-bag"]')).not.toBeNull();
+    // 公主系列的 12 款公仔一个都不该出现在这个页面上
+    expect(container.querySelector('a[href="/products/swan-princess"]')).toBeNull();
+    expect(container.querySelector('a[href="/products/prep-school"]')).toBeNull();
   });
 });

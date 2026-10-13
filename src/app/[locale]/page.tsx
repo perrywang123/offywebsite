@@ -1,12 +1,11 @@
 import Image from "next/image";
 import { getTranslations } from "next-intl/server";
 import { Link } from "@/i18n/navigation";
-import { teaserSeries, upcomingIps } from "@/lib/catalog";
+import { MERCH_SERIES_SLUG, getProductByCode, teaserSeries, upcomingIps } from "@/lib/catalog";
 import { heroSlides, newsFeature, newsItems } from "@/lib/content";
 import { headers } from "next/headers";
 import { getLiveNewLooksProducts, getLiveProducts, toLiveProduct } from "@/server/catalog/live";
 import { getRegionalProducts } from "@/server/catalog/regional";
-import { getProductByCode } from "@/lib/catalog";
 import { pickCountry } from "@/lib/geo";
 import { env } from "@/lib/env";
 import { Reveal } from "@/components/Reveal";
@@ -31,7 +30,15 @@ export default async function HomePage({ params }: { params: Promise<{ locale: s
   // 本地手写死的商品快照;Shopify 不可达时内部自动回退本地数据。
   // New Looks:每个系列按 Shopify 创建时间取最新 2 款(3 系列共 6 款)。
   const looks = await getLiveNewLooksProducts(visitorCountry, 2);
-  const roster = await getLiveProducts(visitorCountry);
+  // 「All Products 名册」与 /products(All Looks)用的是**同一个数据源**,只是名册
+  // 要滤掉 merch —— 贴纸/帆布包这类不属于任何系列的商品只在 All Looks 出现
+  // (老板 2026-10 决策;它们的 series 是哨兵值 "merch")。
+  const allProducts = await getLiveProducts(visitorCountry);
+  const roster = allProducts.filter((p) => p.series !== MERCH_SERIES_SLUG);
+  // 周边商品的 handle 集合:区域限定区块下面还要按它兜一道(见该处注释)。
+  const merchHandles = new Set(
+    allProducts.filter((p) => p.series === MERCH_SERIES_SLUG).map((p) => p.code),
+  );
 
   // ——— 区域限定(路线 A:按访客所在国家展示)———
   // 国家来自前置层注入的请求头(Cloudflare cf-ipcountry / nginx GeoIP2 等),
@@ -39,10 +46,16 @@ export default async function HomePage({ params }: { params: Promise<{ locale: s
   // 某些 Market」,判定要按国家各查一次再比对,详见 server/catalog/regional.ts。
   // 价格来源已随本次改造改为"如实采用该国市场的金额与币种":英国访客看到
   // NOIR £37.90、香港访客看到 BOOTS HK$369.00,而不再是 $0.00。
-  const regionals = (await getRegionalProducts(visitorCountry)).map((item, i) => ({
-    ...toLiveProduct(item, getProductByCode(item.handle)?.series ?? "princess-lady", i * 10),
-    badge: visitorCountry,
-  }));
+  const regionals = (await getRegionalProducts(visitorCountry))
+    // 区域限定是另一条查询路径(按国家比对可见性),这里再兜一道:周边商品不该
+    // 借"区域限定"回到首页。今天两款周边在所有市场都可见(实测 US/GB/HK/SG/JP/
+    // DE/... 全部返回),所以当前恒为空操作;商家将来若把某款周边只发布到单一
+    // 市场,这条能保证它仍不会出现在首页。
+    .filter((item) => !merchHandles.has(item.handle))
+    .map((item, i) => ({
+      ...toLiveProduct(item, getProductByCode(item.handle)?.series ?? "princess-lady", i * 10),
+      badge: visitorCountry,
+    }));
 
   return (
     <>

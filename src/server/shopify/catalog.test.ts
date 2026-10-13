@@ -1,6 +1,11 @@
 // @vitest-environment node
 import { describe, expect, it, vi } from "vitest";
-import { fetchShopifyCollectionProducts, fetchShopifyCollections, listShopifyProducts } from "./catalog";
+import {
+  fetchShopifyCollectionProducts,
+  fetchShopifyCollections,
+  fetchShopifyProductsOutsideCollections,
+  listShopifyProducts,
+} from "./catalog";
 
 function mockFetch(json: unknown, ok = true): typeof fetch {
   return vi.fn().mockResolvedValue({ ok, json: async () => json }) as unknown as typeof fetch;
@@ -172,5 +177,94 @@ describe("fetchShopifyCollectionProducts", () => {
     const [url, init] = (f as unknown as ReturnType<typeof vi.fn>).mock.calls[0] as [string, RequestInit];
     expect(url).toContain("ck=collection-products%3Afrontpage%3AHK");
     expect(String(init.body)).toContain("@inContext(country: HK)");
+  });
+});
+
+/** 全店商品节点(含 `collections` 归属),用于"不在任何系列里"的过滤测试。 */
+function productNode(
+  handle: string,
+  createdAt: string | null,
+  collectionHandles: string[],
+  amount = "20.00",
+) {
+  return {
+    handle,
+    title: handle.toUpperCase(),
+    createdAt,
+    availableForSale: true,
+    featuredImage: { url: `https://cdn.shopify.com/${handle}.jpg` },
+    priceRange: { minVariantPrice: { amount, currencyCode: "USD" } },
+    variants: { nodes: [{ id: `gid://shopify/ProductVariant/${handle}`, sku: null }] },
+    collections: { nodes: collectionHandles.map((h) => ({ handle: h })) },
+  };
+}
+
+describe("fetchShopifyProductsOutsideCollections", () => {
+  const TRACKED = ["frontpage", "outdoor-sporty系列", "趣味生活系列"];
+
+  it("returns only the published products that belong to none of the tracked collections, newest first", async () => {
+    // 线上实测(2026-10):全店 35 款已发布商品,其中 offy-tote-bag / offy-sticker-sheet
+    // 的 collections 为空 —— 它们靠 collectionByHandle 永远查不到。
+    const f = mockFetch({
+      data: {
+        products: {
+          nodes: [
+            // 故意按"旧→新"返回,验证函数自己按 createdAt 降序排
+            productNode("offy-sticker-sheet", "2026-09-26T19:08:16Z", []),
+            productNode("swan-princess", "2026-09-22T22:03:56Z", ["frontpage"]),
+            productNode("offy-tote-bag", "2026-10-09T07:09:24Z", []),
+            productNode("noir", "2026-09-01T00:00:00Z", ["outdoor-sporty系列", "趣味生活系列"]),
+          ],
+        },
+      },
+    });
+
+    const items = await fetchShopifyProductsOutsideCollections(TRACKED, "US", f);
+
+    expect(items.map((i) => i.handle)).toEqual(["offy-tote-bag", "offy-sticker-sheet"]);
+    // 结算/加购需要的字段一个都不能少(贴纸$1、帆布包$20 都是真实在售商品)
+    expect(items[0]).toEqual({
+      handle: "offy-tote-bag",
+      title: "OFFY-TOTE-BAG",
+      priceCents: 2000,
+      currency: "USD",
+      image: "https://cdn.shopify.com/offy-tote-bag.jpg",
+      available: true,
+      variantId: "gid://shopify/ProductVariant/offy-tote-bag",
+      sku: null,
+      createdAt: "2026-10-09T07:09:24Z",
+    });
+  });
+
+  it("treats a product with no createdAt as the oldest (sorted last)", async () => {
+    const f = mockFetch({
+      data: {
+        products: {
+          nodes: [
+            productNode("no-date", null, []),
+            productNode("dated", "2026-05-01T00:00:00Z", []),
+          ],
+        },
+      },
+    });
+    const items = await fetchShopifyProductsOutsideCollections(TRACKED, "US", f);
+    expect(items.map((i) => i.handle)).toEqual(["dated", "no-date"]);
+  });
+
+  it("asks Shopify for the visitor's market and keeps one cache key per country", async () => {
+    const f = mockFetch({ data: { products: { nodes: [] } } });
+    await fetchShopifyProductsOutsideCollections(TRACKED, "gb", f);
+    const [url, init] = (f as unknown as ReturnType<typeof vi.fn>).mock.calls[0] as [
+      string,
+      RequestInit,
+    ];
+    expect(url).toContain("products-outside-collections%3AGB");
+    expect(String(init.body)).toContain("@inContext(country: GB)");
+  });
+
+  it("throws on a non-OK HTTP response (so the caller can degrade instead of shipping a wrong list)", async () => {
+    await expect(
+      fetchShopifyProductsOutsideCollections(TRACKED, "US", mockFetch({}, false)),
+    ).rejects.toThrow();
   });
 });

@@ -3,8 +3,16 @@ import { seriesList } from "./series";
 import type { Product } from "./types";
 
 export { products, productHandleAliases, upcomingIps, collabLooks, teaserSeries, seriesList };
-export { getSeries, seriesMap } from "./series";
-export type { Product, Series, SeriesSlug, LocalizedString, Dimensions } from "./types";
+export { MERCH_SERIES_SLUG, getSeries, getSeriesName, merchSeriesName, seriesMap } from "./series";
+export type {
+  Product,
+  ProductSeries,
+  MerchSeriesSlug,
+  Series,
+  SeriesSlug,
+  LocalizedString,
+  Dimensions,
+} from "./types";
 export type { UpcomingIp } from "./products";
 
 export function getProducts(): Product[] {

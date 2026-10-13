@@ -1,9 +1,15 @@
-import type { Product, Series, SeriesSlug } from "../../lib/catalog/types";
-import { getProductByCode, getProductsBySeries, seriesList } from "../../lib/catalog";
+import type { Product, ProductSeries, Series, SeriesSlug } from "../../lib/catalog/types";
+import {
+  MERCH_SERIES_SLUG,
+  getProductByCode,
+  getProductsBySeries,
+  seriesList,
+} from "../../lib/catalog";
 import { products as localProducts } from "../../lib/catalog/products";
 import {
   fetchShopifyCollectionProducts,
   fetchShopifyCollections,
+  fetchShopifyProductsOutsideCollections,
   type ShopifyCollectionProductItem,
 } from "../shopify/catalog";
 import { fetchProductData } from "../shopify/products";
@@ -68,10 +74,13 @@ const CURATED_ZH_PRODUCT_NAMES: Record<string, string> = Object.fromEntries(
 );
 
 /** 系列情绪标签沿用本地人工精修值(与具体商品无关,整系列统一)。 */
-const SERIES_TAGS: Record<SeriesSlug, { zh: string[]; en: string[] }> = {
+const SERIES_TAGS: Record<ProductSeries, { zh: string[]; en: string[] }> = {
   "princess-lady": { zh: ["公主", "优雅"], en: ["princess", "elegant"] },
   "outdoor-sporty": { zh: ["街头", "潮流"], en: ["streetwear", "urban"] },
   "playful-life": { zh: ["日常", "可爱"], en: ["daily", "cute"] },
+  // 周边(贴纸/帆布包)没有系列情绪标签;详情页早已不再渲染 mood tags,
+  // 这里给空数组只是让映射函数对哨兵值也有定义。
+  merch: { zh: [], en: [] },
 };
 
 /** 实时数据缺图时的占位图(理论上不会触发,Shopify 已发布商品均有主图)。 */
@@ -125,7 +134,7 @@ function resolvePrice(
 
 export function toLiveProduct(
   item: LiveProductInput,
-  series: SeriesSlug,
+  series: ProductSeries,
   sortOrder: number,
 ): Product {
   const tags = SERIES_TAGS[series];
@@ -193,13 +202,41 @@ export async function getLiveSeriesList(): Promise<Series[]> {
   }
 }
 
+/**
+ * 实时周边商品(merch):商家发布了、但**不属于任何系列 Collection** 的商品
+ * (贴纸、帆布包这类非公仔周边)。线上实测两款:offy-tote-bag、offy-sticker-sheet。
+ *
+ * 老板 2026-10 决策:这批商品只在 All Looks(/products)展示、排在最后,组内按
+ * Shopify `createdAt` 降序;`series` 用哨兵值 `"merch"`(此前代码把"无系列归属"
+ * 硬塞成 "princess-lady",导致贴纸详情页推荐公主系列公仔)。
+ *
+ * 本地静态兜底表里没有任何周边商品,所以 Shopify 不可达时返回空 —— 宁可少显示
+ * 周边,也不能把周边挂到某个公仔系列下面。
+ */
+export async function getLiveMerchProducts(country: string): Promise<Product[]> {
+  const excluded = Object.values(SERIES_SHOPIFY_HANDLE);
+  try {
+    const items = await fetchShopifyProductsOutsideCollections(excluded, country);
+    return items.map((item, i) => toLiveProduct(item, MERCH_SERIES_SLUG, i * 10));
+  } catch (error) {
+    console.error("getLiveMerchProducts: Shopify unreachable, showing no merch", error);
+    return [];
+  }
+}
+
 /** 单个系列的实时商品清单(完整反映 Shopify 当前的 Collection 成员,而非本地
  * 快照);价格按 `country`(访客所在国家)对应的市场币种返回。任一环节失败均
- * 整体回退该系列的本地静态清单(美元快照),保证页面始终可渲染。 */
+ * 整体回退该系列的本地静态清单(美元快照),保证页面始终可渲染。
+ *
+ * `slug` 也可以是哨兵值 `"merch"`:这类商品没有 Collection,改查"不属于任何已知
+ * Collection 的商品"(详情页的「More from this series」对周边商品走这条路径,
+ * 于是只会推荐其它周边,不会串到公仔上)。 */
 export async function getLiveProductsBySeries(
-  slug: SeriesSlug,
+  slug: ProductSeries,
   country: string,
 ): Promise<Product[]> {
+  if (slug === MERCH_SERIES_SLUG) return getLiveMerchProducts(country);
+
   const handle = SERIES_SHOPIFY_HANDLE[slug];
   try {
     const items = await fetchShopifyCollectionProducts(handle, country);
@@ -213,12 +250,19 @@ export async function getLiveProductsBySeries(
   }
 }
 
-/** 全量实时商品(3 个系列拼合),用于 /products 全量页、sitemap、公开 API。
- * 价格按 `country`(访客所在国家)对应的市场币种返回。 */
+/** 全量实时商品(3 个系列 + 周边),用于 /products 全量页、sitemap、公开 API。
+ * 价格按 `country`(访客所在国家)对应的市场币种返回。
+ *
+ * 顺序(老板决策):有系列的(公仔)全部靠前,`merch`(贴纸/帆布包等不属于任何
+ * 系列的商品)统一排在最后;两组各自保持原有顺序(merch 组内按 Shopify
+ * createdAt 降序,由 `fetchShopifyProductsOutsideCollections` 保证)。 */
 export async function getLiveProducts(country: string): Promise<Product[]> {
   const slugs = Object.keys(SERIES_SHOPIFY_HANDLE) as SeriesSlug[];
-  const perSeries = await Promise.all(slugs.map((s) => getLiveProductsBySeries(s, country)));
-  return perSeries.flat();
+  const [perSeries, merch] = await Promise.all([
+    Promise.all(slugs.map((s) => getLiveProductsBySeries(s, country))),
+    getLiveMerchProducts(country),
+  ]);
+  return [...perSeries.flat(), ...merch];
 }
 
 /**
@@ -280,7 +324,11 @@ export async function getLiveProductByCode(
     const matchedSlug = data.collectionHandles
       .map((h) => SHOPIFY_HANDLE_TO_SERIES[h])
       .find((s): s is SeriesSlug => Boolean(s));
-    const series: SeriesSlug = matchedSlug ?? local?.series ?? "princess-lady";
+    // 归属优先级:实时 collection 成员 → 本地静态表的系列 → 哨兵 "merch"。
+    // 最后一档以前写的是 "princess-lady"(硬塞),于是不属于任何系列的贴纸
+    // (offy-sticker-sheet)详情页会推荐公主系列公仔 —— 已修正为 merch:
+    // 周边商品的「More from this series」只推荐其它周边。
+    const series: ProductSeries = matchedSlug ?? local?.series ?? MERCH_SERIES_SLUG;
     const tags = SERIES_TAGS[series];
     const { priceCents, currency } = resolvePrice(
       data.priceCents,

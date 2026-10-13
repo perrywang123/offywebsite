@@ -220,6 +220,117 @@ interface CollectionProductNode {
   variants?: { nodes?: Array<{ id?: string; sku?: string | null }> };
 }
 
+/** 全店商品节点:`CollectionProductNode` + 该商品当前所属的 collection 归属。 */
+interface ProductWithCollectionsNode extends CollectionProductNode {
+  collections?: { nodes?: Array<{ handle?: string }> };
+}
+
+/**
+ * 全店商品查询(不按 collection 遍历)—— 用来找**不属于任何已知系列 Collection**
+ * 的已发布商品:贴纸、帆布包这类非公仔周边。
+ *
+ * 为什么需要单独一条:系列清单走 `collectionByHandle`,商品只要不在那 3 个
+ * collection 里就永远查不到(线上实测:offy-tote-bag / offy-sticker-sheet 的
+ * collections 为空,全站哪儿都不显示)。这里改从 `products` 出发,把每个商品的
+ * collection 归属一并取回,由调用方按"已知系列 handle"排除。
+ *
+ * `sortKey: CREATED_AT, reverse: true` = 最新上架的在前 —— 正好是老板要的组内
+ * 顺序(merch 组内按 createdAt 降序)。Shopify 已按此排序,下面的 map 前再排一次
+ * 是防御性的(不依赖对方行为,缺失 createdAt 的一律当最旧)。
+ *
+ * `first: 250` 是 Storefront 的单词上限。线上现有 35 款已发布商品,余量很大;
+ * 若将来超过 250 款,这里需要改成分页(届时再加,与 collectionProductsQuery 的
+ * `first: 100` 是同一类限制)。
+ */
+function productsOutsideCollectionsQuery(country: string): string {
+  return `
+query ProductsOutsideCollections @inContext(country: ${country}) {
+  products(first: 250, sortKey: CREATED_AT, reverse: true) {
+    nodes {
+      handle
+      title
+      createdAt
+      availableForSale
+      featuredImage { url }
+      priceRange { minVariantPrice { amount currencyCode } }
+      variants(first: 1) { nodes { id sku } }
+      collections(first: 20) { nodes { handle } }
+    }
+  }
+}`;
+}
+
+/** createdAt 降序;缺失的当最旧(排最后),与 getLiveNewLooksProducts 同一约定。 */
+function byCreatedAtDesc(a: ProductWithCollectionsNode, b: ProductWithCollectionsNode): number {
+  const ta = a.createdAt ? Date.parse(a.createdAt) : 0;
+  const tb = b.createdAt ? Date.parse(b.createdAt) : 0;
+  return tb - ta;
+}
+
+/**
+ * 已发布、但**不属于** `excludedCollectionHandles` 里任何一个 collection 的商品
+ * (贴纸/帆布包等周边),按 `createdAt` 降序。价格按访客市场币种返回。
+ *
+ * 与 `fetchShopifyCollectionProducts` 的区别:那条按系列查成员,这条按"没有系列"
+ * 查。两者互补,合起来覆盖 Shopify 后台当前**全部**已发布商品。
+ *
+ * @param excludedCollectionHandles 已知系列的 Shopify collection handle(全站只有 3 个)。
+ * @param country ISO-3166 alpha-2 of the visitor; omitted → `SHOPIFY_MARKET_COUNTRY`.
+ * Throws on transport errors so the caller can degrade (首页/列表页不必因此失败)。
+ */
+export async function fetchShopifyProductsOutsideCollections(
+  excludedCollectionHandles: readonly string[],
+  country: string = marketCountry(),
+  fetchImpl: typeof fetch = fetch,
+): Promise<ShopifyCollectionProductItem[]> {
+  const cc = normalizeCountry(country);
+  const excluded = new Set(excludedCollectionHandles);
+  // 缓存键:国家 + 排除集合都要进(同 URL 不同 body 会被 Next 的数据缓存串味,
+  // 见本文件开头记录的线上事故;排除集合变了也必须换键)。
+  const cacheTag = `products-outside-collections:${cc}:${[...excluded].sort().join(",")}`;
+  const res = await fetchImpl(storefrontEndpoint(cacheTag), {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      "X-Shopify-Storefront-Access-Token": env.SHOPIFY_STOREFRONT_TOKEN ?? "",
+    },
+    body: JSON.stringify({ query: productsOutsideCollectionsQuery(cc) }),
+    next: { revalidate: 60 },
+    signal: AbortSignal.timeout(3000),
+  } as RequestInit);
+
+  if (!res.ok) throw new ShopifyError("storefront_products_outside_collections_failed", res.status);
+
+  const json = (await res.json()) as {
+    data?: { products?: { nodes?: ProductWithCollectionsNode[] } };
+    errors?: Array<{ message: string }>;
+  };
+  if (json.errors && json.errors.length > 0) {
+    throw new ShopifyError(
+      json.errors[0]?.message ?? "storefront_products_outside_collections_error",
+    );
+  }
+
+  const nodes = json.data?.products?.nodes ?? [];
+  return nodes
+    .filter((n) => !(n.collections?.nodes ?? []).some((c) => c.handle && excluded.has(c.handle)))
+    .sort(byCreatedAtDesc)
+    .map((n) => {
+      const amount = n.priceRange?.minVariantPrice?.amount;
+      return {
+        handle: n.handle,
+        title: n.title ?? "",
+        priceCents: amount ? Math.round(parseFloat(amount) * 100) : 0,
+        currency: n.priceRange?.minVariantPrice?.currencyCode ?? "USD",
+        image: n.featuredImage?.url ?? null,
+        available: Boolean(n.availableForSale),
+        variantId: n.variants?.nodes?.[0]?.id ?? null,
+        sku: n.variants?.nodes?.[0]?.sku || null,
+        createdAt: n.createdAt ?? null,
+      };
+    });
+}
+
 /**
  * List the current, live product roster of a Shopify collection by handle —
  * this is the single source of truth for "which products belong to this

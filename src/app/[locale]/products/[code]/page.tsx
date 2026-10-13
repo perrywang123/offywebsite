@@ -9,7 +9,7 @@ import {
   getLiveProductsBySeries,
   getLiveSeriesList,
 } from "@/server/catalog/live";
-import { getProductHandleAlias } from "@/lib/catalog";
+import { getProductHandleAlias, getSeriesName } from "@/lib/catalog";
 import { env } from "@/lib/env";
 import { pickCountry } from "@/lib/geo";
 import { formatPrice } from "@/lib/pricing";
@@ -66,7 +66,16 @@ export default async function ProductDetailPage({
   const t = await getTranslations("product");
   const tHome = await getTranslations("home");
   const seriesList = await getLiveSeriesList();
-  const series = seriesList.find((s) => s.slug === product.series);
+  const liveSeries = seriesList.find((s) => s.slug === product.series);
+  // 系列展示名:真实系列用实时名(商家改 Shopify 标题即时生效);merch(贴纸/帆布包
+  // 这类不属于任何系列的周边)**没有系列页**,名字取 lib/catalog/series.ts 里的
+  // 哨兵展示名 —— 否则页面上会显示裸的 "merch"。
+  const seriesName = liveSeries?.name ?? getSeriesName(product.series);
+  const seriesLabel = seriesName
+    ? locale === "zh"
+      ? seriesName.zh
+      : seriesName.en
+    : product.series;
   // Shopify 单语言:zh 描述暂缺时回退英文原文(后续 Translate & Adapt 接管)
   const description =
     locale === "zh" ? product.description.zh || product.description.en : product.description.en;
@@ -91,9 +100,14 @@ export default async function ProductDetailPage({
             {t("shopBreadcrumb")}
           </Link>
           <span aria-hidden>/</span>
-          <Link href={`/collections/${product.series}`} className="link-line tap-target--quiet">
-            {series ? (locale === "zh" ? series.name.zh : series.name.en) : product.series}
-          </Link>
+          {liveSeries ? (
+            <Link href={`/collections/${liveSeries.slug}`} className="link-line tap-target--quiet">
+              {seriesLabel}
+            </Link>
+          ) : (
+            // merch 商品没有系列页(/collections/merch 会 404),只显示名字不给链接
+            <span>{seriesLabel}</span>
+          )}
         </nav>
 
         {/* `min-w-0` 不能省:窄屏下两列都是单列栅格项,而图区里那条自图集横滑条
@@ -124,9 +138,7 @@ export default async function ProductDetailPage({
             整体用 space-y 统一纵向间距,不再逐个元素各自零散设置 mt-*。 */}
           <div className="min-w-0 space-y-8">
             <div>
-              <p className="kicker mb-3">
-                {series ? (locale === "zh" ? series.name.zh : series.name.en) : product.series}
-              </p>
+              <p className="kicker mb-3">{seriesLabel}</p>
               <h1 className="font-display text-4xl font-semibold tracking-tight">
                 {locale === "zh" ? product.name.zh : product.name.en}
               </h1>
