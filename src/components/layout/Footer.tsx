@@ -36,7 +36,11 @@ export async function Footer({ series, locale }: { series: Series[]; locale: str
           该列 ≥320px。 */}
       <div className="container-site grid gap-10 py-16 md:grid-cols-2 md:gap-8 lg:grid-cols-4">
         <div>
-          <p className="text-cream/70 max-w-xs text-sm leading-relaxed">{t("footer.blurb")}</p>
+          {/* whitespace-pre-line:`blurb` 是两行(声明一行、版权一行),不这样处理
+              `\n` 会被 HTML 折叠成空格,两行挤在一起。 */}
+          <p className="text-cream/70 max-w-xs text-sm leading-relaxed whitespace-pre-line">
+            {t("footer.blurb")}
+          </p>
         </div>
         <nav aria-label={t("nav.home") + " / " + t("nav.shop")}>
           <p className="kicker kicker--on-dark mb-4">{t("footer.menuHeading")}</p>
