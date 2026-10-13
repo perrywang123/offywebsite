@@ -31,3 +31,23 @@ if (typeof window !== "undefined" && !window.matchMedia) {
 afterEach(() => {
   cleanup();
 });
+
+// jsdom(本版本)不提供 localStorage —— 即便配置了真实源,`window.localStorage`
+// 仍是 undefined(Node 26 + 新版 jsdom 收紧了;旧版是宽松放行)。购物袋的持久化
+// 逻辑依赖它,所以照上面 IntersectionObserver / matchMedia 的同一套做法补一个
+// 最小实现。只实现被测代码用到的部分,不做完整 Storage 规范。
+if (typeof window !== "undefined" && !window.localStorage) {
+  const store = new Map<string, string>();
+  const storage: Storage = {
+    get length() {
+      return store.size;
+    },
+    clear: () => store.clear(),
+    getItem: (k: string) => (store.has(k) ? (store.get(k) as string) : null),
+    key: (i: number) => [...store.keys()][i] ?? null,
+    removeItem: (k: string) => void store.delete(k),
+    setItem: (k: string, v: string) => void store.set(k, String(v)),
+  };
+  Object.defineProperty(window, "localStorage", { value: storage, configurable: true });
+  Object.defineProperty(globalThis, "localStorage", { value: storage, configurable: true });
+}

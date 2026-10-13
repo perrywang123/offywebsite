@@ -60,23 +60,23 @@ function mockRoutes({ catalog }: { catalog: "ok" | "500" | "reject" }) {
 const lines = () => JSON.parse(screen.getByTestId("lines").textContent ?? "[]");
 
 beforeEach(() => {
-  localStorage.clear();
-  localStorage.setItem(STORAGE_KEY, JSON.stringify([{ code: "offy_redrush", quantity: 2 }]));
+  window.localStorage.clear();
+  window.localStorage.setItem(STORAGE_KEY, JSON.stringify([{ code: "offy_redrush", quantity: 2 }]));
 });
 afterEach(() => {
   vi.unstubAllGlobals();
-  localStorage.clear();
+  window.localStorage.clear();
 });
 
 describe("CartProvider 健壮性", () => {
-  it("S1:目录接口返回 500 时不得清空购物袋(也不得把空数组写回 localStorage)", async () => {
+  it("S1:目录接口返回 500 时不得清空购物袋(也不得把空数组写回 window.localStorage)", async () => {
     mockRoutes({ catalog: "500" });
     render(<CartProvider><Probe /></CartProvider>);
 
     await waitFor(() => expect(screen.getByTestId("loaded").textContent).toBe("true"));
     expect(lines()).toEqual([{ code: "offy_redrush", quantity: 2 }]);
     // 关键:持久化的内容也必须保住 —— 旧实现会在这里写回 []
-    expect(JSON.parse(localStorage.getItem(STORAGE_KEY) ?? "[]")).toEqual([
+    expect(JSON.parse(window.localStorage.getItem(STORAGE_KEY) ?? "[]")).toEqual([
       { code: "offy_redrush", quantity: 2 },
     ]);
   });
@@ -90,7 +90,7 @@ describe("CartProvider 健壮性", () => {
   });
 
   it("S2:目录里没有、但单品接口能查到的商品必须留在购物袋里", async () => {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify([{ code: "offy-sticker-sheet", quantity: 1 }]));
+    window.localStorage.setItem(STORAGE_KEY, JSON.stringify([{ code: "offy-sticker-sheet", quantity: 1 }]));
     mockRoutes({ catalog: "ok" });
     render(<CartProvider><Probe /></CartProvider>);
 
@@ -100,7 +100,7 @@ describe("CartProvider 健壮性", () => {
   });
 
   it("仍然会清理真正下架的商品(单品接口 404)", async () => {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify([{ code: "long-gone", quantity: 1 }]));
+    window.localStorage.setItem(STORAGE_KEY, JSON.stringify([{ code: "long-gone", quantity: 1 }]));
     mockRoutes({ catalog: "ok" });
     render(<CartProvider><Probe /></CartProvider>);
 

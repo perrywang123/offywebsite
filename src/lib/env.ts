@@ -27,6 +27,18 @@ const envSchema = z.object({
    * 留空用内置默认(公告栏主推的 6 个市场 + 常见海外市场)。
    */
   SHOPIFY_REGIONS: z.string().optional(),
+  /**
+   * **允许展示区域限定的访客国家**(逗号分隔,默认 US,GB,SG,HK)。
+   *
+   * 这不是"探测范围"(那是 SHOPIFY_REGIONS),而是"哪些国家的访客能看到这块内容"。
+   * 不在这个名单里的访客**一律不展示区域限定** —— 因为"限定"是相对目标市场说的,
+   * 对一个我们没有配置市场的国家(例如伊朗),任何判定都是凭空造出来的。
+   *
+   * 为什么必须显式配置:商品是发布到 **Market** 的,而一个 Market 往往含多个国家。
+   * 例如发布到"新加坡所在市场"的商品,德国、伊朗、巴西的访客同样能看到它 ——
+   * 于是曾出现"伊朗访客看到 AVAILABLE IN IRAN ONLY"(后台从未配置伊朗)。
+   */
+  SHOPIFY_TARGET_MARKETS: z.string().optional(),
 });
 
 export const env = envSchema.parse(process.env);
