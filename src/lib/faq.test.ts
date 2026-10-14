@@ -17,7 +17,7 @@ describe("FAQ 内容(来自 独立站Q&A_审核修订稿——final(2).docx)", (
 
   it("部分标题按源文档原样带编号(PART 3 是全角冒号,不要顺手修正)", () => {
     expect(faqParts.map((p) => p.title)).toEqual([
-      "Part 1: 📦 Shipping & Delivery",
+      "PART 1: 📦 Shipping & Delivery",
       "PART 2: 🔄 RETURNS & QUALITY ASSURANCE",
       "PART 3：🔒 PAYMENT, PRIVACY & SECURITY",
     ]);

@@ -137,7 +137,7 @@ describe("/faq 页面渲染", () => {
     await renderFaq("en");
     const headings = screen.getAllByRole("heading", { level: 2 }).map((h) => h.textContent);
     expect(headings).toEqual([
-      "Part 1: 📦 Shipping & Delivery",
+      "PART 1: 📦 Shipping & Delivery",
       "PART 2: 🔄 RETURNS & QUALITY ASSURANCE",
       "PART 3：🔒 PAYMENT, PRIVACY & SECURITY",
     ]);

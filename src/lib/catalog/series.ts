@@ -42,13 +42,13 @@ export const seriesList: Series[] = [
   {
     slug: "outdoor-sporty",
     name: { zh: "时尚潮流生活", en: "Fashion Lifestyle" },
-    tagline: { zh: "为球场、街头与户外而生", en: "Built for the court, street, and outdoors" },
+    tagline: { zh: "为球场、街头与户外而生", en: "Weekend in motion" },
     heroImage: "/assets/hero/hero-03.jpg",
   },
   {
     slug: "playful-life",
     name: { zh: "趣味生活系列", en: "Playful Life" },
-    tagline: { zh: "黑皮 OFFY 的可爱日常", en: "Her playful everyday moments" },
+    tagline: { zh: "黑皮 OFFY 的可爱日常", en: "Too cute to dress normal" },
     heroImage: "/assets/hero/hero-04.jpg",
   },
 ];

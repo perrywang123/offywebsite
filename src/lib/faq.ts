@@ -35,14 +35,15 @@ export interface FaqItem {
 }
 
 export interface FaqPart {
-  /** 部分标题,含源文档原样的编号与 emoji(`Part 1: ` / `PART 2: ` / `PART 3：`)。 */
+  /** 部分标题,含编号与 emoji。注意 `PART 1` 被老板要求改成大写(源文档是 `Part 1:`),
+   * 以便与 PART 2 / PART 3 一致 —— 即此处**不**完全等于源文档。 */
   title: string;
   items: FaqItem[];
 }
 
 export const faqParts: FaqPart[] = [
   {
-    title: "Part 1: 📦 Shipping & Delivery",
+    title: "PART 1: 📦 Shipping & Delivery",
     items: [
       {
         q: "How long will it take for my order to be dispatched?",
