@@ -26,11 +26,15 @@ describe("catalog data integrity (33 Shopify-mapped products)", () => {
   });
 
   it("each series carries a dedicated hero image for the collection page hero", () => {
-    // 按图内容对应:公主lady=素材2(白底人台)、时尚=素材4(CATTLETUS)、趣味=素材3(深底)
+    // 按**图内容**对应(编号文件名不含信息,别再凭编号猜):
+    // 公主lady=素材2(白底人台)、街头=素材3(运动/护目镜/球衣)、
+    // 趣味(Dress-up)=素材4(连衣裙/背带裤 + 深灰地面)。
+    // 2026-10-13:后两者的 heroImage 原先正好挂反 —— 顺带一提,头图那两个文件名
+    // (hero-streetwear/hero-playful)当时也与图内容相反,已一并按内容改正。
     expect(seriesList.map((s) => s.heroImage)).toEqual([
       "/assets/hero/hero-02.jpg",
-      "/assets/hero/hero-04.jpg",
       "/assets/hero/hero-03.jpg",
+      "/assets/hero/hero-04.jpg",
     ]);
   });
 

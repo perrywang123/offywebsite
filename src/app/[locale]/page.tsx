@@ -62,7 +62,7 @@ export default async function HomePage({ params }: { params: Promise<{ locale: s
       {/* ============ 头图轮播(图片驱动:宽撑满,高=宽/1.789 等比,文字随图) ============
           `border-b border-cream-line`(#e3e3e3)是给头图 ↔ NEWS 这条硬接缝补的分隔线:
           5 张头图素材的底边色差很大(hero-promo 底边 #f7f2ef 与 NEWS 的 #efefef 只差
-          Δ8,hero-streetwear 的 #4f4d50 差 Δ162),而每 5 秒切一次屏 —— 没有这条线,
+          Δ8,hero-dressup 的 #4f4d50 差 Δ162),而每 5 秒切一次屏 —— 没有这条线,
           接缝会跟着轮播来回跳。此处**不要**在 NEWS 顶部加渐变(见下方注释)。 */}
       <section className="border-cream-line relative overflow-hidden border-b">
         <HeroCarousel slides={heroSlides} locale={locale} />

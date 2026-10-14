@@ -22,6 +22,15 @@ export const merchSeriesName: LocalizedString = { zh: "周边", en: "Goods" };
  *
  * 注意:merch 哨兵**不在这里** —— 它没有系列页,混进来会凭空多出一个
  * /collections/merch 的导航项与 sitemap 条目(线上会 404)。
+ *
+ * `heroImage`(系列页 /collections/<slug> 的大图)按**图内容**对应 ——
+ * 编号文件名本身不含任何信息,别再凭编号顺序猜:
+ *   hero-02 = 白底人台、公主组            → princess-lady
+ *   hero-03 = 运动/护目镜/球衣组           → outdoor-sporty(Streetwear)
+ *   hero-04 = 连衣裙/背带裤/深灰地面组      → playful-life(Dress-up)
+ * 这三张是头图同名高清图(hero-princess / hero-streetwear / hero-dressup.jpg,
+ * 3250×2041)的低分辨率版本(1920×1072),画面内容一一对应。
+ * 2026-10-13:outdoor-sporty 与 playful-life 的 heroImage 原先正好挂反,已对调。
  */
 export const seriesList: Series[] = [
   {
@@ -34,13 +43,13 @@ export const seriesList: Series[] = [
     slug: "outdoor-sporty",
     name: { zh: "时尚潮流生活", en: "Fashion Lifestyle" },
     tagline: { zh: "为球场、街头与户外而生", en: "Built for the court, street, and outdoors" },
-    heroImage: "/assets/hero/hero-04.jpg",
+    heroImage: "/assets/hero/hero-03.jpg",
   },
   {
     slug: "playful-life",
     name: { zh: "趣味生活系列", en: "Playful Life" },
     tagline: { zh: "黑皮 OFFY 的可爱日常", en: "Her playful everyday moments" },
-    heroImage: "/assets/hero/hero-03.jpg",
+    heroImage: "/assets/hero/hero-04.jpg",
   },
 ];
 

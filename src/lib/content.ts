@@ -66,9 +66,21 @@ export const newsItems: NewsItem[] = [
  * PSD 分组 ↔ 底图 ↔ 文案(按分组内的智能对象底图认人,不按分组名):
  *   让想象落地,让陪伴发生      → hero-brand.jpg     黑字居中 slogan
  *   头图-活动奖励              → hero-promo.jpg    黑字 kicker + 两行大字
- *   OFFY 公主lady系列          → hero-princess.jpg 黑字
- *   OFFY 时尚潮流生活          → hero-streetwear.jpg 白字(dark)
- *   OFFY 趣味生活系列          → hero-playful.jpg  黑字
+ *   OFFY 公主lady系列(屏 3)   → hero-princess.jpg 黑字
+ *   OFFY 时尚潮流生活(屏 4)   → hero-streetwear.jpg 黑字(运动/护目镜那组)
+ *   OFFY 趣味生活系列(屏 5)   → hero-dressup.jpg   白字(dark,连衣裙/背带裤那组)
+ *
+ * ⚠️ 2026-10-13 图片改名 —— 原先**文件名与图内容不符**,把两个系列的配图搞反了:
+ *   `hero-streetwear.jpg` 里拍的其实是裙子/背带裤那组(Dress-up),
+ *   `hero-playful.jpg` 里拍的才是运动/护目镜/球衣那组(Streetwear)。
+ *   已按**图内容**改正文件名(不是改映射去迁就错误的名字):
+ *     hero-streetwear.jpg = 运动/护目镜组 → 屏 4 / `/collections/outdoor-sporty`
+ *     hero-dressup.jpg    = 连衣裙/背带裤组 → 屏 5 / `/collections/playful-life`
+ *   旧的 `hero-playful.jpg` 已不存在(没有文件再叫这个名字)。
+ *   注:`dark` / `bg` 是**跟着图**走的属性而不是文案的属性 —— 白底图用 ink 字、
+ *   深灰地面那组用 cream 字;`bg` 取该图边缘色(见 openspec 规格
+ *   「backdrop matching the photo's edge color」)。图片对调后这两个字段随图一起
+ *   对调,否则白底图上的白字会看不见。**标题/副标题/跳转链接一字未动。**
  *
  * 注:新 PSD 把「时尚潮流生活 / 趣味生活系列」两屏的**英文**标题互换了
  * (PSD: 时尚潮流生活→OFFY DRESS-UP SERIES,趣味生活系列→STREETWEAR SERIES·),
@@ -79,8 +91,8 @@ export const newsItems: NewsItem[] = [
  *  · 去掉品牌前缀 —— 英文「OFFY」与中文「Offy 」都去掉了;
  *  · **两屏文案对调**:PSD 把「DRESS-UP / Too Cute…」与「STREETWEAR / Weekend…」
  *    贴错了屏(Excel 标注「文案匹配错了」),已按文案表换回 ——
- *    街头屏(hero-streetwear)= STREETWEAR SERIES / Weekend in Motion,
- *    趣味屏(hero-playful)= DRESS-UP SERIES / Too Cute to Dress Normal。
+ *    街头屏(屏 4)= STREETWEAR SERIES / Weekend in Motion,
+ *    趣味屏(屏 5)= DRESS-UP SERIES / Too Cute to Dress Normal。
  *    跳转链接本来就没错,只有文字贴错了。中文侧原本配对是对的,只去了前缀。
  * 中文标题与跳转链接未动(仍与文案表一致)。
  */
@@ -96,7 +108,8 @@ export interface HeroSlideData {
   title?: { zh: string; en: string };
   /** 屏 3-5:系列副标题(实时文字,随语言切换)。 */
   subtitle?: { zh: string; en: string };
-  /** 屏 3-5:底部偏暗背景(标题/副标题/CTA 为白色)。 */
+  /** 屏 3-5:该屏**底图**底部偏暗 → 标题/副标题/CTA 用 cream 而不是 ink。
+   *  这是图片的属性(跟着图走),对调两张底图时它必须跟着一起对调。 */
   dark?: boolean;
   /** 屏 2 专用:促销屏(kicker + 两行大字促销语,产品图已烤入背景)。 */
   promo?: {
@@ -142,18 +155,19 @@ export const heroSlides: HeroSlideData[] = [
     subtitle: { zh: "生活需要仪式感", en: "Romanticize the Everyday" },
   },
   {
-    image: "/assets/hero/hero-streetwear.jpg",
-    bg: "#d1c0b6",
+    image: "/assets/hero/hero-streetwear.jpg", // 运动/护目镜/球衣那组 = outdoor-sporty
+    bg: "#fefefe", // 该图边缘色(白底棚拍)
     href: "/collections/outdoor-sporty",
     title: { zh: "时尚潮流生活", en: "STREETWEAR SERIES" },
     subtitle: { zh: "周末出去玩", en: "Weekend in Motion" },
-    dark: true,
+    // 白底图 → 不设 dark:标题/副标题用 ink。`dark` 是**图的**属性,不是文案的属性。
   },
   {
-    image: "/assets/hero/hero-playful.jpg",
-    bg: "#fefefe",
+    image: "/assets/hero/hero-dressup.jpg", // 连衣裙/背带裤/深灰地面那组 = playful-life
+    bg: "#d1c0b6", // 该图边缘色(浅米色墙)
     href: "/collections/playful-life",
     title: { zh: "趣味生活系列", en: "DRESS-UP SERIES" },
     subtitle: { zh: "日常犯可爱", en: "Too Cute to Dress Normal" },
+    dark: true, // 图底部是深灰地面(实测底边 5% 中位色 #4f4d4f)→ 白字
   },
 ];

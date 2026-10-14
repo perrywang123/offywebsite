@@ -134,7 +134,7 @@ const SERIES: Series[] = [
     slug: "playful-life",
     name: { en: "Playful Life", zh: "趣味生活系列" },
     tagline: { en: "x", zh: "x" },
-    heroImage: "/assets/hero/hero-playful.jpg",
+    heroImage: "/assets/hero/hero-dressup.jpg",
   },
 ];
 

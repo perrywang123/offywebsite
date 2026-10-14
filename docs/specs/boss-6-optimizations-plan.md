@@ -362,6 +362,14 @@ const SHOW_HERO_ARROWS = false;
 | `hero-streetwear.jpg`（屏 4） | **`#4f4d50`** | **162** |
 | `hero-playful.jpg`（屏 5） | `#fefefe` | **15** |
 
+> **2026-10-13 文件名更正（本节数字仍有效，改的是名字）**：`hero-streetwear.jpg` /
+> `hero-playful.jpg` 两个文件名与**图内容**相反（屏 4 那张拍的其实是连衣裙/背带裤组、
+> 屏 5 才是运动/护目镜组），系列配图因此整体挂反。按图内容改名后：屏 4（Streetwear）
+> = `hero-streetwear.jpg`（运动组）、屏 5（Dress-up）= `hero-dressup.jpg`（裙子组）。
+> 所以**底边 `#4f4d50` 的那张现在叫 `hero-dressup.jpg`、挂在屏 5**；
+> `hero-playful.jpg` 这个名字已不存在。本节结论（补 1px `border-b border-cream-line`）
+> 与文件名无关，不受影响。
+
 → 今天这条边被 Marquee 的黑色 `border-y`（`--color-sand: #d4d4d4`）遮住了；删掉后它会**每 5 秒在 Δ8 与 Δ162 之间来回跳**。
 **采用（A15）**：给 `page.tsx:54` 的 `<section className="relative overflow-hidden">` 补 `border-b border-cream-line`，把接缝固定成一条 1px 设计线（`#e3e3e3`）。
 **否决时的退路**：接受硬边，**但不要在 NEWS 顶部加渐变** —— `page.tsx:63-65` 注释里那条"柔和的过渡渐变带"代码与图里都不存在，是错注释（本次一并修正）。

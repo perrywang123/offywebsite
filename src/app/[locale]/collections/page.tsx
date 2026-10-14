@@ -15,11 +15,19 @@ export const revalidate = 60;
  * 为什么不用商品图:系列卡片要表达的是"这一整个系列的世界观",头图那一屏正是
  * 为它拍的整组画面;而商品图是单个玩偶的棚拍,放在系列卡上会被读成"这个系列
  * 就这一款"。映射与 `lib/content.ts` 的 heroSlides 跳转一一对应。
+ *
+ * ⚠️ 文件名即**图内容** —— 2026-10-13 已按图内容改正过命名(此前
+ * `hero-streetwear.jpg` / `hero-playful.jpg` 两个名字与内容相反,导致
+ * outdoor-sporty 挂着裙子那组、playful-life 挂着运动那组)。核对口径:
+ *   princess-lady  → hero-princess.jpg   白底人台、公主组
+ *   outdoor-sporty → hero-streetwear.jpg 运动/护目镜/球衣组(Streetwear)
+ *   playful-life   → hero-dressup.jpg    连衣裙/背带裤/深灰地面组(Dress-up)
+ * 改这里之前请先打开图片确认内容,不要凭文件名猜(本轮 bug 就是这么来的)。
  */
 const SERIES_HERO_IMAGE: Record<string, string> = {
   "princess-lady": "/assets/hero/hero-princess.jpg",
   "outdoor-sporty": "/assets/hero/hero-streetwear.jpg",
-  "playful-life": "/assets/hero/hero-playful.jpg",
+  "playful-life": "/assets/hero/hero-dressup.jpg",
 };
 
 function seriesHeroImage(slug: string): string {
