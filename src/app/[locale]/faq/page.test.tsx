@@ -164,4 +164,16 @@ describe("/faq 页面渲染", () => {
       }
     }
   });
+
+  it("问题编号按源文档显示,且每个部分内从 Q1 重新开始", async () => {
+    // 源文档里编号是每部分重置的(Part 1 有 Q1–Q5、Part 2 只有 Q1–Q2),
+    // 所以正确性依赖"按部分内索引渲染"而不是全局序号。
+    const { container } = await renderFaq("en");
+    const marks = [...container.querySelectorAll("summary span span")].map((e) => e.textContent);
+    expect(marks.filter((t) => t === "Q1:")).toHaveLength(3); // 三个部分各有一个 Q1
+    expect(marks.filter((t) => t === "Q2:")).toHaveLength(3);
+    expect(marks.filter((t) => t === "Q5:")).toHaveLength(1); // 只有 Part 1 有 Q5
+    // 全局序号会是 Q1…Q10 这种;按部分重置就不会有 Q6 以上的编号
+    expect(marks.some((t) => /^Q(6|7|8|9|10):$/.test(t ?? ""))).toBe(false);
+  });
 });

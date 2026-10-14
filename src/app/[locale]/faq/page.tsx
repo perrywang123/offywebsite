@@ -56,7 +56,7 @@ export default async function FaqPage({ params }: { params: Promise<{ locale: st
               {part.title}
             </h2>
             <div className="divide-cream-line border-cream-line mt-5 divide-y border-y">
-              {part.items.map((item) => (
+              {part.items.map((item, itemIndex) => (
                 /* 纵向内边距从 <details> 挪到 <summary>(方案 #50):原来 py-4 加在
                    外层,summary 自身只有 28px 高,点在它上下那圈"看不见的 padding"
                    上没有反应 —— 是个假可点区域。挪进来后视觉完全不变,
@@ -66,7 +66,13 @@ export default async function FaqPage({ params }: { params: Promise<{ locale: st
                     lang="en"
                     className="focus-ring text-ink flex cursor-pointer list-none items-start justify-between gap-4 py-4 text-base font-medium marker:content-none"
                   >
-                    <span>{item.q}</span>
+                    {/* 问题编号按源文档显示(老板要求)。
+                        源文档里编号在**每个部分内从 Q1 重新开始**,而那正好等于
+                        数组索引 + 1 —— 所以不需要在数据里存编号,也不用改生成器。
+                        编号存进数据反而会多一个可能和顺序不一致的事实来源。 */}
+                    <span>
+                      <span className="text-ink-muted">Q{itemIndex + 1}:</span> {item.q}
+                    </span>
                     {/* 展开指示:纯 CSS,不引图标库 */}
                     <span
                       aria-hidden
