@@ -1,0 +1,1037 @@
+[
+ {
+  "style": "Normal",
+  "runs": [
+   {
+    "t": "独立站",
+    "b": true,
+    "sz": 26.0
+   },
+   {
+    "t": " Q&A",
+    "b": true,
+    "sz": 26.0
+   }
+  ]
+ },
+ {
+  "style": "Normal",
+  "runs": [
+   {
+    "t": "Part 1: ",
+    "b": true,
+    "sz": 15.0
+   },
+   {
+    "t": "📦 ",
+    "b": true,
+    "sz": 15.0
+   },
+   {
+    "t": "Shipping & Delivery",
+    "b": true,
+    "sz": 15.0
+   }
+  ]
+ },
+ {
+  "style": "Normal",
+  "runs": [
+   {
+    "t": "Q1: How long will it take for my order to be dispatched?",
+    "b": true,
+    "sz": 14.0
+   }
+  ]
+ },
+ {
+  "style": "Normal",
+  "runs": [
+   {
+    "t": "In-Stock Items:",
+    "b": true,
+    "sz": null
+   },
+   {
+    "t": " Our processing time is up to ",
+    "b": false,
+    "sz": null
+   },
+   {
+    "t": "72 hours",
+    "b": true,
+    "sz": null
+   },
+   {
+    "t": " (Monday through Saturday, excluding public holidays) before your order is dispatched. Orders placed over weekends or public holidays will be processed starting on the next business day.   ",
+    "b": false,
+    "sz": null
+   }
+  ]
+ },
+ {
+  "style": "Normal",
+  "runs": [
+   {
+    "t": "Pre-Order Items:",
+    "b": true,
+    "sz": null
+   },
+   {
+    "t": " Pre-orders will be dispatched according to the estimated release date stated on the product page.   ",
+    "b": false,
+    "sz": null
+   }
+  ]
+ },
+ {
+  "style": "Normal",
+  "runs": [
+   {
+    "t": "Q2: How long does shipping take to my destination?",
+    "b": true,
+    "sz": 14.0
+   }
+  ]
+ },
+ {
+  "style": "Normal",
+  "runs": [
+   {
+    "t": "Estimated delivery windows below include our ",
+    "b": false,
+    "sz": null
+   },
+   {
+    "t": "72-hour processing",
+    "b": true,
+    "sz": null
+   },
+   {
+    "t": ", followed by the respective transit times by region:   ",
+    "b": false,
+    "sz": null
+   }
+  ]
+ },
+ {
+  "style": "Normal",
+  "runs": [
+   {
+    "t": "Mainland China & Hong Kong",
+    "b": true,
+    "sz": null
+   },
+   {
+    "t": ": Transit takes approx. 3",
+    "b": false,
+    "sz": null
+   },
+   {
+    "t": "–",
+    "b": false,
+    "sz": null
+   },
+   {
+    "t": "7 business days (Total: approx. 6",
+    "b": false,
+    "sz": null
+   },
+   {
+    "t": "–",
+    "b": false,
+    "sz": null
+   },
+   {
+    "t": "10 business days)",
+    "b": false,
+    "sz": null
+   }
+  ]
+ },
+ {
+  "style": "Normal",
+  "runs": [
+   {
+    "t": "Southeast Asia",
+    "b": true,
+    "sz": null
+   },
+   {
+    "t": " ",
+    "b": false,
+    "sz": null
+   },
+   {
+    "t": "(Singapore, Malaysia, Thailand and etc.)",
+    "b": false,
+    "sz": null
+   },
+   {
+    "t": ": Transit takes approx. 5",
+    "b": false,
+    "sz": null
+   },
+   {
+    "t": "–",
+    "b": false,
+    "sz": null
+   },
+   {
+    "t": "10 business days (Total: approx. 8",
+    "b": false,
+    "sz": null
+   },
+   {
+    "t": "–",
+    "b": false,
+    "sz": null
+   },
+   {
+    "t": "13 business days)",
+    "b": false,
+    "sz": null
+   }
+  ]
+ },
+ {
+  "style": "Normal",
+  "runs": [
+   {
+    "t": "Europe",
+    "b": true,
+    "sz": null
+   },
+   {
+    "t": "(UK)",
+    "b": false,
+    "sz": null
+   },
+   {
+    "t": ": Transit takes approx. 7",
+    "b": false,
+    "sz": null
+   },
+   {
+    "t": "–",
+    "b": false,
+    "sz": null
+   },
+   {
+    "t": "14 business days (Total: approx. 10",
+    "b": false,
+    "sz": null
+   },
+   {
+    "t": "–",
+    "b": false,
+    "sz": null
+   },
+   {
+    "t": "17 business days) ",
+    "b": false,
+    "sz": null
+   }
+  ]
+ },
+ {
+  "style": "Normal",
+  "runs": [
+   {
+    "t": "North America",
+    "b": true,
+    "sz": null
+   },
+   {
+    "t": " ",
+    "b": false,
+    "sz": null
+   },
+   {
+    "t": "(United States, Canada)",
+    "b": false,
+    "sz": null
+   },
+   {
+    "t": ": Transit takes approx. 8",
+    "b": false,
+    "sz": null
+   },
+   {
+    "t": "–",
+    "b": false,
+    "sz": null
+   },
+   {
+    "t": "18 business days (Total: approx. 11",
+    "b": false,
+    "sz": null
+   },
+   {
+    "t": "–",
+    "b": false,
+    "sz": null
+   },
+   {
+    "t": "21 business days)  ",
+    "b": false,
+    "sz": null
+   }
+  ]
+ },
+ {
+  "style": "Normal",
+  "runs": [
+   {
+    "t": "Oceania",
+    "b": true,
+    "sz": null
+   },
+   {
+    "t": " ",
+    "b": false,
+    "sz": null
+   },
+   {
+    "t": "(Australia, New Zealand)",
+    "b": false,
+    "sz": null
+   },
+   {
+    "t": ": Transit takes approx. 8",
+    "b": false,
+    "sz": null
+   },
+   {
+    "t": "–",
+    "b": false,
+    "sz": null
+   },
+   {
+    "t": "18 business days (Total: approx. 11",
+    "b": false,
+    "sz": null
+   },
+   {
+    "t": "–",
+    "b": false,
+    "sz": null
+   },
+   {
+    "t": "21 business days)",
+    "b": false,
+    "sz": null
+   }
+  ]
+ },
+ {
+  "style": "Normal",
+  "runs": [
+   {
+    "t": "Please note: Transit times are estimates provided in good faith and are not guaranteed. Delivery to remote or outlying areas, or during peak shopping seasons (such as Black Friday and Christmas), may require additional time.  ",
+    "b": false,
+    "sz": null
+   }
+  ]
+ },
+ {
+  "style": "Normal",
+  "runs": [
+   {
+    "t": "Q3: How do I track my parcel? Why hasn't the tracking status updated for several days?",
+    "b": true,
+    "sz": 14.0
+   }
+  ]
+ },
+ {
+  "style": "Normal",
+  "runs": [
+   {
+    "t": "Within ",
+    "b": false,
+    "sz": null
+   },
+   {
+    "t": "24 hours after your order completes processing",
+    "b": true,
+    "sz": null
+   },
+   {
+    "t": ", you will receive a dispatch confirmation email containing your tracking number and tracking link.   ",
+    "b": false,
+    "sz": null
+   }
+  ]
+ },
+ {
+  "style": "Normal",
+  "runs": [
+   {
+    "t": "Tracking Update Gaps:",
+    "b": true,
+    "sz": null
+   },
+   {
+    "t": " Cross-border parcels involve international line-haul transit, export processing, and customs handovers. As packages transfer between stages, tracking updates may pause for several days between physical scans; This is normal and does not mean your package is lost.   ",
+    "b": false,
+    "sz": null
+   }
+  ]
+ },
+ {
+  "style": "Normal",
+  "runs": [
+   {
+    "t": "If your tracking status shows ",
+    "b": false,
+    "sz": null
+   },
+   {
+    "t": "no updates for more than 7 business days (or 10 calendar days)",
+    "b": true,
+    "sz": null
+   },
+   {
+    "t": ", please contact our support team at ",
+    "b": false,
+    "sz": null
+   },
+   {
+    "t": "contact@whimcoreofficial.com",
+    "b": true,
+    "sz": null
+   },
+   {
+    "t": ". We will coordinate with our logistics partners to investigate and get back to you promptly.   ",
+    "b": false,
+    "sz": null
+   }
+  ]
+ },
+ {
+  "style": "Normal",
+  "runs": [
+   {
+    "t": "Q4: Can I amend my shipping address or contact details after ordering?",
+    "b": true,
+    "sz": 14.0
+   }
+  ]
+ },
+ {
+  "style": "Normal",
+  "runs": [
+   {
+    "t": "Due to the speed of our fulfillment workflow and the nature of international express line-hauls, addresses cannot be altered once a parcel enters processing or dispatch:   ",
+    "b": false,
+    "sz": null
+   }
+  ]
+ },
+ {
+  "style": "Normal",
+  "runs": [
+   {
+    "t": "In-Stock Orders:",
+    "b": true,
+    "sz": null
+   },
+   {
+    "t": " Address amendments can only be requested ",
+    "b": false,
+    "sz": null
+   },
+   {
+    "t": "within 24 hours of placing your order",
+    "b": true,
+    "sz": null
+   },
+   {
+    "t": " and ",
+    "b": false,
+    "sz": null
+   },
+   {
+    "t": "strictly before the order enters the processing phase",
+    "b": true,
+    "sz": null
+   },
+   {
+    "t": ". Please email us immediately at ",
+    "b": false,
+    "sz": null
+   },
+   {
+    "t": "contact@whimcoreofficial.com",
+    "b": true,
+    "sz": null
+   },
+   {
+    "t": " with your Order ID and updated details, and our team will do our best to assist. Once the order has moved into processing, no change can be made.   ",
+    "b": false,
+    "sz": null
+   }
+  ]
+ },
+ {
+  "style": "Normal",
+  "runs": [
+   {
+    "t": "Pre-Orders:",
+    "b": true,
+    "sz": null
+   },
+   {
+    "t": " You may request address changes anytime ",
+    "b": false,
+    "sz": null
+   },
+   {
+    "t": "prior to the stock arriving and the order entering the fulfillment processing stage",
+    "b": true,
+    "sz": null
+   },
+   {
+    "t": ". Once fulfillment processing begins, address updates will be locked().   ",
+    "b": false,
+    "sz": null
+   }
+  ]
+ },
+ {
+  "style": "Normal",
+  "runs": [
+   {
+    "t": "Post-Dispatch:",
+    "b": true,
+    "sz": null
+   },
+   {
+    "t": " Once a parcel has been handed over to the carrier, neither we nor the carrier can redirect or amend the shipping address. Any failed deliveries, parcels returned to origin, or abandonments resulting from incorrect, incomplete addresses (such as missing apartment/suite numbers), or uncontactable recipients remain the sole responsibility of the customer.  ",
+    "b": false,
+    "sz": null
+   }
+  ]
+ },
+ {
+  "style": "Normal",
+  "runs": [
+   {
+    "t": "Q5: Why must I provide a complete and accurate shipping address? What happens if it is incorrect or incomplete?",
+    "b": true,
+    "sz": 14.0
+   }
+  ]
+ },
+ {
+  "style": "Normal",
+  "runs": [
+   {
+    "t": "To ensure smooth customs clearance and successful delivery, please make sure your shipping details are accurate and complete at checkout (including full name, unit/house number, street name, postal code, and an active phone number):   ",
+    "b": false,
+    "sz": null
+   }
+  ]
+ },
+ {
+  "style": "Normal",
+  "runs": [
+   {
+    "t": "Customer Responsibility After Dispatch (Non-Refundable)",
+    "b": true,
+    "sz": null
+   }
+  ]
+ },
+ {
+  "style": "Normal",
+  "runs": [
+   {
+    "t": "Once an international parcel is dispatched, clearance and delivery are carried out strictly according to the address provided. If a delivery fails, is returned, abandoned, or destroyed due to an incorrect address, missing unit number, invalid postal code, or unreachable contact details, ",
+    "b": false,
+    "sz": null
+   },
+   {
+    "t": "the customer assumes full responsibility, and the order is non-refundable and ineligible for return",
+    "b": true,
+    "sz": null
+   },
+   {
+    "t": ".   ",
+    "b": false,
+    "sz": null
+   }
+  ]
+ },
+ {
+  "style": "Normal",
+  "runs": [
+   {
+    "t": "Address Verification (7-Day Email Response Window)",
+    "b": true,
+    "sz": null
+   }
+  ]
+ },
+ {
+  "style": "Normal",
+  "runs": [
+   {
+    "t": "Before dispatch, if our system detects that your address is incomplete or invalid, we will reach out ",
+    "b": false,
+    "sz": null
+   },
+   {
+    "t": "primarily via official email",
+    "b": true,
+    "sz": null
+   },
+   {
+    "t": " to verify your details. ",
+    "b": false,
+    "sz": null
+   },
+   {
+    "t": "Please reply with your complete address within 7 days.",
+    "b": true,
+    "sz": null
+   },
+   {
+    "t": " If no response is received within 7 days, the order cannot be shipped and ",
+    "b": false,
+    "sz": null
+   },
+   {
+    "t": "will be automatically cancelled and refunded.",
+    "b": true,
+    "sz": null
+   }
+  ]
+ },
+ {
+  "style": "Normal",
+  "runs": [
+   {
+    "t": "PART 2: ",
+    "b": true,
+    "sz": 16.0
+   },
+   {
+    "t": "🔄 ",
+    "b": true,
+    "sz": 16.0
+   },
+   {
+    "t": "RETURNS & QUALITY ASSURANCE",
+    "b": true,
+    "sz": 16.0
+   }
+  ]
+ },
+ {
+  "style": "Normal",
+  "runs": [
+   {
+    "t": "Q1: Why does my plush toy look slightly different from the website images? Is this a defect?",
+    "b": true,
+    "sz": 14.0
+   }
+  ]
+ },
+ {
+  "style": "Normal",
+  "runs": [
+   {
+    "t": "OFFY products are designer art toys and plush collectibles featuring extensive handcrafted sewing and assembly techniques. Due to the physical nature of plush fabrics and manual craftsmanship, the following conditions are inherent characteristics and are not considered defects:   ",
+    "b": false,
+    "sz": null
+   }
+  ]
+ },
+ {
+  "style": "Normal",
+  "runs": [
+   {
+    "t": "Minor Loose Threads:",
+    "b": true,
+    "sz": null
+   },
+   {
+    "t": " Minor stray threads can be safely trimmed without affecting structural integrity.   ",
+    "b": false,
+    "sz": null
+   }
+  ]
+ },
+ {
+  "style": "Normal",
+  "runs": [
+   {
+    "t": "Subtle Asymmetry:",
+    "b": true,
+    "sz": null
+   },
+   {
+    "t": " Hand-finished stitching and facial embroidery may exhibit slight variations, giving each piece its own unique character.   ",
+    "b": false,
+    "sz": null
+   }
+  ]
+ },
+ {
+  "style": "Normal",
+  "runs": [
+   {
+    "t": "Transit Flattening / Pile Impression:",
+    "b": true,
+    "sz": null
+   },
+   {
+    "t": " Long-distance international transport may cause temporary pile flattening or shape distortion",
+    "b": false,
+    "sz": null
+   },
+   {
+    "t": ". Gently kneading the plush and letting it rest will ",
+    "b": false,
+    "sz": null
+   },
+   {
+    "t": "restore",
+    "b": false,
+    "sz": null
+   },
+   {
+    "t": " its original fullness",
+    "b": false,
+    "sz": null
+   },
+   {
+    "t": ".   ",
+    "b": false,
+    "sz": null
+   }
+  ]
+ },
+ {
+  "style": "Normal",
+  "runs": [
+   {
+    "t": "Measurement Tolerances:",
+    "b": true,
+    "sz": null
+   },
+   {
+    "t": " Handcrafted items carry a normal measurement tolerance of approx. ",
+    "b": false,
+    "sz": null
+   },
+   {
+    "t": "±",
+    "b": false,
+    "sz": null
+   },
+   {
+    "t": "1",
+    "b": false,
+    "sz": null
+   },
+   {
+    "t": "–",
+    "b": false,
+    "sz": null
+   },
+   {
+    "t": "2 cm().",
+    "b": false,
+    "sz": null
+   }
+  ]
+ },
+ {
+  "style": "Normal",
+  "runs": [
+   {
+    "t": "Q2: Do you accept returns?",
+    "b": true,
+    "sz": 14.0
+   }
+  ]
+ },
+ {
+  "style": "Normal",
+  "runs": [
+   {
+    "t": "Generally, we do not accept returns or exchanges based on personal preference, given the limited-edition collectible nature of OFFY products. Nothing in this policy limits any statutory rights you may have under applicable law.   ",
+    "b": false,
+    "sz": null
+   }
+  ]
+ },
+ {
+  "style": "Normal",
+  "runs": [
+   {
+    "t": "However, if your product has a quality issue or arrives damaged, we provide a Free Replacement: If your item has a verified manufacturing defect, substantial transit damage, or an incorrect item was sent, our primary remedy is to arrange a Free Replacement of the identical item at no additional cost to you (re-shipping postage fully covered).   ",
+    "b": false,
+    "sz": null
+   }
+  ]
+ },
+ {
+  "style": "Normal",
+  "runs": [
+   {
+    "t": "Claim Window:",
+    "b": true,
+    "sz": null
+   },
+   {
+    "t": " Please reach out to us within ",
+    "b": false,
+    "sz": null
+   },
+   {
+    "t": "14 calendar days of delivery",
+    "b": true,
+    "sz": null
+   },
+   {
+    "t": ".   ",
+    "b": false,
+    "sz": null
+   }
+  ]
+ },
+ {
+  "style": "Normal",
+  "runs": [
+   {
+    "t": "Required Proof:",
+    "b": true,
+    "sz": null
+   },
+   {
+    "t": " Send an email to ",
+    "b": false,
+    "sz": null
+   },
+   {
+    "t": "contact@whimcoreofficial.com",
+    "b": true,
+    "sz": null
+   },
+   {
+    "t": " with your ",
+    "b": false,
+    "sz": null
+   },
+   {
+    "t": "Order ID",
+    "b": true,
+    "sz": null
+   },
+   {
+    "t": ", ",
+    "b": false,
+    "sz": null
+   },
+   {
+    "t": "clear defect photos",
+    "b": true,
+    "sz": null
+   },
+   {
+    "t": ", and a ",
+    "b": false,
+    "sz": null
+   },
+   {
+    "t": "continuous, unedited one-take unboxing video",
+    "b": true,
+    "sz": null
+   },
+   {
+    "t": " (showing the sealed outer shipping carton, shipping label, and the entire unpacking process).   ",
+    "b": false,
+    "sz": null
+   }
+  ]
+ },
+ {
+  "style": "Normal",
+  "runs": [
+   {
+    "t": "Processing:",
+    "b": true,
+    "sz": null
+   },
+   {
+    "t": " Once approved, your free replacement will typically be dispatched within ",
+    "b": false,
+    "sz": null
+   },
+   {
+    "t": "5 business days",
+    "b": true,
+    "sz": null
+   },
+   {
+    "t": ". In the rare event that the item is completely sold out or discontinued, a refund will be issued instead.  ",
+    "b": false,
+    "sz": null
+   }
+  ]
+ },
+ {
+  "style": "Normal",
+  "runs": [
+   {
+    "t": "PART 3",
+    "b": true,
+    "sz": 16.0
+   },
+   {
+    "t": "：🔒 ",
+    "b": true,
+    "sz": 16.0
+   },
+   {
+    "t": "PAYMENT, PRIVACY & SECURITY",
+    "b": true,
+    "sz": 16.0
+   }
+  ]
+ },
+ {
+  "style": "Normal",
+  "runs": [
+   {
+    "t": "Q1: Is it safe to pay on your website? Do you store my credit card details?",
+    "b": true,
+    "sz": 14.0
+   }
+  ]
+ },
+ {
+  "style": "Normal",
+  "runs": [
+   {
+    "t": "We take the security of your payment seriously and apply industry-standard safeguards.   ",
+    "b": false,
+    "sz": null
+   }
+  ]
+ },
+ {
+  "style": "Normal",
+  "runs": [
+   {
+    "t": "Encrypted Transmission:",
+    "b": true,
+    "sz": null
+   },
+   {
+    "t": " All sensitive data across our store is protected by robust ",
+    "b": false,
+    "sz": null
+   },
+   {
+    "t": "TLS/SSL encryption protocols",
+    "b": true,
+    "sz": null
+   },
+   {
+    "t": " to ensure end-to-end security.   ",
+    "b": false,
+    "sz": null
+   }
+  ]
+ },
+ {
+  "style": "Normal",
+  "runs": [
+   {
+    "t": "No Card Data Stored:",
+    "b": true,
+    "sz": null
+   },
+   {
+    "t": " Payment processing is managed directly by globally compliant, ",
+    "b": false,
+    "sz": null
+   },
+   {
+    "t": "PCI-DSS Level 1 certified payment gateways",
+    "b": true,
+    "sz": null
+   },
+   {
+    "t": " (such as Stripe, PayPal, Apple Pay, etc.). We do not access, process, or store your full card number, CVV code, or banking credentials on our systems.   ",
+    "b": false,
+    "sz": null
+   }
+  ]
+ },
+ {
+  "style": "Normal",
+  "runs": [
+   {
+    "t": "Q2: What payment methods do you accept?",
+    "b": true,
+    "sz": 14.0
+   }
+  ]
+ },
+ {
+  "style": "Normal",
+  "runs": [
+   {
+    "t": "We accept major international credit and debit cards (Visa, Mastercard, American Express, etc.) along with trusted digital wallets such as PayPal, Apple Pay, and Google Pay, depending on available gateways displayed at checkout. Orders must be paid in full prior to order dispatch.   ",
+    "b": false,
+    "sz": null
+   }
+  ]
+ },
+ {
+  "style": "Normal",
+  "runs": [
+   {
+    "t": "Q3: How do you use my personal data? Do you sell my information?",
+    "b": true,
+    "sz": 14.0
+   }
+  ]
+ },
+ {
+  "style": "Normal",
+  "runs": [
+   {
+    "t": "Order Fulfilment Only: ",
+    "b": true,
+    "sz": null
+   },
+   {
+    "t": "We strictly collect essential details (name, shipping address, email, and phone number) to process, ship, and support your orders.  ",
+    "b": false,
+    "sz": null
+   }
+  ]
+ },
+ {
+  "style": "Normal",
+  "runs": [
+   {
+    "t": "We Do Not Sell Your Data",
+    "b": true,
+    "sz": null
+   },
+   {
+    "t": ": We never sell your personal information to third parties. We handle your personal information in accordance with applicable data protection laws, including the EU GDPR, the UK GDPR, the California Consumer Privacy Act (CCPA/CPRA), and the Hong Kong Personal Data (Privacy) Ordinance (PDPO).   ",
+    "b": false,
+    "sz": null
+   }
+  ]
+ }
+]

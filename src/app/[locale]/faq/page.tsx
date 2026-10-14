@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { Fragment } from "react";
 import { getTranslations } from "next-intl/server";
 import { Link } from "@/i18n/navigation";
 import { faqParts } from "@/lib/faq";
@@ -6,13 +7,16 @@ import { faqParts } from "@/lib/faq";
 /**
  * 常见问题(Q&A)页。
  *
- * 内容来源:`独立站Q&A_审核修订稿(1).pages`,见 `src/lib/faq.ts`(脚本从提取稿生成)。
+ * 内容来源:`独立站Q&A_审核修订稿——final(2).docx`,见 `src/lib/faq.ts`(脚本从 docx 生成)。
  * 文案只有英文 —— 与政策页同理:这批内容紧邻法务口径(退货/隐私/免责),
  * 不做机翻;中文站顶部给一句语言说明。
  *
  * 展示用原生 `<details>`:10 条长答案全铺开会有 8 千多字符、页面极长,
  * 折叠后先让用户扫问题。用 `<details>` 而不是自研手风琴 —— 零 JS、
  * 键盘与屏幕阅读器原生可用、也不需要给这个页面引入客户端组件。
+ *
+ * 字号层级由页面元素承担(源 docx 的 26pt 总标题 → h1、15/16pt Part → h2、
+ * 14pt 问题 → summary);答案内部只还原源文档的**加粗**与**分段**。
  */
 export const metadata: Metadata = {
   title: "FAQ",
@@ -72,9 +76,20 @@ export default async function FaqPage({ params }: { params: Promise<{ locale: st
                     </span>
                   </summary>
                   <div lang="en" className="policy-body mt-3 max-w-none text-[0.9375rem]">
-                    {item.a
-                      .split("\n")
-                      .map((line, i) => (line.trim() === "" ? null : <p key={i}>{line}</p>))}
+                    {/* 一个 block = 源文档里的一段 → 一个 <p>(换行);
+                        段内片段按 bold 渲染成 <strong>(加粗小标题与正文同段,
+                        所以不能整段当纯文本塞进去)。`policy-body strong` 已有字重样式。 */}
+                    {item.a.map((block, blockIndex) => (
+                      <p key={blockIndex}>
+                        {block.map((segment, segmentIndex) =>
+                          segment.bold ? (
+                            <strong key={segmentIndex}>{segment.text}</strong>
+                          ) : (
+                            <Fragment key={segmentIndex}>{segment.text}</Fragment>
+                          ),
+                        )}
+                      </p>
+                    ))}
                   </div>
                 </details>
               ))}
