@@ -1,5 +1,6 @@
 import { render, screen } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
+import { env } from "@/lib/env";
 import { faqParts, type FaqBlock } from "@/lib/faq";
 import en from "../../../../messages/en.json";
 import zh from "../../../../messages/zh.json";
@@ -175,5 +176,59 @@ describe("/faq 页面渲染", () => {
     expect(marks.filter((t) => t === "Q5:")).toHaveLength(1); // 只有 Part 1 有 Q5
     // 全局序号会是 Q1…Q10 这种;按部分重置就不会有 Q6 以上的编号
     expect(marks.some((t) => /^Q(6|7|8|9|10):$/.test(t ?? ""))).toBe(false);
+  });
+});
+
+/**
+ * 第 2 批 SEO · FAQPage 结构化数据。
+ *
+ * Google 的 FAQ 富媒体要求 `acceptedAnswer.text` 是**纯文本**:加粗在数据里是
+ * `FaqBlock[]` 的行内片段,输出时必须拼平(不能把 `<strong>` 塞进答案)。
+ */
+describe("/faq · JSON-LD(FAQPage)", () => {
+  it("输出 FAQPage:10 条 Question,顺序与页面数据一致", async () => {
+    const { container } = await renderFaq("en");
+    const script = container.querySelector('script[type="application/ld+json"]');
+    expect(script).not.toBeNull();
+    const ld = JSON.parse(script?.textContent ?? "") as Record<string, unknown>;
+    const items = faqParts.flatMap((part) => part.items);
+    const questions = ld.mainEntity as Array<Record<string, unknown>>;
+
+    expect(ld["@context"]).toBe("https://schema.org");
+    expect(ld["@type"]).toBe("FAQPage");
+    expect(questions).toHaveLength(10);
+    expect(questions.map((question) => question.name)).toEqual(items.map((item) => item.q));
+  });
+
+  it("acceptedAnswer.text 是纯文本:没有 <strong>,段落按换行保留", async () => {
+    const { container } = await renderFaq("en");
+    const ld = JSON.parse(
+      container.querySelector('script[type="application/ld+json"]')?.textContent ?? "",
+    ) as Record<string, unknown>;
+    const questions = ld.mainEntity as Array<Record<string, unknown>>;
+    const items = faqParts.flatMap((part) => part.items);
+
+    questions.forEach((question, index) => {
+      const answer = question.acceptedAnswer as Record<string, unknown>;
+      const expected = answerLines(items[index].a).join("\n");
+
+      expect(answer["@type"]).toBe("Answer");
+      expect(answer.text).toBe(expected);
+      expect(answer.text).not.toContain("<");
+    });
+
+    // 第一条的加粗导语以纯文本出现,且后面紧跟正文
+    const first = questions[0].acceptedAnswer as Record<string, unknown>;
+    expect(first.text).toMatch(/^In-Stock Items: Our processing time is up to 72 hours/);
+  });
+
+  it("全站 URL 用 SITE_URL 的绝对地址(答案里没有相对链接)", async () => {
+    const { container } = await renderFaq("en");
+    const raw = container.querySelector('script[type="application/ld+json"]')?.textContent ?? "";
+
+    // FAQ 正文目前不含站内链接;至少确认没有把未转义的 `<` 写进 script。
+    expect(raw).not.toContain("</script");
+    expect(raw).not.toContain("<");
+    expect(raw).toContain(env.SITE_URL === "" ? "" : "contact@whimcoreofficial.com");
   });
 });

@@ -4,6 +4,8 @@ import { Fragment } from "react";
 import { getTranslations } from "next-intl/server";
 import { Link } from "@/i18n/navigation";
 import { faqParts } from "@/lib/faq";
+import { JsonLd } from "@/components/seo/JsonLd";
+import { faqJsonLd } from "@/lib/seo/jsonld";
 
 /**
  * 常见问题(Q&A)页。
@@ -46,6 +48,8 @@ export default async function FaqPage({ params }: { params: Promise<{ locale: st
 
   return (
     <div className="container-site section-y lg:py-20">
+      {/* 第 2 批 SEO:FAQPage 富媒体。答案由 FaqBlock[] 拼成纯文本,不输出 <strong>。 */}
+      <JsonLd data={faqJsonLd(faqParts)} />
       <header className="mx-auto max-w-[68ch]">
         <p className="kicker mb-4">{t("kicker")}</p>
         {/* 页面 H1 从 28px 抬到 36px(方案 #54:把小的抬上来,而不是把 About 的

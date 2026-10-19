@@ -17,6 +17,8 @@ import { AddToCartButton } from "@/components/cart/AddToCartButton";
 import { ProductGallery } from "@/components/product/ProductGallery";
 import { StickyBuyBar } from "@/components/product/StickyBuyBar";
 import { Reveal } from "@/components/Reveal";
+import { JsonLd } from "@/components/seo/JsonLd";
+import { breadcrumbJsonLd, productJsonLd } from "@/lib/seo/jsonld";
 
 // 近实时：每 60s 重新生成，从 Shopify 拉取最新图片/描述/价格/标题/库存。
 export const revalidate = 60;
@@ -65,6 +67,7 @@ export default async function ProductDetailPage({
 
   const t = await getTranslations("product");
   const tHome = await getTranslations("home");
+  const tCommon = await getTranslations("common");
   const seriesList = await getLiveSeriesList();
   const liveSeries = seriesList.find((s) => s.slug === product.series);
   // 系列展示名:真实系列用实时名(商家改 Shopify 标题即时生效);merch(贴纸/帆布包
@@ -88,8 +91,25 @@ export default async function ProductDetailPage({
     (p) => p.code !== product.code,
   );
 
+  // 结构化数据(第 2 批 SEO):Product+Offer 用本页渲染的同一份 product
+  // (含访客市场币种),面包屑的每一级都走 publicPath + SITE_URL.
+  // merch 没有系列页,面包屑里就不放系列这一级(不能伪造 /collections/merch).
+  const productName = locale === "zh" ? product.name.zh : product.name.en;
+  const seriesHref = liveSeries ? publicPath(locale, `/collections/${liveSeries.slug}`) : null;
+  const breadcrumbLd = breadcrumbJsonLd(
+    [
+      { name: tCommon("nav.home"), path: publicPath(locale, "/") },
+      { name: t("shopBreadcrumb"), path: publicPath(locale, "/products") },
+      ...(seriesHref ? [{ name: seriesLabel, path: seriesHref }] : []),
+      { name: productName, path: publicPath(locale, `/products/${product.code}`) },
+    ],
+    env.SITE_URL,
+  );
+
   return (
     <>
+      <JsonLd data={productJsonLd({ product, locale, siteUrl: env.SITE_URL })} />
+      <JsonLd data={breadcrumbLd} />
       {/* 版心改 `.container-site`(16px / 8%),不再自带 `px-6`:两套边距会让
           PDP 的 logo 与标题左边缘对不齐(方案 #22)。纵向 py-12 → 窄屏 24px,
           md 起恢复 48px(≥1024px 与改动前一致)。 */}

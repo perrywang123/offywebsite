@@ -10,6 +10,8 @@ import { getLiveProductsBySeries, getLiveSeriesList } from "@/server/catalog/liv
 import { ProductGrid } from "@/components/product/ProductGrid";
 import { CategoryTabs } from "@/components/layout/CategoryTabs";
 import { Reveal } from "@/components/Reveal";
+import { JsonLd } from "@/components/seo/JsonLd";
+import { breadcrumbJsonLd } from "@/lib/seo/jsonld";
 
 export const revalidate = 60;
 
@@ -48,6 +50,7 @@ export default async function SeriesPage({
 }) {
   const { locale, series: slug } = await params;
   const t = await getTranslations("catalog");
+  const tCommon = await getTranslations("common");
   // 价格按访客所在国家的市场币种(读 headers() → 本页按请求渲染)。
   const country = pickCountry(await headers(), env.SHOPIFY_MARKET_COUNTRY);
 
@@ -61,9 +64,19 @@ export default async function SeriesPage({
   const idx = seriesList.findIndex((s) => s.slug === slug);
   const name = locale === "zh" ? series.name.zh : series.name.en;
   const tagline = locale === "zh" ? series.tagline.zh : series.tagline.en;
+  // 第 2 批 SEO:Home > Series > 系列名。系列名取上面渲染 h1 的同一个值。
+  const breadcrumbLd = breadcrumbJsonLd(
+    [
+      { name: tCommon("nav.home"), path: publicPath(locale, "/") },
+      { name: tCommon("nav.series"), path: publicPath(locale, "/collections") },
+      { name, path: publicPath(locale, `/collections/${series.slug}`) },
+    ],
+    env.SITE_URL,
+  );
 
   return (
     <>
+      <JsonLd data={breadcrumbLd} />
       <CategoryTabs series={seriesList} active={slug} locale={locale} />
 
       {/* 分类大图 hero(系列专属头图,与首页轮播图一致) */}

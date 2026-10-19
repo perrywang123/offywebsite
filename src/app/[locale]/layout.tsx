@@ -9,6 +9,7 @@ import { CartProvider } from "@/components/cart/CartProvider";
 import { CartDrawer } from "@/components/cart/CartDrawer";
 import { Header } from "@/components/layout/Header";
 import { Footer } from "@/components/layout/Footer";
+import { SiteJsonLd } from "@/components/seo/SiteJsonLd";
 import "../globals.css";
 
 // 近实时:每 60s 重新生成,导航栏/页脚的系列名随 Shopify Collection 标题变化。
@@ -83,6 +84,8 @@ export default async function LocaleLayout({
         <script
           dangerouslySetInnerHTML={{ __html: "document.documentElement.classList.add('js')" }}
         />
+        {/* 第 2 批 SEO:Organization + WebSite 全站各一份(由根布局统一输出)。 */}
+        <SiteJsonLd siteUrl={env.SITE_URL} />
         <NextIntlClientProvider messages={messages}>
           <CartProvider>
             <Header series={series} />

@@ -1,4 +1,5 @@
 import { render, screen } from "@testing-library/react";
+import { env } from "@/lib/env";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import type { Product, Series } from "@/lib/catalog/types";
 import en from "../../../../../messages/en.json";
@@ -277,5 +278,118 @@ describe("PDP · 周边商品(series = merch)", () => {
     // 公主系列的 12 款公仔一个都不该出现在这个页面上
     expect(container.querySelector('a[href="/products/swan-princess"]')).toBeNull();
     expect(container.querySelector('a[href="/products/prep-school"]')).toBeNull();
+  });
+});
+
+/**
+ * 第 2 批 SEO · 商品页的结构化数据。
+ *
+ * 两个硬要求:
+ *  ① `offers.price` / `priceCurrency` 必须来自本页渲染用的 `product`(访客市场
+ *     币种),而不是写死 USD —— 否则英国访客看到 £37.90、Google 却读到 49.90 USD;
+ *  ② 面包屑每级都是绝对 URL,且 merch 没有系列页时不得伪造 `/collections/merch`。
+ */
+const SITE_URL = env.SITE_URL.replace(/\/+$/, "");
+
+function jsonLdBlocks(container: HTMLElement): Array<Record<string, unknown>> {
+  return [...container.querySelectorAll('script[type="application/ld+json"]')].map(
+    (script) => JSON.parse(script.textContent ?? "") as Record<string, unknown>,
+  );
+}
+
+function jsonLdOfType(container: HTMLElement, type: string): Record<string, unknown> {
+  const block = jsonLdBlocks(container).find((item) => item["@type"] === type);
+  if (!block) throw new Error(`页面没有输出 ${type} JSON-LD`);
+  return block;
+}
+
+describe("PDP · JSON-LD(Product + BreadcrumbList)", () => {
+  it("Product 的 name/description/image/sku/brand/offers 均为真实商品数据", async () => {
+    pdpState.product = { ...CURRENT, skuCode: "OFFY-LP-01" };
+    const { container } = await renderPdp();
+    const ld = jsonLdOfType(container, "Product");
+
+    expect(ld).toMatchObject({
+      "@context": "https://schema.org",
+      name: "LADY PEARL",
+      description: "A tiny pearl.",
+      sku: "OFFY-LP-01",
+      brand: { "@type": "Brand", name: "is.offy" },
+    });
+    expect(ld.image).toEqual(CURRENT.images.map((image) => `${SITE_URL}${image}`));
+    expect(ld.offers).toEqual({
+      "@type": "Offer",
+      url: `${SITE_URL}/products/lady-pearl`,
+      price: "49.90",
+      priceCurrency: "USD",
+      availability: "https://schema.org/InStock",
+      itemCondition: "https://schema.org/NewCondition",
+    });
+  });
+
+  it("offers.price / priceCurrency 与页面可见价格一致(USD)", async () => {
+    const { container } = await renderPdp();
+    const offers = jsonLdOfType(container, "Product").offers as Record<string, unknown>;
+
+    // 页面上可见的价格由同一个 product.priceCents / product.currency 格式化而来
+    expect(screen.getAllByText("$49.90").length).toBeGreaterThan(0);
+    expect(offers.price).toBe("49.90");
+    expect(offers.priceCurrency).toBe("USD");
+  });
+
+  it("换市场币种时跟着变:GBP 37.90 的页面,JSON-LD 也是 GBP 37.90(不是硬编码 USD)", async () => {
+    pdpState.product = { ...CURRENT, priceCents: 3790, currency: "GBP" };
+    const { container } = await renderPdp();
+    const offers = jsonLdOfType(container, "Product").offers as Record<string, unknown>;
+
+    expect(screen.getAllByText("£37.90").length).toBeGreaterThan(0);
+    expect(offers.price).toBe("37.90");
+    expect(offers.priceCurrency).toBe("GBP");
+  });
+
+  it("售罄商品输出 OutOfStock", async () => {
+    pdpState.product = { ...CURRENT, isAvailable: false };
+    const { container } = await renderPdp();
+    const offers = jsonLdOfType(container, "Product").offers as Record<string, unknown>;
+
+    expect(offers.availability).toBe("https://schema.org/OutOfStock");
+  });
+
+  it("面包屑:Home > Shop > 系列 > 商品,position 从 1 开始、item 全绝对 URL", async () => {
+    const { container } = await renderPdp();
+    const ld = jsonLdOfType(container, "BreadcrumbList");
+
+    expect(ld.itemListElement).toEqual([
+      { "@type": "ListItem", position: 1, name: "Home", item: `${SITE_URL}/` },
+      { "@type": "ListItem", position: 2, name: "Shop", item: `${SITE_URL}/products` },
+      {
+        "@type": "ListItem",
+        position: 3,
+        name: "Playful Life",
+        item: `${SITE_URL}/collections/playful-life`,
+      },
+      {
+        "@type": "ListItem",
+        position: 4,
+        name: "LADY PEARL",
+        item: `${SITE_URL}/products/lady-pearl`,
+      },
+    ]);
+  });
+
+  it("merch 商品没有系列页:面包屑只有 3 级,不输出 /collections/merch", async () => {
+    pdpState.product = MERCH;
+    pdpState.siblings = MERCH_SIBLINGS;
+    const { container } = await renderPdp();
+    const ld = jsonLdOfType(container, "BreadcrumbList");
+    const elements = ld.itemListElement as Array<Record<string, unknown>>;
+
+    expect(elements.map((element) => element.name)).toEqual([
+      "Home",
+      "Shop",
+      "BUY ANY OFFY, GET A FREE STICKER",
+    ]);
+    expect(elements.map((element) => element.position)).toEqual([1, 2, 3]);
+    expect(JSON.stringify(elements)).not.toContain("/collections/merch");
   });
 });

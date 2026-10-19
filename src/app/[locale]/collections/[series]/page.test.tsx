@@ -1,4 +1,6 @@
+import { render } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
+import { env } from "@/lib/env";
 
 /**
  * `/collections/<series>` metadata 测试。
@@ -60,6 +62,12 @@ vi.mock("@/i18n/navigation", () => ({
   ),
 }));
 
+// 系列页正文的 ProductGrid 是 async server component,React 的测试渲染器不接受
+// async 客户端组件;本测试只关心 breadcrumb script,用空网格替身。
+vi.mock("@/components/product/ProductGrid", () => ({
+  ProductGrid: () => <div data-testid="product-grid" />,
+}));
+
 vi.mock("next/image", () => ({
   default: ({ alt, src }: { alt: string; src: string }) => (
     // eslint-disable-next-line @next/next/no-img-element
@@ -67,7 +75,7 @@ vi.mock("next/image", () => ({
   ),
 }));
 
-import { generateMetadata } from "./page";
+import SeriesPage, { generateMetadata } from "./page";
 
 const meta = (series: string) =>
   generateMetadata({ params: Promise.resolve({ locale: "en", series }) });
@@ -103,5 +111,59 @@ describe("/collections/<series> metadata · self-canonical", () => {
     const result = await meta("does-not-exist");
     expect(result.title).toBe("Series");
     expect(result.alternates?.canonical).toBe("/collections/does-not-exist");
+  });
+});
+
+/**
+ * 第 2 批 SEO · 系列页 BreadcrumbList。
+ *
+ * `Home > Series > <系列名>`,每级 position 从 1 开始、item 是绝对 URL。
+ * 系列名取渲染页面用的同一份实时名(不是 slug、也不是写死的英文名)。
+ */
+describe("/collections/<series> · JSON-LD(BreadcrumbList)", () => {
+  const SITE_URL = env.SITE_URL.replace(/\/+$/, "");
+
+  it("输出 Home > Series > 系列名,item 全绝对 URL", async () => {
+    const ui = await SeriesPage({
+      params: Promise.resolve({ locale: "en", series: "outdoor-sporty" }),
+    });
+    const { container } = render(ui);
+    const script = container.querySelector('script[type="application/ld+json"]');
+    expect(script).not.toBeNull();
+    const ld = JSON.parse(script?.textContent ?? "") as Record<string, unknown>;
+
+    expect(ld).toEqual({
+      "@context": "https://schema.org",
+      "@type": "BreadcrumbList",
+      itemListElement: [
+        { "@type": "ListItem", position: 1, name: "Home", item: `${SITE_URL}/` },
+        {
+          "@type": "ListItem",
+          position: 2,
+          name: "Series",
+          item: `${SITE_URL}/collections`,
+        },
+        {
+          "@type": "ListItem",
+          position: 3,
+          name: "Fashion Lifestyle",
+          item: `${SITE_URL}/collections/outdoor-sporty`,
+        },
+      ],
+    });
+  });
+
+  it("加了 script 之后页面可见内容不变:仍有系列 h1 与分类 tab", async () => {
+    const ui = await SeriesPage({
+      params: Promise.resolve({ locale: "en", series: "playful-life" }),
+    });
+    const { container, getByRole } = render(ui);
+
+    expect(getByRole("heading", { level: 1, name: "Playful Life" })).toBeInTheDocument();
+    expect(container.querySelector('[role="tablist"]')).not.toBeNull();
+    // script 之外没有多出可见元素:首屏第一个可见节点仍是分类 tab 条
+    expect(container.querySelector("script")?.nextElementSibling).toBe(
+      container.querySelector('[role="tablist"]'),
+    );
   });
 });
