@@ -19,7 +19,10 @@ vi.mock("next-intl/server", async () => {
     import("../../../../messages/zh.json"),
   ]);
   type Messages = typeof en;
-  const dictionaries: Record<"en" | "zh", Messages> = { en: enModule.default, zh: zhModule.default };
+  const dictionaries: Record<"en" | "zh", Messages> = {
+    en: enModule.default,
+    zh: zhModule.default,
+  };
   return {
     getTranslations: async (namespace: string) =>
       createTranslator({
@@ -31,7 +34,7 @@ vi.mock("next-intl/server", async () => {
   };
 });
 
-import AboutPage from "./page";
+import AboutPage, { generateMetadata } from "./page";
 
 function flatten(obj: Record<string, unknown>, prefix = ""): string[] {
   return Object.entries(obj).flatMap(([key, value]) => {
@@ -52,7 +55,9 @@ describe("About 页 · OUR STORY 表改版", () => {
   describe("row 3 页首", () => {
     it("en:主标语换成 Meet Who You Love to Be,原标语降为副行", async () => {
       await renderAbout("en");
-      expect(screen.getByRole("heading", { level: 1, name: "Meet Who You Love to Be" })).toBeInTheDocument();
+      expect(
+        screen.getByRole("heading", { level: 1, name: "Meet Who You Love to Be" }),
+      ).toBeInTheDocument();
       expect(screen.getByText("Imagine with Love. Create with Companion.")).toBeInTheDocument();
     });
 
@@ -67,7 +72,9 @@ describe("About 页 · OUR STORY 表改版", () => {
   describe("row 4 Where She Came From 正文", () => {
     it("标题保留,12 段新正文按顺序全部渲染,图集还在", async () => {
       const { container } = await renderAbout("en");
-      expect(screen.getByRole("heading", { level: 2, name: "Where She Came From" })).toBeInTheDocument();
+      expect(
+        screen.getByRole("heading", { level: 2, name: "Where She Came From" }),
+      ).toBeInTheDocument();
       expect(en.about.storyParagraphs).toHaveLength(12);
       for (const paragraph of en.about.storyParagraphs) {
         expect(screen.getByText(paragraph)).toBeInTheDocument();
@@ -124,7 +131,9 @@ describe("About 页 · OUR STORY 表改版", () => {
       expect(screen.getByText(en.home.comingSub)).toBeInTheDocument();
       expect(screen.getAllByText("IN DEVELOPMENT")).toHaveLength(2);
 
-      const sources = [...container.querySelectorAll("img")].map((img) => img.getAttribute("src") ?? "");
+      const sources = [...container.querySelectorAll("img")].map(
+        (img) => img.getAttribute("src") ?? "",
+      );
       expect(sources.some((src) => src.includes("upcoming-kitty"))).toBe(true);
       expect(sources.some((src) => src.includes("upcoming-butterfly"))).toBe(true);
     });
@@ -136,6 +145,26 @@ describe("About 页 · OUR STORY 表改版", () => {
     });
   });
 
+  describe("metadata · self-canonical", () => {
+    it("canonical 是自己的 /about,不是首页 /(此前的 bug:继承 layout 的首页 canonical)", async () => {
+      mockState.locale = "en";
+      const meta = await generateMetadata({ params: Promise.resolve({ locale: "en" }) });
+      expect(meta.alternates?.canonical).toBe("/about");
+      expect(meta.alternates?.canonical).not.toBe("/");
+    });
+
+    it("title 是 Our Story,description 写品牌故事而不是首页 tagline", async () => {
+      mockState.locale = "en";
+      const meta = await generateMetadata({ params: Promise.resolve({ locale: "en" }) });
+      expect(meta.title).toBe(en.about.storyKicker);
+      expect(meta.title).toBe("Our Story");
+      expect(meta.description).toBe(
+        "The story behind is.offy — a gentle spirit from Briar Island, made to help you meet who you love to be.",
+      );
+      expect(meta.description).not.toBe(en.common.tagline);
+    });
+  });
+
   describe("about 字典", () => {
     it("en / zh key 集合完全一致", () => {
       expect(flatten(zh.about).sort()).toEqual(flatten(en.about).sort());
@@ -144,11 +173,17 @@ describe("About 页 · OUR STORY 表改版", () => {
     it("两版正文段数一致、都非空", () => {
       expect(en.about.storyParagraphs).toHaveLength(12);
       expect(zh.about.storyParagraphs).toHaveLength(12);
-      expect([...en.about.storyParagraphs, ...zh.about.storyParagraphs].every((p) => p.trim().length > 0)).toBe(true);
+      expect(
+        [...en.about.storyParagraphs, ...zh.about.storyParagraphs].every(
+          (p) => p.trim().length > 0,
+        ),
+      ).toBe(true);
     });
 
     it("旧版 team / retail / future / storyP* key 已清理", () => {
-      const legacy = flatten(en.about).filter((key) => /^(team|retail|future|comingSoonLabel|storyP\d)/.test(key));
+      const legacy = flatten(en.about).filter((key) =>
+        /^(team|retail|future|comingSoonLabel|storyP\d)/.test(key),
+      );
       expect(legacy).toEqual([]);
     });
   });

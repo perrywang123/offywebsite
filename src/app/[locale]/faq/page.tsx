@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { publicPath } from "@/i18n/routing";
 import { Fragment } from "react";
 import { getTranslations } from "next-intl/server";
 import { Link } from "@/i18n/navigation";
@@ -18,10 +19,25 @@ import { faqParts } from "@/lib/faq";
  * 字号层级由页面元素承担(源 docx 的 26pt 总标题 → h1、15/16pt Part → h2、
  * 14pt 问题 → summary);答案内部只还原源文档的**加粗**与**分段**。
  */
-export const metadata: Metadata = {
-  title: "FAQ",
-  description: "Shipping, returns, payment and privacy questions about OFFY orders.",
-};
+/**
+ * 用 `generateMetadata` 而不是静态对象,只为一件事:**canonical**。
+ *
+ * 静态 `metadata` 拿不到 `locale`(它是模块级常量),于是写不出 `publicPath(locale, ...)`
+ * —— 而**不写 canonical 就会继承 layout 的那个(指向首页)** ✗,对 Google 等于
+ * 声称"本页是首页的副本",不被独立收录。
+ */
+export async function generateMetadata({
+  params,
+}: {
+  params: Promise<{ locale: string }>;
+}): Promise<Metadata> {
+  const { locale } = await params;
+  return {
+    title: "FAQ",
+    description: "Shipping, returns, payment and privacy questions about OFFY orders.",
+    alternates: { canonical: publicPath(locale, "/faq") },
+  };
+}
 
 export default async function FaqPage({ params }: { params: Promise<{ locale: string }> }) {
   const { locale } = await params;

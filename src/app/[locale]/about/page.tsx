@@ -1,8 +1,33 @@
+import type { Metadata } from "next";
 import Image from "next/image";
 import { getTranslations } from "next-intl/server";
+import { publicPath } from "@/i18n/routing";
 import { upcomingIps, collabLooks } from "@/lib/catalog";
 import { Reveal } from "@/components/Reveal";
 import { UpcomingCard } from "@/components/home/UpcomingCard";
+
+/**
+ * 本页自己的 metadata。没有它时页面会继承 layout 的 canonical(首页 `/`),
+ * 被 Google 判成首页副本。canonical 走 `publicPath()`,英文站无语言前缀。
+ *
+ * title 复用 `about.storyKicker`("Our Story"),与页面 kicker 同名;
+ * description 写页面真正讲的事(Briar Island 的来处 + "meet who you love to be")。
+ */
+export async function generateMetadata({
+  params,
+}: {
+  params: Promise<{ locale: string }>;
+}): Promise<Metadata> {
+  const { locale } = await params;
+  const t = await getTranslations("about");
+
+  return {
+    title: t("storyKicker"),
+    description:
+      "The story behind is.offy — a gentle spirit from Briar Island, made to help you meet who you love to be.",
+    alternates: { canonical: publicPath(locale, "/about") },
+  };
+}
 
 /**
  * 品牌故事页 —— 按 OUR STORY 表(`副本独立站首页文案 (1).xlsx` → `OUR STORY`)改版:

@@ -1,7 +1,9 @@
+import type { Metadata } from "next";
 import Image from "next/image";
 import { headers } from "next/headers";
 import { notFound } from "next/navigation";
 import { getTranslations } from "next-intl/server";
+import { publicPath } from "@/i18n/routing";
 import { env } from "@/lib/env";
 import { pickCountry } from "@/lib/geo";
 import { getLiveProductsBySeries, getLiveSeriesList } from "@/server/catalog/live";
@@ -10,6 +12,34 @@ import { CategoryTabs } from "@/components/layout/CategoryTabs";
 import { Reveal } from "@/components/Reveal";
 
 export const revalidate = 60;
+
+/**
+ * 本页自己的 metadata。
+ *
+ * 系列名取 `getLiveSeriesList()` 的**实时值**(商家改 Shopify Collection 标题,
+ * 下次请求就生效),不写死;查不到该 slug 时退回 "Series" —— 此时页面主体
+ * 会 notFound(),metadata 只是不留下一个继承自首页的 canonical。
+ * description 用该系列的 tagline(数据源 `lib/catalog/series.ts`)。
+ */
+export async function generateMetadata({
+  params,
+}: {
+  params: Promise<{ locale: string; series: string }>;
+}): Promise<Metadata> {
+  const { locale, series: slug } = await params;
+  const series = (await getLiveSeriesList()).find((s) => s.slug === slug);
+  const isZh = locale === "zh";
+
+  return {
+    title: series ? (isZh ? series.name.zh : series.name.en) : "Series",
+    description: series
+      ? isZh
+        ? series.tagline.zh
+        : series.tagline.en
+      : "Three OFFY series: princess, streetwear and dress-up.",
+    alternates: { canonical: publicPath(locale, `/collections/${slug}`) },
+  };
+}
 
 export default async function SeriesPage({
   params,

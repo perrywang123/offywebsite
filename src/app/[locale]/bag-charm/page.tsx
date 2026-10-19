@@ -1,8 +1,31 @@
+import type { Metadata } from "next";
 import Image from "next/image";
 import { getTranslations } from "next-intl/server";
+import { publicPath } from "@/i18n/routing";
 import { teaserSeries } from "@/lib/catalog";
 import { Reveal } from "@/components/Reveal";
 import { TeaserProductGrid } from "./TeaserProductGrid";
+
+/**
+ * 本页自己的 metadata。没有它时页面会继承 layout 的 canonical(首页 `/`),
+ * 被 Google 判成首页副本。canonical 走 `publicPath()`,英文站无语言前缀。
+ *
+ * description 按页面实际内容写:这是系列**预告**页,下方正好 N 款包挂,
+ * 数量直接取 `teaserSeries.items.length`(不写死,以后增删款不会漂)。
+ */
+export async function generateMetadata({
+  params,
+}: {
+  params: Promise<{ locale: string }>;
+}): Promise<Metadata> {
+  const { locale } = await params;
+
+  return {
+    title: "Bag Charms",
+    description: `A first look at the OFFY bag charm collection — ${teaserSeries.items.length} charms, with more urban spirits on the way.`,
+    alternates: { canonical: publicPath(locale, "/bag-charm") },
+  };
+}
 
 /**
  * 时尚包挂系列预告详情页(更多新品.psd 还原):

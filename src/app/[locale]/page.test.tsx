@@ -136,6 +136,17 @@ async function renderHome(locale: "en" | "zh" = "en") {
   return render(ui);
 }
 
+describe("首页 · 语义 H1", () => {
+  it("有且只有一个 h1,且是 sr-only(头图文字烧在图片里,语义层补标题 / 视觉零变化)", async () => {
+    const { container } = await renderHome();
+    const h1s = container.querySelectorAll("h1");
+    expect(h1s).toHaveLength(1);
+    const h1 = h1s[0] as HTMLHeadingElement;
+    expect(h1).toHaveClass("sr-only");
+    expect(h1.textContent).toBe(en.common.tagline);
+  });
+});
+
 describe("首页 · 名册不含 merch", () => {
   it("名册里没有贴纸 / 帆布包(只在 All Looks 展示)", async () => {
     const { container } = await renderHome();

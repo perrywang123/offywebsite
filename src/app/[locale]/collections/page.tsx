@@ -1,7 +1,9 @@
+import type { Metadata } from "next";
 import Image from "next/image";
 import { headers } from "next/headers";
 import { getTranslations } from "next-intl/server";
 import { Link } from "@/i18n/navigation";
+import { publicPath } from "@/i18n/routing";
 import { env } from "@/lib/env";
 import { pickCountry } from "@/lib/geo";
 import { getLiveProductsBySeries, getLiveSeriesList } from "@/server/catalog/live";
@@ -33,6 +35,25 @@ const SERIES_HERO_IMAGE: Record<string, string> = {
 function seriesHeroImage(slug: string): string {
   // 未知系列(商家在 Shopify 新建 collection)时退回品牌图,而不是崩掉
   return SERIES_HERO_IMAGE[slug] ?? "/assets/hero/hero-brand.jpg";
+}
+
+/**
+ * 本页自己的 metadata。没有它时页面会继承 layout 的 canonical(首页 `/`),
+ * 被 Google 判成首页副本。canonical 走 `publicPath()`,英文站无语言前缀。
+ */
+export async function generateMetadata({
+  params,
+}: {
+  params: Promise<{ locale: string }>;
+}): Promise<Metadata> {
+  const { locale } = await params;
+  const t = await getTranslations("catalog");
+
+  return {
+    title: t("seriesKicker"),
+    description: "Three OFFY series: princess, streetwear and dress-up.",
+    alternates: { canonical: publicPath(locale, "/collections") },
+  };
 }
 
 export default async function CollectionsPage({ params }: { params: Promise<{ locale: string }> }) {

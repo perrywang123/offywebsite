@@ -20,6 +20,8 @@ import { NewsletterForm } from "@/components/newsletter-form";
 export default async function HomePage({ params }: { params: Promise<{ locale: string }> }) {
   const { locale } = await params;
   const t = await getTranslations("home");
+  // 首页语义 H1 用全站品牌主张(common.tagline),不新造文案。
+  const tCommon = await getTranslations("common");
 
   // 先确定访客国家,再按它查询:所有价格(含区域限定)都用同一个市场上下文,
   // 保证首页上的金额/币种与结账页一致(见 server/catalog/live.ts 的 resolvePrice)。
@@ -59,6 +61,13 @@ export default async function HomePage({ params }: { params: Promise<{ locale: s
 
   return (
     <>
+      {/* 语义 H1(**sr-only**,视觉零变化)。
+          首页头图的文字是烧进图片里的,语义层此前一个 h1 都没有(实测 h1=0),
+          搜索引擎只能看到一个没有标题的页面。这里补品牌主张作 h1,但**必须**
+          视觉隐藏:头图里已经有同一句话,可见 h1 会重复/破坏设计稿。
+          文案复用 common.tagline,不在组件里硬编码。 */}
+      <h1 className="sr-only">{tCommon("tagline")}</h1>
+
       {/* ============ 头图轮播(图片驱动:宽撑满,高=宽/1.789 等比,文字随图) ============
           `border-b border-cream-line`(#e3e3e3)是给头图 ↔ NEWS 这条硬接缝补的分隔线:
           5 张头图素材的底边色差很大(hero-promo 底边 #f7f2ef 与 NEWS 的 #efefef 只差
