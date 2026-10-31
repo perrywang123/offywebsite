@@ -1,77 +1,34 @@
-# legal-policies Specification
+# Legal Policies Specification
 
 ## Purpose
-TBD - created by archiving change 2026-10-07-add-legal-policies. Update Purpose after archive.
+
+Record implemented policy/support behavior as of 2026-10-31; this is product documentation, not a new legal text.
 
 ## Requirements
 
 ### Requirement: Legal policy pages
 
-The site SHALL serve five legally-required pages under `/[locale]/policies/[handle]`, where
-`handle` is restricted to the whitelist `returns`, `privacy`, `terms`, `shipping`, `contact`.
-The four policy bodies (`returns` → `shop.refundPolicy`, `privacy` → `shop.privacyPolicy`,
-`terms` → `shop.termsOfService`, `shipping` → `shop.shippingPolicy`) SHALL be read from the
-Shopify Storefront API in a single query issued with the `ck=shop-policies` cache-key guard
-and a `revalidate` of 300 seconds, and SHALL be sanitized through a tag/attribute whitelist
-before rendering. `contact` SHALL be rendered from in-tree structured content (the Storefront
-API exposes no contact-information field). A `handle` outside the whitelist MUST return 404 —
-never a 200 page with an empty body. Display names SHALL come from the `policies.titles.*`
-i18n keys so that the footer entry and the page heading can never diverge.
+The site SHALL serve /policies and the whitelisted handles returns, privacy, terms, shipping and contact. Unknown handles SHALL return 404. Four written bodies SHALL be read together from Shopify shop refundPolicy/privacyPolicy/termsOfService/shippingPolicy, using ck=shop-policies and fetch revalidate=300. HTML SHALL pass the existing tag/attribute whitelist before rendering.
 
-#### Scenario: Policy body is fetched and sanitized
+#### Scenario: Shopify policy failure
 
-- **WHEN** a visitor requests `/en/policies/privacy`
-- **THEN** the response is 200, contains an `<h1>` whose text is the English display name,
-  and the article contains the policy text returned by `shop.privacyPolicy` with every
-  `class` attribute stripped and no `script`/`style` element present
+- **WHEN** a known policy cannot be read
+- **THEN** the current page remains 200 with its heading and a visible unavailable notice rather than a fabricated legal body
 
-#### Scenario: Unknown handle is rejected
+### Requirement: Policy directory and language
 
-- **WHEN** a visitor requests `/en/policies/legal-notice` or `/en/policies/unknown`
-- **THEN** the response status is 404
+The directory SHALL list four written policies and exclude contact. Public pages SHALL use the active English locale and unprefixed paths. Reserved zh branches SHALL show a language notice around English bodies if later re-enabled, but SHALL NOT be described as currently routed Chinese pages. Policy text SHALL not be machine-translated.
 
-#### Scenario: Shopify is unreachable
+#### Scenario: English policy
 
-- **WHEN** the Storefront query fails or returns an empty body for a known handle
-- **THEN** the page still renders 200 with its heading, the footer and contact entry points
-  intact, and an inline "text could not be loaded" notice — it MUST NOT render a blank
-  article or a 404
-
-### Requirement: Policy language handling
-
-Because the Shopify policy bodies exist in English only (`@inContext(language:)` returns
-byte-identical English for `EN` and `ZH_CN`), the Chinese locale SHALL render a Chinese page
-shell around the English body and SHALL display a language notice stating that the English
-text is the authoritative version and that the Chinese page is not a translation. The policy
-article SHALL carry `lang="en"` so assistive technology does not read it with Chinese
-phonetics. The English locale MUST NOT display the Chinese notice. The policy text MUST NOT
-be machine-translated.
-
-#### Scenario: Chinese locale shows the notice and marks the body as English
-
-- **WHEN** a visitor requests `/zh/policies/privacy`
-- **THEN** the page contains the Chinese language notice text and the article element carries
-  `lang="en"`
-
-#### Scenario: English locale omits the Chinese notice
-
-- **WHEN** a visitor requests `/en/policies/privacy`
-- **THEN** the page does not contain the Chinese notice text
+- **WHEN** a shopper visits /policies/privacy
+- **THEN** the body uses lang=en, English navigation and its own canonical, without a Chinese-language notice
 
 ### Requirement: Contact information page
 
-The `contact` policy page SHALL render the company's contact details as a structured
-definition list rather than as a single prose paragraph, using the values supplied by the
-business verbatim in English (entity name and company number, registered office, customer
-support email, Instagram handle), plus the supplied intro and response-time note. The support
-email SHALL be a `mailto:` link; the Instagram entry SHALL be an external link carrying
-`rel="noopener noreferrer"`. The Chinese locale SHALL translate only the field labels, never
-the values.
+Contact SHALL use structured local content because the Storefront API wrapper has no contact field. Values SHALL use Whimcore Cultural Creative Co., Limited, Company No. 81264514, the configured Hong Kong office, contact@whimcoreofficial.com and @is.offy. Email SHALL be actionable and Instagram SHALL use a safe external link.
 
-#### Scenario: Contact details are present and actionable
+#### Scenario: Support contact
 
-- **WHEN** a visitor requests `/en/policies/contact`
-- **THEN** the page contains `Whimcore Cultural Creative Co., Limited`, the company number
-  `81264514`, the registered office address, `contact@whimcoreofficial.com` and `@isoffy`,
-  the email is an `a[href^="mailto:contact@whimcoreofficial.com"]`, and the Instagram link
-  carries `rel="noopener noreferrer"`
+- **WHEN** /policies/contact renders
+- **THEN** its definition list includes the current company values, mailto support link and https://www.instagram.com/is.offy

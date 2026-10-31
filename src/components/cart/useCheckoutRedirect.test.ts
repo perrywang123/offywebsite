@@ -13,7 +13,7 @@ const mockPush = vi.fn();
 vi.mock("next-intl", () => ({ useLocale: () => "en" }));
 vi.mock("@/i18n/navigation", () => ({ useRouter: () => ({ push: mockPush }) }));
 
-import { CHECKOUT_FALLBACK_DELAY_MS, useCheckoutRedirect } from "./useCheckoutRedirect";
+import { useCheckoutRedirect } from "./useCheckoutRedirect";
 
 const realLocation = window.location;
 let assign: ReturnType<typeof vi.fn>;
@@ -174,7 +174,7 @@ describe("useCheckoutRedirect · 失败兜底", () => {
   ];
 
   beforeEach(() => {
-    // 失败后是"先显示提示、再跳转"(见 CHECKOUT_FALLBACK_DELAY_MS),用假定时器精确断言。
+    // 失败后是"先显示提示、再跳转"(见 1200),用假定时器精确断言。
     vi.useFakeTimers();
   });
 
@@ -182,7 +182,7 @@ describe("useCheckoutRedirect · 失败兜底", () => {
     vi.useRealTimers();
   });
 
-  it.each(cases)("%s → 先置位 failed,再跳回 /checkout(不静默、不卡住)", async (_name, handler) => {
+  it.each(cases)("%s → 原地提示失败并允许重试，不跳转", async (_name, handler) => {
     mockFetch(handler);
     const { result } = renderHook(() => useCheckoutRedirect());
 
@@ -198,11 +198,11 @@ describe("useCheckoutRedirect · 失败兜底", () => {
     expect(mockPush).not.toHaveBeenCalled();
 
     await act(async () => {
-      vi.advanceTimersByTime(CHECKOUT_FALLBACK_DELAY_MS);
+      vi.advanceTimersByTime(1200);
     });
 
     // 站内路径无语言前缀:`/checkout`,不是 `/en/checkout`
-    expect(mockPush).toHaveBeenCalledWith("/checkout");
+    expect(mockPush).not.toHaveBeenCalled();
   });
 
   it("失败提示期间重试成功:撤销那次兜底跳转,直接去 Shopify", async () => {
@@ -233,7 +233,7 @@ describe("useCheckoutRedirect · 失败兜底", () => {
 
     // 未撤销的兜底定时器会把已经跳走的页面又拽回 /checkout
     await act(async () => {
-      vi.advanceTimersByTime(CHECKOUT_FALLBACK_DELAY_MS * 2);
+      vi.advanceTimersByTime(1200 * 2);
     });
     expect(mockPush).not.toHaveBeenCalled();
   });
@@ -269,7 +269,7 @@ describe("useCheckoutRedirect · 4xx 点名商品(留在原地,不跳兜底页)"
 
     // 关键:4xx 不跳 /checkout(那是"这层打不开"的兜底,不是"商品买不了")
     await act(async () => {
-      vi.advanceTimersByTime(CHECKOUT_FALLBACK_DELAY_MS * 3);
+      vi.advanceTimersByTime(1200 * 3);
     });
     expect(mockPush).not.toHaveBeenCalled();
   });
@@ -285,7 +285,7 @@ describe("useCheckoutRedirect · 4xx 点名商品(留在原地,不跳兜底页)"
     expect(result.current.blocked).toEqual([]);
     expect(result.current.failed).toBe(false);
     await act(async () => {
-      vi.advanceTimersByTime(CHECKOUT_FALLBACK_DELAY_MS * 3);
+      vi.advanceTimersByTime(1200 * 3);
     });
     expect(mockPush).not.toHaveBeenCalled();
   });
@@ -332,8 +332,8 @@ describe("useCheckoutRedirect · 4xx 点名商品(留在原地,不跳兜底页)"
     expect(result.current.blocked).toBeNull();
     expect(result.current.failed).toBe(true);
     await act(async () => {
-      vi.advanceTimersByTime(CHECKOUT_FALLBACK_DELAY_MS);
+      vi.advanceTimersByTime(1200);
     });
-    expect(mockPush).toHaveBeenCalledWith("/checkout");
+    expect(mockPush).not.toHaveBeenCalled();
   });
 });

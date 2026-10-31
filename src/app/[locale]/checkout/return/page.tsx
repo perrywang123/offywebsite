@@ -22,14 +22,14 @@ export default async function CheckoutReturnPage() {
       <div className="mx-auto max-w-2xl text-center">
         {/* 挂载即清空:这一页只可能由"付款流程回到站上"打开 */}
         <ClearCartOnSuccess />
-        <div className="mx-auto mb-6 flex h-16 w-16 items-center justify-center rounded-full bg-leaf text-3xl text-cream">
+        <div className="bg-leaf text-cream mx-auto mb-6 flex h-16 w-16 items-center justify-center rounded-full text-3xl">
           ✓
         </div>
         <h1 className="font-display text-4xl font-semibold">{t("returnTitle")}</h1>
-        <p className="mt-4 text-ink-soft">{t("returnBody")}</p>
+        <p className="text-ink-soft mt-4">{t("returnBody")}</p>
         <Link
           href="/products"
-          className="mt-8 inline-flex h-12 items-center justify-center rounded-full bg-ink px-6 text-sm font-medium text-cream"
+          className="bg-ink text-cream mt-8 inline-flex h-12 items-center justify-center rounded-full px-6 text-sm font-medium"
         >
           {t("continue")}
         </Link>

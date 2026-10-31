@@ -1,6 +1,7 @@
 "use client";
 
 import Image from "next/image";
+import { CommerceUnavailable } from "@/components/CommerceUnavailable";
 import { useLocale, useTranslations } from "next-intl";
 import { Link } from "@/i18n/navigation";
 import { cartTotal, formatPrice } from "@/lib/pricing";
@@ -8,15 +9,14 @@ import { useCart, type CartCatalogEntry } from "@/components/cart/CartProvider";
 import { useCheckoutRedirect } from "@/components/cart/useCheckoutRedirect";
 
 export default function CartPage() {
-  // `catalog`(来自 /api/products 实时拉取)取代直接 import 本地静态目录 ——
   // 否则本地完全没有记录的新商品(如本次新发现的 noir/wander/fable 等)
   // 加入购物车后会在这个页面被静默过滤掉,表现为"购物车显示是空的"。
-  const { lines, catalog, catalogLoaded, setQty, remove } = useCart();
+  const { lines, catalog, catalogLoaded, catalogStatus, refresh, setQty, remove } = useCart();
   const locale = useLocale();
   const t = useTranslations("common.cart");
   const ta = useTranslations("common.actions");
-  // 与购物袋抽屉保持同一条链路:直接去 Shopify 结算页,失败才回退 /checkout。
-  const checkout = useCheckoutRedirect();
+  // 与购物袋抽屉保持同一条链路:直接去 Shopify 结算页,失败时原地重试。
+  const checkout = useCheckoutRedirect(refresh);
 
   const items = lines
     .map((line) => ({ line, product: catalog[line.code] }))
@@ -33,7 +33,15 @@ export default function CartPage() {
     })),
   );
 
-  if (!catalogLoaded && lines.length > 0) {
+  if (catalogStatus === "unavailable")
+    return (
+      <div className="container-site section-y">
+        <h1 className="font-display mb-8 text-4xl font-semibold">{t("title")}</h1>
+        <CommerceUnavailable scene="bag" retry={refresh} />
+      </div>
+    );
+
+  if (!catalogLoaded) {
     return (
       <div className="container-site section-y text-ink-muted text-center text-sm lg:py-12">
         {t("loading")}
@@ -62,13 +70,15 @@ export default function CartPage() {
             {items.map(({ line, product }) => (
               <li key={line.code} className="flex gap-4 py-6">
                 <div className="bg-cream-deep relative h-32 w-24 shrink-0 overflow-hidden rounded-lg">
-                  <Image
-                    src={product.images[0]}
-                    alt={locale === "zh" ? product.name.zh : product.name.en}
-                    fill
-                    sizes="96px"
-                    className="object-cover"
-                  />
+                  {product.images[0] && (
+                    <Image
+                      src={product.images[0]}
+                      alt={locale === "zh" ? product.name.zh : product.name.en}
+                      fill
+                      sizes="96px"
+                      className="object-cover"
+                    />
+                  )}
                 </div>
                 <div className="flex min-w-0 flex-1 flex-col">
                   <p className="font-medium">
@@ -119,10 +129,16 @@ export default function CartPage() {
             <div className="mb-4 flex justify-between font-medium">
               <span>{t("subtotal")}</span>
               <span className="tabular-nums">
-                {formatPrice(subtotal.cents, subtotal.currency, locale)}
+                {subtotal.mixed ? "—" : formatPrice(subtotal.cents, subtotal.currency, locale)}
               </span>
             </div>
             {subtotal.mixed && <p className="text-ink-muted mb-4 text-xs">{t("mixedCurrency")}</p>}
+            {items.some((x) => !x.product.available) && (
+              <p role="status" className="text-ink-soft mb-3 text-sm">
+                Some items are sold out. Remove them to continue.
+              </p>
+            )}
+            {subtotal.mixed && <p className="text-ink-soft mb-3 text-sm">{t("mixedCurrency")}</p>}
             {checkout.failed && (
               <p role="alert" className="text-error mb-3 text-xs">
                 {t("checkoutFallback")}
@@ -153,7 +169,9 @@ export default function CartPage() {
                   items.map((x) => ({ code: x.line.code, quantity: x.line.quantity })),
                 )
               }
-              disabled={checkout.pending}
+              disabled={
+                checkout.pending || subtotal.mixed || items.some((x) => !x.product.available)
+              }
               aria-busy={checkout.pending}
               className="bg-accent text-paper hover:bg-accent-deep flex h-12 w-full items-center justify-center rounded-full text-sm font-medium transition-colors disabled:opacity-70"
             >

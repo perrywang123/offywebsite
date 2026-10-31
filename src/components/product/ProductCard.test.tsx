@@ -185,9 +185,9 @@ describe("ProductCard sold-out presentation (P0-3 companion)", () => {
     expect(screen.getAllByText(/revealing soon/i).length).toBeGreaterThan(0);
   });
 
-  it("never lets one product carry both a featured flag and a regional badge (B11)", async () => {
-    const { products } = await import("@/lib/catalog");
-    const both = products.filter((p) => p.featured && p.badge);
-    expect(both.map((p) => p.code)).toEqual([]);
+  it("uses a neutral frame when Shopify has no product photo", () => {
+    render(<ProductCard product={make({ images: [] })} locale="en" />);
+    expect(screen.queryByRole("img")).toBeNull();
+    expect(screen.getByText("Image coming soon")).toBeInTheDocument();
   });
 });

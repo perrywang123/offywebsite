@@ -81,3 +81,179 @@ export type NewNewsletterSubscriber = typeof newsletterSubscribers.$inferInsert;
 export type Order = typeof orders.$inferSelect;
 export type NewOrder = typeof orders.$inferInsert;
 export type CheckoutSession = typeof checkoutSessions.$inferSelect;
+
+// KOL accounting is independent of the legacy payment tables. Times are UTC milliseconds.
+export const kolAdmins = sqliteTable("kol_admins", {
+  id: text("id").primaryKey(),
+  email: text("email").notNull().unique(),
+  passwordHash: text("password_hash").notNull(),
+  createdAt: integer("created_at").notNull(),
+});
+export const kolAdminSessions = sqliteTable("kol_admin_sessions", {
+  digest: text("digest").primaryKey(),
+  adminId: text("admin_id")
+    .notNull()
+    .references(() => kolAdmins.id),
+  expiresAt: integer("expires_at").notNull(),
+});
+export const kolLoginLimits = sqliteTable("kol_login_limits", {
+  key: text("key").primaryKey(),
+  attempts: integer("attempts").notNull(),
+  resetsAt: integer("resets_at").notNull(),
+});
+export const kolPartners = sqliteTable("kol_partners", {
+  id: text("id").primaryKey(),
+  alias: text("alias").notNull().unique(),
+  name: text("name").notNull(),
+  status: text("status").notNull(),
+  version: integer("version").notNull(),
+  requests: integer("requests").notNull().default(0),
+  landings: integer("landings").notNull().default(0),
+  createdAt: integer("created_at").notNull(),
+});
+export const kolTerms = sqliteTable("kol_terms", {
+  id: text("id").primaryKey(),
+  kolId: text("kol_id")
+    .notNull()
+    .references(() => kolPartners.id),
+  version: integer("version").notNull(),
+  rateBps: integer("rate_bps").notNull(),
+  startsAt: integer("starts_at").notNull(),
+  endsAt: integer("ends_at").notNull(),
+  data: text("data").notNull(),
+  createdAt: integer("created_at").notNull(),
+});
+export const kolReferrals = sqliteTable(
+  "kol_referrals",
+  {
+    id: text("id").primaryKey(),
+    kolId: text("kol_id")
+      .notNull()
+      .references(() => kolPartners.id),
+    createdAt: integer("created_at").notNull(),
+    lastActiveAt: integer("last_active_at").notNull(),
+    landedAt: integer("landed_at"),
+  },
+  (t) => [index("kol_referrals_time_idx").on(t.createdAt)],
+);
+export const kolIntents = sqliteTable("kol_intents", {
+  id: text("id").primaryKey(),
+  referralId: text("referral_id").notNull(),
+  kolId: text("kol_id")
+    .notNull()
+    .references(() => kolPartners.id),
+  termsId: text("terms_id")
+    .notNull()
+    .references(() => kolTerms.id),
+  rateBps: integer("rate_bps").notNull(),
+  createdAt: integer("created_at").notNull(),
+  expiresAt: integer("expires_at").notNull(),
+  cartToken: text("cart_token").unique(),
+  orderId: text("order_id").unique(),
+});
+export const kolCodes = sqliteTable("kol_codes", {
+  id: text("id").primaryKey(),
+  shop: text("shop").notNull(),
+  normalized: text("normalized").notNull().unique(),
+  kolId: text("kol_id")
+    .notNull()
+    .references(() => kolPartners.id),
+  campaignId: text("campaign_id").notNull(),
+  source: text("source").notNull(),
+  status: text("status").notNull(),
+  summary: text("summary").notNull(),
+  remoteStatus: text("remote_status").notNull(),
+  syncedAt: integer("synced_at").notNull(),
+});
+export const kolCodeJobs = sqliteTable("kol_code_jobs", {
+  id: text("id").primaryKey(),
+  kolId: text("kol_id")
+    .notNull()
+    .references(() => kolPartners.id),
+  candidate: text("candidate").notNull().unique(),
+  campaignId: text("campaign_id").notNull(),
+  status: text("status").notNull(),
+  remoteId: text("remote_id"),
+  error: text("error"),
+  attempts: integer("attempts").notNull().default(0),
+  nextAt: integer("next_at").notNull(),
+  leaseUntil: integer("lease_until").notNull().default(0),
+  createdAt: integer("created_at").notNull(),
+});
+export const kolInbox = sqliteTable("kol_inbox", {
+  id: text("id").primaryKey(),
+  orderId: text("order_id").notNull(),
+  topic: text("topic").notNull(),
+  status: text("status").notNull(),
+  attempts: integer("attempts").notNull().default(0),
+  nextAt: integer("next_at").notNull(),
+  leaseUntil: integer("lease_until").notNull().default(0),
+  error: text("error"),
+  createdAt: integer("created_at").notNull(),
+});
+export const kolShopOrders = sqliteTable("kol_shop_orders", {
+  id: text("id").primaryKey(),
+  name: text("name").notNull(),
+  kolId: text("kol_id").references(() => kolPartners.id),
+  intentId: text("intent_id"),
+  currency: text("currency").notNull(),
+  net: integer("net"),
+  commission: integer("commission"),
+  rateBps: integer("rate_bps"),
+  status: text("status").notNull(),
+  reason: text("reason"),
+  paidAt: integer("paid_at"),
+  holdUntil: integer("hold_until"),
+  evidence: text("evidence").notNull(),
+  checkedAt: integer("checked_at").notNull(),
+});
+export const kolLedger = sqliteTable("kol_ledger", {
+  id: text("id").primaryKey(),
+  orderId: text("order_id")
+    .notNull()
+    .references(() => kolShopOrders.id),
+  kolId: text("kol_id")
+    .notNull()
+    .references(() => kolPartners.id),
+  currency: text("currency").notNull(),
+  amount: integer("amount").notNull(),
+  availableAt: integer("available_at").notNull(),
+  createdAt: integer("created_at").notNull(),
+});
+export const kolSettlements = sqliteTable("kol_settlements", {
+  id: text("id").primaryKey(),
+  kolId: text("kol_id")
+    .notNull()
+    .references(() => kolPartners.id),
+  currency: text("currency").notNull(),
+  month: text("month").notNull(),
+  status: text("status").notNull(),
+  total: integer("total").notNull(),
+  revision: integer("revision").notNull().default(1),
+  paymentRef: text("payment_ref"),
+  paymentNote: text("payment_note"),
+  createdAt: integer("created_at").notNull(),
+  paidAt: integer("paid_at"),
+});
+export const kolSettlementItems = sqliteTable("kol_settlement_items", {
+  snapshot: text("snapshot").notNull().default("{}"),
+  ledgerId: text("ledger_id")
+    .primaryKey()
+    .references(() => kolLedger.id),
+  settlementId: text("settlement_id")
+    .notNull()
+    .references(() => kolSettlements.id),
+});
+export const kolAudit = sqliteTable("kol_audit", {
+  id: text("id").primaryKey(),
+  actor: text("actor").notNull(),
+  action: text("action").notNull(),
+  entity: text("entity").notNull(),
+  detail: text("detail").notNull(),
+  createdAt: integer("created_at").notNull(),
+});
+export const kolRuntime = sqliteTable("kol_runtime", {
+  key: text("key").primaryKey(),
+  value: text("value").notNull(),
+  updatedAt: integer("updated_at").notNull(),
+});

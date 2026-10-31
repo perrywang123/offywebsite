@@ -1,12 +1,9 @@
 // @vitest-environment node
 import { describe, expect, it, vi } from "vitest";
 
-// 真实目录里没有"存在但买不了"的商品(全部 isAvailable),所以这一条只能靠
-// 把 live 解析包一层 spy 来控制;其余用例继续走真实实现(离线时会回退本地目录)。
-vi.mock("../../catalog/live", async (importOriginal) => {
-  const actual = await importOriginal<typeof import("../../catalog/live")>();
-  return { ...actual, getLiveProductByCode: vi.fn(actual.getLiveProductByCode) };
-});
+vi.mock("../../catalog/live", async () => ({
+  getLiveProductByCode: vi.fn((await import("../../../test/product")).testProductLookup),
+}));
 
 import { getLiveProductByCode } from "../../catalog/live";
 import { cartMutation } from "./client";

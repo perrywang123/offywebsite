@@ -6,6 +6,30 @@ import { z } from "zod";
  * populated for client bundles.
  */
 const envSchema = z.object({
+  KOL_ADMIN_BOOTSTRAP_HASH: z.preprocess(
+    (v) => (v === "" ? undefined : v),
+    z
+      .string()
+      .regex(/^scrypt:[a-f0-9]{32}:[a-f0-9]{128}$/)
+      .optional(),
+  ),
+  KOL_ENABLED: z.enum(["true", "false"]).default("false"),
+  KOL_SETTLEMENTS_ENABLED: z.enum(["true", "false"]).default("false"),
+  KOL_INGRESS_SECRET: z.preprocess(
+    (v) => (v === "" ? undefined : v),
+    z.string().min(32).optional(),
+  ),
+  KOL_SIGNING_SECRET: z.preprocess(
+    (v) => (v === "" ? undefined : v),
+    z.string().min(32).optional(),
+  ),
+  KOL_WORKER_URL: z.string().url().optional(),
+  KOL_WORKER_SECRET: z.preprocess((v) => (v === "" ? undefined : v), z.string().min(32).optional()),
+  SHOPIFY_WEBHOOK_SECRET: z.string().optional(),
+  ADMIN_ORIGIN: z.string().url().optional(),
+  NEXT_PUBLIC_OFFY_INTEGRATION_TEST: z.enum(["true", "false"]).default("false"),
+  OFFY_INTEGRATION_TEST: z.enum(["true", "false"]).default("false"),
+  SHOPIFY_TEST_ORIGIN: z.string().url().optional(),
   NODE_ENV: z.enum(["development", "test", "production"]).default("development"),
   DATABASE_PROVIDER: z.enum(["sqlite", "postgres"]).default("sqlite"),
   DATABASE_URL: z.string().default("./data/offy.db"),
@@ -41,7 +65,32 @@ const envSchema = z.object({
   SHOPIFY_TARGET_MARKETS: z.string().optional(),
 });
 
-export const env = envSchema.parse(process.env);
+export const env = envSchema
+  .superRefine((value, ctx) => {
+    if (
+      value.NODE_ENV === "production" &&
+      (value.OFFY_INTEGRATION_TEST === "true" ||
+        value.NEXT_PUBLIC_OFFY_INTEGRATION_TEST === "true" ||
+        value.SHOPIFY_TEST_ORIGIN)
+    )
+      ctx.addIssue({ code: "custom", message: "Integration transport is forbidden in production" });
+    if (
+      value.KOL_ENABLED === "true" &&
+      (!value.KOL_INGRESS_SECRET ||
+        !value.KOL_SIGNING_SECRET ||
+        !value.KOL_WORKER_SECRET ||
+        !value.ADMIN_ORIGIN)
+    )
+      ctx.addIssue({ code: "custom", message: "Enabled KOL requires secrets and ADMIN_ORIGIN" });
+    if (
+      value.KOL_ENABLED === "true" &&
+      value.OFFY_INTEGRATION_TEST !== "true" &&
+      value.ADMIN_ORIGIN &&
+      !value.ADMIN_ORIGIN.startsWith("https://")
+    )
+      ctx.addIssue({ code: "custom", message: "Admin origin requires HTTPS" });
+  })
+  .parse(process.env);
 
 /**
  * True when the variable carries a usable (non-empty) value.
@@ -67,5 +116,29 @@ export function isPayPalConfigured(): boolean {
 
 /** True when a Shopify store domain + Storefront token are configured. */
 export function isShopifyConfigured(): boolean {
-  return isConfiguredValue(env.SHOPIFY_STORE_DOMAIN) && isConfiguredValue(env.SHOPIFY_STOREFRONT_TOKEN);
+  return (
+    isConfiguredValue(env.SHOPIFY_STORE_DOMAIN) && isConfiguredValue(env.SHOPIFY_STOREFRONT_TOKEN)
+  );
+}
+
+export function kolEnabled() {
+  return (
+    env.KOL_ENABLED === "true" &&
+    Boolean(env.KOL_SIGNING_SECRET && env.KOL_INGRESS_SECRET && env.ADMIN_ORIGIN)
+  );
+}
+/** Explicit loopback simulator only; never available in a production process. */
+export function shopifyOrigin(): string {
+  if (env.SHOPIFY_TEST_ORIGIN) {
+    const u = new URL(env.SHOPIFY_TEST_ORIGIN);
+    if (
+      env.OFFY_INTEGRATION_TEST !== "true" ||
+      env.NODE_ENV === "production" ||
+      !["127.0.0.1", "localhost"].includes(u.hostname) ||
+      !["127.0.0.1", "localhost"].includes(new URL(env.SITE_URL).hostname)
+    )
+      throw new Error("unsafe_shopify_test_origin");
+    return u.origin;
+  }
+  return `https://${env.SHOPIFY_STORE_DOMAIN}`;
 }

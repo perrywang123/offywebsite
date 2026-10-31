@@ -39,7 +39,7 @@
       "openAria": "Open bag",
       "loading": "Loading your bag…",
       "checkoutRedirecting": "Redirecting to checkout…",
-      "checkoutFallback": "Checkout is taking longer than expected — opening our checkout page instead.",
+      "checkoutFallback": "We can’t open checkout right now. Your bag is saved. Please try again.",
       "checkoutBlocked": "These items can't be checked out right now: {items}. Remove them from your bag and try again.",
       "checkoutBlockedGeneric": "Some items in your bag can't be checked out right now. Please review your bag and try again."
     },

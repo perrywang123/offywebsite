@@ -2,6 +2,7 @@
 
 import { useEffect, useRef } from "react";
 import Image from "next/image";
+import { CommerceUnavailable } from "@/components/CommerceUnavailable";
 import { useLocale, useTranslations } from "next-intl";
 import { Link } from "@/i18n/navigation";
 import { cartTotal, formatPrice } from "@/lib/pricing";
@@ -10,24 +11,56 @@ import { useCheckoutRedirect } from "./useCheckoutRedirect";
 import { useScrollLock } from "@/hooks/useScrollLock";
 
 export function CartDrawer() {
-  const { lines, catalog, catalogLoaded, isOpen, mounted, close, setQty, remove } = useCart();
+  const {
+    lines,
+    catalog,
+    catalogLoaded,
+    catalogStatus,
+    refresh,
+    isOpen,
+    mounted,
+    close,
+    setQty,
+    remove,
+  } = useCart();
   const locale = useLocale();
   const t = useTranslations("common.cart");
   const ta = useTranslations("common.actions");
+  const panelRef = useRef<HTMLElement>(null);
   const closeRef = useRef<HTMLButtonElement>(null);
-  // Checkout 直接去 Shopify 结算页(不再经过我们自己的 /checkout);失败时该
-  // hook 会回退跳转到 /checkout 并置位 failed,提示见下方 footer。
-  const checkout = useCheckoutRedirect();
+  // Checkout验证失败留在原地，购物袋内容保留。
+
+  const checkout = useCheckoutRedirect(refresh);
 
   // 打开时焦点移入抽屉(关闭按钮),Escape 关闭 —— WAI-ARIA Dialog 规范。
   useEffect(() => {
     if (!isOpen) return;
+    const previous = document.activeElement instanceof HTMLElement ? document.activeElement : null;
     closeRef.current?.focus();
     const onKeyDown = (e: KeyboardEvent) => {
       if (e.key === "Escape") close();
+      if (e.key === "Tab") {
+        const targets = Array.from(
+          panelRef.current?.querySelectorAll<HTMLElement>(
+            "button:not(:disabled),a[href],input:not(:disabled),select:not(:disabled)",
+          ) ?? [],
+        );
+        const first = targets[0],
+          last = targets.at(-1);
+        if (e.shiftKey && document.activeElement === first) {
+          e.preventDefault();
+          last?.focus();
+        } else if (!e.shiftKey && document.activeElement === last) {
+          e.preventDefault();
+          first?.focus();
+        }
+      }
     };
     document.addEventListener("keydown", onKeyDown);
-    return () => document.removeEventListener("keydown", onKeyDown);
+    return () => {
+      document.removeEventListener("keydown", onKeyDown);
+      if (previous?.isConnected) previous.focus();
+    };
   }, [isOpen, close]);
 
   // 打开期间锁住页面滚动:否则手指在抽屉里滑到底后继续滑,背景页会跟着滚
@@ -67,6 +100,7 @@ export function CartDrawer() {
           高度用 dvh:地址栏/工具栏收放时抽屉要跟着变,否则底部的 Checkout
           会被浏览器工具栏压住(方案 #21/#36);不支持 dvh 的浏览器保留 h-full。 */}
       <aside
+        ref={panelRef}
         className="cart-drawer bg-cream absolute top-0 right-0 flex h-full w-[88%] max-w-md flex-col shadow-2xl supports-[height:100dvh]:h-dvh"
         data-open={isOpen}
         role="dialog"
@@ -82,13 +116,17 @@ export function CartDrawer() {
             type="button"
             onClick={close}
             aria-label={ta("close")}
-            className="text-ink-muted hover:bg-cream-deep flex h-11 w-11 shrink-0 items-center justify-center rounded-full lg:h-8 lg:w-8"
+            className="focus-ring text-ink-muted hover:bg-cream-deep flex h-11 w-11 shrink-0 items-center justify-center rounded-full"
           >
             ✕
           </button>
         </header>
 
-        {!catalogLoaded && lines.length > 0 ? (
+        {catalogStatus === "unavailable" ? (
+          <div className="flex-1 overflow-y-auto">
+            <CommerceUnavailable scene="drawer" retry={refresh} />
+          </div>
+        ) : !catalogLoaded ? (
           <div className="text-ink-muted flex flex-1 items-center justify-center px-4 text-center text-sm lg:px-6">
             {t("loading")}
           </div>
@@ -110,13 +148,15 @@ export function CartDrawer() {
               {items.map(({ line, product }) => (
                 <li key={line.code} className="flex gap-4 p-4">
                   <div className="rounded-soft bg-paper relative h-24 w-20 shrink-0 overflow-hidden">
-                    <Image
-                      src={product.images[0]}
-                      alt={locale === "zh" ? product.name.zh : product.name.en}
-                      fill
-                      sizes="80px"
-                      className="object-cover"
-                    />
+                    {product.images[0] && (
+                      <Image
+                        src={product.images[0]}
+                        alt={locale === "zh" ? product.name.zh : product.name.en}
+                        fill
+                        sizes="80px"
+                        className="object-cover"
+                      />
+                    )}
                   </div>
                   <div className="flex flex-1 flex-col">
                     {/* 线上有 49 字符的长商品名(方案 #41):不夹住的话行高在
@@ -134,7 +174,7 @@ export function CartDrawer() {
                         <button
                           type="button"
                           onClick={() => setQty(line.code, line.quantity - 1)}
-                          className="text-ink-soft h-11 w-11 lg:h-8 lg:w-8"
+                          className="text-ink-soft h-11 w-11"
                         >
                           −
                         </button>
@@ -142,7 +182,7 @@ export function CartDrawer() {
                         <button
                           type="button"
                           onClick={() => setQty(line.code, line.quantity + 1)}
-                          className="text-ink-soft h-11 w-11 lg:h-8 lg:w-8"
+                          className="text-ink-soft h-11 w-11"
                         >
                           +
                         </button>
@@ -163,9 +203,15 @@ export function CartDrawer() {
               <div className="mb-4 flex justify-between text-sm font-medium">
                 <span>{t("subtotal")}</span>
                 <span className="tabular-nums">
-                  {formatPrice(subtotal.cents, subtotal.currency, locale)}
+                  {subtotal.mixed ? "—" : formatPrice(subtotal.cents, subtotal.currency, locale)}
                 </span>
               </div>
+              {items.some((x) => !x.product.available) && (
+                <p role="status" className="text-ink-soft mb-3 text-sm">
+                  Some items are sold out. Remove them to continue.
+                </p>
+              )}
+              {subtotal.mixed && <p className="text-ink-soft mb-3 text-sm">{t("mixedCurrency")}</p>}
               {checkout.failed && (
                 <p role="alert" className="text-error mb-3 text-xs">
                   {t("checkoutFallback")}
@@ -198,7 +244,9 @@ export function CartDrawer() {
                     items.map((x) => ({ code: x.line.code, quantity: x.line.quantity })),
                   )
                 }
-                disabled={checkout.pending}
+                disabled={
+                  checkout.pending || subtotal.mixed || items.some((x) => !x.product.available)
+                }
                 aria-busy={checkout.pending}
                 className="bg-accent text-cream hover:bg-accent-deep flex h-12 w-full items-center justify-center rounded-full text-sm font-medium transition-colors disabled:opacity-70"
               >

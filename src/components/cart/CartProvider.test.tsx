@@ -41,14 +41,24 @@ function mockRoutes({ catalog }: { catalog: "ok" | "500" | "reject" }) {
     if (url === "/api/products") {
       if (catalog === "reject") throw new Error("network down");
       if (catalog === "500") return { ok: false, status: 500, json: async () => ({}) } as Response;
-      return { ok: true, status: 200, json: async () => ({ products: [PRODUCT], categories: [] }) } as Response;
+      return {
+        ok: true,
+        status: 200,
+        json: async () => ({ products: [PRODUCT], categories: [] }),
+      } as Response;
     }
     // 单品直查:只有不属于任何 collection 的商品会走到这里
     if (url.includes("offy-sticker-sheet")) {
       return {
         ok: true,
         status: 200,
-        json: async () => ({ product: { ...PRODUCT, code: "offy-sticker-sheet", name: { en: "OFFY STICKER SHEET", zh: "贴纸" } } }),
+        json: async () => ({
+          product: {
+            ...PRODUCT,
+            code: "offy-sticker-sheet",
+            name: { en: "OFFY STICKER SHEET", zh: "贴纸" },
+          },
+        }),
       } as Response;
     }
     return { ok: false, status: 404, json: async () => ({}) } as Response;
@@ -71,7 +81,11 @@ afterEach(() => {
 describe("CartProvider 健壮性", () => {
   it("S1:目录接口返回 500 时不得清空购物袋(也不得把空数组写回 window.localStorage)", async () => {
     mockRoutes({ catalog: "500" });
-    render(<CartProvider><Probe /></CartProvider>);
+    render(
+      <CartProvider>
+        <Probe />
+      </CartProvider>,
+    );
 
     await waitFor(() => expect(screen.getByTestId("loaded").textContent).toBe("true"));
     expect(lines()).toEqual([{ code: "offy_redrush", quantity: 2 }]);
@@ -83,16 +97,27 @@ describe("CartProvider 健壮性", () => {
 
   it("S3:目录接口网络失败时 catalogLoaded 仍要置位,否则购物袋页永远转圈", async () => {
     mockRoutes({ catalog: "reject" });
-    render(<CartProvider><Probe /></CartProvider>);
+    render(
+      <CartProvider>
+        <Probe />
+      </CartProvider>,
+    );
 
     await waitFor(() => expect(screen.getByTestId("loaded").textContent).toBe("true"));
     expect(lines()).toEqual([{ code: "offy_redrush", quantity: 2 }]);
   });
 
   it("S2:目录里没有、但单品接口能查到的商品必须留在购物袋里", async () => {
-    window.localStorage.setItem(STORAGE_KEY, JSON.stringify([{ code: "offy-sticker-sheet", quantity: 1 }]));
+    window.localStorage.setItem(
+      STORAGE_KEY,
+      JSON.stringify([{ code: "offy-sticker-sheet", quantity: 1 }]),
+    );
     mockRoutes({ catalog: "ok" });
-    render(<CartProvider><Probe /></CartProvider>);
+    render(
+      <CartProvider>
+        <Probe />
+      </CartProvider>,
+    );
 
     await waitFor(() => expect(screen.getByTestId("loaded").textContent).toBe("true"));
     await waitFor(() => expect(lines()).toEqual([{ code: "offy-sticker-sheet", quantity: 1 }]));
@@ -102,7 +127,11 @@ describe("CartProvider 健壮性", () => {
   it("仍然会清理真正下架的商品(单品接口 404)", async () => {
     window.localStorage.setItem(STORAGE_KEY, JSON.stringify([{ code: "long-gone", quantity: 1 }]));
     mockRoutes({ catalog: "ok" });
-    render(<CartProvider><Probe /></CartProvider>);
+    render(
+      <CartProvider>
+        <Probe />
+      </CartProvider>,
+    );
 
     await waitFor(() => expect(screen.getByTestId("loaded").textContent).toBe("true"));
     await waitFor(() => expect(lines()).toEqual([]));

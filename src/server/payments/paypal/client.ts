@@ -59,11 +59,7 @@ export async function getAccessToken(fetchImpl: typeof fetch = fetch): Promise<s
   return cache.accessToken;
 }
 
-async function request(
-  path: string,
-  init: RequestInit,
-  fetchImpl: typeof fetch,
-): Promise<unknown> {
+async function request(path: string, init: RequestInit, fetchImpl: typeof fetch): Promise<unknown> {
   const token = await getAccessToken(fetchImpl);
   const res = await fetchImpl(`${paypalBaseUrl()}${path}`, {
     ...init,
@@ -95,8 +91,15 @@ export async function createOrder(
   )) as PayPalOrder;
 }
 
-export async function getOrder(orderId: string, fetchImpl: typeof fetch = fetch): Promise<PayPalOrder> {
-  return (await request(`/v2/checkout/orders/${orderId}`, { method: "GET" }, fetchImpl)) as PayPalOrder;
+export async function getOrder(
+  orderId: string,
+  fetchImpl: typeof fetch = fetch,
+): Promise<PayPalOrder> {
+  return (await request(
+    `/v2/checkout/orders/${orderId}`,
+    { method: "GET" },
+    fetchImpl,
+  )) as PayPalOrder;
 }
 
 export async function captureOrder(

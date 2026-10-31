@@ -1,11 +1,6 @@
+import { cache } from "react";
 import type { Product, ProductSeries, Series, SeriesSlug } from "../../lib/catalog/types";
-import {
-  MERCH_SERIES_SLUG,
-  getProductByCode,
-  getProductsBySeries,
-  seriesList,
-} from "../../lib/catalog";
-import { products as localProducts } from "../../lib/catalog/products";
+import { MERCH_SERIES_SLUG, seriesList } from "../../lib/catalog/series";
 import {
   fetchShopifyCollectionProducts,
   fetchShopifyCollections,
@@ -13,364 +8,112 @@ import {
   type ShopifyCollectionProductItem,
 } from "../shopify/catalog";
 import { fetchProductData } from "../shopify/products";
+import { CatalogUnavailableError } from "../shopify/storefront";
 
-/**
- * 实时目录层(live catalog)—— 修复的核心问题:本地 `lib/catalog/{series,products}.ts`
- * 是手写死的静态快照,从未真正对接过 Shopify 的 Collections API,"这个系列里有哪些
- * 商品"这件事完全不随 Shopify 实际上下架/调整而变化(已用真实店铺数据核实:
- * outdoor-sporty 系列本地只有 1 款,Shopify 实际 12 款;另有 16 款已发布商品
- * 本地完全没有记录)。本模块让"系列名称 + 系列成员 + 每款商品的标题/图片/价格/
- * 库存/结算变体 ID"在**每次请求时**都直接向 Shopify 实时拉取(沿用全站已有的
- * `next: { revalidate: 60 }` 近实时缓存节奏),本地静态数据降级为"Shopify 连不上
- * 时的兜底",不再是主数据源。
- *
- * 价格维度(币种 + 金额):所有 `getLive*` 函数都要求传入**访客所在国家**
- * (`pickCountry(headers, env.SHOPIFY_MARKET_COUNTRY)`),由它决定这次查询命中
- * Shopify Markets 的哪个市场 —— 实测 US→USD 49.90、GB→GBP 37.90、HK→HKD 369.00、
- * JP/DE→SGD 49.90。金额与币种一并如实采用(见 `resolvePrice`),绝不假设"价格
- * 就是美元";本地兜底价是美元快照,回退时会同时把币种标成 USD。
- *
- * 下游使用方:
- * - 展示页(首页/商品页/系列页/商品详情页/导航栏/sitemap/公开 API)用
- *   `getLive*` 系列函数渲染"看得到"的内容。
- * - 结算三条通道(Stripe/PayPal/Shopify)用 `getLiveProductByCode` 解析
- *   "买得到"的商品(价格/库存/变体 ID),保证本次新发现的 16 款商品不仅
- *   前台可见,也能真正走通下单——否则只修展示层会出现"看得到买不了"。
- */
-
-/**
- * 路由 slug → 真实 Shopify Collection handle。
- * 这条映射本身很少变(只有商家在 Shopify 后台新建/重命名/删除整个 Collection
- * 这种小概率的结构性调整才需要手动更新一行),真正高频变化的"系列里有哪些
- * 商品"完全不在这里维护,而是每次请求时实时查询。
- */
-const SERIES_SHOPIFY_HANDLE: Record<SeriesSlug, string> = {
+/** Local routes/editorial assets are configuration; Shopify owns names, membership and commerce. */
+export const SERIES_SHOPIFY_HANDLE: Record<SeriesSlug, string> = {
   "princess-lady": "frontpage",
   "outdoor-sporty": "outdoor-sporty系列",
   "playful-life": "趣味生活系列",
 };
-
-const SHOPIFY_HANDLE_TO_SERIES: Partial<Record<string, SeriesSlug>> = Object.fromEntries(
-  (Object.entries(SERIES_SHOPIFY_HANDLE) as [SeriesSlug, string][]).map(([slug, handle]) => [
-    handle,
-    slug,
-  ]),
-);
-
-/**
- * 系列中文名精修表 —— Shopify 侧目前未配置多语言(@inContext(language) 实测
- * 仍返回英文原文),中文名沿用人工精修译名;英文名以 Shopify Collection 的
- * `title` 为准(商家在后台改标题,网站下一次请求即生效)。
- */
-const SERIES_ZH_NAME: Record<SeriesSlug, string> = {
-  "princess-lady": "公主lady系列",
-  "outdoor-sporty": "街头潮流系列",
-  "playful-life": "趣味生活系列",
-};
-
-/** 已知商品 handle 的本地中文精修译名;未命中(全新上架商品)时回退 Shopify 英文标题。 */
-const CURATED_ZH_PRODUCT_NAMES: Record<string, string> = Object.fromEntries(
-  localProducts.map((p) => [p.code, p.name.zh]),
-);
-
-/** 系列情绪标签沿用本地人工精修值(与具体商品无关,整系列统一)。 */
-const SERIES_TAGS: Record<ProductSeries, { zh: string[]; en: string[] }> = {
-  "princess-lady": { zh: ["公主", "优雅"], en: ["princess", "elegant"] },
-  "outdoor-sporty": { zh: ["街头", "潮流"], en: ["streetwear", "urban"] },
-  "playful-life": { zh: ["日常", "可爱"], en: ["daily", "cute"] },
-  // 周边(贴纸/帆布包)没有系列情绪标签;详情页早已不再渲染 mood tags,
-  // 这里给空数组只是让映射函数对哨兵值也有定义。
-  merch: { zh: [], en: [] },
-};
-
-/** 实时数据缺图时的占位图(理论上不会触发,Shopify 已发布商品均有主图)。 */
-const FALLBACK_IMAGE = "/assets/hero/hero-01.jpg";
-
-/**
- * toLiveProduct 的入参:只要求基础展示字段,变体/编码/创建时间可缺省 ——
- * 这样「区域限定」探测拿到的 ShopifyListItem 也能复用同一套映射,
- * 不必为它再写一份,避免两处映射逻辑分叉。
- */
+const slugs = Object.keys(SERIES_SHOPIFY_HANDLE) as SeriesSlug[];
 export type LiveProductInput = Pick<
   ShopifyCollectionProductItem,
   "handle" | "title" | "priceCents" | "currency" | "image" | "available"
 > &
-  Partial<ShopifyCollectionProductItem> & {
-    /**
-     * 完整图集(可选)。Collection 列表查询只带单张主图,所以这个字段由调用方
-     * 按需补;详情页路径(`fetchProductData` 的 `images(first: 10)`)本来就
-     * 有最多 10 张,可以直接透传 —— 不补时行为与改动前完全一致(单图)。
-     */
-    images?: string[];
-  };
-
-/**
- * 决定一个商品最终展示的「金额 + 币种」。
- *
- * 全站跟随访客所在市场:Shopify 按 `@inContext(country:)` 返回的金额与币种
- * 一律**如实采用**(US→USD 49.90、GB→GBP 37.90、HK→HKD 369.00、JP/DE→SGD 49.90)。
- * 旧代码写的是 `currency === "USD" ? 实时价 : (本地价 ?? 0)`,非美元时丢弃实时价:
- * 首页「区域限定」块按访客国家查询,而本地静态表里没有 NOIR/BOOTS 这类只在
- * 单一市场发布的商品,于是英国访客看到 `NOIR $0.00`、香港访客看到 `BOOTS $0.00`。
- *
- * 只有一种情况需要回退到本地价:Shopify 连响应里的币种都没给出(拿不到币种就
- * 无从判断金额面值)。此时必须**同时**把币种标成 USD —— 本地静态表是美元快照,
- * 绝不能把美元金额挂在访客市场的币种下静默输出(那就是币种串味)。
- *
- * `$0` 本身是合法金额(实测 JP/DE 市场的 offy-sticker-sheet 就是 SGD 0.0),
- * 所以这里不做 "> 0" 之类的猜测,只看有没有币种。
- */
-function resolvePrice(
-  liveCents: number,
-  liveCurrency: string | undefined,
-  localCents: number | undefined,
-): { priceCents: number; currency: string } {
-  const cc = liveCurrency?.trim().toUpperCase();
-  if (cc && /^[A-Z]{3}$/.test(cc)) {
-    return { priceCents: Number.isFinite(liveCents) ? liveCents : 0, currency: cc };
-  }
-  return { priceCents: localCents ?? 0, currency: "USD" };
-}
-
+  Partial<ShopifyCollectionProductItem> & { images?: string[] };
 export function toLiveProduct(
   item: LiveProductInput,
   series: ProductSeries,
   sortOrder: number,
 ): Product {
-  const tags = SERIES_TAGS[series];
-  const local = getProductByCode(item.handle);
-  const { priceCents, currency } = resolvePrice(item.priceCents, item.currency, local?.priceCents);
-  // 图集优先用调用方给的完整数组;拿不到就退回"单张主图 → 本地图 → 占位图"
-  // 这条老路径(与改动前逐字一致)。数据层早已取回最多 10 张
-  // (shopify/products.ts 的 images(first: 10)),此前在这里被收成了单图。
-  const images =
-    item.images && item.images.length > 0
-      ? item.images
-      : item.image
-        ? [item.image]
-        : (local?.images ?? [FALLBACK_IMAGE]);
+  if (
+    !item.title ||
+    !Number.isSafeInteger(item.priceCents) ||
+    item.priceCents < 0 ||
+    !/^[A-Z]{3}$/.test(item.currency) ||
+    typeof item.available !== "boolean"
+  )
+    throw new CatalogUnavailableError();
   return {
     code: item.handle,
     slug: item.handle,
     series,
-    name: {
-      en: item.title || local?.name.en || item.handle,
-      zh: CURATED_ZH_PRODUCT_NAMES[item.handle] ?? item.title,
-    },
-    description: local?.description ?? { zh: "", en: "" },
-    priceCents,
-    currency,
-    dimensions: local?.dimensions ?? null,
-    images,
-    emotionTags: local?.emotionTags ?? tags,
-    // 没有可靠的实时"新品"信号(Shopify 侧无对应约定字段),沿用本地已知商品的
-    // 精选标记(驱动卡片上的"新品"小标签);全新上架、本地未记录的商品默认不显示。
-    featured: local?.featured ?? false,
+    name: { en: item.title, zh: item.title },
+    description: { en: "", zh: "" },
+    priceCents: item.priceCents,
+    currency: item.currency,
+    dimensions: null,
+    images: item.images ?? (item.image ? [item.image] : []),
+    emotionTags: { en: [], zh: [] },
+    featured: false,
     isAvailable: item.available,
     isUpcoming: false,
     isQuoteOnly: false,
     sortOrder,
-    badge: local?.badge,
     shopifyHandle: item.handle,
-    shopifyVariantId: item.variantId ?? local?.shopifyVariantId,
+    shopifyVariantId: item.variantId ?? undefined,
     skuCode: item.sku ?? undefined,
   };
 }
-
-/** 实时系列列表:英文名随 Shopify Collection 标题变化;中文名人工精修;
- * 整体结构(slug/heroImage/tagline)仍是本地编辑态资产,不属于"商品信息"。
- * Shopify 不可达时整体回退本地静态 `seriesList`。 */
-export async function getLiveSeriesList(): Promise<Series[]> {
-  try {
-    const live = await fetchShopifyCollections();
-    const byHandle = new Map(live.map((c) => [c.handle, c]));
-    return seriesList.map((local) => {
-      const handle = SERIES_SHOPIFY_HANDLE[local.slug];
-      const remote = byHandle.get(handle);
-      if (!remote) return local;
-      return {
-        ...local,
-        name: { en: remote.title || local.name.en, zh: SERIES_ZH_NAME[local.slug] },
-      };
-    });
-  } catch (error) {
-    console.error(
-      "getLiveSeriesList: Shopify unreachable, falling back to local series list",
-      error,
-    );
-    return seriesList;
-  }
-}
-
-/**
- * 实时周边商品(merch):商家发布了、但**不属于任何系列 Collection** 的商品
- * (贴纸、帆布包这类非公仔周边)。线上实测两款:offy-tote-bag、offy-sticker-sheet。
- *
- * 老板 2026-10 决策:这批商品只在 All Looks(/products)展示、排在最后,组内按
- * Shopify `createdAt` 降序;`series` 用哨兵值 `"merch"`(此前代码把"无系列归属"
- * 硬塞成 "princess-lady",导致贴纸详情页推荐公主系列公仔)。
- *
- * 本地静态兜底表里没有任何周边商品,所以 Shopify 不可达时返回空 —— 宁可少显示
- * 周边,也不能把周边挂到某个公仔系列下面。
- */
-export async function getLiveMerchProducts(country: string): Promise<Product[]> {
-  const excluded = Object.values(SERIES_SHOPIFY_HANDLE);
-  try {
-    const items = await fetchShopifyProductsOutsideCollections(excluded, country);
-    return items.map((item, i) => toLiveProduct(item, MERCH_SERIES_SLUG, i * 10));
-  } catch (error) {
-    console.error("getLiveMerchProducts: Shopify unreachable, showing no merch", error);
-    return [];
-  }
-}
-
-/** 单个系列的实时商品清单(完整反映 Shopify 当前的 Collection 成员,而非本地
- * 快照);价格按 `country`(访客所在国家)对应的市场币种返回。任一环节失败均
- * 整体回退该系列的本地静态清单(美元快照),保证页面始终可渲染。
- *
- * `slug` 也可以是哨兵值 `"merch"`:这类商品没有 Collection,改查"不属于任何已知
- * Collection 的商品"(详情页的「More from this series」对周边商品走这条路径,
- * 于是只会推荐其它周边,不会串到公仔上)。 */
-export async function getLiveProductsBySeries(
-  slug: ProductSeries,
-  country: string,
-): Promise<Product[]> {
-  if (slug === MERCH_SERIES_SLUG) return getLiveMerchProducts(country);
-
-  const handle = SERIES_SHOPIFY_HANDLE[slug];
-  try {
-    const items = await fetchShopifyCollectionProducts(handle, country);
-    return items.map((item, i) => toLiveProduct(item, slug, i * 10));
-  } catch (error) {
-    console.error(
-      `getLiveProductsBySeries(${slug}): Shopify unreachable, falling back to local roster`,
-      error,
-    );
-    return getProductsBySeries(slug);
-  }
-}
-
-/** 全量实时商品(3 个系列 + 周边),用于 /products 全量页、sitemap、公开 API。
- * 价格按 `country`(访客所在国家)对应的市场币种返回。
- *
- * 顺序(老板决策):有系列的(公仔)全部靠前,`merch`(贴纸/帆布包等不属于任何
- * 系列的商品)统一排在最后;两组各自保持原有顺序(merch 组内按 Shopify
- * createdAt 降序,由 `fetchShopifyProductsOutsideCollections` 保证)。 */
-export async function getLiveProducts(country: string): Promise<Product[]> {
-  const slugs = Object.keys(SERIES_SHOPIFY_HANDLE) as SeriesSlug[];
-  const [perSeries, merch] = await Promise.all([
-    Promise.all(slugs.map((s) => getLiveProductsBySeries(s, country))),
+// React cache deduplicates within a server render only, never across requests or markets.
+export const getLiveSeriesList = cache(async (): Promise<Series[]> => {
+  const remote = await fetchShopifyCollections();
+  return seriesList.flatMap((config) => {
+    const s = remote.find((c) => c.handle === SERIES_SHOPIFY_HANDLE[config.slug]);
+    return s ? [{ ...config, name: { en: s.title, zh: s.title } }] : [];
+  });
+});
+const collectionItems = cache((slug: SeriesSlug, country: string) =>
+  fetchShopifyCollectionProducts(SERIES_SHOPIFY_HANDLE[slug], country),
+);
+export const getLiveMerchProducts = cache(async (country: string): Promise<Product[]> =>
+  (await fetchShopifyProductsOutsideCollections(Object.values(SERIES_SHOPIFY_HANDLE), country)).map(
+    (item, i) => toLiveProduct(item, MERCH_SERIES_SLUG, i * 10),
+  ),
+);
+export const getLiveProductsBySeries = cache(
+  async (slug: ProductSeries, country: string): Promise<Product[]> =>
+    slug === MERCH_SERIES_SLUG
+      ? getLiveMerchProducts(country)
+      : (await collectionItems(slug, country)).map((item, i) => toLiveProduct(item, slug, i * 10)),
+);
+export const getLiveProducts = cache(async (country: string): Promise<Product[]> => {
+  const groups = await Promise.all([
+    ...slugs.map((s) => getLiveProductsBySeries(s, country)),
     getLiveMerchProducts(country),
   ]);
-  return [...perSeries.flat(), ...merch];
-}
-
-/**
- * 首页"New Looks"(最新造型曝光):每个系列取**最新上架**的 N 款(默认 2 款,
- * 3 系列共 6 款)——按 Shopify 商品 createdAt 降序排序,而不是 Collection
- * 后台的手工排列顺序;商家新上架一款商品,下一次请求即进入本模块。
- * 过滤不可售款(售罄/下架不占位)。Shopify 不可达时按系列回退本地清单前 N 款。
- * 价格按 `country`(访客所在国家)对应的市场币种返回。
- */
-export async function getLiveNewLooksProducts(country: string, perSeries = 2): Promise<Product[]> {
-  const slugs = Object.keys(SERIES_SHOPIFY_HANDLE) as SeriesSlug[];
-  const perSeriesResults = await Promise.all(
-    slugs.map(async (slug) => {
-      try {
-        const items = await fetchShopifyCollectionProducts(SERIES_SHOPIFY_HANDLE[slug], country);
-        return items
-          .filter((item) => item.available)
-          .sort((a, b) => {
-            // createdAt 缺失的旧数据视为最旧,排在最后
-            const ta = a.createdAt ? Date.parse(a.createdAt) : 0;
-            const tb = b.createdAt ? Date.parse(b.createdAt) : 0;
-            return tb - ta;
-          })
+  return [...new Map(groups.flat().map((p) => [p.code, p])).values()];
+});
+export const getLiveNewLooksProducts = cache(
+  async (country: string, perSeries = 2): Promise<Product[]> => {
+    const groups = await Promise.all(
+      slugs.map(async (slug) =>
+        (await collectionItems(slug, country))
+          .filter((i) => i.available)
+          .sort(
+            (a, b) =>
+              (b.createdAt ? Date.parse(b.createdAt) : 0) -
+              (a.createdAt ? Date.parse(a.createdAt) : 0),
+          )
           .slice(0, perSeries)
-          .map((item, i) => toLiveProduct(item, slug, i * 10));
-      } catch (error) {
-        console.error(
-          `getLiveNewLooksProducts(${slug}): Shopify unreachable, falling back to local roster`,
-          error,
-        );
-        return getProductsBySeries(slug)
-          .filter((p) => p.isAvailable)
-          .slice(0, perSeries);
-      }
-    }),
-  );
-  return perSeriesResults.flat();
-}
-
-/**
- * 按 code(= Shopify handle)实时解析单个商品 —— 展示页(商品详情)与结算三条
- * 通道(Stripe/PayPal/Shopify)共用同一入口,保证"买得到"和"看得到"同步实时。
- * 价格按 `country`(访客所在国家)对应的市场币种返回;结算必须传访客国家,
- * 否则 Shopify 会按默认市场(US)计价,结账页金额与站上显示不一致。
- * 优先直接按 handle 查询 Shopify(不依赖该商品当前是否仍归属某个已知系列,
- * 即使是未归类的孤儿商品——如本次核实到的 royal-grey/gurardian-angel——
- * 只要仍在 Shopify 发布中就能正确解析);查无此商品或请求失败时回退本地
- * 静态目录(含该 code 根本不存在于本地的情况,此时返回 undefined)。
- */
-export async function getLiveProductByCode(
-  code: string,
-  country: string,
-): Promise<Product | undefined> {
-  const local = getProductByCode(code);
-  try {
+          .map((item, i) => toLiveProduct(item, slug, i * 10)),
+      ),
+    );
+    return [...new Map(groups.flat().map((p) => [p.code, p])).values()];
+  },
+);
+export const getLiveProductByCode = cache(
+  async (code: string, country: string): Promise<Product | undefined> => {
     const data = await fetchProductData(code, fetch, country);
-    if (!data) return local;
-
-    const matchedSlug = data.collectionHandles
-      .map((h) => SHOPIFY_HANDLE_TO_SERIES[h])
-      .find((s): s is SeriesSlug => Boolean(s));
-    // 归属优先级:实时 collection 成员 → 本地静态表的系列 → 哨兵 "merch"。
-    // 最后一档以前写的是 "princess-lady"(硬塞),于是不属于任何系列的贴纸
-    // (offy-sticker-sheet)详情页会推荐公主系列公仔 —— 已修正为 merch:
-    // 周边商品的「More from this series」只推荐其它周边。
-    const series: ProductSeries = matchedSlug ?? local?.series ?? MERCH_SERIES_SLUG;
-    const tags = SERIES_TAGS[series];
-    const { priceCents, currency } = resolvePrice(
-      data.priceCents,
-      data.currency,
-      local?.priceCents,
-    );
-
+    if (data === null) return undefined;
+    const series =
+      slugs.find((slug) => data.collectionHandles.includes(SERIES_SHOPIFY_HANDLE[slug])) ??
+      MERCH_SERIES_SLUG;
     return {
-      code,
-      slug: code,
-      series,
-      name: {
-        en: data.title || local?.name.en || code,
-        zh: CURATED_ZH_PRODUCT_NAMES[code] ?? local?.name.zh ?? data.title ?? code,
-      },
-      description: data.description
-        ? { en: data.description, zh: data.description }
-        : (local?.description ?? { zh: "", en: "" }),
-      descriptionBlocks:
-        data.descriptionBlocks.length > 0
-          ? { en: data.descriptionBlocks, zh: data.descriptionBlocks }
-          : local?.descriptionBlocks,
-      priceCents,
-      currency,
-      dimensions: local?.dimensions ?? null,
-      images: data.images.length > 0 ? data.images : (local?.images ?? [FALLBACK_IMAGE]),
-      emotionTags: local?.emotionTags ?? tags,
-      featured: local?.featured ?? false,
-      isAvailable: data.available,
-      isUpcoming: local?.isUpcoming ?? false,
-      isQuoteOnly: local?.isQuoteOnly ?? false,
-      sortOrder: local?.sortOrder ?? 0,
-      badge: local?.badge,
-      shopifyHandle: code,
-      shopifyVariantId: data.variantId ?? local?.shopifyVariantId,
-      skuCode: data.sku ?? undefined,
+      ...toLiveProduct({ ...data, handle: code, image: null }, series, 0),
+      description: { en: data.description, zh: data.description },
+      descriptionBlocks: { en: data.descriptionBlocks, zh: data.descriptionBlocks },
     };
-  } catch (error) {
-    console.error(
-      `getLiveProductByCode(${code}): Shopify unreachable, falling back to local`,
-      error,
-    );
-    return local;
-  }
-}
+  },
+);

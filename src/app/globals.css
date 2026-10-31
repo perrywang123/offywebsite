@@ -577,3 +577,73 @@ body {
   background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.8' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
   pointer-events: none;
 }
+
+/* Approved Shopify outage presentation: existing wordmark, quiet ground, generous whitespace. */
+.commerce-pause {
+  display: grid;
+  grid-template-columns: minmax(0, 1.2fr) minmax(0, 1fr);
+  gap: 60px;
+  align-items: center;
+  min-height: 400px;
+  padding: 40px 0 48px;
+}
+.commerce-pause__mark {
+  position: relative;
+  aspect-ratio: 1;
+  width: 270px;
+  justify-self: center;
+  border: 1px solid #d4d4d4;
+  border-radius: 50%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+}
+.commerce-pause__mark::after {
+  content: "✦";
+  position: absolute;
+  top: 0;
+  right: 0;
+  padding: 4px 10px;
+  font-size: 30px;
+  background: var(--background);
+}
+.commerce-pause__mark img {
+  width: 196px;
+  height: auto;
+  transform: rotate(-8deg);
+}
+.commerce-pause__mark p {
+  margin-top: 30px;
+  font-size: 10px;
+  letter-spacing: 2px;
+  color: #686868;
+}
+.commerce-pause--compact {
+  display: block;
+  min-height: 0;
+  padding: 40px 24px;
+}
+.commerce-pause--compact h2 {
+  font-size: 32px;
+}
+.commerce-pause--home {
+  display: block;
+  min-height: 0;
+  padding: 40px 0;
+  border-block: 1px solid #d4d4d4;
+}
+@media (max-width: 767px) {
+  .commerce-pause {
+    grid-template-columns: minmax(0, 1fr);
+    padding: 32px 0;
+    gap: 0;
+    min-height: 0;
+  }
+  .commerce-pause__mark {
+    display: none;
+  }
+  .commerce-pause--compact {
+    padding: 36px 24px;
+  }
+}

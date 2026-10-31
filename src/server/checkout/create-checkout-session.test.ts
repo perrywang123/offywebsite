@@ -7,6 +7,9 @@ import type Stripe from "stripe";
 import * as schema from "../db/schema";
 import { createCheckoutSession } from "./create-checkout-session";
 
+vi.mock("../catalog/live", async () => ({
+  getLiveProductByCode: (await import("../../test/product")).testProductLookup,
+}));
 function createDb() {
   const sqlite = new Database(":memory:");
   const db = drizzle(sqlite, { schema });
@@ -43,7 +46,9 @@ describe("createCheckoutSession", () => {
     expect(result).toEqual({ ok: true, url: "https://checkout.stripe.com/c/pay/cs_test_123" });
 
     const createArgs = (stripe.checkout.sessions.create as ReturnType<typeof vi.fn>).mock
-      .calls[0][0] as { line_items: Array<{ quantity: number; price_data: { unit_amount: number } }> };
+      .calls[0][0] as {
+      line_items: Array<{ quantity: number; price_data: { unit_amount: number } }>;
+    };
     expect(createArgs.line_items[0].price_data.unit_amount).toBe(4990);
     expect(createArgs.line_items[0].quantity).toBe(2);
 

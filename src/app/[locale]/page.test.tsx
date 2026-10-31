@@ -115,7 +115,11 @@ const MERCH = [
 
 vi.mock("@/server/catalog/live", () => ({
   getLiveNewLooksProducts: async () => [],
-  getLiveProducts: async () => [DOLL, ...MERCH],
+  getLiveProducts: async () => [
+    DOLL,
+    liveProduct(item("noir", "NOIR"), "outdoor-sporty", 0),
+    ...MERCH,
+  ],
   toLiveProduct: (entry: ShopifyListItem, series: string, sortOrder: number) =>
     liveProduct(entry, series, sortOrder),
 }));

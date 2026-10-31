@@ -41,15 +41,21 @@ export function ProductCard({
   const media = (
     <>
       {/* 主图（hover 时淡出，若有第二图） */}
-      <Image
-        src={product.images[0]}
-        alt={name}
-        fill
-        sizes={sizes}
-        className={`ease-editorial scale-[1.01] object-cover transition-all duration-500 group-hover:scale-105 ${
-          secondImage ? "group-hover:opacity-0" : ""
-        } ${soldOut ? "opacity-60" : ""}`}
-      />
+      {product.images[0] ? (
+        <Image
+          src={product.images[0]}
+          alt={name}
+          fill
+          sizes={sizes}
+          className={`ease-editorial scale-[1.01] object-cover transition-all duration-500 group-hover:scale-105 ${
+            secondImage ? "group-hover:opacity-0" : ""
+          } ${soldOut ? "opacity-60" : ""}`}
+        />
+      ) : (
+        <span className="text-ink-soft absolute inset-0 flex items-center justify-center text-xs">
+          Image coming soon
+        </span>
+      )}
       {/* 第二图（hover 交叉淡入）；售罄款不做交叉淡入,避免与"变淡"的透明度打架 */}
       {secondImage && (
         <Image

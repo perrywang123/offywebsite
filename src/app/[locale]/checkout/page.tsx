@@ -9,17 +9,19 @@
  * (收货信息本来就由 Shopify 收集,中间那层只是多一次点击)。
  *
  * 本页**仍然需要**,不是死页面,请勿按"没人访问"清理:
- *   1. 直达 Shopify 失败(网络错误 / 非 2xx / 没有 `redirect.url`)时的兜底落点
- *      —— 见 `src/components/cart/useCheckoutRedirect.ts`;
+ *   1. 旧书签或用户直接访问的表单入口（正常购买失败仍留在购物袋重试）;
  *   2. PayPal 与 Stripe 的**回跳地址仍指向本页**:
  *      `src/server/checkout/create-checkout-session.ts`、
  *      `src/server/payments/paypal/provider.ts`、
  *      `src/app/[locale]/checkout/paypal-return/route.ts`。
  */
 
-import { useEffect, useState } from "react";
+import { referralTicket } from "@/components/kol/ReferralBridge";
+import { CommerceUnavailable } from "@/components/CommerceUnavailable";
+import { useEffect, useRef, useState } from "react";
 import { useLocale, useTranslations } from "next-intl";
 import { Link } from "@/i18n/navigation";
+import { checkoutRedirectUrl } from "@/lib/checkout-redirect";
 import { cartTotal, formatPrice } from "@/lib/pricing";
 import { useCart, type CartCatalogEntry } from "@/components/cart/CartProvider";
 
@@ -80,10 +82,9 @@ const inputCls =
   "h-12 w-full rounded-soft border border-sand bg-paper px-4 text-base outline-none transition-colors focus:border-brown-600";
 
 export default function CheckoutPage() {
-  // `catalog`(来自 /api/products 实时拉取)取代直接 import 本地静态目录 ——
   // 否则本地完全没有记录的新商品加入购物车后会在结算页被静默过滤掉,
   // 表现为"购物车显示是空的",无法下单。
-  const { lines, catalog, catalogLoaded } = useCart();
+  const { lines, catalog, catalogLoaded, catalogStatus, refresh } = useCart();
   const locale = useLocale();
   const t = useTranslations("checkout");
   const tCart = useTranslations("common.cart");
@@ -101,6 +102,7 @@ export default function CheckoutPage() {
   const [address2, setAddress2] = useState("");
   const [postalCode, setPostalCode] = useState("");
   const [submitting, setSubmitting] = useState(false);
+  const inFlight = useRef(false);
   const [error, setError] = useState("");
   const [notice, setNotice] = useState<Notice>(null);
 
@@ -126,15 +128,21 @@ export default function CheckoutPage() {
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
-    if (items.length === 0) return;
+    if (items.length === 0 || inFlight.current || catalogStatus !== "ready") return;
+    inFlight.current = true;
     setSubmitting(true);
     setError("");
+    let navigating = false;
     try {
+      if (!(await refresh())) throw new Error("catalog_unavailable");
       const res = await fetch("/api/payments/checkout", {
         method: "POST",
+        cache: "no-store",
+        signal: AbortSignal.timeout(15000),
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           provider,
+          referralTicket: referralTicket(),
           items: items.map((x) => ({ code: x.line.code, quantity: x.line.quantity })),
           locale,
           email,
@@ -142,16 +150,20 @@ export default function CheckoutPage() {
         }),
       });
       const data = await res.json();
-      if (res.ok && data.redirect) {
-        window.location.href =
-          data.redirect.kind === "approve" ? data.redirect.approveUrl : data.redirect.url;
+      const target = checkoutRedirectUrl(data?.redirect);
+      if (res.ok && target) {
+        navigating = true;
+        window.location.assign(target);
       } else {
-        setError(data.error ?? "checkout_failed");
+        setError("checkout_failed");
       }
     } catch {
       setError("network_error");
     } finally {
-      setSubmitting(false);
+      if (!navigating) {
+        inFlight.current = false;
+        setSubmitting(false);
+      }
     }
   }
 
@@ -175,7 +187,9 @@ export default function CheckoutPage() {
         </div>
       )}
 
-      {!catalogLoaded && lines.length > 0 ? (
+      {catalogStatus === "unavailable" ? (
+        <CommerceUnavailable scene="bag" retry={refresh} />
+      ) : !catalogLoaded ? (
         <p className="text-ink-muted text-center text-sm">{tCart("loading")}</p>
       ) : items.length === 0 ? (
         <div className="text-center">
@@ -245,7 +259,9 @@ export default function CheckoutPage() {
                   <span className="text-ink-soft mb-2 block text-sm">{t("country")}</span>
                   <select
                     value={country}
-                    disabled={submitting}
+                    disabled={
+                      submitting || subtotal.mixed || items.some((x) => !x.product.available)
+                    }
                     onChange={(e) => setCountry(e.target.value)}
                     autoComplete="country"
                     className={inputCls}
@@ -368,7 +384,7 @@ export default function CheckoutPage() {
 
             <button
               type="submit"
-              disabled={submitting}
+              disabled={submitting || subtotal.mixed || items.some((x) => !x.product.available)}
               aria-busy={submitting}
               className="bg-accent text-cream hover:bg-accent-deep h-12 w-full rounded-full text-sm font-medium transition-colors disabled:opacity-70"
             >
@@ -394,7 +410,7 @@ export default function CheckoutPage() {
             <div className="border-cream-line mt-4 flex justify-between border-t pt-4 font-medium">
               <span>{t("summary")}</span>
               <span className="tabular-nums">
-                {formatPrice(subtotal.cents, subtotal.currency, locale)}
+                {subtotal.mixed ? "—" : formatPrice(subtotal.cents, subtotal.currency, locale)}
               </span>
             </div>
             {subtotal.mixed && (

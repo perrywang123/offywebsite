@@ -1,0 +1,1 @@
+ALTER TABLE `kol_settlement_items` ADD `snapshot` text DEFAULT '{}' NOT NULL;

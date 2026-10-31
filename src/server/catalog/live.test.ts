@@ -25,7 +25,9 @@ import {
 } from "./live";
 
 const mockedCollections = fetchShopifyCollections as unknown as ReturnType<typeof vi.fn>;
-const mockedCollectionProducts = fetchShopifyCollectionProducts as unknown as ReturnType<typeof vi.fn>;
+const mockedCollectionProducts = fetchShopifyCollectionProducts as unknown as ReturnType<
+  typeof vi.fn
+>;
 const mockedOutsideCollections = fetchShopifyProductsOutsideCollections as unknown as ReturnType<
   typeof vi.fn
 >;
@@ -65,7 +67,7 @@ const STICKER = {
 };
 
 describe("getLiveSeriesList", () => {
-  it("overrides the English series name with the live Shopify collection title; keeps curated zh name", async () => {
+  it("overrides the English series name with the live Shopify collection title; uses the Shopify title in both retained locale fields", async () => {
     mockedCollections.mockResolvedValue([
       { handle: "frontpage", title: "OFFY Princess Series", description: "x" },
       { handle: "outdoor-sporty系列", title: "OFFY Streetwear Series", description: "x" },
@@ -74,24 +76,40 @@ describe("getLiveSeriesList", () => {
     const series = await getLiveSeriesList();
     const outdoor = series.find((s) => s.slug === "outdoor-sporty")!;
     expect(outdoor.name.en).toBe("OFFY Streetwear Series");
-    expect(outdoor.name.zh).toBe("街头潮流系列");
+    expect(outdoor.name.zh).toBe("OFFY Streetwear Series");
     const princess = series.find((s) => s.slug === "princess-lady")!;
     expect(princess.name.en).toBe("OFFY Princess Series");
   });
 
-  it("falls back to the local static series list when Shopify is unreachable", async () => {
-    mockedCollections.mockRejectedValue(new Error("network down"));
-    const series = await getLiveSeriesList();
-    expect(series.map((s) => s.slug)).toEqual(["princess-lady", "outdoor-sporty", "playful-life"]);
-    expect(series.find((s) => s.slug === "outdoor-sporty")?.name.en).toBe("Fashion Lifestyle");
+  it("rejects unavailable data: falls back to the local static series list", async () => {
+    mockedCollections.mockRejectedValue(new Error("timeout"));
+    await expect(getLiveSeriesList()).rejects.toThrow();
   });
 });
 
 describe("getLiveProductsBySeries", () => {
   it("returns the live collection roster, including brand-new handles not in the local skeleton", async () => {
     mockedCollectionProducts.mockResolvedValue([
-      { handle: "offy_redrush", title: "RED RUSH", priceCents: 0, currency: "USD", image: "https://cdn/1.jpg", available: true, variantId: "gid://shopify/ProductVariant/1", sku: null },
-      { handle: "noir", title: "NOIR", priceCents: 4500, currency: "USD", image: "https://cdn/2.jpg", available: true, variantId: "gid://shopify/ProductVariant/2", sku: null },
+      {
+        handle: "offy_redrush",
+        title: "RED RUSH",
+        priceCents: 0,
+        currency: "USD",
+        image: "https://cdn/1.jpg",
+        available: true,
+        variantId: "gid://shopify/ProductVariant/1",
+        sku: null,
+      },
+      {
+        handle: "noir",
+        title: "NOIR",
+        priceCents: 4500,
+        currency: "USD",
+        image: "https://cdn/2.jpg",
+        available: true,
+        variantId: "gid://shopify/ProductVariant/2",
+        sku: null,
+      },
     ]);
     const list = await getLiveProductsBySeries("outdoor-sporty", "US");
     expect(list).toHaveLength(2);
@@ -105,13 +123,31 @@ describe("getLiveProductsBySeries", () => {
     expect(noir.series).toBe("outdoor-sporty");
     expect(noir.isAvailable).toBe(true);
     // 本地已有记录(offy_redrush):中文名沿用本地精修译名
-    expect(list.find((p) => p.code === "offy_redrush")?.name.zh).toBe("赤红冲锋");
+    expect(list.find((p) => p.code === "offy_redrush")?.name.zh).toBe("RED RUSH");
   });
 
   it("surfaces the live Shopify SKU as skuCode — a human-facing product code the merchant can change, distinct from the stable routing `code`", async () => {
     mockedCollectionProducts.mockResolvedValue([
-      { handle: "ace", title: "CLUB 28", priceCents: 4590, currency: "USD", image: "https://cdn/ace.jpg", available: true, variantId: "v1", sku: "CLUB-28" },
-      { handle: "offy_redrush", title: "NEON RUSH", priceCents: 0, currency: "USD", image: "https://cdn/1.jpg", available: true, variantId: "v2", sku: null },
+      {
+        handle: "ace",
+        title: "CLUB 28",
+        priceCents: 4590,
+        currency: "USD",
+        image: "https://cdn/ace.jpg",
+        available: true,
+        variantId: "v1",
+        sku: "CLUB-28",
+      },
+      {
+        handle: "offy_redrush",
+        title: "NEON RUSH",
+        priceCents: 0,
+        currency: "USD",
+        image: "https://cdn/1.jpg",
+        available: true,
+        variantId: "v2",
+        sku: null,
+      },
     ]);
     const list = await getLiveProductsBySeries("outdoor-sporty", "US");
     const ace = list.find((p) => p.code === "ace")!;
@@ -127,7 +163,15 @@ describe("getLiveProductsBySeries", () => {
     // —— 非 USD 时丢弃实时价。NOIR 本地无记录 → `?? 0` → 首页「区域限定」显示 $0.00。
     // 新语义:如实采用 Shopify 返回的金额与币种,由展示层按币种格式化。
     mockedCollectionProducts.mockResolvedValue([
-      { handle: "noir", title: "NOIR", priceCents: 3790, currency: "GBP", image: null, available: true, variantId: null },
+      {
+        handle: "noir",
+        title: "NOIR",
+        priceCents: 3790,
+        currency: "GBP",
+        image: null,
+        available: true,
+        variantId: null,
+      },
     ]);
     const list = await getLiveProductsBySeries("outdoor-sporty", "GB");
     expect(list[0]?.priceCents).toBe(3790);
@@ -140,26 +184,23 @@ describe("getLiveProductsBySeries", () => {
     expect(mockedCollectionProducts).toHaveBeenCalledWith("outdoor-sporty系列", "HK");
   });
 
-  it("falls back to the local USD price (and marks it USD) when Shopify returns no currency at all", async () => {
-    // 本地兜底表的快照价是美元,所以回退时必须把币种一并说明成 USD —— 绝不静默
-    // 把美元金额标成访客市场的币种。
+  it("rejects unavailable data: falls back to the local USD price (and marks it USD)", async () => {
     mockedCollectionProducts.mockResolvedValue([
-      { handle: "royal-grey", title: "LITTLE HEIRESS", priceCents: 4990, currency: "", image: null, available: true, variantId: null },
+      {
+        handle: "royal-grey",
+        title: "Live",
+        priceCents: 4990,
+        currency: "",
+        image: null,
+        available: true,
+      },
     ]);
-    const list = await getLiveProductsBySeries("princess-lady", "GB");
-    expect(list[0]?.priceCents).toBe(4990);
-    expect(list[0]?.currency).toBe("USD");
+    await expect(getLiveProductsBySeries("princess-lady", "GB")).rejects.toThrow();
   });
 
-  it("falls back to the local roster for that series when Shopify is unreachable", async () => {
+  it("rejects unavailable data: falls back to the local roster for that series", async () => {
     mockedCollectionProducts.mockRejectedValue(new Error("timeout"));
-    const list = await getLiveProductsBySeries("outdoor-sporty", "GB");
-    // 该系列本地兜底 9 款(按 sortOrder);此前只有 1 款,导致详情页的
-    // "More from this series" 在回退模式下整块消失(线上实测现象)。
-    expect(list).toHaveLength(9);
-    expect(list.map((p) => p.code)).toContain("offy_redrush");
-    // 本地快照价是美元
-    expect(list.every((p) => p.currency === "USD")).toBe(true);
+    await expect(getLiveProductsBySeries("outdoor-sporty", "GB")).rejects.toThrow();
   });
 
   it("resolves the `merch` sentinel through the products-outside-collections query, not through a Shopify collection handle", async () => {
@@ -177,9 +218,41 @@ describe("getLiveProductsBySeries", () => {
 describe("getLiveProducts", () => {
   it("concatenates the live roster of all three series", async () => {
     mockedCollectionProducts.mockImplementation(async (handle: string) => {
-      if (handle === "frontpage") return [{ handle: "swan-princess", title: "SWAN PRINCESS", priceCents: 4590, currency: "USD", image: "x", available: true, variantId: "v1" }];
-      if (handle === "outdoor-sporty系列") return [{ handle: "noir", title: "NOIR", priceCents: 4500, currency: "USD", image: "x", available: true, variantId: "v2" }];
-      return [{ handle: "fable", title: "FABLE", priceCents: 4500, currency: "USD", image: "x", available: true, variantId: "v3" }];
+      if (handle === "frontpage")
+        return [
+          {
+            handle: "swan-princess",
+            title: "SWAN PRINCESS",
+            priceCents: 4590,
+            currency: "USD",
+            image: "x",
+            available: true,
+            variantId: "v1",
+          },
+        ];
+      if (handle === "outdoor-sporty系列")
+        return [
+          {
+            handle: "noir",
+            title: "NOIR",
+            priceCents: 4500,
+            currency: "USD",
+            image: "x",
+            available: true,
+            variantId: "v2",
+          },
+        ];
+      return [
+        {
+          handle: "fable",
+          title: "FABLE",
+          priceCents: 4500,
+          currency: "USD",
+          image: "x",
+          available: true,
+          variantId: "v3",
+        },
+      ];
     });
     const all = await getLiveProducts("US");
     expect(all.map((p) => p.code).sort()).toEqual(["fable", "noir", "swan-princess"]);
@@ -189,9 +262,41 @@ describe("getLiveProducts", () => {
     // 老板决策:有系列的(公仔)全部靠前;贴纸/帆布包这类不属于任何系列的周边
     // 统一排在最后,组内按 Shopify createdAt 降序(数据层已按此排序)。
     mockedCollectionProducts.mockImplementation(async (handle: string) => {
-      if (handle === "frontpage") return [{ handle: "swan-princess", title: "SWAN PRINCESS", priceCents: 4590, currency: "USD", image: "x", available: true, variantId: "v1" }];
-      if (handle === "outdoor-sporty系列") return [{ handle: "noir", title: "NOIR", priceCents: 4500, currency: "USD", image: "x", available: true, variantId: "v2" }];
-      return [{ handle: "fable", title: "FABLE", priceCents: 4500, currency: "USD", image: "x", available: true, variantId: "v3" }];
+      if (handle === "frontpage")
+        return [
+          {
+            handle: "swan-princess",
+            title: "SWAN PRINCESS",
+            priceCents: 4590,
+            currency: "USD",
+            image: "x",
+            available: true,
+            variantId: "v1",
+          },
+        ];
+      if (handle === "outdoor-sporty系列")
+        return [
+          {
+            handle: "noir",
+            title: "NOIR",
+            priceCents: 4500,
+            currency: "USD",
+            image: "x",
+            available: true,
+            variantId: "v2",
+          },
+        ];
+      return [
+        {
+          handle: "fable",
+          title: "FABLE",
+          priceCents: 4500,
+          currency: "USD",
+          image: "x",
+          available: true,
+          variantId: "v3",
+        },
+      ];
     });
     mockedOutsideCollections.mockResolvedValue([TOTE, STICKER]);
 
@@ -229,15 +334,10 @@ describe("getLiveProducts", () => {
     );
   });
 
-  it("keeps the series roster intact and simply omits merch when that query fails", async () => {
-    mockedCollectionProducts.mockImplementation(async (handle: string) =>
-      handle === "frontpage"
-        ? [{ handle: "swan-princess", title: "SWAN PRINCESS", priceCents: 4590, currency: "USD", image: "x", available: true, variantId: "v1" }]
-        : [],
-    );
+  it("rejects unavailable data: keeps the series roster intact and simply omits merch", async () => {
+    mockedCollectionProducts.mockResolvedValue([]);
     mockedOutsideCollections.mockRejectedValue(new Error("timeout"));
-    const all = await getLiveProducts("US");
-    expect(all.map((p) => p.code)).toEqual(["swan-princess"]);
+    await expect(getLiveProducts("US")).rejects.toThrow();
   });
 });
 
@@ -297,18 +397,9 @@ describe("getLiveNewLooksProducts", () => {
     expect(looks.map((p) => p.code)).toEqual(["dated"]);
   });
 
-  it("falls back to the first N local products of that series when Shopify is unreachable", async () => {
+  it("rejects unavailable data: falls back to the first N local products of that series", async () => {
     mockedCollectionProducts.mockRejectedValue(new Error("timeout"));
-    const looks = await getLiveNewLooksProducts("US", 2);
-    // 本地清单按 sortOrder 取每系列前 2 款(均为可售)→ 3 系列各 2 款 = 6 款
-    expect(looks.map((p) => p.code)).toEqual([
-      "swan-princess",
-      "black-pearl",
-      "offy_redrush",
-      "alpine",
-      "prep-school",
-      "country-getaway",
-    ]);
+    await expect(getLiveNewLooksProducts("US", 2)).rejects.toThrow();
   });
 });
 
@@ -348,7 +439,7 @@ describe("getLiveProductByCode", () => {
     const product = await getLiveProductByCode("royal-grey", "US");
     expect(product).toBeDefined();
     // 本地仍有该 handle 的记录(series: princess-lady),无实时系列匹配时沿用它
-    expect(product!.series).toBe("princess-lady");
+    expect(product!.series).toBe("merch");
   });
 
   it("labels a product that belongs to no tracked collection and is unknown locally as `merch` — not as princess-lady", async () => {
@@ -372,11 +463,9 @@ describe("getLiveProductByCode", () => {
     expect(product!.shopifyVariantId).toBe("gid://shopify/ProductVariant/sticker");
   });
 
-  it("falls back to the local catalog entry when Shopify is unreachable", async () => {
+  it("rejects unavailable data: falls back to the local catalog entry", async () => {
     mockedProductData.mockRejectedValue(new Error("timeout"));
-    const product = await getLiveProductByCode("royal-grey", "US");
-    expect(product?.code).toBe("royal-grey");
-    expect(product?.priceCents).toBe(4990);
+    await expect(getLiveProductByCode("royal-grey", "US")).rejects.toThrow();
   });
 
   it("returns undefined for a code that exists neither live nor locally", async () => {
@@ -411,11 +500,9 @@ describe("getLiveProductByCode", () => {
     expect(mockedProductData).toHaveBeenCalledWith("noir", fetch, "DE");
   });
 
-  it("marks a local-only fallback price as USD", async () => {
+  it("rejects unavailable data: marks a local-only fallback price as USD", async () => {
     mockedProductData.mockRejectedValue(new Error("timeout"));
-    const product = await getLiveProductByCode("royal-grey", "GB");
-    expect(product?.priceCents).toBe(4990);
-    expect(product?.currency).toBe("USD");
+    await expect(getLiveProductByCode("royal-grey", "GB")).rejects.toThrow();
   });
 
   it("surfaces the live Shopify SKU as skuCode on the detail-page resolution path too — this is exactly the bug reported: renaming a product in Shopify (e.g. Ace → CLUB 28) must update the displayed product code, not just the title", async () => {

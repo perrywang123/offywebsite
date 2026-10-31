@@ -1,0 +1,65 @@
+[
+  {
+    "market": "US",
+    "status": 200,
+    "count": 42,
+    "currencies": ["usd"],
+    "sample": {
+      "code": "royal-grey",
+      "name": "LITTLE HEIRESS",
+      "price": {
+        "currency": "usd",
+        "amountCents": 4590
+      }
+    },
+    "cache": "no-store"
+  },
+  {
+    "market": "GB",
+    "status": 200,
+    "count": 41,
+    "currencies": ["gbp"],
+    "sample": {
+      "code": "royal-grey",
+      "name": "LITTLE HEIRESS",
+      "price": {
+        "currency": "gbp",
+        "amountCents": 3390
+      }
+    },
+    "cache": "no-store"
+  },
+  {
+    "market": "HK",
+    "status": 200,
+    "count": 41,
+    "currencies": ["hkd"],
+    "sample": {
+      "code": "royal-grey",
+      "name": "LITTLE HEIRESS",
+      "price": {
+        "currency": "hkd",
+        "amountCents": 36900
+      }
+    },
+    "cache": "no-store"
+  },
+  {
+    "path": "/api/products/offy-validation-does-not-exist-20261031",
+    "status": 404,
+    "cache": "no-store",
+    "sitemapProducts": null
+  },
+  {
+    "path": "/products/offy-validation-does-not-exist-20261031",
+    "status": 404,
+    "cache": "private, no-cache, no-store, max-age=0, must-revalidate",
+    "sitemapProducts": null
+  },
+  {
+    "path": "/sitemap.xml",
+    "status": 200,
+    "cache": "no-store",
+    "sitemapProducts": 42
+  }
+]

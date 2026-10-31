@@ -1,4 +1,4 @@
-import { env, isShopifyConfigured } from "../../../lib/env";
+import { env, isShopifyConfigured, kolEnabled } from "../../../lib/env";
 import { publicPath } from "../../../i18n/routing";
 import { getLiveProductByCode } from "../../catalog/live";
 import type {
@@ -9,6 +9,9 @@ import type {
   CreateCheckoutResult,
   PaymentProvider,
 } from "../types";
+import { getKolDb } from "../../kol/database";
+import { createIntent, bindCart } from "../../kol/core";
+import { setRuntime } from "../../kol/sync";
 import { cartCreate, type CartLineInput, type ShopifyCart } from "./client";
 
 /** CountryCode 是 GraphQL 枚举，必须作为字面量注入（用变量传不生效）。仅允许两位字母。 */
@@ -26,17 +29,6 @@ export interface ShopifyProviderDeps {
   configured?: () => boolean;
 }
 
-/**
- * Shopify provider: builds a cart via the Storefront API and redirects the
- * buyer to Shopify's hosted checkout. Prices/variants are resolved server-side
- * — client prices are never trusted — and resolved **live from Shopify**
- * (`getLiveProductByCode`, which itself falls back to the local static catalog
- * when Shopify is unreachable), so products added to the store later are
- * immediately purchasable without a code change.
- *
- * Orders are owned by Shopify, so `capture` is a no-op and `parseCallback`
- * returns null (order write-back is reserved for a future webhook milestone).
- */
 export class ShopifyPaymentProvider implements PaymentProvider {
   readonly name = "shopify" as const;
 
@@ -53,20 +45,24 @@ export class ShopifyPaymentProvider implements PaymentProvider {
     const country = input.country;
     const lines: CartLineInput[] = [];
     const failures: CheckoutItemFailure[] = [];
-    for (const item of input.items) {
-      const product = await getLiveProductByCode(item.code, country ?? marketCountry());
-      // 售罄/下架/仅有报价的商品此前只是在整单里被"顺带"拒掉,顾客拿到的是一个
-      // 没有主语的 400(方案 P0-3:一路点到结算才被 400 拦下)。这里把原因分成
-      // 两类并**逐件指名**,让购物袋能说清"哪一件买不了、先移除再试"。
-      if (!product || !product.shopifyVariantId) {
-        failures.push({ code: item.code, reason: "unknown_items" });
-        continue;
+    try {
+      for (const item of input.items) {
+        const product = await getLiveProductByCode(item.code, country ?? marketCountry());
+        // 售罄/下架/仅有报价的商品此前只是在整单里被"顺带"拒掉,顾客拿到的是一个
+        // 没有主语的 400(方案 P0-3:一路点到结算才被 400 拦下)。这里把原因分成
+        // 两类并**逐件指名**,让购物袋能说清"哪一件买不了、先移除再试"。
+        if (!product || !product.shopifyVariantId) {
+          failures.push({ code: item.code, reason: "unknown_items" });
+          continue;
+        }
+        if (!product.isAvailable || product.isQuoteOnly) {
+          failures.push({ code: item.code, reason: "unavailable_items" });
+          continue;
+        }
+        lines.push({ merchandiseId: product.shopifyVariantId, quantity: item.quantity });
       }
-      if (!product.isAvailable || product.isQuoteOnly) {
-        failures.push({ code: item.code, reason: "unavailable_items" });
-        continue;
-      }
-      lines.push({ merchandiseId: product.shopifyVariantId, quantity: item.quantity });
+    } catch {
+      return { ok: false, status: 503, error: "catalog_unavailable" };
     }
     if (failures.length > 0) {
       return {
@@ -88,14 +84,42 @@ export class ShopifyPaymentProvider implements PaymentProvider {
     // 字段,attributes 是官方支持的载体),商家/后台据此配置订单完成后的回跳。
     // 落点页 `/checkout/return` 负责清空袋子(方案 P0-4 / §2 F)。
     const returnUrl = `${env.SITE_URL}${publicPath(input.locale, "/checkout/return")}`;
+    let intent: ReturnType<typeof createIntent> = null;
+    if (kolEnabled() && input.referralTicket) {
+      try {
+        intent = createIntent(getKolDb(), input.referralTicket, env.KOL_SIGNING_SECRET!);
+      } catch {
+        try {
+          setRuntime(getKolDb(), "attributionError", {
+            at: Date.now(),
+            reason: "intent_write_failed",
+          });
+        } catch {}
+      }
+    }
     const createCart =
       this.deps.createCart ??
       ((l: CartLineInput[]) =>
-        country
-          ? cartCreate(l, fetch, input.locale, country, returnUrl)
-          : cartCreate(l, fetch, input.locale, undefined, returnUrl));
+        intent
+          ? cartCreate(l, fetch, input.locale, country, returnUrl, intent.reference)
+          : country
+            ? cartCreate(l, fetch, input.locale, country, returnUrl)
+            : cartCreate(l, fetch, input.locale, undefined, returnUrl));
     try {
       const cart = await createCart(lines);
+      if (intent) {
+        try {
+          bindCart(getKolDb(), intent.id, cart.id, cart.checkoutUrl);
+        } catch {
+          try {
+            setRuntime(getKolDb(), "attributionError", {
+              at: Date.now(),
+              reason: "cart_binding_failed",
+              intent: intent.id,
+            });
+          } catch {}
+        }
+      }
       return {
         ok: true,
         provider: "shopify",
@@ -113,7 +137,7 @@ export class ShopifyPaymentProvider implements PaymentProvider {
   }
 
   async parseCallback(): Promise<CompletedPayment | null> {
-    // Order confirmation via Shopify webhook is a future milestone.
+    // Optional KOL accounting uses its dedicated HMAC inbox and Admin reconciliation.
     return null;
   }
 }

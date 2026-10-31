@@ -1,21 +1,31 @@
+import { CommerceUnavailable } from "@/components/CommerceUnavailable";
+import { catalogResult } from "@/server/catalog/result";
 import Image from "next/image";
 import { getTranslations } from "next-intl/server";
 import { Link } from "@/i18n/navigation";
-import { MERCH_SERIES_SLUG, getProductByCode, teaserSeries, upcomingIps } from "@/lib/catalog";
+import { MERCH_SERIES_SLUG, teaserSeries, upcomingIps } from "@/lib/catalog";
 import { heroSlides, newsFeature, newsItems } from "@/lib/content";
 import { headers } from "next/headers";
-import { getLiveNewLooksProducts, getLiveProducts, toLiveProduct } from "@/server/catalog/live";
+import { getLiveNewLooksProducts, getLiveProducts } from "@/server/catalog/live";
 import { getRegionalProducts } from "@/server/catalog/regional";
 import { pickCountry } from "@/lib/geo";
 import { env } from "@/lib/env";
 import { Reveal } from "@/components/Reveal";
 
-export const revalidate = 60;
+export const dynamic = "force-dynamic";
 import { HeroCarousel } from "@/components/home/HeroCarousel";
 import { NewsGrid } from "@/components/home/NewsGrid";
 import { UpcomingCard } from "@/components/home/UpcomingCard";
 import { ProductCard } from "@/components/product/ProductCard";
 import { NewsletterForm } from "@/components/newsletter-form";
+
+export async function generateMetadata(): Promise<import("next").Metadata> {
+  const country = pickCountry(await headers(), env.SHOPIFY_MARKET_COUNTRY);
+  const result = await catalogResult(
+    Promise.all([getLiveNewLooksProducts(country, 2), getLiveProducts(country)]),
+  );
+  return result.status === "unavailable" ? { robots: { index: false, follow: true } } : {};
+}
 
 export default async function HomePage({ params }: { params: Promise<{ locale: string }> }) {
   const { locale } = await params;
@@ -24,40 +34,37 @@ export default async function HomePage({ params }: { params: Promise<{ locale: s
   const tCommon = await getTranslations("common");
 
   // 先确定访客国家,再按它查询:所有价格(含区域限定)都用同一个市场上下文,
-  // 保证首页上的金额/币种与结账页一致(见 server/catalog/live.ts 的 resolvePrice)。
+
   // 注意:读 headers() 会让本页转为按请求渲染(dynamic)——这是 route A 的必要代价。
   const visitorCountry = pickCountry(await headers(), env.SHOPIFY_MARKET_COUNTRY);
 
-  // 实时拉取 Shopify:每次请求都反映当前真实的系列成员/价格/图片,不再依赖
-  // 本地手写死的商品快照;Shopify 不可达时内部自动回退本地数据。
-  // New Looks:每个系列按 Shopify 创建时间取最新 2 款(3 系列共 6 款)。
-  const looks = await getLiveNewLooksProducts(visitorCountry, 2);
-  // 「All Products 名册」与 /products(All Looks)用的是**同一个数据源**,只是名册
-  // 要滤掉 merch —— 贴纸/帆布包这类不属于任何系列的商品只在 All Looks 出现
-  // (老板 2026-10 决策;它们的 series 是哨兵值 "merch")。
-  const allProducts = await getLiveProducts(visitorCountry);
+  const [looksResult, allResult] = await Promise.all([
+    catalogResult(getLiveNewLooksProducts(visitorCountry, 2)),
+    catalogResult(getLiveProducts(visitorCountry)),
+  ]);
+  const unavailable = looksResult.status === "unavailable" || allResult.status === "unavailable";
+  const looks = looksResult.status === "ready" ? looksResult.data : [];
+  const allProducts = allResult.status === "ready" ? allResult.data : [];
   const roster = allProducts.filter((p) => p.series !== MERCH_SERIES_SLUG);
-  // 周边商品的 handle 集合:区域限定区块下面还要按它兜一道(见该处注释)。
-  const merchHandles = new Set(
-    allProducts.filter((p) => p.series === MERCH_SERIES_SLUG).map((p) => p.code),
+  const regionals =
+    allResult.status === "ready"
+      ? (await getRegionalProducts(visitorCountry).catch(() => [])).flatMap((item) => {
+          const p = roster.find((p) => p.code === item.handle);
+          return p
+            ? [{ ...p, badge: item.countries?.length === 1 ? visitorCountry : undefined }]
+            : [];
+        })
+      : [];
+  // Product-bound editorial cards are shown only when their actual products were verified in this market.
+  const featureProduct = allProducts.find(
+    (p) => p.code === newsFeature.productCode && p.isAvailable,
   );
-
-  // ——— 区域限定(路线 A:按访客所在国家展示)———
-  // 国家来自前置层注入的请求头(Cloudflare cf-ipcountry / nginx GeoIP2 等),
-  // 拿不到就按 SHOPIFY_MARKET_COUNTRY 展示。Shopify 侧的区域限定是「只发布到
-  // 某些 Market」,判定要按国家各查一次再比对,详见 server/catalog/regional.ts。
-  // 价格来源已随本次改造改为"如实采用该国市场的金额与币种":英国访客看到
-  // NOIR £37.90、香港访客看到 BOOTS HK$369.00,而不再是 $0.00。
-  const regionals = (await getRegionalProducts(visitorCountry))
-    // 区域限定是另一条查询路径(按国家比对可见性),这里再兜一道:周边商品不该
-    // 借"区域限定"回到首页。今天两款周边在所有市场都可见(实测 US/GB/HK/SG/JP/
-    // DE/... 全部返回),所以当前恒为空操作;商家将来若把某款周边只发布到单一
-    // 市场,这条能保证它仍不会出现在首页。
-    .filter((item) => !merchHandles.has(item.handle))
-    .map((item, i) => ({
-      ...toLiveProduct(item, getProductByCode(item.handle)?.series ?? "princess-lady", i * 10),
-      badge: visitorCountry,
-    }));
+  const verifiedNews = newsItems
+    .flatMap((item) => {
+      const p = allProducts.find((p) => p.code === item.productCode && p.isAvailable);
+      return p ? [{ ...item, image: p.images[0] ?? "" }] : [];
+    })
+    .filter((item) => item.image);
 
   return (
     <>
@@ -77,7 +84,13 @@ export default async function HomePage({ params }: { params: Promise<{ locale: s
         <HeroCarousel slides={heroSlides} locale={locale} />
       </section>
 
-      {/* ============ 最新资讯 · 揭晓(网站素材0926/2、最新咨询)============
+      {unavailable && (
+        <div className="container-site section-y">
+          <CommerceUnavailable scene="home" />
+        </div>
+      )}
+      <>
+        {/* ============ 最新资讯 · 揭晓(网站素材0926/2、最新咨询)============
           老板 2026-10 诉求 2:原头图下方的**滚动促销条(Marquee)已删除** ——
           同一份 promoMessages 在 Header 的 sticky 促销条上全站每页常驻,首页这条
           是重复曝光(且 `— is.offy —` 分隔符只存在于被删的那段 join 串里)。
@@ -90,130 +103,147 @@ export default async function HomePage({ params }: { params: Promise<{ locale: s
           今天靠"无层级压过 @layer utilities"才显示为 #efefef —— 谁把那条规则挪进
           @layer base,首页底色就整体变白。也不要写 `bg-background`:
           --background 定义在 :root 而非 @theme,Tailwind v4 不生成该工具类。 */}
-      <section className="relative overflow-hidden bg-[#efefef]">
-        <div className="container-site section-y relative">
-          {/* 标题区(最新资讯.psd 组「最新咨询·标题」):PSD 里是一行居中
+        {featureProduct?.images[0] && verifiedNews.length > 0 && (
+          <section className="relative overflow-hidden bg-[#efefef]">
+            <div className="container-site section-y relative">
+              {/* 标题区(最新资讯.psd 组「最新咨询·标题」):PSD 里是一行居中
               'NEWS·The Latest from OFFY'(80.8px=2.49vw,黑字,just=2 居中),
               其下居中 'Browse All Series'(36px=1.11vw)+ 一条与文字等宽的
               下划线(矩形「直线 1」)。原来「逛全部系列」在网格底部,现上移。
               字号下限抬到 30/12px(方案 §1.1 规则 1:所有 clamp 下限 = 档位值)。
               `lg:` 保留改动前的原值 —— 下限只影响窄屏,桌面端算式一字不变。 */}
-          <Reveal className="mb-12 text-center">
-            <h2 className="font-display text-[clamp(30px,2.49vw,54px)] leading-tight font-semibold tracking-tight uppercase lg:text-[clamp(20px,2.49vw,54px)]">
-              {/* 老板 2026-10 要求:去掉 "News·" 前缀,标题只留 "The Latest from OFFY"。
+              <Reveal className="mb-12 text-center">
+                <h2 className="font-display text-[clamp(30px,2.49vw,54px)] leading-tight font-semibold tracking-tight uppercase lg:text-[clamp(20px,2.49vw,54px)]">
+                  {/* 老板 2026-10 要求:去掉 "News·" 前缀,标题只留 "The Latest from OFFY"。
                 newsKicker 这个 i18n key 保留(两本字典 key 必须一致),只是不再渲染。 */}
-              {t("newsTitle")}
-            </h2>
-            <Link
-              href="/products"
-              className="link-line tap-target mt-5 text-[clamp(12px,1.11vw,24px)] tracking-[var(--tracking-10)] uppercase lg:min-h-0 lg:text-[clamp(11px,1.11vw,24px)]"
-            >
-              {t("browseAll")}
-            </Link>
-          </Reveal>
-          <NewsGrid
-            feature={newsFeature}
-            items={newsItems}
-            texts={{
-              featureTitle: t("newsFeatureTitle"),
-              cta: t("teaserCta"),
-              browseAll: t("browseAll"),
-            }}
-            locale={locale}
-          />
-        </div>
-      </section>
+                  {t("newsTitle")}
+                </h2>
+                <Link
+                  href="/products"
+                  className="link-line tap-target mt-5 text-[clamp(12px,1.11vw,24px)] tracking-[var(--tracking-10)] uppercase lg:min-h-0 lg:text-[clamp(11px,1.11vw,24px)]"
+                >
+                  {t("browseAll")}
+                </Link>
+              </Reveal>
+              <NewsGrid
+                feature={{ ...newsFeature, image: featureProduct.images[0] }}
+                items={verifiedNews}
+                texts={{
+                  featureTitle: t("newsFeatureTitle"),
+                  cta: t("teaserCta"),
+                  browseAll: t("browseAll"),
+                }}
+                locale={locale}
+              />
+            </div>
+          </section>
+        )}
 
-      {/* ============ 按类别选购 + 最新曝光造型(设计稿:同一模块;
+        {/* ============ 按类别选购 + 最新曝光造型(设计稿:同一模块;
           网站素材0926/3、按类别选购)。
           诉求 5:满幅底图 category-bg.jpg 已删除 —— 实测该图 98.90% 的像素就是
           `#f7f7f9`(四角一致、行/列中位数极差 = 0),唯一内容是顶部 y2.1–10.0%
           处的 `is.offy` 幽灵字标,与底色对比度 1.154:1。当年写死的 `bg-[#f7f7f9]`
           本来就是给 object-contain 的留白补的底色,与取色值**逐位相同**,故原样保留。 */}
-      <section className="relative overflow-hidden bg-[#f7f7f9]">
-        <div className="container-site section-y relative">
-          <Reveal className="mb-12 text-center">
-            <h2 className="font-display text-[clamp(30px,2.6vw,60px)] font-semibold tracking-tight uppercase">
-              {t("categoryTitle")}
-            </h2>
-          </Reveal>
-          <Reveal className="mb-8 flex items-end justify-between">
-            <h3 className="font-display text-2xl font-semibold tracking-tight md:text-3xl">
-              {t("discoverTitle")}
-            </h3>
-            <Link href="/products" className="link-line tap-target text-sm lg:min-h-0">
-              {t("castViewAll")}
-            </Link>
-          </Reveal>
-          <div className="grid grid-cols-2 gap-x-4 gap-y-10 sm:gap-x-6 lg:grid-cols-3 lg:gap-x-8">
-            {looks.map((p, i) => (
-              <Reveal key={p.code} delay={Math.min(i, 5) * 60}>
-                {/* 显示商品名而非 SKU:商家的真实 SKU 可能是任意字符串
-                    (如 NEON RUSH 的 SKU 是 "20"),直接展示会像乱码。 */}
-                <ProductCard product={p} locale={locale} sizes="(max-width: 768px) 50vw, 33vw" />
+        {(looksResult.status === "ready" || allResult.status === "ready") && (
+          <section className="relative overflow-hidden bg-[#f7f7f9]">
+            <div className="container-site section-y relative">
+              <Reveal className="mb-12 text-center">
+                <h2 className="font-display text-[clamp(30px,2.6vw,60px)] font-semibold tracking-tight uppercase">
+                  {t("categoryTitle")}
+                </h2>
               </Reveal>
-            ))}
-          </div>
-
-          {/* ============ 区域限定(设计稿:红底 US/UK ONLY 徽章)============
-              按访客国家展示;该国没有限定款时整块隐藏,不留空标题。 */}
-          {regionals.length > 0 && (
-            <>
-              <p className="text-ink-soft mt-10 text-sm sm:mt-16">{t("regionalTitle")}</p>
-              <div className="mt-6 grid grid-cols-2 gap-x-4 gap-y-10 sm:gap-x-6 lg:grid-cols-3 lg:gap-x-8">
-                {regionals.map((p) => (
-                  <Reveal key={p.code}>
-                    <ProductCard
-                      product={p}
-                      locale={locale}
-                      sizes="(max-width: 768px) 50vw, 33vw"
-                    />
+              {looksResult.status === "ready" && (
+                <>
+                  <Reveal className="mb-8 flex items-end justify-between">
+                    <h3 className="font-display text-2xl font-semibold tracking-tight md:text-3xl">
+                      {t("discoverTitle")}
+                    </h3>
+                    <Link href="/products" className="link-line tap-target text-sm lg:min-h-0">
+                      {t("castViewAll")}
+                    </Link>
                   </Reveal>
-                ))}
-              </div>
-            </>
-          )}
+                  <div className="grid grid-cols-2 gap-x-4 gap-y-10 sm:gap-x-6 lg:grid-cols-3 lg:gap-x-8">
+                    {looks.map((p, i) => (
+                      <Reveal key={p.code} delay={Math.min(i, 5) * 60}>
+                        {/* 显示商品名而非 SKU:商家的真实 SKU 可能是任意字符串
+                    (如 NEON RUSH 的 SKU 是 "20"),直接展示会像乱码。 */}
+                        <ProductCard
+                          product={p}
+                          locale={locale}
+                          sizes="(max-width: 768px) 50vw, 33vw"
+                        />
+                      </Reveal>
+                    ))}
+                  </div>
+                </>
+              )}
 
-          {/* ============ 产品汇总-选购同款造型(圆形名册,紧接本模块) ============ */}
-          <p className="text-ink-soft mt-10 text-sm sm:mt-16">{t("rosterTitle")}</p>
-          <Reveal className="mt-6">
-            {/* 圆圈原本是写死的 h-16 w-16(64px)。手机 375px 宽时 6 列 × 64px = 384px
+              {/* ============ 区域限定(设计稿:红底 US/UK ONLY 徽章)============
+              按访客国家展示;该国没有限定款时整块隐藏,不留空标题。 */}
+              {regionals.length > 0 && (
+                <>
+                  <p className="text-ink-soft mt-10 text-sm sm:mt-16">{t("regionalTitle")}</p>
+                  <div className="mt-6 grid grid-cols-2 gap-x-4 gap-y-10 sm:gap-x-6 lg:grid-cols-3 lg:gap-x-8">
+                    {regionals.map((p) => (
+                      <Reveal key={p.code}>
+                        <ProductCard
+                          product={p}
+                          locale={locale}
+                          sizes="(max-width: 768px) 50vw, 33vw"
+                        />
+                      </Reveal>
+                    ))}
+                  </div>
+                </>
+              )}
+
+              {/* ============ 产品汇总-选购同款造型(圆形名册,紧接本模块) ============ */}
+              {allResult.status === "ready" && (
+                <>
+                  <p className="text-ink-soft mt-10 text-sm sm:mt-16">{t("rosterTitle")}</p>
+                  <Reveal className="mt-6">
+                    {/* 圆圈原本是写死的 h-16 w-16(64px)。手机 375px 宽时 6 列 × 64px = 384px
                 已经超出容器,grid 的 gap 根本挤不出来 —— 圆圈直接贴在一起。改成按单元格
                 缩放 + max-w-16 封顶:窄屏自动缩小(间距才是真的),宽屏仍是原来的 64px。
                 窄屏(375px)6 列 → 4 列:每格 (343 − 3×12) / 4 = 76.75px,并给每个圆
                 补一个**常显**名称(原来只有 hover/`title`,触屏上等于没有名字)。 */}
-            <div className="grid grid-cols-4 gap-3 sm:grid-cols-8 sm:gap-3 lg:grid-cols-12">
-              {roster.map((p) => (
-                <Link
-                  key={p.code}
-                  href={`/products/${p.code}`}
-                  title={locale === "zh" ? p.name.zh : p.name.en}
-                  className="group flex flex-col items-center gap-1.5"
-                >
-                  <span className="border-sand bg-cream-deep group-hover:border-brown-600 relative block aspect-square w-full max-w-16 overflow-hidden rounded-full border transition-colors">
-                    {p.isUpcoming ? (
-                      <span className="text-ink-muted flex h-full w-full items-center justify-center text-xs font-semibold">
-                        ?
-                      </span>
-                    ) : (
-                      <Image
-                        src={p.images[0]}
-                        alt={p.name.en}
-                        fill
-                        sizes="64px"
-                        className="object-cover transition-transform duration-500 group-hover:scale-110"
-                      />
-                    )}
-                  </span>
-                  <span className="text-ink-soft w-full truncate text-center text-[11px] leading-tight">
-                    {locale === "zh" ? p.name.zh : p.name.en}
-                  </span>
-                </Link>
-              ))}
+                    <div className="grid grid-cols-4 gap-3 sm:grid-cols-8 sm:gap-3 lg:grid-cols-12">
+                      {roster.map((p) => (
+                        <Link
+                          key={p.code}
+                          href={`/products/${p.code}`}
+                          title={locale === "zh" ? p.name.zh : p.name.en}
+                          className="group flex flex-col items-center gap-1.5"
+                        >
+                          <span className="border-sand bg-cream-deep group-hover:border-brown-600 relative block aspect-square w-full max-w-16 overflow-hidden rounded-full border transition-colors">
+                            {p.isUpcoming ? (
+                              <span className="text-ink-muted flex h-full w-full items-center justify-center text-xs font-semibold">
+                                ?
+                              </span>
+                            ) : p.images[0] ? (
+                              <Image
+                                src={p.images[0]}
+                                alt={p.name.en}
+                                fill
+                                sizes="64px"
+                                className="object-cover transition-transform duration-500 group-hover:scale-110"
+                              />
+                            ) : null}
+                          </span>
+                          <span className="text-ink-soft w-full truncate text-center text-[11px] leading-tight">
+                            {locale === "zh" ? p.name.zh : p.name.en}
+                          </span>
+                        </Link>
+                      ))}
+                    </div>
+                  </Reveal>
+                </>
+              )}
             </div>
-          </Reveal>
-        </div>
-      </section>
+          </section>
+        )}
+      </>
 
       {/* ============ OFFY 新品抢先看(PSD:Stay tuned 标题区 + 玩偶图左上文字块;
           网站素材0926/4、更多新品，敬请期待)。

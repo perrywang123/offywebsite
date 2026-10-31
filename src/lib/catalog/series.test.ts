@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { MERCH_SERIES_SLUG, getSeriesName, merchSeriesName, seriesList, seriesMap } from "./series";
+import { MERCH_SERIES_SLUG, merchSeriesName, seriesList, seriesMap } from "./series";
 
 /**
  * `merch` 哨兵系列 —— 不属于任何 Shopify Collection 的已发布商品(贴纸、帆布包
@@ -12,7 +12,6 @@ describe("merch 哨兵系列", () => {
   });
 
   it("有中英显示名(占位文案,待老板确认)", () => {
-    expect(getSeriesName("merch")).toEqual(merchSeriesName);
     expect(merchSeriesName.en.trim().length).toBeGreaterThan(0);
     expect(merchSeriesName.zh.trim().length).toBeGreaterThan(0);
   });
@@ -27,8 +26,7 @@ describe("merch 哨兵系列", () => {
     expect(seriesMap[MERCH_SERIES_SLUG]).toBeUndefined();
   });
 
-  it("真实系列仍取系列表里的名字,未知 slug 返回 undefined", () => {
-    expect(getSeriesName("princess-lady")).toEqual({ zh: "公主lady系列", en: "Princess Lady" });
-    expect(getSeriesName("no-such-series")).toBeUndefined();
+  it("route configuration cannot provide a local commercial title", () => {
+    for (const s of seriesList) expect(s).not.toHaveProperty("name");
   });
 });

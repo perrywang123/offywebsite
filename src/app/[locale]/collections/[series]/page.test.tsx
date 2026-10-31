@@ -45,11 +45,18 @@ vi.mock("@/server/catalog/live", async () => {
   const { seriesList } = await import("@/lib/catalog/series");
   return {
     getLiveSeriesList: async () =>
-      seriesList.map((s) =>
-        s.slug === "outdoor-sporty" && mockState.liveName
-          ? { ...s, name: { ...s.name, en: mockState.liveName } }
-          : s,
-      ),
+      seriesList.map((s) => ({
+        ...s,
+        name: {
+          en:
+            s.slug === "outdoor-sporty"
+              ? (mockState.liveName ?? "Fashion Lifestyle")
+              : s.slug === "playful-life"
+                ? "Playful Life"
+                : "Princess Lady",
+          zh: "Shopify test collection",
+        },
+      })),
     getLiveProductsBySeries: async () => [],
   };
 });

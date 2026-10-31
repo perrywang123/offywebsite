@@ -1,0 +1,58 @@
+[
+  {
+    "path": "/api/products",
+    "status": 503,
+    "cache": "no-store",
+    "noindex": null,
+    "error": "catalog_unavailable"
+  },
+  {
+    "path": "/api/products/royal-grey",
+    "status": 503,
+    "cache": "no-store",
+    "noindex": null,
+    "error": "catalog_unavailable"
+  },
+  {
+    "path": "/products",
+    "status": 200,
+    "cache": "private, no-cache, no-store, max-age=0, must-revalidate",
+    "noindex": true,
+    "error": null
+  },
+  {
+    "path": "/products/royal-grey",
+    "status": 200,
+    "cache": "private, no-cache, no-store, max-age=0, must-revalidate",
+    "noindex": true,
+    "error": null
+  },
+  {
+    "path": "/sitemap.xml",
+    "status": 503,
+    "cache": "no-store",
+    "noindex": false,
+    "error": null
+  },
+  {
+    "provider": "shopify",
+    "status": 503,
+    "body": {
+      "error": "catalog_unavailable"
+    }
+  },
+  {
+    "provider": "stripe",
+    "status": 503,
+    "body": {
+      "error": "catalog_unavailable"
+    }
+  },
+  {
+    "provider": "paypal",
+    "status": 503,
+    "body": {
+      "error": "catalog_unavailable"
+    }
+  }
+]

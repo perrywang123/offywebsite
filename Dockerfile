@@ -25,9 +25,7 @@ RUN corepack enable
 COPY --from=deps /root/.cache/node/corepack /root/.cache/node/corepack
 COPY --from=deps /app/node_modules ./node_modules
 COPY . .
-# 构建期环境:`next build` 会预渲染 /products、/collections 与首页,拿不到这些
-# 变量就会把**本地兜底目录**烤进 ISR 缓存 —— 现象是刚部署完商品数不对、系列名
-# 是本地占位名,要等 60s revalidate 才自愈。这里传进来就一次到位。
+# 商业数据仅来自Shopify，读取失败显示品牌化重试态。构建只传公开配置。
 # 只放**可公开**的值:Storefront token 本身就是面向浏览器的公开令牌;
 # STRIPE_SECRET_KEY / SHOPIFY_ADMIN_TOKEN 绝不进构建参数(会留在镜像 history 里),
 # 它们是纯运行时的,由 compose 的 environment 注入。
@@ -72,9 +70,15 @@ COPY --from=builder --chown=nextjs:nodejs /migrate-deps/drizzle-orm ./node_modul
 COPY --from=builder --chown=nextjs:nodejs /app/db/migrations ./db/migrations
 COPY --from=builder --chown=nextjs:nodejs /app/db/migrate.mjs ./db/migrate.mjs
 
+COPY --from=builder --chown=nextjs:nodejs /app/scripts/kol-admin.mjs ./scripts/kol-admin.mjs
+COPY --from=builder --chown=nextjs:nodejs /app/scripts/kol-admin-bootstrap.mjs ./scripts/kol-admin-bootstrap.mjs
+COPY --from=builder --chown=nextjs:nodejs /app/scripts/lib/kol-admin-policy.mjs ./scripts/lib/kol-admin-policy.mjs
+COPY --from=builder --chown=nextjs:nodejs /app/scripts/kol-worker.mjs ./scripts/kol-worker.mjs
+COPY --from=builder --chown=nextjs:nodejs /app/scripts/kol-deployment-check.mjs ./scripts/kol-deployment-check.mjs
+
 USER nextjs
 EXPOSE 3000
 ENV PORT=3000 HOSTNAME=0.0.0.0 DATABASE_URL=/data/offy.db
 
 # Apply migrations, then serve.
-CMD ["sh", "-c", "node db/migrate.mjs && exec node server.js"]
+CMD ["sh", "-c", "node db/migrate.mjs && node scripts/kol-admin-bootstrap.mjs && exec node server.js"]

@@ -1,515 +1,165 @@
 # Brand Site Specification
 
 ## Purpose
-The public marketing site for the Offy brand: a responsive homepage that communicates brand identity, product highlights, and contact information.
+
+Record the implemented is.offy brand storefront as of 2026-10-31. Historical PSD measurements and superseded behavior remain in change history. The approved Shopify unavailable-state design is implemented and included in this baseline.
 
 ## Requirements
 
+### Requirement: Public language and URL handling
+
+The routed locale set SHALL contain only en with as-needed prefixing. Public default-language URLs SHALL be unprefixed. The zh dictionary and source branches may remain, but no language switch SHALL be rendered in the current Header/MobileNav. Public canonical paths SHALL use publicPath().
+
+#### Scenario: Historical language links
+
+- **WHEN** /zh or /zh/* is requested
+- **THEN** middleware issues 308 to the unprefixed path preserving query parameters; next-intl separately redirects /en/* with 307
+
 ### Requirement: Homepage renders brand content
-The homepage SHALL present the is.offy™ brand (黑皮 OFFY · 37 个化身) with the
-following section order: hero carousel → promo bar → news → shop by category
-(centered title group + latest looks + regional-exclusive group + product-summary
-roster) → upcoming series teaser → collab (14 OF looks) → future IPs → newsletter.
-Brand copy uses "让想象落地，让陪伴发生" and "仪式感生活" messaging.
-The collaboration section's call-to-action SHALL link to the current company domain
-(`mailto:contact@whimcoreofficial.com`); the retired `playcoretoys.com` address MUST NOT
-appear anywhere on the site.
 
-#### Scenario: Visitor loads the homepage
-- **WHEN** a visitor requests `/`
-- **THEN** the server returns HTTP 200 with the hero carousel, merged category section, and newsletter section
+The homepage SHALL render Hero → NEWS → shop by category (New Looks, applicable regionals, non-merch roster) → bag-charm teaser → collaboration → newsletter → upcoming IPs. The removed homepage Marquee SHALL NOT render; the Header promo bar SHALL remain. Collaboration SHALL link to /policies/contact, and active copy SHALL not use the retired playcoretoys.com contact.
 
-#### Scenario: Category tiles link to category pages
-- **WHEN** a visitor clicks a product card in the merged category section
-- **THEN** they land on that product's detail page
+#### Scenario: Product and brand sections
 
-#### Scenario: Regional-exclusive group
-- **WHEN** the merged category section renders for a visitor in country X
-- **THEN** after the latest-looks grid a 「区域限定」 group lists the products that are
-  visible in X but not in every probed market — derived from Shopify Markets by re-running the
-  same Storefront query under different `@inContext(country:)` contexts, not from hard-coded
-  product codes — each card carrying a red badge reading `AVAILABLE IN <REGION> ONLY` for X;
-  the whole group is hidden when X has no exclusive products
-
-#### Scenario: Product-summary roster inside the category section
-- **WHEN** the merged category section renders
-- **THEN** after the regional group, a 「产品汇总-选购同款造型:」 label and the
-  circular-avatar roster of all products appear; no separate roster section exists
-  later on the page
-
-#### Scenario: Brand sections are present
-- **WHEN** the homepage renders
-- **THEN** it contains a news section, a teaser section, a collab section, a newsletter section, and a contact footer
-
-#### Scenario: Collaboration CTA uses the current domain
-- **WHEN** the homepage renders
-- **THEN** the collaboration call-to-action is a `mailto:` link to
-  `contact@whimcoreofficial.com` and the rendered HTML contains no `playcoretoys.com`
-
-### Requirement: Health endpoint
-The site SHALL expose a liveness endpoint for monitoring.
-
-#### Scenario: Health check
-- **WHEN** a monitor requests `/api/health`
-- **THEN** the server returns HTTP 200 with a JSON `status: "ok"` payload
+- **WHEN** the homepage loads normally
+- **THEN** the sections appear in the stated order, with no repeated standalone product roster or homepage Marquee
 
 ### Requirement: Header behavior
-The header SHALL be fixed, transparent over the hero, and slide in a solid
-background (400ms) once the page is scrolled; it SHALL expose a Shop menu
-listing all categories.
 
-#### Scenario: Scrolled header
-- **WHEN** the visitor scrolls past the hero
-- **THEN** the header background slides in and the wordmark/logo animates in with a 300ms delay
+The Header SHALL be sticky with a solid light navigation background and black text, with rotating promo copy above it. Desktop navigation appears from 768px; mobile navigation opens below that breakpoint. ResizeObserver SHALL publish actual header height to --header-h for sticky category offsets.
 
-### Requirement: Sticky category tab bar
+#### Scenario: Promo wraps
 
-Catalog and collection pages SHALL render a horizontally-scrollable category tab bar
-that sticks below the header while scrolling, with the active category bold. Below
-1024px each tab SHALL expose at least 44px of tappable height while the strip's
-desktop height is unchanged. The collection page hero SHALL display the series' own
-hero image (`series.heroImage`) with the Ken Burns entrance.
-
-#### Scenario: Following scroll
-- **WHEN** the visitor scrolls a collection page
-- **THEN** the category tab bar remains visible directly below the header
-
-#### Scenario: Series hero shows the series hero image
-- **WHEN** a collections page renders
-- **THEN** the hero shows that series' dedicated hero image, not a product photo
-
-#### Scenario: Tabs are tappable below 1024px
-- **WHEN** the tab strip renders at 375px
-- **THEN** every tab's tappable height is at least 44px, the strip scrolls
-  horizontally with snapping and a hidden scrollbar, and at 1024px and above the tab
-  geometry matches the pre-change rendering
-
-### Requirement: Motion quality bar
-All entrance and hover animations SHALL use the editorial easing tokens with
-durations matching the reference (hero 1.5s, header 400ms, card hovers 500ms)
-and SHALL be disabled under `prefers-reduced-motion: reduce`. Every animation
-utility referenced in markup SHALL exist in the theme (e.g. the collections hero
-uses `animate-ken-burns`, not the nonexistent `ken-burns` class).
-
-#### Scenario: Reduced motion
-- **WHEN** the visitor prefers reduced motion
-- **THEN** all entrance animations render content immediately without transforms
-
-#### Scenario: Collections hero animates
-- **WHEN** a collections page renders
-- **THEN** the hero image plays the Ken Burns entrance (the animation class resolves)
+- **WHEN** a promo message changes header height
+- **THEN** the published height follows the element and category tabs remain offset beneath it
 
 ### Requirement: Hero carousel with landing links
 
-The homepage hero SHALL be a 5-slide carousel (auto-advancing, swipeable) aligned to the
-`网站头图.psd` UI tree, rendered as **live text** rather than baked title/subtitle images.
-Slide 1 (brand group photo) shows the hand-written is.offy wordmark image (596×224 PSD vector
-layer) centered near the top at y8.81% with the slogan below it at y21.6% (3.22cqw; the
-English slogan uses an explicit two-line break), and is NOT clickable. Slide 2 is the promo
-composite screen: the doll photo on the left, the bag photos to its right, and live promo
-copy — a kicker at x12.25%/y51.35% and a title at x11.88%/y59.72% with `leading-[1.2]` and no
-uppercase transform (so "OFFYs," keeps its lowercase s); it is NOT clickable. Slides 3-5 are
-series screens: the subtitle at x6.4%/y64.51% (`clamp(11px, 2.46cqw, 36px)`) and the series
-title at x6.4%/y71.2% (`clamp(18px, 6.91cqw, 100px)`, the same size for both locales since the
-PSD supplies English copy) — the title's top is 71.2% on `lg` and above, and 73% below `lg` so
-that the subtitle→title gap grows on narrow viewports while the title still clears the
-progress indicator. The「查看详情」CTA SHALL sit in the same row as the subtitle, right-aligned
-to the row's 93.6% edge and vertically centred on the subtitle (measured centre delta 0.00%
-at every viewport), with height 2.6cqw (`min-h-[24px]`), font `clamp(9px, 1.24cqw, 18px)` and
-`min-w-[15.35cqw]`. The fashion slide (slide 4) uses WHITE title/subtitle on its dark
-full-bleed photo; other series slides use dark text on light. Slide controls SHALL be a
-centered line indicator at y89.8% plus prev/next arrow buttons at the bottom-right using the
-PSD arrow PNGs — sized `clamp(30px, 3.7cqw, 48px)` at y76.3% on `lg` and above, and
-`clamp(20px, 2.7cqw, 38px)` at y84.8% below `lg` (the longest series title reaches 88% of the
-width on narrow viewports, so arrows left at y76.3% would overlap it). Series slides MUST NOT
-wrap the whole slide in an anchor (the CTA is the only navigation entry, avoiding nested
-anchors). All hero text and images SHALL scale with viewport-relative clamp() constraints
-(min/max caps) so that on narrow viewports text shrinks proportionally, wraps when too long,
-and never overflows or clips.
+The Hero SHALL contain five photo-based slides, live overlay copy, a 3250/2041 aspect ratio and bottom indicators. All five slides SHALL have full-screen links to /about, /products and the three mapped series. Detail CTA and arrow controls SHALL remain behind disabled render flags, not invisible focusable anchors. A manual pause control SHALL NOT be added without a separate approved change.
 
-#### Scenario: Series slide bottom-left title group
-- **WHEN** the user browses to hero slide 3, 4 or 5 (公主lady / 时尚潮流生活 / 趣味生活)
-- **THEN** the bottom-left shows the series title text at x6.4%/y71.2% (73% below `lg`) with
-  the subtitle above it at x6.4%/y64.51% and a「查看详情」outlined CTA in that same row,
-  right-aligned; the fashion slide renders them in white, others in dark ink
+#### Scenario: Interaction
 
-#### Scenario: Slide links to landing
-- **WHEN** the user clicks the「查看详情」button on a series slide (3/4/5)
-- **THEN** they navigate to the matching series collection page
-  (`/collections/princess-lady` / `/collections/outdoor-sporty` / `/collections/playful-life`)
+- **WHEN** a shopper drags with mouse/pen or swipes with touch
+- **THEN** the carousel applies the existing threshold/flick behavior, settles the visual track and suppresses a gesture-generated navigation click
 
-#### Scenario: CTA navigates to landing
-- **WHEN** the user activates the「查看详情」CTA (click or keyboard) on a series slide
-- **THEN** it is the only anchor in the slide and navigates to the matching series collection
-  page (`/collections/princess-lady` / `/collections/outdoor-sporty` / `/collections/playful-life`)
+#### Scenario: Auto-advance and reduced motion
 
-#### Scenario: Non-linked slides
-- **WHEN** the user taps hero slide 1 or 2
-- **THEN** nothing happens (no navigation)
-
-#### Scenario: Slide 1 text overlay
-- **WHEN** slide 1 is active
-- **THEN** the hand-written is.offy wordmark image renders centered near the top at y8.81%,
-  with the slogan beneath it at y21.6%
-
-#### Scenario: Slide 1 wordmark and slogan
-- **WHEN** slide 1 renders
-- **THEN** the 596×224 is.offy wordmark image shows centered at y8.81% of the hero area with
-  the slogan at y21.6% (`clamp(16px, 3.22cqw, 105px)`) beneath it
-
-#### Scenario: Slide 1 wordmark and one-line slogan
-- **WHEN** slide 1 renders
-- **THEN** the wordmark image is centered with a width of 15.78% of the hero and the slogan
-  is centered beneath it; the Chinese slogan renders on one line and the English slogan on
-  two lines via an explicit break rather than by wrapping
-
-#### Scenario: No image cropping
-- **WHEN** any slide renders on any viewport
-- **THEN** the full photo is visible (`object-contain object-top`) on a backdrop matching the
-  photo's edge color, and the hero keeps its PSD aspect ratio (3250/2041) at every width
-
-#### Scenario: Promo composite screen
-- **WHEN** slide 2 renders
-- **THEN** the doll photo, the bag photos and the live promo copy (kicker at x12.25%/y51.35%,
-  title at x11.88%/y59.72% with `leading-[1.2]`) render at their PSD-derived positions, and
-  the title is not upper-cased
-
-#### Scenario: Series slides show OFFY titles
-- **WHEN** slides 3-5 render
-- **THEN** each shows its series title as live text at x6.4%, at `clamp(18px, 6.91cqw, 100px)`
-  with the same size in both locales
-
-#### Scenario: Dark fashion slide readability
-- **WHEN** slide 4 (时尚潮流生活) renders
-- **THEN** its title, subtitle and CTA render in white over the dark photo and remain readable
-
-#### Scenario: Arrow navigation
-- **WHEN** the user clicks the next arrow
-- **THEN** the carousel advances to the next slide; the prev arrow goes back, and both arrows
-  render at the sizes and vertical positions defined for the current breakpoint
-
-#### Scenario: Auto-advance
-- **WHEN** the hero is visible and idle
-- **THEN** slides advance automatically with a cross-fade transition
-
-#### Scenario: Mobile proportional scaling
-- **WHEN** the viewport is ≤768px wide
-- **THEN** hero text shrinks proportionally within clamp() bounds, the series title drops to
-  y73%, the arrows shrink and move to y84.8%, and neither the title nor the arrows overlap the
-  progress indicator or each other
-
-#### Scenario: CTA stays centred on the subtitle
-- **WHEN** the hero renders at any viewport width, including 390px
-- **THEN** the CTA's vertical centre equals the subtitle's vertical centre, and the CTA's
-  `min-height` does not push the subtitle out of position
+- **WHEN** the carousel is idle without reduced motion
+- **THEN** it advances every five seconds; gestures pause/restart the timer, and reduced motion disables autoplay and drag animation
 
 ### Requirement: News module
-The homepage SHALL render the news section with a single centred title line composed as
-`{newsKicker}·{newsTitle}` ("News·The Latest from OFFY") and the "Browse all series" link as a
-centred, underlined `link-line` **below that title**, outside the card grid. The grid keeps
-one large feature card and four secondary cards, but every card's copy SHALL sit inside a
-solid black pill positioned over the image at its bottom centre — the feature card's badge and
-headline at the top centre with a pill CTA at `bottom-[10%]`, and each secondary card's pill
-at `bottom-[8.4%]` — and the secondary cards MUST NOT render a caption below the image.
 
-#### Scenario: News cards render
-- **WHEN** the homepage renders
-- **THEN** 1 feature card + 4 secondary cards render with images and localized titles, and
-  each card's caption sits in a black pill over the image rather than below it
+NEWS SHALL show The Latest from OFFY without News· or the retired NEW ARRIVALS badge. Product bindings and editorial copy remain site configuration. Cards SHALL render only for Shopify-verified available products in the visitor market, using that product's returned image. Missing bindings SHALL be hidden rather than advertised as available products.
 
-#### Scenario: Browse-all CTA
-- **WHEN** the user clicks 逛全部系列 / "Browse all series"
-- **THEN** they navigate to the products page, and the link is rendered once, centred beneath
-  the section title rather than inside the card grid
+#### Scenario: News links
 
-### Requirement: Teaser section for upcoming series
-The homepage SHALL render the teaser section with a centred title group above a full-bleed
-panel. Per `更多新品，敬请期待.psd`, the small line `Stay tuned.` renders ABOVE the large
-`Upcoming Releases` heading (36px ≈ 1.11vw and 102.2px ≈ 3.14vw respectively, both centred);
-the oversized faded "Stay / tuned." watermark is baked into the background image and MUST NOT
-be re-rendered. The panel keeps the teaser hero image as background with the left column
-overlaying the series name, its note and a solid black pill 查看详情 button.
+- **WHEN** a verified card is activated
+- **THEN** it opens the configured Shopify product handle and the browse-all link stays outside the grid
 
-#### Scenario: Teaser renders
-- **WHEN** the homepage renders
-- **THEN** the centred title group shows the small `Stay tuned.` line above the large
-  `Upcoming Releases` heading, the background hero image fills the panel, and the left overlay
-  text and black pill CTA appear
+### Requirement: Homepage visual sections
+
+NEWS SHALL use #efefef, category/upcoming sections #f7f7f9. Removed full-size background texture images SHALL NOT be reintroduced. Upcoming Releases SHALL lead to /bag-charm; collaboration, newsletter and future IP cards SHALL keep their existing current arrangement.
+
+#### Scenario: Upcoming IP cards
+
+- **WHEN** the future-IP section renders
+- **THEN** it shows Miss Kitty and Butterfly Sprite with illustrations, IN DEVELOPMENT labels and taglines, without the retired PSYCHE or COMING SOON placeholders
+
+### Requirement: Regional-exclusive presentation
+
+Regionals SHALL be inferred only after all configured probe countries return complete successful Storefront rosters, with at least two countries and the visitor inside the probe scope. Probe scope and target whitelist remain independent. Failed probes SHALL hide uncertain inferences. Merch SHALL be excluded from the homepage; regional display prices SHALL reuse the verified visitor-market catalog.
+
+#### Scenario: Non-target visitor
+
+- **WHEN** the visitor is outside the target whitelist or any required probe fails
+- **THEN** no regional-exclusive section is rendered
+
+### Requirement: Series and catalog presentation
+
+Catalog and series pages SHALL render current Shopify names and product facts with sticky category navigation when those data are available. Site slugs, hero assets and taglines remain configuration; local series titles SHALL NOT replace failed or removed Shopify collections. Overview cards retain the whole-series editorial photos. Unavailable data SHALL show the approved recovery presentation.
+
+#### Scenario: Series identity
+
+- **WHEN** outdoor-sporty or playful-life successfully renders
+- **THEN** its image shows the streetwear/sport or dress-up group respectively, with the Shopify collection title
 
 ### Requirement: Bag charm teaser detail page
-A route `/[locale]/bag-charm` SHALL render the fashionable bag charm series teaser
-detail page per the design draft: a hero area with the oversized two-line English
-title "FASHIONABLEBAG CHARM COLLECTION", a large left image and a tall right image
-(both derived from the teaser hero photo), a title block (时尚包挂系列 /
-更多都市精灵，敬请期待), and a 3-column grid of 6 teaser product cards coded
-WCOFFY-XXX01..06, each with a 「点击查看」 link to the products page.
 
-#### Scenario: Teaser page renders
-- **WHEN** a visitor opens `/zh/bag-charm`
-- **THEN** the hero title, two hero images, title block, and 6 coded teaser cards render
+/bag-charm SHALL show the two-line title, two hero images and six coded teaser images. View controls SHALL open an in-page quick view, not navigate to the catalog. Hover-capable devices SHALL open after 1s, pointer departure SHALL close temporary preview after a grace period, and clicking SHALL pin it until explicit dismissal. The overlay SHALL use a body Portal and scroll lock.
 
-#### Scenario: Card CTA navigates to products
-- **WHEN** a visitor clicks 点击查看 on a teaser card
-- **THEN** they navigate to the products page
+#### Scenario: Explicit dismissal
 
-#### Scenario: Homepage teaser button links here
-- **WHEN** a visitor clicks 查看详情 in the homepage teaser section
-- **THEN** they navigate to `/[locale]/bag-charm`
+- **WHEN** the user presses Escape, close or the backdrop
+- **THEN** the quick view closes and page scroll is restored
 
-### Requirement: Mobile navigation
-On viewports below 768px, the header SHALL provide a hamburger button that opens a
-drawer navigation containing the same links as the desktop nav plus the language
-switcher. The drawer SHALL be dismissed by a close button, the Escape key, or a
-backdrop tap.
+### Requirement: About and support content
 
-#### Scenario: Hamburger opens drawer
-- **WHEN** a mobile user taps the hamburger button
-- **THEN** a navigation drawer opens with the main nav links
+/about SHALL use Meet Who You Love to Be, the current twelve story paragraphs, future-IP cards and collaboration content. Retired team and stockists sections SHALL NOT render. FAQ SHALL contain ten structured English answers in three parts, native details/summary and question numbering restarted per part.
 
-#### Scenario: Drawer dismissal
-- **WHEN** the drawer is open and the user presses Escape or taps the backdrop
-- **THEN** the drawer closes
+#### Scenario: FAQ formatting
 
-### Requirement: SEO metadata
-The site SHALL render document metadata: a root `generateMetadata` with title
-template, description, Open Graph fields, and `alternates.languages` hreflang for
-zh/en; the product detail page SHALL generate per-product title/description/OG
-image. The site SHALL also serve `sitemap.xml` (all static routes + 19 product
-pages + 3 collection pages) and `robots.txt`.
-
-#### Scenario: Home page metadata
-- **WHEN** a crawler fetches `/zh`
-- **THEN** the HTML head contains a localized title, description, OG tags, and hreflang alternates
-
-#### Scenario: Sitemap lists products
-- **WHEN** a crawler fetches `/sitemap.xml`
-- **THEN** it lists the home, products, collections, about, and all 19 product detail URLs in both locales
+- **WHEN** an answer is expanded
+- **THEN** its paragraphs and bold segments match the current FaqPart data rather than an unformatted plain-text paragraph
 
 ### Requirement: Footer policy entry points
 
-The footer's fourth column SHALL be a navigation group headed by the
-`common.footer.policiesHeading` translation, listing the five policy pages as links in the
-order returns → privacy → terms → shipping → contact, with `href` exactly
-`/{locale}/policies/{handle}`. The former hard-coded CONTACT column (the
-`hello@playcoretoys.com` address and the Xiaohongshu handle) SHALL be removed, and no page in
-the site may reference the `playcoretoys.com` domain. The policy group SHALL use the same
-kicker, link size, tracking and hover treatment as the existing MENU and COLLECTIONS groups,
-and the group's `<nav>` SHALL carry an `aria-label`. The footer grid SHALL use two columns
-from the `md` breakpoint and four columns only from `lg` — at 768–1023px the container is
-about 707px wide, so four columns leave roughly 150px each, less than the 320px the brand
-blurb's own `max-w-xs` implies.
+The footer SHALL provide Menu, Collections and Help & Support. Help & Support SHALL show FAQ and CONTACT US, then a separated weaker LEGAL & POLICIES link to /policies. Four written policies SHALL be listed inside that index; contact remains a direct entry. The brand blurb SHALL keep its explicit line break. Footer uses two columns at md and four at lg.
 
-#### Scenario: Footer exposes exactly the five policy links
+#### Scenario: Policy navigation
 
-- **WHEN** any page renders its footer
-- **THEN** exactly five anchors match `/{locale}/policies/{handle}` and their `handle` values
-  are `returns`, `privacy`, `terms`, `shipping`, `contact` in that order
+- **WHEN** the footer is rendered
+- **THEN** it links to /faq, /policies/contact and /policies without language prefixes, not the retired five-flat-policy-link arrangement
 
-#### Scenario: Stale contact details are gone
+### Requirement: Responsive design contract
 
-- **WHEN** any page's HTML is inspected
-- **THEN** it does not contain `playcoretoys.com`, and the footer no longer contains the
-  Xiaohongshu handle
+Layouts SHALL reuse the current theme, container-site, section-y, tap-target, hscroll and safe-area classes. The PDP mobile purchase bar SHALL be sticky, never fixed inside the transformed page template. Small-screen layouts SHALL be checked at 320/375px; source-rule tests alone SHALL NOT be treated as geometry verification. The root viewport SHALL include viewportFit cover.
 
-### Requirement: Keyboard focus visibility
+#### Scenario: Mobile PDP baseline
 
-Every textual link in the site SHALL expose a visible focus indicator for keyboard users,
-using `:focus-visible` with an outline that is not clipped by `overflow` or `border-radius`.
-On the dark footer the outline SHALL use the on-dark accent colour; on light pages it SHALL
-use the ink colour. Because touch devices have no hover state, every `link-line` text link
-SHALL additionally expose a pressed (`:active`) state in which its underline collapses,
-so that a tap produces immediate visible feedback.
+- **WHEN** the PDP renders at 375×812
+- **THEN** its purchase action remains at the viewport bottom and the page does not scroll horizontally
 
-#### Scenario: Footer links show a focus ring
+### Requirement: Motion and overlays
 
-- **WHEN** a footer link receives keyboard focus
-- **THEN** it renders a visible outline offset from the text rather than the browser default
-  or no indicator at all
+Entrance/reveal animations SHALL honor reduced motion. The cart drawer and teaser quick view SHALL use the shared scroll lock and restore prior inline overflow. MobileNav currently closes by link/backdrop/Escape but does not yet share all cart focus/scroll behavior; full modal compliance is not claimed.
 
-#### Scenario: Pressed state without hover
+#### Scenario: Reduced motion content
 
-- **WHEN** an inline `link-line` link is pressed on a touch device
-- **THEN** its underline collapses, giving immediate feedback without a hover state
+- **WHEN** reduced motion is active
+- **THEN** entrance content is immediately visible and the relevant theme animations are disabled
 
-### Requirement: Coming-next IP cards
+### Requirement: SEO metadata
 
-The homepage SHALL render the coming-next section (`后续计划.psd`) with a heading block
-containing only the section title and its one-line subtitle — the section MUST NOT render a
-kicker above the title, because the PSD has no such layer. Below it, two cards SHALL render
-side by side (stacked on narrow viewports), each built from the PSD layer tree: a rounded
-card clipped at its bounds, a dotted background (base `#e7e7e7`, dot pitch 43px = 2.97% of
-card width), the character illustration anchored at x33.0%/y-5.3% with width 72.1% and
-allowed to overflow above and below before being clipped, an `IN DEVELOPMENT` pill at
-x6.9%/y37.8% with width 32.9% and height 6.5% of card height in `#424242`, the name at
-6.21% of card width, and the two-line centred tagline. Card copy SHALL come from the
-`upcomingIps` data and the illustrations from assets exported out of the PSD's smart-object
-layers. The section MUST NOT render a "COMING SOON — TBD" label, and the second IP SHALL be
-named `Butterfly Sprite` (the earlier placeholder name `PSYCHE` is retired).
+Core pages SHALL have their own canonical/title/description. Home SHALL have a visually hidden semantic H1. Product/Offer and breadcrumbs SHALL use the rendered market product; Organization/WebSite SHALL appear once per page and FAQPage on FAQ. JsonLd SHALL escape < before embedding. Sitemap SHALL derive routed languages, current catalog/series and policy handles; robots SHALL disallow API/cart/checkout. Shopify seo.title/description are not yet read.
 
-#### Scenario: Cards render the PSD structure
+#### Scenario: Market product structured data
 
-- **WHEN** the coming-next section renders
-- **THEN** each card shows its character illustration, an `IN DEVELOPMENT` pill, the IP name
-  and a two-line centred tagline, and no card shows a "COMING SOON" label
+- **WHEN** a product page renders GBP or HKD
+- **THEN** its Offer priceCurrency and amount match that page's displayed product rather than a hardcoded USD value
 
-#### Scenario: No kicker above the section title
+### Requirement: Health endpoint
 
-- **WHEN** the coming-next section renders
-- **THEN** the heading block contains the section title and its subtitle only, with no
-  kicker line above the title
+/api/health SHALL return status ok with timestamp and configuration-presence diagnostics. It SHALL NOT make a Shopify request or imply valid credentials, a healthy database or a successful checkout.
 
-#### Scenario: Second IP uses its final name
+#### Scenario: Liveness check
 
-- **WHEN** the coming-next section renders
-- **THEN** the second card's name is `Butterfly Sprite` and the string `PSYCHE` does not appear
+- **WHEN** the container health check calls the endpoint
+- **THEN** HTTP 200 confirms that the handler is alive, independent of Shopify reachability
 
-### Requirement: Narrow-viewport layout contract
+### Requirement: Brand-preserving commerce outage presentation
 
-Below the `lg` breakpoint (1024px) every page SHALL lay out against a single gutter
-source: sixteen pixels of side margin at 375px (a 343px content column) and the
-existing 92% `.container-site` width from `md` up, with no page-level container
-re-declaring its own horizontal padding. Vertical section rhythm below 1024px SHALL
-come from `.section-y` (48px at the base breakpoint, 80px from `md`), so the seam
-between two adjacent sections is 96px instead of 160px. Reading-width caps (68ch /
-`max-w-3xl` / `max-w-5xl` / `max-w-[38rem]`) SHALL live on an inner element, never as a
-second gutter.
+The storefront SHALL retain independently available brand content and its navigation when Shopify commercial data fails. Product-specific editorial cards and product modules SHALL not present unverified commercial content. The homepage SHALL consolidate affected commerce modules into one clear local unavailable presentation. Healthy independently loaded modules SHALL remain visible.
 
-At 320px and 375px no route may scroll horizontally:
-`document.documentElement.scrollWidth` SHALL equal `clientWidth`. The left edge of the
-first `h1`, the header logo, the category tab strip and main content containers SHALL
-be 16px at 375px.
+#### Scenario: Homepage commerce outage
 
-#### Scenario: Zero horizontal overflow at 320 and 375
+- **WHEN** Shopify product data is unavailable
+- **THEN** the brand hero, story and support remain reachable, while affected product sections are replaced by a retry presentation
 
-- **WHEN** each audited route (home, products, collection, PDP, cart, checkout,
-  bag-charm, FAQ, policy, about) is loaded at 320px or 375px
-- **THEN** `documentElement.scrollWidth === documentElement.clientWidth`
+### Requirement: Outage indexing protection
 
-#### Scenario: One gutter, one left edge
+Unavailable commerce HTML SHALL be excluded from indexing and SHALL emit no Product Offer or fabricated product count. Confirmed product absence SHALL retain its separate not-found behavior. Sitemap generation SHALL never substitute the local catalog after upstream failure or publish a failed partial product enumeration as complete.
 
-- **WHEN** a route renders at 375px
-- **THEN** its `h1`, the header logo, the category tab strip (inner container) and its
-  main content container all report `getBoundingClientRect().left === 16`
+#### Scenario: Detail outage has no false product offer
 
-#### Scenario: Section rhythm
-
-- **WHEN** two `.section-y` sections are adjacent at 375px
-- **THEN** their combined padding is 96px, and at 1024px and above the padding is
-  exactly what the page used before this change
-
-### Requirement: Readability floor
-
-No visible text below 1024px SHALL render smaller than 11px, with no exceptions; body
-copy SHALL not render below 12px, and interactive caps labels SHALL not render below
-12px. Page `h1` elements SHALL be 36px at 375px, `section` `h2` lower bounds SHALL be
-30px, and every `clamp()` / `max()` font size in `vw` or `cqw` units SHALL carry an
-explicit lower bound so that narrow viewports cannot shrink text below the floor. The
-absolute floor SHALL be enforced by a source-level assertion, not only by review.
-
-#### Scenario: Secondary news captions at 375px
-
-- **WHEN** the home news grid renders at 375px
-- **THEN** its secondary-card captions measure at least 11px instead of the previous
-  7.91px, and the copy still fits its pill
-
-#### Scenario: Upcoming card floors
-
-- **WHEN** an `UpcomingCard` renders below 640px
-- **THEN** its three `clamp()` font sizes have lower bounds of 11px, 24px and 12px
-
-#### Scenario: Source-level guard
-
-- **WHEN** `pnpm test` runs
-- **THEN** it fails if any non-test source file contains `text-[9px]`, `text-[10px]`,
-  a bounded-less `text-[<number>cqw]`, a bare `py-3 -my-3`, a `max-w-*xl` paired with
-  `px-*` on the same element, or a bare `h-8 w-8` / `h-9 w-9`
-
-### Requirement: Touch target contract
-
-Independent controls SHALL expose at least a 44×44px tappable area below the `lg`
-breakpoint, measured as the region that actually routes a tap to that control
-(pseudo-element expansions count, regions covered by another element do not).
-Inline text links SHALL expose at least 44px of tappable height with width following
-the text. Every control SHALL keep a tappable area of at least 24×24px at every
-breakpoint. Above 1024px control sizes SHALL remain exactly as they were before this
-change.
-
-#### Scenario: Purchase path at 375px
-
-- **WHEN** the PDP, the cart drawer, `/cart` or `/checkout` renders at 375px
-- **THEN** no interactive element is smaller than 44×44px, counting pseudo-element
-  hit-area expansions
-
-#### Scenario: Hero indicator bars
-
-- **WHEN** the home hero's 2.8px-tall indicator bars render at 375px
-- **THEN** each bar's real tappable height (bar plus its upward `::after` extension)
-  is at least 24px, while the painted bar keeps its PSD height
-
-#### Scenario: Inline links keep their visual line box
-
-- **WHEN** a breadcrumb, footer, FAQ or policy text link receives `.tap-target--quiet`
-- **THEN** its tappable height is at least 44px and its surrounding layout is
-  unchanged (the added padding is cancelled by an equal negative margin, and a
-  `link-line` underline stays 2px below the text)
-
-#### Scenario: Drawer exit paths
-
-- **WHEN** the cart drawer is open at 375px
-- **THEN** the ✕ control is at least 44×44px, at least 40px of clickable overlay
-  remains to the left of the 88%-wide panel, the panel is `100dvh` tall with
-  `env(safe-area-inset-*)` respected, and the page behind it cannot scroll
-
-### Requirement: Safe-area and overlay viewport
-
-The root layout SHALL export a `viewport` with `width: device-width`,
-`initialScale: 1` and `viewportFit: "cover"`, and full-height overlays SHALL use
-`100dvh` (falling back to `height: 100%` where `dvh` is unsupported) with
-`.safe-b` / `.safe-t` padding so that content is never trapped under the browser
-toolbar or the home indicator.
-
-#### Scenario: Drawer footer clearance
-
-- **WHEN** the cart drawer renders on a device with a home indicator
-- **THEN** its footer's computed bottom padding is at least
-  `1rem + env(safe-area-inset-bottom)` and the Checkout button's lower edge sits at
-  least 24px above the viewport bottom
-
-#### Scenario: Overlay scroll lock
-
-- **WHEN** the cart drawer or the bag-charm quick view is open
-- **THEN** `document.documentElement` has `overflow: hidden`, and the previous inline
-  value is restored when it closes
-
-### Requirement: Horizontal scroller pattern
-
-Horizontal strips (category tabs, PDP thumbnails, product galleries) SHALL use
-`.hscroll`: flex layout, `overflow-x: auto` with `overscroll-behavior-x: contain`,
-scroll snapping, a hidden scrollbar, and a 12px fade at both edges **only below
-1024px**. The active category tab SHALL be scrolled into view horizontally
-(`inline: "center"`) without moving the page vertically (`block: "nearest"`).
-
-#### Scenario: Category strip at 375px
-
-- **WHEN** `/collections/playful-life` loads at 375px
-- **THEN** the active tab is fully inside the viewport, the strip scrolls
-  horizontally with snapping, and `window.scrollY` is still 0
-
-#### Scenario: Reduced motion
-
-- **WHEN** `prefers-reduced-motion: reduce` is set
-- **THEN** the promo marquee renders as a wrapped static block with its copy fully
-  readable and the duplicated loop copy hidden
-
-### Requirement: Header height and sticky offsets
-
-The header SHALL publish its measured height into the `--header-h` custom property on
-`<html>` (via `ResizeObserver`), so sticky elements positioned from that variable
-follow the promo bar as its copy wraps, and the `globals.css` values remain as the
-initial estimate for the pre-hydration paint.
-
-#### Scenario: Promo rotation does not cover the tab bar
-
-- **WHEN** the header's promo message changes length and the header grows
-- **THEN** `--header-h` equals the measured header height, and the sticky category tab
-  bar's top edge stays at or below the header's bottom edge
+- **WHEN** a detail unavailable state is rendered
+- **THEN** it carries noindex and no Product/Offer JSON-LD

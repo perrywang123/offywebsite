@@ -1,3 +1,5 @@
+> 文档状态（2026-10-31）：故事文案提取证据，不是运行时快照；当前内容见 [../messages/en.json](../messages/en.json)。
+
 # OUR STORY 页改版文案（Excel 提取）
 
 来源：`副本独立站首页文案 (1).xlsx` → `OUR STORY` 工作表（该表只有 7 个非空行）。

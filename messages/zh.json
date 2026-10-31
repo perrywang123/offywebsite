@@ -39,7 +39,7 @@
       "openAria": "打开购物袋",
       "loading": "正在加载购物车…",
       "checkoutRedirecting": "正在前往结算…",
-      "checkoutFallback": "结算页暂时打不开，已为你打开备用结算页面。",
+      "checkoutFallback": "暂时无法打开结算，购物袋已保留，请重试。",
       "checkoutBlocked": "这些商品目前无法结算：{items}。请先从购物袋移除，再重试。",
       "checkoutBlockedGeneric": "购物袋里有商品目前无法结算，请检查购物袋后重试。"
     },

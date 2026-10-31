@@ -1,54 +1,21 @@
-# Offy 区域限定配置(实测拉取)
+# 市场、币种与区域限定
 
-来源:Shopify Storefront API 逐国 `@inContext(country:)` 查询,共 30 个国家 / 37 个商品。
+基线：2026-10-31。国家列表配置是站点推断范围，不是实时读取的完整Shopify Market清单。
 
-配置位置:**Shopify 后台 → 商品 → 发布(Publications/Markets)** —— 每个商品可选发布到哪些市场。不是 tag、不是 metafield。
+## 国家判定
 
-## 有区域限制的商品
+cf-ipcountry → x-vercel-ip-country → x-country-code → x-geo-country → x-forwarded-country → XFF首IP/x-real-ip经geoip-lite → SHOPIFY_MARKET_COUNTRY（默认US）。UK归一为GB，排除XX/EU等哨兵。国家头/IP仅是请求来源线索，不是鉴权或合规凭证，反代需有可信头策略。
 
-| 商品 | 可见国家 | 数量 | 类型 |
-| --- | --- | --- | --- |
-| `noir` (NOIR - UK EXCLUSIVE DROP) | GB | 1/30 | 单国限定 |
-| `cold-kitten` (COLD KITTEN - US EXCLUSIVE DROP) | US, CA | 2/30 | 少数国家 |
-| `lemon-fizz` (LEMON FIZZ) | US, CA | 2/30 | 少数国家 |
-| `boots` (BOOTS - HK EXCLUSIVE DROP) | HK, CN, MO | 3/30 | 少数国家 |
+## 两份列表
 
-## 全球可见(无区域限制)
+SHOPIFY_REGIONS指定探测范围，默认30国：US,CA,GB,AU,NZ,SG,MY,TH,HK,CN,TW,JP,KR,MO,ID,PH,VN,IN,AE,DE,FR,ES,IT,NL,SE,CH,BR,MX,ZA,SA。
 
-`offy_redrush`、`wild-sweetie`、`coastal-star`、`british-noon`、`afternoon-muse`、`warm-biscuit`、`mint-breeze`、`pink-mallow`、`black-pearl`、`royal-grey`、`swan-princess`、`bunny-hug`、`mocha-painter`、`burger-doll`、`country-getaway`、`prep-school`、`gurardian-angel`、`glow`、`snow-white`、`mori`、`diva`、`wander`、`alpine`、`roamer`、`baller`、`nova`、`ace`、`smash`、`ease`、`offy-sticker-sheet`、`feral`、`fable`、`offy-tote-bag`
- 共 33 个。
+SHOPIFY_TARGET_MARKETS指定哪些访客能看到限定区块，默认US,GB,SG,HK。它与探测范围不同。CN/MO/CA即使某商品可售，当前默认也不展示区域限定模块。
 
-## 各国币种
+当前算法按国家查询Storefront完整分页可见商品；至少两国且整个配置范围全部成功才参与推断。任一探测失败则隐藏限定模块，不把未验证国家当作不可售。探测无跨请求缓存。红徽章是配置范围内的区域展示，不代表全球每个国家的正式排他资格。
 
-| 国家 | 币种 | 可见商品数 |
-| --- | --- | --- |
-| US | USD | 35 |
-| CA | CAD | 35 |
-| GB | GBP | 34 |
-| AU | AUD | 33 |
-| NZ | AUD | 33 |
-| SG | SGD | 33 |
-| MY | MYR | 33 |
-| TH | THB | 33 |
-| HK | HKD | 34 |
-| CN | HKD | 34 |
-| TW | SGD | 33 |
-| JP | SGD | 33 |
-| KR | SGD | 33 |
-| DE | SGD | 33 |
-| FR | SGD | 33 |
-| MO | HKD | 34 |
-| ID | SGD | 33 |
-| PH | SGD | 33 |
-| VN | SGD | 33 |
-| IN | SGD | 33 |
-| AE | SGD | 33 |
-| ES | SGD | 33 |
-| IT | SGD | 33 |
-| NL | SGD | 33 |
-| SE | SGD | 33 |
-| CH | SGD | 33 |
-| BR | SGD | 33 |
-| MX | SGD | 33 |
-| ZA | SGD | 33 |
-| SA | SGD | 33 |
+## 实时价格
+
+商品价采用Storefront @inContext(country)返回的金额和currency，Cart用同country；不是本地汇率。2026-10-31取样：US42款/USD、GB41款/GBP、HK41款/HKD；数量与映射随商家维护变化，不能作固定测试。未实时复查的旧国家/商品限定表已移历史。
+
+[已实现方案](shopify-unavailable-design.md)取消本地商品价格fallback；区域探测不完整时隐藏不确定限定结论。页面价格复用本市场已验证的目录商品。

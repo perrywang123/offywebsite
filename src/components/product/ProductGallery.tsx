@@ -25,7 +25,12 @@ export function ProductGallery({
   const [requested, setRequested] = useState(0);
   const active = images[requested] ? requested : 0;
   const current = images[active];
-  if (!current) return null;
+  if (!current)
+    return (
+      <div className="bg-cream-deep text-ink-soft flex aspect-[4/5] items-center justify-center text-sm">
+        Image coming soon
+      </div>
+    );
 
   return (
     <>

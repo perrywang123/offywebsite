@@ -1,247 +1,142 @@
-# 生产部署指南
+# 服务器 Git 部署：Offy 独立站与 KOL 后台
 
-> 想快速拿到一个**公网链接分享给同事**？先看
-> [`public-deploy.md`](./public-deploy.md)（三档方案 + 决策矩阵：Cloudflare 快速隧道 /
-> 云服务器 Docker / Fly.io·Railway 托管）。本文是选定「云服务器 + Docker/裸 Node」
-> 路线后的详细运维手册。
-
-目标环境：一台 Linux 云服务器（Ubuntu/Debian 均可），公网可达、有域名。
-
-## 先决条件（服务器上）
-
-- **路径 A（Docker，推荐）**：安装 Docker + Docker Compose 插件。
-- ~~**路径 B（裸 Node）**：安装 Node.js ≥ 20 与 nginx。~~ **已弃用** —— 线上统一走 Docker,见下方「部署方式」。
-- 域名解析到服务器 IP（A 记录）。
-
-## 区域限定与币种(按访客国家)
-
-**这一节决定两件事,不止一件**:首页「区域限定」那一栏展示哪些商品,**以及全站
-价格用什么币种**。两者都来自同一个国家判定,配不好会同时错。
-
-### 国家是怎么判定的
-
-应用按以下顺序判定(见 `src/lib/geo.ts`):
-
-```
-cf-ipcountry → x-vercel-ip-country → x-country-code → x-geo-country
-             → x-forwarded-country
-             → 应用自己按客户端 IP 解析(geoip-lite)      ← 2026-10-11 新增
-             → SHOPIFY_MARKET_COUNTRY(默认 US)
-```
-
-**前五级是请求头,第六级是应用自己解析。**一个头都拿不到时,`pickCountry` 会取
-`x-forwarded-for` 的**第一个**地址(没有就退到 `x-real-ip`),用 `geoip-lite` 查
-ISO 国家码,再走和请求头完全相同的归一化(`UK` → `GB`)与哨兵值过滤
-(`XX`/`T1`/`EU` 之类不算国家)。
-
-这一层是 **zero-config** 的:`geoip-lite` 的数据库打包在 npm 包里,所以
-
-- **不用装 nginx GeoIP2 模块**(`libnginx-mod-http-geoip2` 是 Debian/Ubuntu 包名,
-  OpenCloudOS / RHEL 系根本没有,硬开配置会让 `nginx -t` 报
-  `unknown directive "geoip2"`);
-- **不用注册 MaxMind 账号、不用 `geoipupdate`**;
-- **不用把域名挂到 Cloudflare**。
-
-部署完就能按访客地区展示,币种也跟着走。**唯一的硬要求是 nginx 必须把客户端 IP
-传进来**(`deploy/nginx.conf` 里那两行 `X-Real-IP` / `X-Forwarded-For`),否则应用
-只能看到回环地址,退回默认市场。
-
-> 私有段 / 回环地址(`127.0.0.1`、`10.x`、`192.168.x`、`::1`)与畸形 IP 查不到
-> 国家,此时**静默回落**到 `SHOPIFY_MARKET_COUNTRY`,不会报错、不会白屏 ——
-> 从本机直连容器调试时看到 USD 是正常的。
-
-> `UK` 不是 ISO-3166 码(`GB` 才是),但设计稿、文案和人工标注里都习惯写 UK。
-> 所有来源(含 IP 解析)在返回前统一归一化成 `GB` —— Shopify Markets 只认
-> alpha-2,传 `UK` 会让它落回默认市场(币种和区域限定同时失效)。
-
-> 这一层判定最终来自**请求方自己声称的值**(头可以被伪造,`X-Forwarded-For`
-> 的左侧也可能被伪造),它只影响展示币种与区域限定区块。真要按国家做价格/合规
-> 判定,以后得在结算侧另行校验(当前结算是按 `pickCountry` 的结果下单,行为与
-> 改造前一致)。
-
-### 可选:用前置层覆盖判定
-
-想让 CDN / nginx 指定国家(内网压测要伪装成某个国家、或想让判定收口到边缘),
-再在下面三种里挑一种。**都不做也没关系** —— IP 解析这一层已经覆盖了裸机部署。
-
-| 做法 | 说明 |
-| --- | --- |
-| **A. 域名挂 Cloudflare** | CF 自动注入 `cf-ipcountry`,优先级最高,什么都不用配 |
-| **B. 裸 nginx + GeoIP2** | 需要 `libnginx-mod-http-geoip2` + MaxMind 账号,见 `deploy/nginx-geoip2.conf` |
-| **C. 什么都不做(推荐)** | 应用自己按 IP 解析,币种与区域限定已经正确 |
-
-> 有国家头时**以头为准**,IP 解析不会覆盖它 —— 这正是 A/B 能"覆盖"应用判定的原因。
-> `deploy/nginx.conf` 里那行 `proxy_set_header X-Country-Code` 默认是**注释掉**的:
-> 模块没装就打开它,`nginx -t` 会直接失败。
-
-### 部署后必须验证
+更新：2026-11-01。推荐在服务器原有 Git checkout 中执行脚本。代码仍在同一个 GitHub 仓库；Docker Compose 运行独立的 `app`、`admin` 容器及 `kol-worker`。后台独立发布只替换 `admin` 和 worker，不重启主站。
 
 ```bash
-# 1. 不伪造任何国家头,只给一个公网 IP —— 应用应当自己解析出国家
-curl -s -H "X-Forwarded-For: 210.128.0.1" http://127.0.0.1:3000/api/products | head -c 200
-curl -s -H "X-Forwarded-For: 212.58.244.20" http://127.0.0.1:3000/api/products | head -c 200
-#    期望:两个 IP 拿到**不同**币种(本店实测 JP→SGD、GB→GBP),而不是两边都 USD
-#    (镜像里没有 curl,要在容器内自查就用 node 的 fetch:
-#       docker compose -f docker-compose.prod.yml exec app node -e \
-#         "fetch('http://127.0.0.1:3000/api/products',{headers:{'X-Forwarded-For':'212.58.244.20'}}).then(r=>r.json()).then(j=>console.log(j.products[0].price))")
-
-# 2. 国家头仍然优先于 IP(优先级没被破坏)
-curl -s -H "cf-ipcountry: GB" -H "X-Forwarded-For: 210.128.0.1" \
-  http://127.0.0.1:3000/api/products | head -c 200
-#    期望:GBP —— 头压过 IP
-
-# 3. 换两个地区的网络访问首页,「区域限定」那一栏与价格币种应当不同
+cd /opt/offy                    # 使用现有项目目录，不另 clone 一份后台
+bash deploy/update-admin.sh       # 自动拉 Git、构建、备份、更新后台、验证
 ```
 
-第 1 步如果两个 IP 都还是 USD,依次检查:(a) 反代有没有传 `X-Forwarded-For`;
-(b) 容器里 `node_modules/geoip-lite/data/` 在不在(少了就会一律回落默认市场,
-见下一条)。
+无需输入服务器 IP：脚本就在服务器上运行。以前的 `DEPLOY_SERVER` 是开发机 SSH 上传工具的目标地址，与此脚本无关。`ADMIN_ORIGIN` 是浏览器访问后台的实际 HTTPS 地址，用于登录安全校验，只在服务器配置中设置；可用管理域名，不必使用 IP。
 
-> **打包侧的两个坑(都已在 `next.config.ts` 修好,别删那两行):**
->
-> 1. `serverExternalPackages: ["geoip-lite"]` —— `geoip-lite` 用
->    `path.resolve(__dirname, "../data")` 找数据文件。被 Turbopack 打进 server
->    bundle 后 `__dirname` 变成虚拟路径(`/ROOT/node_modules/...`),**import 阶段
->    就 ENOENT,每个请求 500**。声明成外部依赖让它按真实路径 `require`。
-> 2. `outputFileTracingIncludes: { "/**": ["node_modules/geoip-lite/**"] }` ——
->    standalone 的文件追踪只跟 import/require 走,看不到 `fs.openSync(*.dat)`,
->    不显式包含就不会被复制进镜像 —— 现象是"本地全对,容器里查谁都是 undefined"。
->    自查:`docker compose -f docker-compose.prod.yml exec app ls node_modules/geoip-lite/data`。
->
-> 顺带一提,这个库在进程启动时同步读入约 115MB 数据(实测常驻内存约 +150MB),
-> 换 IP 判定的准确性就是拿这点内存换的。它声明 `engines: node >= 24`,但实测在
-> 镜像里的 Node 22 上工作正常(`geoip-lite@2.0.3` 没有用到 Node 24 专有 API)。
+本次仅修改/验证本地仓库，未连接或更新生产服务器。脚本不申请 Shopify 权限/注册 webhook、签发证书或开放防火墙。
 
+## 第一次部署：只配置一次
 
-### 数据来源与缓存
+服务器需要Docker Engine、Compose插件、Python3、curl、flock（Linux util-linux）；启用管理入口还需要已运行的Nginx及有效TLS证书。使用有Docker权限的部署用户；自动安装Nginx配置另需root或已配置的非交互sudo权限。
 
-Shopify 侧的区域限定不是 tag 也不是 metafield,而是**只把商品发布到某些
-Market**,所以服务端会拿同一份 Storefront 查询换不同 `@inContext(country:)`
-跑一遍再比对(实测该店 35 个商品里 6 个是限定款)。实现见
-`src/server/catalog/regional.ts`,探测结果缓存 1 小时。
-
-可选:`SHOPIFY_REGIONS` 指定要比对的国家(逗号分隔),留空用内置默认
-`US,CA,GB,SG,HK,MY,AU,JP,KR,DE,FR,TW`。
-
-> 注意:读请求头会让首页转为**按请求渲染**(不再走 ISR 静态缓存)。这是按国家
-> 变化的必要代价;Shopify 的数据请求仍有各自的缓存窗口,所以不会每个请求都打
-> Shopify。每个国家的 data cache 键是独立的,不会互相串味。
-
-### 兜底表会漂移,用脚本盯住
-
-`src/lib/catalog/products.ts` 是 Shopify 不可达时的兜底。商家改价/改名后它会
-过时,所以:
+在服务器的**固定项目目录**（例如`/opt/offy`）维护`.env`：
 
 ```bash
-pnpm check:catalog      # 比 handle / 名称 / 价格 / 系列归属,有漂移则退出非零
+cp .env.production.example .env
+chmod 600 .env
+# 填写真实配置，不把此文件提交git
 ```
 
-建议放进部署流程 —— 兜底表显示错价(尤其 0 价)比整站降级更难被发现。
+至少填写`SITE_URL`、`SHOPIFY_STORE_DOMAIN`、`SHOPIFY_STOREFRONT_TOKEN`。`DATABASE_URL`保持`/data/offy.db`等`/data/`内路径，不能把开发机的`./data/offy.db`原样传给容器。保持原Compose项目目录/项目名和`offy-data`卷；换目录或改项目名可能指向另一份卷，需先确认数据迁移。
 
----
+启用KOL另需：
 
-## 数据库说明
+```dotenv
+KOL_ENABLED=true
+KOL_SETTLEMENTS_ENABLED=false
+ADMIN_ORIGIN=https://你的管理域名或IPv4:8443
+KOL_INGRESS_SECRET=独立随机值_至少32字符_hex或base64url
+KOL_SIGNING_SECRET=另一个独立随机值_至少32字符
+KOL_WORKER_SECRET=第三个独立随机值_至少32字符
+SHOPIFY_ADMIN_TOKEN=实际服务端Admin令牌
+SHOPIFY_WEBHOOK_SECRET=实际应用验签秘密
+KOL_ADMIN_BOOTSTRAP_HASH=私密的初始scrypt哈希
+```
 
-当前里程碑用 **SQLite**。生产部署务必把数据放在**持久化目录**（Docker 用
-volume `/data`，裸 Node 用 `/var/lib/offy/offy.db`），不要放在应用目录里，
-否则重新部署会覆盖数据。
+以上内容为说明，不能直接作为真实配置。`ADMIN_ORIGIN`使用精确origin，无尾部斜杠；后台外部端口与主站及源站3000/3001不同。管理员白名单仅`wangperry666@gmail.com`；密码哈希通过`pnpm kol:admin prepare-production wangperry666@gmail.com`隐藏输入生成（已准备的私密配置也可使用）。把该**哈希配置**私密提供给服务器，不写明文密码，不放build args。Docker在迁移后首次初始化owner，已有密码保留。详见 [KOL运行手册](kol-platform-operations.md)。
 
-切 **PostgreSQL**（后续商城阶段建议）：见
-[`docs/architecture.md`](./architecture.md)「数据层与 PostgreSQL 预留」。
-schema 需改为 `pg-core` 并重新生成迁移，属后续 spec 变更。
+新功能与结算开关独立。上线前完成真实Shopify/税/付款退款/归因核验，再单独开启结算；部署脚本不会代替这些验收。
 
----
+## Nginx首次接入
 
-## 部署方式：Docker(唯一推荐路径)
+可手工按`deploy/nginx-kol.conf`配置，再由部署脚本验证现有入口；也可让脚本管理**你明确指定的、已被主Nginx加载的Offy站点文件**：
 
-> **2026-10 起,线上统一走 Docker。** 之前是「裸 Node + systemd + 手工
-> `npx next build`」,那条路有两个问题:(1) 绕过了 `docker-compose.prod.yml`
-> 里固定下来的构建期参数(见 `build.args`),预渲染拿到的是占位域名;(2) systemd
-> 服务会和容器**抢 3000 端口**,谁先起来谁占住。旧的 `deploy/offy.service`
-> 保留只为回滚参考,不要再启用。
+```dotenv
+# 示例路径，必须改成服务器上真实的Offy活动站点配置和证书文件
+DEPLOY_NGINX_CONFIG=/etc/nginx/sites-available/offy
+DEPLOY_SITE_TLS_CERTIFICATE=/etc/letsencrypt/live/主站域名/fullchain.pem
+DEPLOY_SITE_TLS_KEY=/etc/letsencrypt/live/主站域名/privkey.pem
+DEPLOY_ADMIN_TLS_CERTIFICATE=/etc/letsencrypt/live/管理域名/fullchain.pem
+DEPLOY_ADMIN_TLS_KEY=/etc/letsencrypt/live/管理域名/privkey.pem
+DEPLOY_CA_FILE=
+```
 
-### 服务器上更新(日常)
+使用`conf.d`的系统可将目标选为`/etc/nginx/conf.d/offy.conf`。不要另选新文件而保留相同域名的旧server块；目标应是此站点的实际活动配置。若有自定义Nginx规则，先评估模板再决定是否自动管理；未填写目标时脚本保留已有配置，只验证入口。
+
+生成器从`SITE_URL`/`ADMIN_ORIGIN`取域名和端口；默认主站443、后台8443，也支持IPv4＋独立端口，证书需覆盖该IP。源站3000/3001只绑定loopback，分别转发主站和管理请求；主站拒绝管理页/API并清空伪造入口标记；后台仅开放管理路由及必要静态资源。配置文件含私密入口标记，以600权限写入。默认不自动操作防火墙，确认只开放计划中的站点入口。
+
+自动安装会先保留旧文件，在实际主配置下`nginx -t`，通过后reload；语法或HTTPS边界失败时恢复原站点文件。`DEPLOY_CA_FILE`仅用于显式可信CA bundle，脚本从不使用`curl -k`。这不是证书签发工具。
+
+## 首次获取脚本与启用
+
+先将本次代码提交/推送到**原有 GitHub 仓库**。服务器继续使用原 checkout 和配置，不需要手动上传源码：
 
 ```bash
-cd /opt/offy        # 或你的 DEPLOY_DIR
-./deploy/update.sh
+cd /opt/offy
+# 首次获取新增脚本；后续由部署脚本自己拉取
+git pull --ff-only
+bash deploy/update.sh --kol --check
+bash deploy/update.sh --kol
 ```
 
-`deploy/update.sh` 按顺序做六件事,**任何一步不过就停下并说明原因**:
+首次整套发布将 KOL 归因/Shopify webhook 代码更新到主站，并建立独立后台容器，Nginx 管理上游切换到 loopback3001。主站升级会有短暂重启窗口；后续兼容的后台更新才使用独立脚本。不能只启动后台就让尚未改造的旧主站自动拥有 KOL 归因能力。
 
-1. 检查 docker / compose 可用
-2. **如果 systemd 的 `offy` 服务还在跑就直接失败** —— 它占着 3000,容器起不来
-3. 校验 `.env` 存在且 `SHOPIFY_*` / `SITE_URL` 不是占位值
-4. `git pull --ff-only`
-5. `docker compose -f docker-compose.prod.yml up -d --build`
-6. 等 `/api/health` 通过,并检查它的 `config` 块
+服务器无需安装 Node/pnpm：Git、Python3、Docker、curl、flock 即可执行部署。已有 checkout 的 Git upstream 和服务器 GitHub 访问权限应可正常 `git pull`；脚本不切分支、不强制覆盖本地改动。首次还没有 checkout 时，用原仓库地址 `git clone` 到固定项目目录，随后按前述步骤配置，不另建后台仓库。
 
-### 为什么第 3 步和第 6 步要这么较真
-
-**缺 `SHOPIFY_*` 不会让站点报错。** 站点会正常 200、容器会 healthy,但商品目录
-**静默退回本地兜底表** —— 商品数量、名字、价格全是快照值。这个坑在本项目上已经
-真实踩过两次(容器与本地各一次),从页面上完全看不出来,所以现在:
-
-- `deploy/update.sh` 在部署前就拦住(占位值也拦)
-- 部署后检查 `/api/health` 的 `config.shopify` 是否为 `configured`
-- `pnpm check:catalog` 可以随时比对兜底表与线上是否漂移
-
-### 从旧的裸 Node 部署切过来
+## 日常只更新后台
 
 ```bash
-systemctl stop offy && systemctl disable offy    # 必须先做,否则容器抢不到端口
-cd /opt/offy && ./deploy/update.sh
+cd /opt/offy
+bash deploy/update-admin.sh
+# 等价命令（服务器已有 pnpm 时）：pnpm deploy:admin
 ```
 
-### 从本地推送到服务器
+默认检查配置后获取共享部署锁，拒绝 tracked 本地修改，`git pull --ff-only`，并在持有同一锁时重载新脚本；拉取失败就终止。Git worktree 也支持。脚本默认要求此目录是 Git checkout，不会悄悄用陈旧源码发布。不会执行 SSH、rsync 或要求 `DEPLOY_SERVER`。
+
+只检查（不拉代码、不构建、不备份、不改容器或 Nginx）：
 
 ```bash
-DEPLOY_SERVER=root@1.2.3.4 DEPLOY_DIR=/opt/offy ./scripts/deploy.sh
+bash deploy/update-admin.sh --check
 ```
 
-`scripts/deploy.sh` 用 rsync 把源码同步过去再在服务器上构建(原生模块要按 Linux
-编译)。
+只有已经有意准备好源码时才使用 `--skip-pull`；可用 `--env-file /私密路径/production.env` 指定服务器配置，默认使用原项目 `.env`。`--check` 仅验证声明配置和依赖，不代替正式发布对运行中主站和 HTTPS 的检查。
 
-**配置默认不经过这个脚本**:它只同步源码(rsync 明确排除 `.env`),服务器上那份
-`.env` 由你自己维护 —— 手工粘贴或其他方式都行,`deploy/update.sh` 会在部署前
-校验它。想临时从本地推一次配置时显式指定:
+整套发布仍使用 `bash deploy/update.sh --kol`（已有 KOL 启用时普通 `bash deploy/update.sh` 也包含后台），同样默认更新 Git。不要同时手动运行 Compose 或覆盖源码绕过共享部署锁。
 
-```bash
-DEPLOY_ENV_FILE=.env.production ./scripts/deploy.sh
-```
+## 容器、端口与数据互通
 
-**真实配置永远不进 git。** `.gitignore` 覆盖 `.env` / `.env.production` /
-`.env.*.local`;仓库只跟踪 `.env.example` 与 `.env.production.example` 两个模板,
-内容全是 `REPLACE_WITH_*` 占位符。可以随时自查:
+| 服务       | 镜像             | 宿主机源站端口 | 职责                                        |
+| ---------- | ---------------- | -------------- | ------------------------------------------- |
+| app        | offy-app:local   | 127.0.0.1:3000 | 独立站、推广入口、checkout、Shopify webhook |
+| admin      | offy-admin:local | 127.0.0.1:3001 | 管理页面/API、内部 worker API               |
+| kol-worker | offy-admin:local | 不发布         | 调用 http://admin:3000/api/kol/worker       |
 
-```bash
-git ls-files | grep -i env      # 只应看到两个 *.example 和 src/lib/env.ts
-```
+`app` 与 `admin` 是同一个 Next.js 工程的两个 Docker 实例，镜像标签和容器生命周期独立；不是两个仓库。两者挂载**同一个原有** `offy-data:/data`，使用相同的 `/data/offy.db`、店铺与 KOL 配置。数据库 WAL 与 busy timeout 支持进程间访问，后台直接读取主站已提交的记录，不通过公开端口传数据库或额外 RPC。保留原 Compose 项目名/目录，避免意外创建空卷。
 
-### 配置 HTTPS(nginx + certbot)
+独立脚本在构建前私密检查实际运行中的 app 容器：必须健康，数据库卷真实名称/路径、KOL 开关、店铺、密钥和管理 origin 必须与声明配置一致；不一致先执行整套发布。不要在独立后台发布时顺便轮换共用密钥或切换数据库。
 
-同下节,反代配置见 `deploy/nginx.conf`(国家判定默认由应用按 IP 自行解析,不需要
-nginx 模块;想让 nginx 覆盖时才看 `deploy/nginx-geoip2.conf`)。
+共库意味着数据库升级须兼容仍在运行的主站。当前迁移为增量扩展；未来删除/重命名共享字段等不兼容迁移需专门安排整套协调升级，不能承诺任意版本后台都可独立更新。整套脚本先启动并确认 app 健康，再启动 admin，避免两个 entrypoint 同时迁移。
 
-## 手工打包产物说明
+## 可选旧工具
 
-`pnpm package` 生成的 tarball 是**自包含**的：
+开发机远程上传仍可用 `DEPLOY_SERVER=user@服务器 DEPLOY_DIR=/opt/offy pnpm deploy:kol`，**只有这种 SSH 模式**才需要目标地址；这不是日常 Git 更新的必需步骤。源码归档 `pnpm package:source` 与 `--skip-pull` 保留用于离线交付，不是推荐生产流程。原 `pnpm package` 是同 OS/架构的裸 Node 包，不能替代 Docker 构建。
 
-```
-server.js            # Next standalone 入口
-node_modules/        # 已裁剪的运行时依赖（含 better-sqlite3）
-.next/static/        # 静态资源
-public/
-db/migrations/       # 迁移文件
-db/migrate.mjs       # 迁移执行器
-start.sh             # 启动脚本（加载 .env → 迁移 → server.js）
-.env.example
-```
+## 实际执行顺序
 
-在解包目录直接 `PORT=3000 ./start.sh` 即可运行（`start.sh` 会自动迁移）。
+1. 检查 Docker/Compose 和配置，私密解析 Compose JSON，不将 `.env` 当 Shell 执行。Git 更新后重新检查，并保留部署锁。
+2. 独立后台发布先核对运行中主站的实际设置/卷，再**只构建 admin 镜像**；整套发布构建 app、admin。旧容器在构建阶段继续服务。
+3. 使用本次目标镜像的一次性容器，对共享 `/data` 做 SQLite 在线 backup、完整性校验，保存在卷内私密 `deploy-backups/`。失败不替换服务；首次无 DB 时跳过备份。
+4. 独立发布只启动 admin，健康后更新 worker；均使用 `--no-deps`，不会由依赖隐式启动/替换 app。后台 entrypoint 执行兼容迁移与首次 owner 初始化。整套发布则先启动 app 并等待健康，再按此顺序启动后台。
+5. 检查后台 3001 健康、worker 容器运行、owner/店铺匹配，以及本次发布后的成功 worker 心跳。
+6. 明确选择了 Nginx 配置目标时安装/校验并 reload，否则验证现有配置。共享 Nginx 的 reload 仍会执行；不会重启主站容器。检查主站 admin/API 为404、后台登录200、未登录管理API401；正常校验 TLS。
+7. 全部通过才报告成功。不删除持久卷、不全局清理镜像。停用 KOL 的整套发布会停止旧 worker；独立后台脚本在 KOL 关闭时拒绝发布。
 
-## 常见问题
+运行设置可用`DEPLOY_WAIT_ATTEMPTS`（默认40）、`DEPLOY_WAIT_SECONDS`（默认3）调整等待；这些是部署工具选项，不进入浏览器/应用。KOL心跳失败可能是Shopify权限或连接问题，需查看admin/worker日志；脚本不会把它当成功，也不会自动向Shopify发测试付款。
 
-- **端口冲突**：默认 3000，用 `PORT=xxxx` 覆盖。
-- **数据丢失**：SQLite 文件必须放持久化目录（volume 或 `/var/lib/offy`）。
-- **原生模块不匹配**：跨平台部署请走 Docker 或在目标服务器上构建。
+## 失败与恢复
+
+备份在持久卷中，与迁移前状态一致。配置备份/源码排除规则不会让业务卷被rsync删除。回退应用前确认新旧schema兼容；需要恢复DB时停写、保留当前卷、从经过完整性校验的备份恢复到新文件，再确认财务合计和只读数据。脚本不自动回滚数据库或撤销Shopify外部操作。
+
+Nginx恢复只针对显式管理的站点文件。健康检查失败时可能已有新容器在运行，不能把非零退出误认为已经完成整套应用回滚。部署完成也不等于真实支付、税或本店优惠权益已验收。
+
+## 本次验证边界
+
+源码包实际生成并检查了私密文件/DB/缓存排除；通过隔离命令替身执行部署、上传、备份失败中止、worker失败、只检查和Nginx恢复分支。生成的Nginx配置另用真实本地Nginx和独立CA做HTTPS边界测试。Compose配置和应用生产build均另行校验。
+
+本机Docker daemon未运行，未执行真实容器构建/启动；本轮没有SSH连接或修改生产服务器。独立 Git 后台发布的补充验证见 [独立后台验收](admin-deployment-validation.md)。前一轮记录见 [一键部署验收](deployment-validation.md)。

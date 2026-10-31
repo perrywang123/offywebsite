@@ -1,3 +1,5 @@
+import { CommerceUnavailable } from "@/components/CommerceUnavailable";
+import { catalogResult } from "@/server/catalog/result";
 import type { Metadata } from "next";
 import Image from "next/image";
 import { headers } from "next/headers";
@@ -9,7 +11,7 @@ import { pickCountry } from "@/lib/geo";
 import { getLiveProductsBySeries, getLiveSeriesList } from "@/server/catalog/live";
 import { Reveal } from "@/components/Reveal";
 
-export const revalidate = 60;
+export const dynamic = "force-dynamic";
 
 /**
  * 系列封面 = 首页头图里该系列那一屏。
@@ -49,7 +51,16 @@ export async function generateMetadata({
   const { locale } = await params;
   const t = await getTranslations("catalog");
 
+  const country = pickCountry(await headers(), env.SHOPIFY_MARKET_COUNTRY);
+  const result = await catalogResult(
+    (async () => {
+      const list = await getLiveSeriesList();
+      await Promise.all(list.map((s) => getLiveProductsBySeries(s.slug, country)));
+      return list;
+    })(),
+  );
   return {
+    ...(result.status === "unavailable" ? { robots: { index: false, follow: true } } : {}),
     title: t("seriesKicker"),
     description: "Three OFFY series: princess, streetwear and dress-up.",
     alternates: { canonical: publicPath(locale, "/collections") },
@@ -63,13 +74,26 @@ export default async function CollectionsPage({ params }: { params: Promise<{ lo
   const country = pickCountry(await headers(), env.SHOPIFY_MARKET_COUNTRY);
 
   // 实时拉取:系列名称跟随 Shopify Collection 标题,张数来自该系列当前真实的商品清单。
-  const seriesList = await getLiveSeriesList();
-  const series = await Promise.all(
-    seriesList.map(async (s) => {
-      const products = await getLiveProductsBySeries(s.slug, country);
-      return { ...s, count: products.length, image: seriesHeroImage(s.slug) };
-    }),
+  const result = await catalogResult(
+    (async () => {
+      const list = await getLiveSeriesList();
+      return Promise.all(
+        list.map(async (s) => ({
+          ...s,
+          count: (await getLiveProductsBySeries(s.slug, country)).length,
+          image: seriesHeroImage(s.slug),
+        })),
+      );
+    })(),
   );
+  if (result.status === "unavailable")
+    return (
+      <div className="container-site section-y">
+        <h1 className="font-display mb-8 text-4xl font-semibold">{t("seriesTitle")}</h1>
+        <CommerceUnavailable />
+      </div>
+    );
+  const series = result.data;
 
   return (
     <div className="container-site section-y lg:py-12">

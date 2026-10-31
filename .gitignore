@@ -61,3 +61,10 @@ next-env.d.ts
 # raw source material (large, local-only). Curated site assets live in public/assets/.
 /resources/
 tmp/
+
+/.next-kol-integration/
+
+# Host-local deployment metadata
+/.deploy.lock
+/.offy-deploy-root
+/.deploy-backups/

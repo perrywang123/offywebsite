@@ -8,6 +8,26 @@ import {
 } from "./catalog";
 
 function mockFetch(json: unknown, ok = true): typeof fetch {
+  // Fixtures model a single Shopify variant; min-price-era fields are retained below for readable expectations.
+  const complete = (value: unknown): void => {
+    if (!value || typeof value !== "object") return;
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const n = value as Record<string, any>;
+    if (n.handle && n.priceRange) {
+      if (!n.variants?.nodes?.length)
+        n.variants = { nodes: [{ id: `gid://shopify/ProductVariant/${n.handle}`, sku: null }] };
+      for (const v of n.variants.nodes) {
+        v.price = n.priceRange.minVariantPrice;
+        v.availableForSale ??= n.availableForSale;
+      }
+    }
+    if (Array.isArray(n.nodes)) n.pageInfo = { hasNextPage: false, endCursor: null };
+    Object.values(n).forEach((v) => {
+      if (Array.isArray(v)) v.forEach(complete);
+      else complete(v);
+    });
+  };
+  complete(json);
   return vi.fn().mockResolvedValue({ ok, json: async () => json }) as unknown as typeof fetch;
 }
 
@@ -38,8 +58,22 @@ describe("listShopifyProducts", () => {
 
     const items = await listShopifyProducts(f);
     expect(items).toEqual([
-      { handle: "offy_redrush", title: "offy_redrush", priceCents: 13, currency: "USD", image: "https://cdn.shopify.com/a.jpg", available: true },
-      { handle: "no-image", title: "No Image", priceCents: 1200, currency: "USD", image: null, available: false },
+      {
+        handle: "offy_redrush",
+        title: "offy_redrush",
+        priceCents: 13,
+        currency: "USD",
+        image: "https://cdn.shopify.com/a.jpg",
+        available: true,
+      },
+      {
+        handle: "no-image",
+        title: "No Image",
+        priceCents: 1200,
+        currency: "USD",
+        image: null,
+        available: false,
+      },
     ]);
   });
 
@@ -58,7 +92,10 @@ describe("listShopifyProducts", () => {
     // 香港访客会拿到美国市场的 USD 金额。
     const f = mockFetch({ data: { products: { nodes: [] } } });
     await listShopifyProducts(f, "gb");
-    const [url, init] = (f as unknown as ReturnType<typeof vi.fn>).mock.calls[0] as [string, RequestInit];
+    const [url, init] = (f as unknown as ReturnType<typeof vi.fn>).mock.calls[0] as [
+      string,
+      RequestInit,
+    ];
     expect(url).toContain("ck=products-list%3AGB");
     expect(String(init.body)).toContain("@inContext(country: GB)");
   });
@@ -70,8 +107,16 @@ describe("fetchShopifyCollections", () => {
       data: {
         collections: {
           nodes: [
-            { handle: "frontpage", title: "OFFY Princess Series", description: "A bespoke wardrobe." },
-            { handle: "outdoor-sporty系列", title: "OFFY Streetwear Series", description: "Unfiltered attitude." },
+            {
+              handle: "frontpage",
+              title: "OFFY Princess Series",
+              description: "A bespoke wardrobe.",
+            },
+            {
+              handle: "outdoor-sporty系列",
+              title: "OFFY Streetwear Series",
+              description: "Unfiltered attitude.",
+            },
           ],
         },
       },
@@ -79,7 +124,11 @@ describe("fetchShopifyCollections", () => {
     const items = await fetchShopifyCollections(f);
     expect(items).toEqual([
       { handle: "frontpage", title: "OFFY Princess Series", description: "A bespoke wardrobe." },
-      { handle: "outdoor-sporty系列", title: "OFFY Streetwear Series", description: "Unfiltered attitude." },
+      {
+        handle: "outdoor-sporty系列",
+        title: "OFFY Streetwear Series",
+        description: "Unfiltered attitude.",
+      },
     ]);
   });
 
@@ -145,7 +194,7 @@ describe("fetchShopifyCollectionProducts", () => {
         currency: "USD",
         image: null,
         available: false,
-        variantId: null,
+        variantId: "gid://shopify/ProductVariant/ease",
         sku: null,
         createdAt: null,
       },
@@ -163,18 +212,27 @@ describe("fetchShopifyCollectionProducts", () => {
 
   it("throws when the collection handle does not exist (so the caller can fall back to local)", async () => {
     await expect(
-      fetchShopifyCollectionProducts("nope", "US", mockFetch({ data: { collectionByHandle: null } })),
+      fetchShopifyCollectionProducts(
+        "nope",
+        "US",
+        mockFetch({ data: { collectionByHandle: null } }),
+      ),
     ).rejects.toThrow();
   });
 
   it("throws on a non-OK HTTP response", async () => {
-    await expect(fetchShopifyCollectionProducts("frontpage", "US", mockFetch({}, false))).rejects.toThrow();
+    await expect(
+      fetchShopifyCollectionProducts("frontpage", "US", mockFetch({}, false)),
+    ).rejects.toThrow();
   });
 
   it("keeps collection + country in the cache key so one series' market prices cannot leak into another's", async () => {
     const f = mockFetch({ data: { collectionByHandle: { title: "x", products: { nodes: [] } } } });
     await fetchShopifyCollectionProducts("frontpage", "hk", f);
-    const [url, init] = (f as unknown as ReturnType<typeof vi.fn>).mock.calls[0] as [string, RequestInit];
+    const [url, init] = (f as unknown as ReturnType<typeof vi.fn>).mock.calls[0] as [
+      string,
+      RequestInit,
+    ];
     expect(url).toContain("ck=collection-products%3Afrontpage%3AHK");
     expect(String(init.body)).toContain("@inContext(country: HK)");
   });

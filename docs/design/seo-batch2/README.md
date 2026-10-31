@@ -1,3 +1,5 @@
+> 证据范围：以下是当次SEO修改的历史截图与验证，不代表2026-10-31实时Shopify内容或本轮业务验收。当前实现见 [current-state](../../current-state.md)。
+
 # SEO 第二批 · 视觉零变化证据(before / after 整页截图)
 
 对应改动:新增 4 类 JSON-LD —— `Product`+`Offer`(商品详情页)、

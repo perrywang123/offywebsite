@@ -1,3 +1,5 @@
+import { CommerceUnavailable } from "@/components/CommerceUnavailable";
+import { catalogResult } from "@/server/catalog/result";
 import Image from "next/image";
 import { headers } from "next/headers";
 import { notFound, permanentRedirect } from "next/navigation";
@@ -9,7 +11,7 @@ import {
   getLiveProductsBySeries,
   getLiveSeriesList,
 } from "@/server/catalog/live";
-import { getProductHandleAlias, getSeriesName } from "@/lib/catalog";
+import { getProductHandleAlias, merchSeriesName } from "@/lib/catalog";
 import { env } from "@/lib/env";
 import { pickCountry } from "@/lib/geo";
 import { formatPrice } from "@/lib/pricing";
@@ -20,8 +22,7 @@ import { Reveal } from "@/components/Reveal";
 import { JsonLd } from "@/components/seo/JsonLd";
 import { breadcrumbJsonLd, productJsonLd } from "@/lib/seo/jsonld";
 
-// 近实时：每 60s 重新生成，从 Shopify 拉取最新图片/描述/价格/标题/库存。
-export const revalidate = 60;
+export const dynamic = "force-dynamic";
 
 export async function generateMetadata({
   params,
@@ -30,7 +31,15 @@ export async function generateMetadata({
 }): Promise<import("next").Metadata> {
   const { locale, code } = await params;
   const country = pickCountry(await headers(), env.SHOPIFY_MARKET_COUNTRY);
-  const product = await getLiveProductByCode(code, country);
+  const result = await catalogResult(getLiveProductByCode(code, country));
+  if (result.status === "unavailable")
+    return {
+      title: "A moment with OFFY",
+      robots: { index: false, follow: true },
+      alternates: { canonical: publicPath(locale, `/products/${code}`) },
+      openGraph: { title: "A moment with OFFY", images: [] },
+    };
+  const product = result.data;
   if (!product) return {};
   const name = locale === "zh" ? product.name.zh : product.name.en;
   return {
@@ -40,7 +49,7 @@ export async function generateMetadata({
     openGraph: {
       title: name,
       description: product.description.en || name,
-      images: [{ url: product.images[0], alt: name }],
+      images: product.images.map((url) => ({ url, alt: name })),
     },
   };
 }
@@ -59,26 +68,32 @@ export default async function ProductDetailPage({
   const alias = getProductHandleAlias(code);
   if (alias) permanentRedirect(publicPath(locale, `/products/${alias}`));
   // 实时拉取:标题/图片/价格/描述/库存/结算变体 ID 均为 Shopify 当前真实值,
-  // 而非本地手写死的快照;Shopify 不可达时内部自动回退本地数据。
+
   // 价格按访客所在国家的市场币种返回(读 headers() → 本页按请求渲染)。
   const country = pickCountry(await headers(), env.SHOPIFY_MARKET_COUNTRY);
-  const product = await getLiveProductByCode(code, country);
+  const result = await catalogResult(getLiveProductByCode(code, country));
+  if (result.status === "unavailable")
+    return (
+      <div className="container-site section-y">
+        <CommerceUnavailable scene="product" heading="h1" />
+      </div>
+    );
+  const product = result.data;
   if (!product) notFound();
 
   const t = await getTranslations("product");
   const tHome = await getTranslations("home");
   const tCommon = await getTranslations("common");
-  const seriesList = await getLiveSeriesList();
+  const [seriesList, relatedProducts] = await Promise.all([
+    getLiveSeriesList().catch(() => []),
+    getLiveProductsBySeries(product.series, country).catch(() => []),
+  ]);
   const liveSeries = seriesList.find((s) => s.slug === product.series);
   // 系列展示名:真实系列用实时名(商家改 Shopify 标题即时生效);merch(贴纸/帆布包
   // 这类不属于任何系列的周边)**没有系列页**,名字取 lib/catalog/series.ts 里的
   // 哨兵展示名 —— 否则页面上会显示裸的 "merch"。
-  const seriesName = liveSeries?.name ?? getSeriesName(product.series);
-  const seriesLabel = seriesName
-    ? locale === "zh"
-      ? seriesName.zh
-      : seriesName.en
-    : product.series;
+  const seriesName = liveSeries?.name ?? (product.series === "merch" ? merchSeriesName : undefined);
+  const seriesLabel = seriesName ? (locale === "zh" ? seriesName.zh : seriesName.en) : "";
   // Shopify 单语言:zh 描述暂缺时回退英文原文(后续 Translate & Adapt 接管)
   const description =
     locale === "zh" ? product.description.zh || product.description.en : product.description.en;
@@ -87,9 +102,7 @@ export default async function ProductDetailPage({
     locale === "zh"
       ? (product.descriptionBlocks?.zh ?? product.descriptionBlocks?.en)
       : product.descriptionBlocks?.en;
-  const siblings = (await getLiveProductsBySeries(product.series, country)).filter(
-    (p) => p.code !== product.code,
-  );
+  const siblings = relatedProducts.filter((p) => p.code !== product.code);
 
   // 结构化数据(第 2 批 SEO):Product+Offer 用本页渲染的同一份 product
   // (含访客市场币种),面包屑的每一级都走 publicPath + SITE_URL.
@@ -193,11 +206,7 @@ export default async function ProductDetailPage({
               )
             )}
 
-            {/* Mood tags 已下线:它取自本地表的 `SERIES_TAGS` 硬编码(按系列统一给
-              "公主/优雅" 这类词),**从来没有从 Shopify 拉过** —— 实时路径里
-              `emotionTags: local?.emotionTags ?? tags` 恒成立,Shopify 侧也没有
-              对应字段。展示一个不是商家真实维护的标签会误导顾客,故整块移除。
-              数据层保留 emotionTags 字段(其它地方仍可能引用),只是详情页不再渲染。 */}
+            {}
             {product.dimensions && (
               <div className="border-cream-line space-y-6 border-t pt-8">
                 {product.dimensions && (
@@ -234,7 +243,11 @@ export default async function ProductDetailPage({
                 </p>
               ) : (
                 // 窄屏由吸底购买条接手(`max-md:hidden`),避免同屏两个"加入购物袋"
-                <AddToCartButton code={product.code} className="w-full max-md:hidden" />
+                <AddToCartButton
+                  code={product.code}
+                  disabled={!product.isAvailable || !product.shopifyVariantId}
+                  className="w-full max-md:hidden"
+                />
               )}
             </div>
           </div>
@@ -253,13 +266,15 @@ export default async function ProductDetailPage({
               {siblings.slice(0, 6).map((sibling) => (
                 <Link key={sibling.code} href={`/products/${sibling.code}`} className="group">
                   <div className="rounded-soft bg-paper relative aspect-[3/4] overflow-hidden">
-                    <Image
-                      src={sibling.images[0]}
-                      alt={sibling.name.en}
-                      fill
-                      sizes="(max-width:768px) 50vw, 16vw"
-                      className="object-cover transition-transform duration-300 group-hover:scale-105"
-                    />
+                    {sibling.images[0] && (
+                      <Image
+                        src={sibling.images[0]}
+                        alt={sibling.name.en}
+                        fill
+                        sizes="(max-width:768px) 50vw, 16vw"
+                        className="object-cover transition-transform duration-300 group-hover:scale-105"
+                      />
+                    )}
                   </div>
                   <p className="text-ink-soft mt-2 truncate text-xs">
                     {locale === "zh" ? sibling.name.zh : sibling.name.en}

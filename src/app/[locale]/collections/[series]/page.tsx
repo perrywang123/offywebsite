@@ -1,3 +1,6 @@
+import { CommerceUnavailable } from "@/components/CommerceUnavailable";
+import { catalogResult } from "@/server/catalog/result";
+import { seriesMap } from "@/lib/catalog/series";
 import type { Metadata } from "next";
 import Image from "next/image";
 import { headers } from "next/headers";
@@ -13,7 +16,7 @@ import { Reveal } from "@/components/Reveal";
 import { JsonLd } from "@/components/seo/JsonLd";
 import { breadcrumbJsonLd } from "@/lib/seo/jsonld";
 
-export const revalidate = 60;
+export const dynamic = "force-dynamic";
 
 /**
  * 本页自己的 metadata。
@@ -29,10 +32,22 @@ export async function generateMetadata({
   params: Promise<{ locale: string; series: string }>;
 }): Promise<Metadata> {
   const { locale, series: slug } = await params;
-  const series = (await getLiveSeriesList()).find((s) => s.slug === slug);
+  const result = await catalogResult(getLiveSeriesList());
+  if (result.status === "unavailable")
+    return {
+      title: "Series",
+      robots: { index: false, follow: true },
+      alternates: { canonical: publicPath(locale, `/collections/${slug}`) },
+    };
+  const series = result.data.find((s) => s.slug === slug);
+  const country = pickCountry(await headers(), env.SHOPIFY_MARKET_COUNTRY);
+  const productsResult = series
+    ? await catalogResult(getLiveProductsBySeries(series.slug, country))
+    : null;
   const isZh = locale === "zh";
 
   return {
+    ...(productsResult?.status === "unavailable" ? { robots: { index: false, follow: true } } : {}),
     title: series ? (isZh ? series.name.zh : series.name.en) : "Series",
     description: series
       ? isZh
@@ -55,12 +70,26 @@ export default async function SeriesPage({
   const country = pickCountry(await headers(), env.SHOPIFY_MARKET_COUNTRY);
 
   // 实时拉取:系列名称/该系列下的商品清单均来自 Shopify 当前真实状态,
-  // 不再依赖本地手写死的快照;Shopify 不可达时内部自动回退本地数据。
-  const seriesList = await getLiveSeriesList();
+
+  if (!Object.prototype.hasOwnProperty.call(seriesMap, slug)) notFound();
+  const result = await catalogResult(getLiveSeriesList());
+  if (result.status === "unavailable")
+    return (
+      <div className="container-site section-y">
+        <CommerceUnavailable heading="h1" />
+      </div>
+    );
+  const seriesList = result.data;
   const series = seriesList.find((s) => s.slug === slug);
   if (!series) notFound();
-
-  const products = await getLiveProductsBySeries(series.slug, country);
+  const productsResult = await catalogResult(getLiveProductsBySeries(series.slug, country));
+  if (productsResult.status === "unavailable")
+    return (
+      <div className="container-site section-y">
+        <CommerceUnavailable heading="h1" />
+      </div>
+    );
+  const products = productsResult.data;
   const idx = seriesList.findIndex((s) => s.slug === slug);
   const name = locale === "zh" ? series.name.zh : series.name.en;
   const tagline = locale === "zh" ? series.tagline.zh : series.tagline.en;

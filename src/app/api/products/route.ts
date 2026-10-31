@@ -15,21 +15,31 @@ export const dynamic = "force-dynamic";
  * 购物车各行的价格可能因此与上一国家不同——这正是"跟随访客市场"的预期行为。
  */
 export async function GET(request: Request) {
-  const country = pickCountry(request.headers, env.SHOPIFY_MARKET_COUNTRY);
-  const [products, series] = await Promise.all([getLiveProducts(country), getLiveSeriesList()]);
-  return NextResponse.json({
-    products: products.map((p) => ({
-      code: p.code,
-      slug: p.slug,
-      name: p.name,
-      description: p.description,
-      price: { currency: p.currency.toLowerCase(), amountCents: p.priceCents },
-      series: p.series,
-      dimensions: p.dimensions,
-      emotionTags: p.emotionTags,
-      images: p.images,
-      available: p.isAvailable,
-    })),
-    categories: series.map((s) => ({ code: s.slug, name: s.name })),
-  });
+  try {
+    const country = pickCountry(request.headers, env.SHOPIFY_MARKET_COUNTRY);
+    const [products, series] = await Promise.all([getLiveProducts(country), getLiveSeriesList()]);
+    return NextResponse.json(
+      {
+        products: products.map((p) => ({
+          code: p.code,
+          slug: p.slug,
+          name: p.name,
+          description: p.description,
+          price: { currency: p.currency.toLowerCase(), amountCents: p.priceCents },
+          series: p.series,
+          dimensions: p.dimensions,
+          emotionTags: p.emotionTags,
+          images: p.images,
+          available: p.isAvailable,
+        })),
+        categories: series.map((s) => ({ code: s.slug, name: s.name })),
+      },
+      { headers: { "Cache-Control": "no-store" } },
+    );
+  } catch {
+    return NextResponse.json(
+      { error: "catalog_unavailable" },
+      { status: 503, headers: { "Cache-Control": "no-store", "Retry-After": "5" } },
+    );
+  }
 }

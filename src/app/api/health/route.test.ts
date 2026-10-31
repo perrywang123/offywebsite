@@ -20,12 +20,12 @@ describe("GET /api/health", () => {
     expect(body.config.shopify).toBe("configured");
   });
 
-  it("缺少 Shopify 凭据时必须显式报出来(否则站点静默回退本地目录,排查成本极高)", async () => {
+  it("缺少 Shopify 凭据时必须显式报出来(商品区域应明确不可用)", async () => {
     const body = await healthWith(false, false, false);
     expect(body.status).toBe("ok");
     expect(body.config.shopify).toContain("MISSING");
     // 说清后果,而不只是打个标记
-    expect(body.config.shopify).toContain("回退");
+    expect(body.config.shopify).toContain("结算不可用");
   });
 
   it("存活判断与外部服务无关:Shopify 没配也仍然返回 ok", async () => {

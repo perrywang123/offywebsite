@@ -1,0 +1,202 @@
+[
+  {
+    "path": "/products/royal-grey",
+    "h1": 1,
+    "offer": false,
+    "panels": 1,
+    "prices": false,
+    "robots": "noindex, follow",
+    "scroll": 375,
+    "width": 375
+  },
+  {
+    "path": "/products/royal-grey",
+    "h1": 1,
+    "offer": false,
+    "panels": 1,
+    "prices": false,
+    "robots": "noindex, follow",
+    "scroll": 768,
+    "width": 768
+  },
+  {
+    "path": "/products/royal-grey",
+    "h1": 1,
+    "offer": false,
+    "panels": 1,
+    "prices": false,
+    "robots": "noindex, follow",
+    "scroll": 1440,
+    "width": 1440
+  },
+  {
+    "path": "/products/royal-grey",
+    "h1": 1,
+    "offer": false,
+    "panels": 1,
+    "prices": false,
+    "robots": "noindex, follow",
+    "scroll": 1920,
+    "width": 1920
+  },
+  {
+    "path": "/collections",
+    "h1": 1,
+    "offer": false,
+    "panels": 1,
+    "prices": false,
+    "robots": "noindex, follow",
+    "scroll": 375,
+    "width": 375
+  },
+  {
+    "path": "/collections",
+    "h1": 1,
+    "offer": false,
+    "panels": 1,
+    "prices": false,
+    "robots": "noindex, follow",
+    "scroll": 768,
+    "width": 768
+  },
+  {
+    "path": "/collections",
+    "h1": 1,
+    "offer": false,
+    "panels": 1,
+    "prices": false,
+    "robots": "noindex, follow",
+    "scroll": 1440,
+    "width": 1440
+  },
+  {
+    "path": "/collections",
+    "h1": 1,
+    "offer": false,
+    "panels": 1,
+    "prices": false,
+    "robots": "noindex, follow",
+    "scroll": 1920,
+    "width": 1920
+  },
+  {
+    "path": "/collections/outdoor-sporty",
+    "h1": 1,
+    "offer": false,
+    "panels": 1,
+    "prices": false,
+    "robots": "noindex, follow",
+    "scroll": 375,
+    "width": 375
+  },
+  {
+    "path": "/collections/outdoor-sporty",
+    "h1": 1,
+    "offer": false,
+    "panels": 1,
+    "prices": false,
+    "robots": "noindex, follow",
+    "scroll": 768,
+    "width": 768
+  },
+  {
+    "path": "/collections/outdoor-sporty",
+    "h1": 1,
+    "offer": false,
+    "panels": 1,
+    "prices": false,
+    "robots": "noindex, follow",
+    "scroll": 1440,
+    "width": 1440
+  },
+  {
+    "path": "/collections/outdoor-sporty",
+    "h1": 1,
+    "offer": false,
+    "panels": 1,
+    "prices": false,
+    "robots": "noindex, follow",
+    "scroll": 1920,
+    "width": 1920
+  },
+  {
+    "path": "/cart",
+    "h1": 1,
+    "offer": false,
+    "panels": 1,
+    "prices": false,
+    "robots": "noindex, follow",
+    "scroll": 375,
+    "width": 375
+  },
+  {
+    "path": "/cart",
+    "h1": 1,
+    "offer": false,
+    "panels": 1,
+    "prices": false,
+    "robots": "noindex, follow",
+    "scroll": 768,
+    "width": 768
+  },
+  {
+    "path": "/cart",
+    "h1": 1,
+    "offer": false,
+    "panels": 1,
+    "prices": false,
+    "robots": "noindex, follow",
+    "scroll": 1440,
+    "width": 1440
+  },
+  {
+    "path": "/cart",
+    "h1": 1,
+    "offer": false,
+    "panels": 1,
+    "prices": false,
+    "robots": "noindex, follow",
+    "scroll": 1920,
+    "width": 1920
+  },
+  {
+    "path": "/checkout",
+    "h1": 1,
+    "offer": false,
+    "panels": 1,
+    "prices": false,
+    "robots": "noindex, follow",
+    "scroll": 375,
+    "width": 375
+  },
+  {
+    "path": "/checkout",
+    "h1": 1,
+    "offer": false,
+    "panels": 1,
+    "prices": false,
+    "robots": "noindex, follow",
+    "scroll": 768,
+    "width": 768
+  },
+  {
+    "path": "/checkout",
+    "h1": 1,
+    "offer": false,
+    "panels": 1,
+    "prices": false,
+    "robots": "noindex, follow",
+    "scroll": 1440,
+    "width": 1440
+  },
+  {
+    "path": "/checkout",
+    "h1": 1,
+    "offer": false,
+    "panels": 1,
+    "prices": false,
+    "robots": "noindex, follow",
+    "scroll": 1920,
+    "width": 1920
+  }
+]

@@ -5,16 +5,18 @@
 #   cp .env.production.example .env
 #   docker compose -f docker-compose.prod.yml up -d --build
 #
-# The app binds to 127.0.0.1:3000 — put nginx/caddy in front for TLS
-# (see deploy/nginx.conf). To expose it directly instead, change the port
-# mapping to "3000:3000".
+# app/admin bind to loopback 3000/3001; keep both private behind Nginx TLS.
+# First KOL deployment: bash deploy/update.sh --kol
+# Subsequent admin-only Git updates: bash deploy/update-admin.sh
+# Keep the same checkout/Compose project to preserve offy-data.
 services:
-  app:
+  app: &offy-app
+    image: offy-app:local
     build:
       context: .
       dockerfile: Dockerfile
-      # 构建期参数:让 `next build` 的预渲染直接拿到真实目录数据,避免上线后
-      # 前 60s 还显示本地兜底目录。只传可公开的值 —— 密钥类走下面的 environment,
+      # 构建期只传公开配置；商业数据仅来自Shopify，故障显示重试态。
+      # 密钥类走下面的environment，
       # 不进构建参数(构建参数会留在镜像 history 里)。
       args:
         SITE_URL: "${SITE_URL:-http://localhost:3000}"
@@ -38,13 +40,20 @@ services:
       # 一直回落到 http://localhost:3000,线上 sitemap 和结算回跳都会指错域名。
       SITE_URL: "${SITE_URL:-http://localhost:3000}"
       # ---- Shopify:商品目录与结算都走 Storefront API ----
-      # 这几项不传,应用会整体回退本地静态目录(现象:商品数不对、系列名是本地
-      # 占位名、部分商品 $0.00)。
+      # 这几项不传时不展示商品事实，也不创建Shopify支付会话。
       SHOPIFY_STORE_DOMAIN: "${SHOPIFY_STORE_DOMAIN:-}"
       SHOPIFY_STOREFRONT_TOKEN: "${SHOPIFY_STOREFRONT_TOKEN:-}"
       SHOPIFY_ADMIN_TOKEN: "${SHOPIFY_ADMIN_TOKEN:-}"
       SHOPIFY_API_VERSION: "${SHOPIFY_API_VERSION:-2026-07}"
       SHOPIFY_MARKET_COUNTRY: "${SHOPIFY_MARKET_COUNTRY:-US}"
+      KOL_ADMIN_BOOTSTRAP_HASH: "${KOL_ADMIN_BOOTSTRAP_HASH:-}"
+      KOL_ENABLED: "${KOL_ENABLED:-false}"
+      KOL_SETTLEMENTS_ENABLED: "${KOL_SETTLEMENTS_ENABLED:-false}"
+      ADMIN_ORIGIN: "${ADMIN_ORIGIN:-https://admin.offy.example.com:8443}"
+      KOL_INGRESS_SECRET: "${KOL_INGRESS_SECRET:-}"
+      KOL_SIGNING_SECRET: "${KOL_SIGNING_SECRET:-}"
+      KOL_WORKER_SECRET: "${KOL_WORKER_SECRET:-}"
+      SHOPIFY_WEBHOOK_SECRET: "${SHOPIFY_WEBHOOK_SECRET:-}"
       # ---- 支付渠道:留空则对应渠道自动禁用 ----
       STRIPE_SECRET_KEY: "${STRIPE_SECRET_KEY:-}"
       STRIPE_WEBHOOK_SECRET: "${STRIPE_WEBHOOK_SECRET:-}"
@@ -66,5 +75,36 @@ services:
       retries: 3
       start_period: 15s
 
+  # Same source and database, independent image/container lifecycle.
+  admin:
+    <<: *offy-app
+    profiles: [kol]
+    image: offy-admin:local
+    ports:
+      - "127.0.0.1:3001:3000"
+
+  kol-worker:
+    profiles: [kol]
+    image: offy-admin:local
+    pull_policy: never
+    restart: always
+    entrypoint: ["node", "scripts/kol-worker.mjs"]
+    environment:
+      KOL_WORKER_URL: http://admin:3000/api/kol/worker
+      KOL_WORKER_SECRET: "${KOL_WORKER_SECRET:-}"
+    depends_on:
+      admin:
+        condition: service_healthy
+
 volumes:
   offy-data:
+
+# Optional host-side deployment metadata; never passed to the application/browser.
+# Select an ACTIVE site config explicitly before allowing the deploy script to replace it.
+x-offy-deploy:
+  nginx_config: "${DEPLOY_NGINX_CONFIG:-}"
+  site_tls_certificate: "${DEPLOY_SITE_TLS_CERTIFICATE:-}"
+  site_tls_key: "${DEPLOY_SITE_TLS_KEY:-}"
+  admin_tls_certificate: "${DEPLOY_ADMIN_TLS_CERTIFICATE:-}"
+  admin_tls_key: "${DEPLOY_ADMIN_TLS_KEY:-}"
+  ca_file: "${DEPLOY_CA_FILE:-}"

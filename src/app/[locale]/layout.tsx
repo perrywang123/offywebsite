@@ -3,8 +3,9 @@ import type { Metadata, Viewport } from "next";
 import { hasLocale, NextIntlClientProvider } from "next-intl";
 import { getTranslations, setRequestLocale } from "next-intl/server";
 import { routing, publicPath } from "@/i18n/routing";
-import { env } from "@/lib/env";
+import { env, kolEnabled } from "@/lib/env";
 import { getLiveSeriesList } from "@/server/catalog/live";
+import { ReferralBridge } from "@/components/kol/ReferralBridge";
 import { CartProvider } from "@/components/cart/CartProvider";
 import { CartDrawer } from "@/components/cart/CartDrawer";
 import { Header } from "@/components/layout/Header";
@@ -12,8 +13,7 @@ import { Footer } from "@/components/layout/Footer";
 import { SiteJsonLd } from "@/components/seo/SiteJsonLd";
 import "../globals.css";
 
-// 近实时:每 60s 重新生成,导航栏/页脚的系列名随 Shopify Collection 标题变化。
-export const revalidate = 60;
+export const dynamic = "force-dynamic";
 
 /** 视口:`viewportFit: "cover"` 是 `.safe-b` / `.safe-t` 里 env(safe-area-inset-*)
  *  能取到非零值的前提(否则刘海与 home indicator 区域一律按 0 处理,
@@ -75,8 +75,8 @@ export default async function LocaleLayout({
   const messages = (await import(`../../../messages/${locale}.json`)).default;
   // 全站导航(Header/Footer/MobileNav)共用同一次实时系列拉取结果,
   // 避免每个组件各自发起请求;Shopify 不可达时 getLiveSeriesList 内部
-  // 已回退本地静态 seriesList,这里不需要再处理失败场景。
-  const series = await getLiveSeriesList();
+
+  const series = await getLiveSeriesList().catch(() => []);
 
   return (
     <html lang={locale} suppressHydrationWarning>
@@ -85,6 +85,7 @@ export default async function LocaleLayout({
           dangerouslySetInnerHTML={{ __html: "document.documentElement.classList.add('js')" }}
         />
         {/* 第 2 批 SEO:Organization + WebSite 全站各一份(由根布局统一输出)。 */}
+        {kolEnabled() && <ReferralBridge />}
         <SiteJsonLd siteUrl={env.SITE_URL} />
         <NextIntlClientProvider messages={messages}>
           <CartProvider>

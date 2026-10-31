@@ -30,7 +30,12 @@
     "db:seed": "tsx db/seed.ts",
     "db:studio": "drizzle-kit studio",
     "sync:assets": "node scripts/sync-assets.mjs",
-    "check:catalog": "node scripts/check-catalog-drift.mjs"
+    "kol:admin": "node scripts/kol-admin.mjs",
+    "kol:integration": "tsx scripts/kol-integration.ts",
+    "deploy:kol": "bash scripts/deploy.sh --kol",
+    "package:source": "bash scripts/package-source.sh",
+    "deploy:admin": "bash deploy/update-admin.sh",
+    "deploy:server": "bash deploy/update.sh"
   },
   "dependencies": {
     "@formatjs/intl-localematcher": "^0.8.13",

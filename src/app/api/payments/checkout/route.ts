@@ -19,6 +19,7 @@ const shippingSchema = z.object({
 });
 
 const bodySchema = z.object({
+  referralTicket: z.string().uuid().optional(),
   provider: z.enum(["stripe", "paypal", "shopify"]).optional(),
   items: z
     .array(z.object({ code: z.string(), quantity: z.number() }))
@@ -51,6 +52,7 @@ export async function POST(request: Request) {
     email: parsed.email,
     shipping: parsed.shipping,
     country,
+    referralTicket: parsed.referralTicket,
   });
 
   if (result.ok) {

@@ -11,3 +11,9 @@ db/migrations
 .pnpm-cache
 .npm-cache
 .home
+
+# Historical drafts and extracted source evidence retain their original formatting.
+docs/history/**
+docs/qa-source*.md
+docs/our-story-source.md
+docs/image-inventory.md

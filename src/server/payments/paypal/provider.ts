@@ -38,32 +38,37 @@ export class PayPalPaymentProvider implements PaymentProvider {
   }
 
   async createCheckout(input: CreateCheckoutInput): Promise<CreateCheckoutResult> {
-    // 实时解析(getLiveProductByCode 内部已在 Shopify 不可达时自动回退本地目录),
-    // 保证新上架 Shopify 商品也能走通 PayPal 结算,不需要再手动维护本地清单。
     const validItems: { product: Product; quantity: number }[] = [];
-    for (const item of input.items) {
-      const product = await getLiveProductByCode(item.code, input.country ?? DEFAULT_MARKET_COUNTRY);
-      if (!product || !product.isAvailable || product.isQuoteOnly) {
-        return { ok: false, status: 400, error: "invalid_items" };
+    try {
+      for (const item of input.items) {
+        const product = await getLiveProductByCode(
+          item.code,
+          input.country ?? DEFAULT_MARKET_COUNTRY,
+        );
+        if (!product || !product.isAvailable || product.isQuoteOnly) {
+          return { ok: false, status: 400, error: "invalid_items" };
+        }
+        validItems.push({ product, quantity: item.quantity });
       }
-      validItems.push({ product, quantity: item.quantity });
+    } catch {
+      return { ok: false, status: 503, error: "catalog_unavailable" };
     }
     if (validItems.length === 0) return { ok: false, status: 400, error: "invalid_request" };
     if (!this.isConfigured()) return { ok: false, status: 503, error: "paypal_unavailable" };
 
-    // ⚠️ 未完成的多币种改造(有意留白,不静默混币):PayPal 这条通道按 USD 计价,
-    // 且 capture 阶段会用 `assertCurrencyUsd` 强校验,而订单快照表还没有"下单市场
-    // 币种"这一列。解析出非 USD 价格时直接拒绝,而不是把 GBP/HKD 金额标成 USD 收。
-    // (2026-08 起结算渠道已确定只保留 Shopify,故这里不再扩展。)
+    // Legacy provider remains USD-only; expanding payment support requires a separate change.
     const nonUsd = validItems.find(({ product }) => product.currency.toUpperCase() !== "USD");
     if (nonUsd) {
       console.warn(
-        `PayPalPaymentProvider: refusing to charge ${nonUsd.product.currency} as USD (code=${nonUsd.product.code}); PayPal channel is USD-only until the order snapshot records a currency.`,
+        `PayPalPaymentProvider: refusing to charge ${nonUsd.product.currency} as USD (code=${nonUsd.product.code}); PayPal channel is USD-only.`,
       );
       return { ok: false, status: 400, error: "currency_not_supported" };
     }
 
-    const subtotalCents = validItems.reduce((sum, { product, quantity }) => sum + product.priceCents * quantity, 0);
+    const subtotalCents = validItems.reduce(
+      (sum, { product, quantity }) => sum + product.priceCents * quantity,
+      0,
+    );
     const lineItems: LineItemSnapshot[] = validItems.map(({ product, quantity }) => ({
       code: product.code,
       nameEn: product.name.en,
@@ -155,7 +160,9 @@ export class PayPalPaymentProvider implements PaymentProvider {
     }
     let shipping: ShippingInfo | undefined;
     try {
-      shipping = session.shippingJson ? (JSON.parse(session.shippingJson) as ShippingInfo) : undefined;
+      shipping = session.shippingJson
+        ? (JSON.parse(session.shippingJson) as ShippingInfo)
+        : undefined;
     } catch {
       shipping = undefined;
     }
@@ -185,7 +192,8 @@ export class PayPalPaymentProvider implements PaymentProvider {
       }
 
       const captureRes = await captureOrder(req.orderId, `capture_${randomUUID()}`);
-      if (captureRes.status !== "COMPLETED") return { ok: false, status: 502, error: "capture_failed" };
+      if (captureRes.status !== "COMPLETED")
+        return { ok: false, status: 502, error: "capture_failed" };
       const firstCapture = captureRes.purchase_units?.[0]?.payments?.captures?.[0];
 
       const payment: CompletedPayment = {

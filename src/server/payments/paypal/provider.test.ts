@@ -5,6 +5,9 @@ import { drizzle } from "drizzle-orm/better-sqlite3";
 import { migrate } from "drizzle-orm/better-sqlite3/migrator";
 import * as schema from "../../db/schema";
 
+vi.mock("../../catalog/live", async () => ({
+  getLiveProductByCode: (await import("../../../test/product")).testProductLookup,
+}));
 vi.mock("./client", () => ({
   createOrder: vi.fn(),
   getOrder: vi.fn(),
@@ -78,7 +81,13 @@ describe("PayPalPaymentProvider.capture", () => {
         paypalOrderId: "ORDER123",
         currency: "usd",
         lineItemsJson: JSON.stringify([
-          { code: "PCOF1-A3", nameEn: "Offy Tennis Ace", nameZh: "网球甜心 Offy", unitPriceCents: 4500, quantity: 2 },
+          {
+            code: "PCOF1-A3",
+            nameEn: "Offy Tennis Ace",
+            nameZh: "网球甜心 Offy",
+            unitPriceCents: 4500,
+            quantity: 2,
+          },
         ]),
         status: "pending",
       })
@@ -92,7 +101,19 @@ describe("PayPalPaymentProvider.capture", () => {
       id: "ORDER123",
       status: "COMPLETED",
       payer: { email_address: "buyer@example.com" },
-      purchase_units: [{ payments: { captures: [{ id: "CAPTURE1", status: "COMPLETED", amount: { currency_code: "USD", value: "90.00" } }] } }],
+      purchase_units: [
+        {
+          payments: {
+            captures: [
+              {
+                id: "CAPTURE1",
+                status: "COMPLETED",
+                amount: { currency_code: "USD", value: "90.00" },
+              },
+            ],
+          },
+        },
+      ],
     });
 
     const provider = new PayPalPaymentProvider(db);
@@ -118,7 +139,13 @@ describe("PayPalPaymentProvider.capture", () => {
         paypalOrderId: "ORDER123",
         currency: "usd",
         lineItemsJson: JSON.stringify([
-          { code: "PCOF1-A3", nameEn: "Offy Tennis Ace", nameZh: "网球甜心 Offy", unitPriceCents: 4500, quantity: 1 },
+          {
+            code: "PCOF1-A3",
+            nameEn: "Offy Tennis Ace",
+            nameZh: "网球甜心 Offy",
+            unitPriceCents: 4500,
+            quantity: 1,
+          },
         ]),
         status: "pending",
       })

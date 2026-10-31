@@ -27,6 +27,7 @@ function createDb() {
   const sqlite = new Database(env.DATABASE_URL);
   sqlite.pragma("journal_mode = WAL");
   sqlite.pragma("foreign_keys = ON");
+  sqlite.pragma("busy_timeout = 5000");
 
   return drizzle(sqlite, { schema });
 }

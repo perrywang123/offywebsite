@@ -1,21 +1,26 @@
-# Newsletter Subscription Specification
+# Newsletter Specification
 
 ## Purpose
-Allow visitors to subscribe to brand updates by submitting an email address, which is validated, normalized, and stored exactly once.
+
+Record the implemented email subscription capture, baseline 2026-10-31. Capturing an address does not implement email delivery or a marketing automation integration.
 
 ## Requirements
 
-### Requirement: Subscribe with a valid email
-The system SHALL accept a syntactically valid email, normalize it (trim + lowercase), and store it exactly once.
+### Requirement: Subscription persistence
 
-#### Scenario: New subscriber
-- **WHEN** a visitor submits a valid email
-- **THEN** the email is stored and the API returns HTTP 201
+The API SHALL trim and lowercase a syntactically valid email and store it once in newsletter_subscribers. Unique email enforcement SHALL be in SQLite. The form SHALL show localized success, duplicate, invalid-email and network feedback.
+
+#### Scenario: New subscription
+
+- **WHEN** a new valid email is submitted
+- **THEN** it is stored normalized and the API returns 201
 
 #### Scenario: Invalid email
-- **WHEN** a visitor submits an email that fails validation
-- **THEN** the API returns HTTP 400 and stores nothing
+
+- **WHEN** input is invalid
+- **THEN** the API returns 400 and stores nothing
 
 #### Scenario: Duplicate email
-- **WHEN** a visitor submits an already-subscribed email
-- **THEN** the API returns HTTP 409 and does not create a duplicate row
+
+- **WHEN** the normalized address already exists
+- **THEN** the API returns 409 without a duplicate row

@@ -1,4 +1,4 @@
-import { env } from "../../../lib/env";
+import { env, shopifyOrigin } from "../../../lib/env";
 
 export class ShopifyError extends Error {
   constructor(
@@ -21,7 +21,7 @@ export interface CartLineInput {
 
 /** Storefront GraphQL endpoint, e.g. https://xxx.myshopify.com/api/2026-07/graphql.json */
 export function storefrontEndpoint(): string {
-  return `https://${env.SHOPIFY_STORE_DOMAIN}/api/${env.SHOPIFY_API_VERSION}/graphql.json`;
+  return `${shopifyOrigin()}/api/${env.SHOPIFY_API_VERSION}/graphql.json`;
 }
 
 interface GraphQLResponse<T> {
@@ -36,6 +36,8 @@ async function storefrontFetch<T>(
 ): Promise<T> {
   const res = await fetchImpl(storefrontEndpoint(), {
     method: "POST",
+    cache: "no-store",
+    signal: AbortSignal.timeout(10000),
     headers: {
       "Content-Type": "application/json",
       "X-Shopify-Storefront-Access-Token": env.SHOPIFY_STOREFRONT_TOKEN ?? "",
@@ -112,8 +114,10 @@ export async function cartCreate(
   language: CartLanguage = "en",
   country: string = marketCountry(),
   returnUrl?: string,
+  referralReference?: string,
 ): Promise<ShopifyCart> {
   const attributes = returnUrl ? [{ key: "return_url", value: returnUrl }] : [];
+  if (referralReference) attributes.push({ key: "offy_ref", value: referralReference });
   const data = await storefrontFetch<CartCreateData>(
     cartMutation(normalizeCountry(country), language),
     { lines, attributes },

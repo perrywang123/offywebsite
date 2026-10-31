@@ -6,6 +6,8 @@ const withNextIntl = createNextIntlPlugin("./src/i18n/request.ts");
 const nextConfig: NextConfig = {
   // Produce a self-hostable, minimal server (used by the Dockerfile).
   output: "standalone",
+  // Separate local integration compiler output; never overwrite a running storefront build.
+  distDir: process.env.OFFY_INTEGRATION_TEST === "true" ? ".next-kol-integration" : ".next",
   /**
    * `src/lib/geo.ts` 在拿不到国家头时会用 geoip-lite 按访客 IP 解析国家。
    * 这个库的数据是**运行时从磁盘读**的:它用 `path.resolve(__dirname, "../data")`
@@ -25,6 +27,7 @@ const nextConfig: NextConfig = {
   },
   poweredByHeader: false,
   images: {
+    unoptimized: process.env.OFFY_INTEGRATION_TEST === "true",
     // Shopify product images are served from the Shopify CDN.
     remotePatterns: [{ protocol: "https", hostname: "cdn.shopify.com" }],
   },

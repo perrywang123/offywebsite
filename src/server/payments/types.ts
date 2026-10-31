@@ -17,6 +17,8 @@ export interface ShippingInfo {
 }
 
 export interface CreateCheckoutInput {
+  /** Opaque tab-local referral ticket; never accepts a KOL ID or client rate. */
+  referralTicket?: string;
   items: CheckoutItemInput[];
   locale: "en" | "zh";
   email?: string;

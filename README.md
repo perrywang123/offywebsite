@@ -1,102 +1,79 @@
-# Offy
+# Offy / is.offy
 
-PLAYCORE 凭空幻想（is.offy）品牌电商独立站：中英双语、品牌形象展示、商品目录、
-Casetify 式「选款 → 购物车 → Stripe 支付」全流程。
+is.offy 品牌展示与跨境电商站。当前公开英文，采用 Next.js 15.5.23、React 19、TypeScript、Tailwind CSS v4、next-intl、Shopify Storefront API 和 Drizzle/SQLite。
 
-技术栈：**Next.js 15 (App Router) · TypeScript · React 19 · Tailwind CSS v4 ·
-next-intl（中英可扩展）· Drizzle ORM（SQLite/PostgreSQL 预留）· Stripe · Vitest**。
+> 文档基线：2026-10-31。入口见 [文档导航](docs/README.md) 和 [当前状态](docs/current-state.md)。
+> Shopify 是唯一商品事实来源；读取失败时显示已确认的品牌化重试界面，不显示旧商品、旧价或假空袋。见 [展示方案](docs/shopify-unavailable-design.md)。
 
-## 功能
+## 当前能力
 
-| 能力 | 路由 |
-| --- | --- |
-| 品牌首页（hero/热门形象/系列/Lookbook/订阅） | `/zh` `/en` |
-| 商品目录（29 形象 · 9 系列 · 筛选） | `/products` |
-| 商品详情（大图/尺寸/情绪标签/形象选择器） | `/products/[code]` |
-| 系列页 | `/collections/[series]` |
-| 购物车（抽屉 + 独立页，localStorage 持久化） | `/cart` |
-| 结算（Stripe Checkout，USD，服务端计价） | `/checkout` |
-| 品牌宣传页（故事/团队/门店/未来 IP） | `/about` |
+| 能力                                                    | 公开地址/来源                                                         |
+| ------------------------------------------------------- | --------------------------------------------------------------------- |
+| 品牌首页、资讯、最新造型、区域限定、名册、订阅与未来 IP | `/`；品牌内容与 Shopify 混合                                          |
+| 全量商品与三大系列                                      | `/products`、`/collections`、`/collections/[series]`                  |
+| 商品详情、多图切换、同系列推荐、手机吸底加购            | `/products/[code]`；code 为 Shopify handle                            |
+| 购物袋抽屉和独立页                                      | `/cart`；`offy.cart.v1` 保存 code/quantity                            |
+| Shopify 托管结账                                        | 购物袋直接建 Shopify Cart 并跳转；`/checkout` 保留旧回调/直接访问入口 |
+| 品牌故事与包挂预告                                      | `/about`、`/bag-charm`；预告图支持 quick view                         |
+| FAQ、政策目录与联系信息                                 | `/faq`、`/policies`、`/policies/[handle]`                             |
+| KOL合作后台（默认关闭）                                 | 独立入口`/admin`；合作、双方式码、当次归因、佣金及人工月结            |
+| SEO                                                     | 独立 canonical、首页语义 H1、JSON-LD、robots、sitemap                 |
 
-> ⚠️ 商品名 / 价格 / 图↔编码映射当前为**占位值**（源自品牌手册 PDF 提取，见
-> [`docs/brand-brief.md`](./docs/brand-brief.md) §9）。修正只需改
-> [`src/lib/catalog/products.ts`](./src/lib/catalog/products.ts) 一处。
+当前只有 `en` 进入路由表，公开 URL 不带语言前缀。`/en/*` 307 去前缀，旧 `/zh/*` 308 去前缀。中文代码保留并不代表中文站已开放。
 
-## 快速开始
+商品唯一主路径是 `src/server/catalog/live.ts` 实时读取 Shopify；旧本地商品快照、富化器和漂移脚本已删除。商品数随市场和后台发布变化，不固定为 19/29/38。名称、价格、库存、商品图在 Shopify 维护。
 
-> 前置：Node.js ≥ 20（本地已验证 v24）、pnpm 10。
+## 本地运行
 
 ```bash
 pnpm install
-cp .env.example .env          # 首次需要，本地默认使用 SQLite
-pnpm db:migrate               # 应用数据库迁移
-pnpm db:seed                  # （可选）写入种子数据
-pnpm dev                      # 打开 http://localhost:3000
+cp .env.example .env
+# 填写 SITE_URL、SHOPIFY_STORE_DOMAIN、SHOPIFY_STOREFRONT_TOKEN
+pnpm db:migrate
+pnpm dev
 ```
 
-> 说明：`.npmrc` 将 pnpm store 与缓存放到项目内（`.pnpm-store/` 等），便于在受限 /
-> 沙箱环境中安装、也保证可复现。若你更想使用全局 store，可删除 `.npmrc` 中对应几行。
+默认访问 `http://localhost:3000`。依赖本地 Node/pnpm 与原生 `better-sqlite3`；Dockerfile 固定 Node 22。按 `packageManager` 使用 pnpm 10.26.2。
 
-## 常用脚本
+`SITE_URL` 是服务端 metadata/sitemap/回跳使用的地址。`NEXT_PUBLIC_SITE_URL` 不能替代它。未填 Shopify 凭据时，商品区域提供重试入口，商品 API/结算返回 503；品牌页面仍可使用。
 
-| 脚本 | 说明 |
-| --- | --- |
-| `pnpm dev` | 开发服务器（Turbopack） |
-| `pnpm build` / `pnpm start` | 生产构建 / 运行生产构建 |
-| `pnpm test` / `pnpm test:watch` | Vitest 运行 / 监听 |
-| `pnpm test:coverage` | 覆盖率报告 |
-| `pnpm typecheck` | 类型检查 |
-| `pnpm lint` / `pnpm format` | ESLint / Prettier |
-| `pnpm db:generate` / `db:migrate` / `db:seed` / `db:studio` | Drizzle 迁移与工具 |
-| `pnpm sync:assets` | 从 `resources/` 同步图片到 `public/assets/` |
+## 常用命令
 
-## 开发流程：spec-first + TDD
+| 命令                                            | 用途                                                        |
+| ----------------------------------------------- | ----------------------------------------------------------- |
+| `pnpm test` / `test:watch` / `test:coverage`    | Vitest + Testing Library                                    |
+| `pnpm typecheck` / `pnpm lint`                  | 类型和 ESLint                                               |
+| `pnpm format:check` / `pnpm format`             | 格式检查/全仓格式化；后者会改文件                           |
+| `pnpm build`                                    | 生产构建，配置为 standalone                                 |
+| `pnpm db:generate` / `db:migrate` / `db:studio` | SQLite schema 迁移与检查                                    |
+| `pnpm db:seed`                                  | 可选：向订阅表写两条示例邮箱；不是商品同步                  |
+| `pnpm sync:assets`                              | 从本地原始资源同步图片；会重写产物，勿用于日常 Shopify 同步 |
+| `pnpm package` / `pnpm deploy`                  | 打包/远程部署；见部署说明                                   |
 
-本项目遵循 **spec-first（OpenSpec）+ TDD** 工作流，详见 [`AGENTS.md`](./AGENTS.md)：
+## 开发纪律
 
-1. 先在 `openspec/changes/` 写变更提案与 spec delta；
-2. 用 `pnpm test:watch` 按 Red → Green → Refactor 实现；
-3. `openspec archive` 归档并把 spec 合并进 `openspec/specs/`。
+遵循 [AGENTS.md](AGENTS.md)：行为变更先写 OpenSpec proposal/tasks/delta 并校验，再以 Red → Green → Refactor 实现。纯文档变更使用 `skip_specs: true`，无须编造行为测试。主规范记录已实现行为，未批准方案留在 `openspec/changes/`。
 
-## 环境变量
+## 边界与部署
 
-见 [`.env.example`](./.env.example)。本地默认：
+- 公开购买路径只使用 Shopify；Stripe/PayPal provider 和 API 仍在，且仍限制 USD，不是当前 UI 的支付选项。
+- Shopify拥有主链路订单；可选KOL平台已实现独立webhook/财务核对与后台，默认关闭；全站行为分析/CMS未实现。
+- KOL运行、管理员初始化和隔离测试见 [手册](docs/kol-platform-operations.md)，验证证据及真实联调门槛见 [记录](docs/kol-platform-validation.md)。
+- 已实现数据库只有 SQLite。PostgreSQL 分支、pg schema、迁移和异步 DAL 尚未实现，不能只改环境变量切换。
+- 生产主路径为 Docker Compose + nginx + 持久化 `/data`。standalone 用 `node server.js` 启动；`pnpm start` 保留为 Next CLI 入口，不是推荐的生产操作手册。
 
-```env
-DATABASE_PROVIDER=sqlite
-DATABASE_URL=./data/offy.db
-STRIPE_SECRET_KEY=REPLACE_WITH_STRIPE_SECRET_KEY          # 换成你的 Stripe 测试 key 才能走通支付
-NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY=REPLACE_WITH_STRIPE_PUBLISHABLE_KEY
+详见 [架构](docs/architecture.md)、[部署](docs/deployment.md)、[路线图](docs/roadmap.md)。
+
+## 服务器 Git 部署
+
+代码继续保存在原 GitHub 仓库。将改动推送到仓库后，在服务器**原有固定 checkout**执行；脚本自动 `git pull --ff-only`，无需上传源码或填写服务器 IP：
+
+```bash
+cd /opt/offy
+bash deploy/update-admin.sh       # 仅更新独立 admin 容器与 worker，不重启主站
+# bash deploy/update.sh --kol     # 首次启用 KOL / 整套更新主站、后台和 worker
 ```
 
-切换生产 PostgreSQL 时，改 `DATABASE_PROVIDER=postgres` 并设置 `DATABASE_URL`，
-数据访问层隔离在 `src/server/db/client.ts`（详见 [`docs/architecture.md`](./docs/architecture.md)）。
+两套应用使用不同镜像与 loopback 端口，共用原 Compose 项目中的 SQLite 持久卷。首次需要配置服务器 `.env`、Shopify 权限和 HTTPS 入口；后台外部访问地址只需在 `ADMIN_ORIGIN` 配置一次。独立发布会核对正在运行的主站配置，密钥/数据库不一致时要求先整套更新。
 
-## 部署
-
-三种方式，详见 [`docs/deployment.md`](./docs/deployment.md)：
-
-- **云服务器一键（Docker，推荐）**：把源码同步到服务器并在服务器上构建/启动，原生模块按 Linux 编译：
-
-  ```bash
-  DEPLOY_SERVER=root@你的IP DEPLOY_DIR=/opt/offy \
-    DEPLOY_ENV_FILE=.env.production pnpm deploy
-  ```
-
-- **自包含打包**：`pnpm package` 生成 `dist/offy-<版本>.tar.gz`，解包后 `./start.sh` 即跑（含自动迁移）。
-- **Vercel**：直接导入仓库即可。
-
-> 跨平台注意：`better-sqlite3` 是原生模块，macOS 本地打包的产物不能直接用于 Linux 服务器，
-> 请用 Docker 路径或在服务器上执行 `pnpm package`。
-
-## 目录结构
-
-```
-src/app/            App Router 页面与 API 路由
-src/components/     UI 组件（含测试）
-src/lib/            纯函数与 env 校验
-src/server/         服务端业务逻辑与数据层（含测试）
-db/                 迁移、种子与 migrate 脚本
-openspec/           spec-first 工作流（specs + changes）
-docs/               架构文档
-```
+详见 [部署手册](docs/deployment.md)。`pnpm deploy` / `deploy:kol` 保留为可选的开发机 SSH 上传工具，仅这类远程工具需要指定服务器。当前改动没有发布到生产。
