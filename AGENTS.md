@@ -55,6 +55,7 @@ Offy 是 is.offy 品牌展示与跨境电商站。技术栈：Next.js 15 App Rou
 - Conventional Commits：feat / fix / refactor / test / docs / chore。
 - 新服务端配置经 `src/lib/env.ts` 校验；客户端仅 `NEXT_PUBLIC_*`。启动诊断/健康检查现有直接读取配置的少量特例见架构说明。
 - 不打印或提交真实 `.env` 值；配置核对优先只检查是否已设置，文档使用 `.env.example`、`.env.production.example`。
+- 2026-11-01 用户明确授权：唯一生产管理员的邮箱与 scrypt 密码哈希存于服务端 `config/admin-account.json`，禁止明文及客户端暴露；其余真实凭据仍不入库。内部认证由部署脚本在服务器私密生成并保留，Shopify webhook 可选。
 - schema 集中于 `src/server/db/schema.ts`，迁移提交 `db/migrations/`。
 - code/handle 是路由与购物袋标识；SKU 是商家维护的展示编码，不能互换。
 - 市场金额和 currency 一起传递；不能把 GBP/HKD 金额标成 USD 或跨币种相加。

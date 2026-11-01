@@ -18,6 +18,8 @@
 /.offy-deploy-root
 /.deploy.lock
 /.deploy-backups/
+/.offy-runtime-secrets.json
+/.offy-runtime-*.local
 *.db
 *.db-*
 *.sqlite

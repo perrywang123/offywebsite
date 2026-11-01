@@ -7,6 +7,8 @@ node_modules
 .npm-cache
 .home
 .env*
+.offy-runtime-secrets.json
+.offy-runtime-*.local
 !.env.example
 !.env.production.example
 data

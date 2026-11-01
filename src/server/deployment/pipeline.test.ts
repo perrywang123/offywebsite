@@ -22,6 +22,7 @@ function setup(kol = true) {
     "update.sh",
     "update-admin.sh",
     "compose-config.py",
+    "runtime-secrets.py",
     "backup-db.mjs",
     "check-ingress.sh",
     "install-nginx.sh",
@@ -88,6 +89,10 @@ if '--env-file' in a:
    for name in ('app','admin'):c['services'][name]['environment']['KOL_ENABLED']=line.split('=',1)[1]
  if os.environ.get('KOL_ENABLED'):
   for name in ('app','admin'):c['services'][name]['environment']['KOL_ENABLED']=os.environ['KOL_ENABLED']
+ for key in ('KOL_INGRESS_SECRET','KOL_SIGNING_SECRET','KOL_WORKER_SECRET'):
+  if os.environ.get(key):
+   for name in ('app','admin'):c['services'][name]['environment'][key]=os.environ[key]
+   if key=='KOL_WORKER_SECRET':c['services']['kol-worker']['environment'][key]=os.environ[key]
  with open(os.environ['KOL_OBSERVATIONS'],'a') as f:f.write(json.dumps({'args':a,'kol':c['services']['app']['environment']['KOL_ENABLED'],'adminKol':c['services']['admin']['environment']['KOL_ENABLED'],'settlements':c['services']['app']['environment']['KOL_SETTLEMENTS_ENABLED'],'file':path})+'\\n')
 if 'config' in a and '--format' in a:print(json.dumps(c))
 if 'run' in a:
@@ -209,13 +214,12 @@ describe("unified server deployment", () => {
     try {
       const c = JSON.parse(readFileSync(f.env.CONFIG, "utf8"));
       for (const name of ["app", "admin"])
-        for (const key of ["SHOPIFY_ADMIN_TOKEN", "SHOPIFY_WEBHOOK_SECRET", "KOL_WORKER_SECRET"])
+        for (const key of ["SHOPIFY_ADMIN_TOKEN", "SHOPIFY_WEBHOOK_SECRET"])
           c.services[name].environment[key] = "";
       writeFileSync(f.env.CONFIG, JSON.stringify(c));
       const r = f.run(["--kol"]);
       expect(r.status).not.toBe(0);
-      for (const key of ["SHOPIFY_ADMIN_TOKEN", "SHOPIFY_WEBHOOK_SECRET", "KOL_WORKER_SECRET"])
-        expect(r.stderr).toContain(key);
+      for (const key of ["SHOPIFY_ADMIN_TOKEN"]) expect(r.stderr).toContain(key);
       expect(r.stderr).toContain(join(f.dir, ".env"));
       expect(r.stdout + r.stderr).not.toContain("test-token");
       expect(f.calls().flat()).not.toContain("build");

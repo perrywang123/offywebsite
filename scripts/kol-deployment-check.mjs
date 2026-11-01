@@ -28,7 +28,7 @@ else {
       const worker = get("worker"),
         shop = get("accountingShop");
       if (!owner || !validBootstrapHash(owner.password_hash))
-        fail("owner_missing_use_private_bootstrap_hash_or_admin_cli");
+        fail("owner_missing_check_startup_bootstrap");
       else if (shop !== process.env.SHOPIFY_STORE_DOMAIN?.toLowerCase())
         fail("accounting_shop_mismatch");
       else if (

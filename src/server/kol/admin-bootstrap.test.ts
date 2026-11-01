@@ -20,6 +20,30 @@ function fixture() {
 const adminScript = resolve("scripts/kol-admin.mjs"),
   bootstrapScript = resolve("scripts/kol-admin-bootstrap.mjs");
 describe("production account tools", () => {
+  it("initializes the sole owner from the server repository hash without a private bootstrap setting", () => {
+    const f = fixture();
+    try {
+      const result = spawnSync(process.execPath, [bootstrapScript], {
+        cwd: f.directory,
+        env: {
+          ...process.env,
+          NODE_ENV: "production",
+          DATABASE_URL: f.path,
+          KOL_ADMIN_BOOTSTRAP_HASH: "",
+        },
+        encoding: "utf8",
+      });
+      expect(result.status, result.stderr).toBe(0);
+      const row = f.sqlite.prepare("SELECT email,password_hash FROM kol_admins").get() as
+        { email: string; password_hash: string } | undefined;
+      expect(row?.email).toBe(owner);
+      expect(row?.password_hash).toMatch(/^scrypt:[a-f0-9]{32}:[a-f0-9]{128}$/);
+      expect(result.stdout + result.stderr).not.toContain(row!.password_hash);
+    } finally {
+      f.sqlite.close();
+      rmSync(f.directory, { recursive: true });
+    }
+  });
   it("refuses other emails and accepts an owner password through stdin", () => {
     const f = fixture();
     try {

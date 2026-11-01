@@ -60,6 +60,12 @@ function validate(config: unknown, args: string[] = []) {
   });
 }
 describe("deployment preflight", () => {
+  it("permits management and scheduled reconciliation without Shopify webhook configuration", () => {
+    const c = fixture();
+    c.services.app.environment.SHOPIFY_WEBHOOK_SECRET = "";
+    c.services.admin.environment.SHOPIFY_WEBHOOK_SECRET = "";
+    expect(validate(c, ["--kol"]).status).toBe(0);
+  });
   it("rejects independent admin database, signing key, public port or image drift", () => {
     for (const key of ["DATABASE_URL", "KOL_SIGNING_SECRET", "SHOPIFY_STORE_DOMAIN"] as const) {
       const c = fixture();
@@ -117,6 +123,8 @@ describe("source deployment archive", () => {
         ".env.production",
         ".env.example",
         ".env.production.example",
+        ".offy-runtime-secrets.json",
+        ".offy-runtime-temporary.local",
         "root.db",
         "root.db-wal",
         "scripts/kol-admin-bootstrap.mjs",
@@ -150,6 +158,7 @@ describe("source deployment archive", () => {
       expect(list).not.toContain("root.db");
       expect(list).not.toContain(".next-kol");
       expect(list).not.toContain("large.psd");
+      expect(list).not.toContain(".offy-runtime-");
     } finally {
       rmSync(dir, { recursive: true });
     }

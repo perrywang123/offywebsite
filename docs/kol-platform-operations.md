@@ -21,29 +21,25 @@
 
 先在隔离环境确认流程，再填运行时配置；不要把Admin token和秘密放Docker build args。模板见`.env.production.example`。
 
-| 配置                                           | 用途                                                                                       |
-| ---------------------------------------------- | ------------------------------------------------------------------------------------------ |
-| `KOL_ENABLED=false`                            | 无显式发布选项时默认关；`--kol`/后台独立发布为当次启用，仍需配置三个独立秘密与ADMIN_ORIGIN |
-| `KOL_SETTLEMENTS_ENABLED=false`                | 独立结算门槛；开启KOL不自动允许锁单/登记付款                                               |
-| `ADMIN_ORIGIN`                                 | 精确HTTPS origin，包括独立端口，例如`https://管理域名:8443`                                |
-| `KOL_INGRESS_SECRET`                           | 至少32字符，Nginx后台覆盖写入的入口秘密                                                    |
-| `KOL_SIGNING_SECRET`                           | 至少32字符，checkout归因签名；不要随意轮换，否则旧在途引用不能核验                         |
-| `KOL_WORKER_SECRET`                            | 至少32字符，仅内网worker调用认证                                                           |
-| `SHOPIFY_ADMIN_TOKEN`                          | 订单与优惠查询，生成代码需受控写入优惠权限                                                 |
-| `SHOPIFY_WEBHOOK_SECRET`                       | Shopify应用对应的webhook验签秘密（不同于Admin token）                                      |
-| `SHOPIFY_STORE_DOMAIN` / `SHOPIFY_API_VERSION` | 仅接受本店事件，API继续固定2026-07                                                         |
-| `KOL_ADMIN_BOOTSTRAP_HASH`                     | 可选生产初始scrypt哈希，只在owner尚不存在时创建；禁止明文                                  |
-| `DATABASE_URL`                                 | 应用迁移、管理员初始化指向同一持久卷文件，默认`/data/offy.db`                              |
+| 配置                                           | 用途                                                                     |
+| ---------------------------------------------- | ------------------------------------------------------------------------ |
+| `KOL_ENABLED=false`                            | 无显式发布选项时默认关；`--kol`/后台独立发布为当次启用，内部认证自动准备 |
+| `KOL_SETTLEMENTS_ENABLED=false`                | 独立结算门槛；开启KOL不自动允许锁单/登记付款                             |
+| `ADMIN_ORIGIN`                                 | 精确HTTPS origin，包括独立端口，例如`https://管理域名:8443`              |
+| `KOL_INGRESS_SECRET`                           | 部署工具自动准备的入口认证值；可兼容已有私密值                           |
+| `KOL_SIGNING_SECRET`                           | 自动准备并稳定保留的 checkout 归因签名值；不要随意轮换                   |
+| `KOL_WORKER_SECRET`                            | 自动准备的内网 worker 认证值                                             |
+| `SHOPIFY_ADMIN_TOKEN`                          | 订单与优惠查询，生成代码需受控写入优惠权限                               |
+| `SHOPIFY_WEBHOOK_SECRET`                       | 可选实时通知验签；为空时接口404，仍按原计划通过 Admin API 扫描/核对订单  |
+| `SHOPIFY_STORE_DOMAIN` / `SHOPIFY_API_VERSION` | 仅接受本店事件，API继续固定2026-07                                       |
+| `KOL_ADMIN_BOOTSTRAP_HASH`                     | 可选生产初始scrypt哈希，只在owner尚不存在时创建；禁止明文                |
+| `DATABASE_URL`                                 | 应用迁移、管理员初始化指向同一持久卷文件，默认`/data/offy.db`            |
 
-生成三个不同的随机值（分别运行；结果仅用于私密运行配置）：
-
-```bash
-openssl rand -hex 32
-```
+部署工具会自动生成和稳定保留内部认证参数，保存到服务器项目 `.offy-runtime-secrets.json`（0600），不用手工生成三组值。已设置的环境值和匹配运行容器的值会保留；冲突时停止，避免破坏在途归因。该文件不提交 Git、不进 Docker 构建、不随源码同步覆盖，需私密备份。
 
 初始化前先运行迁移。无网页注册。生产白名单仅允许`wangperry666@gmail.com`（忽略大小写/首尾空白），账号创建、重置、登录及已有session逐次检查；其他历史管理员不能进入生产。本地隔离环境保留虚构测试账号。
 
-生产初始密码通过隐藏输入准备，只向私密`.env`写入随机盐scrypt哈希：
+生产首次启动默认从服务端 `config/admin-account.json` 的唯一邮箱和已授权 scrypt 哈希初始化管理员；不包含明文密码、不发送到客户端。已有 owner 和后续重置密码保留，不在每次部署时覆盖。通常无需手工初始化；如需私密覆盖首次初始化密码，可隐藏输入生成 `.env` 中的哈希：
 
 ```bash
 pnpm kol:admin prepare-production wangperry666@gmail.com
@@ -84,6 +80,8 @@ docker compose -f docker-compose.prod.yml --profile kol up -d --build
 `app`使用`offy-app:local`，`admin`和`kol-worker`复用独立的`offy-admin:local`镜像；worker不暴露端口，也不直接打开DB，只通过Docker内部`http://admin:3000/api/kol/worker`消费持久任务。app/admin共同挂载原项目的`offy-data:/data`。启用前填写运行配置；不启用KOL时保持profile关闭。不要用`down -v`排障。
 
 ## Shopify授权与webhook
+
+Webhook 现在是可选增强，不是后台登录/发布的前置条件。未连接时，订单沿用现有 Admin API 分页增量扫描（完整一轮后15分钟再扫）及逐单核对，处理进度还受分页/队列影响，不宣称实时到账；结账诊断仍由站内 checkout 直接记录。通知接口在未配置签名密钥时返回404，后续配置后才接收验签事件。
 
 使用本店隔离测试环境核对实际授权。需要`read_orders`；优惠绑定需要读取优惠能力，生成需要`write_discounts`。写权限可能涵盖读能力，以`currentAppInstallation.accessScopes`实际值为准。不申请写订单、退款或转账权限。超过60天订单的重核对涉及历史读取权限；读取不到就阻止该结算，不能声称已核对。
 

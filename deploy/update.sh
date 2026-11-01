@@ -37,8 +37,18 @@ docker compose version >/dev/null 2>&1 || die 'Docker Compose plugin is unavaila
 docker info >/dev/null 2>&1 || die 'Docker daemon is not running or inaccessible'
 COMPOSE=(docker compose --env-file "$ENV_FILE" -f "$ROOT/docker-compose.prod.yml")
 OFFY_CONFIG_JSON="$(mktemp "${TMPDIR:-/tmp}/offy-compose.XXXXXX")"
-trap 'rm -f "$OFFY_CONFIG_JSON"' EXIT
+OFFY_SECRETS_JSON="$(mktemp "${TMPDIR:-/tmp}/offy-auth.XXXXXX")"
+trap 'rm -f "$OFFY_CONFIG_JSON" "$OFFY_SECRETS_JSON"' EXIT
 "${COMPOSE[@]}" --profile kol config --format json > "$OFFY_CONFIG_JSON"
+if [ "$(python3 -c 'import json,sys; print(json.load(open(sys.argv[1]))["services"]["app"]["environment"].get("KOL_ENABLED", "false"))' "$OFFY_CONFIG_JSON")" = true ]; then
+ PREPARE=(); [ "$CHECK_ONLY" = 0 ] || PREPARE=(--check)
+ python3 "$ROOT/deploy/runtime-secrets.py" "$OFFY_CONFIG_JSON" --env-file "$ENV_FILE" --output "$OFFY_SECRETS_JSON" ${PREPARE[@]+"${PREPARE[@]}"}
+ # Values are read as data into fixed variable names; never source/eval runtime files.
+ export KOL_INGRESS_SECRET="$(python3 -c 'import json,sys; print(json.load(open(sys.argv[1]))["KOL_INGRESS_SECRET"])' "$OFFY_SECRETS_JSON")"
+ export KOL_SIGNING_SECRET="$(python3 -c 'import json,sys; print(json.load(open(sys.argv[1]))["KOL_SIGNING_SECRET"])' "$OFFY_SECRETS_JSON")"
+ export KOL_WORKER_SECRET="$(python3 -c 'import json,sys; print(json.load(open(sys.argv[1]))["KOL_WORKER_SECRET"])' "$OFFY_SECRETS_JSON")"
+ "${COMPOSE[@]}" --profile kol config --format json > "$OFFY_CONFIG_JSON"
+fi
 VALIDATE=(); [ "$EXPLICIT_KOL" = 0 ] || VALIDATE=(--kol)
 if ! python3 "$ROOT/deploy/compose-config.py" validate "$OFFY_CONFIG_JSON" ${VALIDATE[@]+"${VALIDATE[@]}"}; then
  printf 'Check the named configuration keys in %s. Private credentials are not supplied by Git.\n' "$ENV_FILE" >&2
@@ -64,7 +74,7 @@ if [ "$SKIP_PULL" = 0 ]; then
   git diff --quiet && git diff --cached --quiet || die 'tracked local edits must be committed or resolved before deployment'
   say 'Fast-forwarding the configured Git upstream'
   git pull --ff-only
-  rm -f "$OFFY_CONFIG_JSON"
+  rm -f "$OFFY_CONFIG_JSON" "$OFFY_SECRETS_JSON"
   MODE=(); [ "$ADMIN_ONLY" = 0 ] || MODE=(--admin-only)
   # Reload new code while retaining the same lock and release scope.
   OFFY_DEPLOY_LOCK_HELD=1 exec bash "$ROOT/deploy/update.sh" --skip-pull ${VALIDATE[@]+"${VALIDATE[@]}"} ${MODE[@]+"${MODE[@]}"} --env-file "$ENV_FILE"
@@ -116,7 +126,7 @@ if [ "$KOL" = true ]; then
   if [ -n "$worker_id" ] && [ "$(docker inspect --format '{{.State.Running}}' "$worker_id")" = true ] && "${COMPOSE[@]}" exec -T admin node scripts/kol-deployment-check.mjs --since "$SINCE"; then ready=1; break; fi
   [ "$i" = "$ATTEMPTS" ] || sleep "$DELAY"
  done
- [ "$ready" = 1 ] || die 'KOL owner/worker is not ready; check bootstrap hash, Shopify permissions and worker logs'
+ [ "$ready" = 1 ] || die 'KOL owner/worker is not ready; check owner startup initialization, Shopify permissions and worker logs'
  if [ -n "$NGINX_TARGET" ]; then bash "$ROOT/deploy/install-nginx.sh" "$OFFY_CONFIG_JSON"
  else say 'Verifying the existing Nginx setup'; bash "$ROOT/deploy/check-ingress.sh" "$OFFY_CONFIG_JSON"; fi
 else

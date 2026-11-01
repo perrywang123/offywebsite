@@ -33,15 +33,14 @@ chmod 600 .env
 KOL_ENABLED=true
 KOL_SETTLEMENTS_ENABLED=false
 ADMIN_ORIGIN=https://你的管理域名或IPv4:8443
-KOL_INGRESS_SECRET=独立随机值_至少32字符_hex或base64url
-KOL_SIGNING_SECRET=另一个独立随机值_至少32字符
-KOL_WORKER_SECRET=第三个独立随机值_至少32字符
 SHOPIFY_ADMIN_TOKEN=实际服务端Admin令牌
-SHOPIFY_WEBHOOK_SECRET=实际应用验签秘密
-KOL_ADMIN_BOOTSTRAP_HASH=私密的初始scrypt哈希
 ```
 
-以上内容为说明，不能直接作为真实配置。`ADMIN_ORIGIN`使用精确origin，无尾部斜杠；后台外部端口与主站及源站3000/3001不同。管理员白名单仅`wangperry666@gmail.com`；密码哈希通过`pnpm kol:admin prepare-production wangperry666@gmail.com`隐藏输入生成（已准备的私密配置也可使用）。把该**哈希配置**私密提供给服务器，不写明文密码，不放build args。Docker在迁移后首次初始化owner，已有密码保留。详见 [KOL运行手册](kol-platform-operations.md)。
+以上内容为说明，不能直接作为真实配置。`ADMIN_ORIGIN`使用精确origin，无尾部斜杠；后台外部端口与主站及源站3000/3001不同。管理员白名单仅`wangperry666@gmail.com`；用户已授权的 scrypt 密码哈希位于服务端 `config/admin-account.json`，首次迁移后自动初始化 owner，无需手工创建账号。已有 owner 密码保留，不会每次发布重置。`KOL_ADMIN_BOOTSTRAP_HASH` 仍可作为私密首次初始化覆盖，密码不进 build args 或客户端。详见 [KOL运行手册](kol-platform-operations.md)。
+
+无需手工填写 `KOL_INGRESS_SECRET`、`KOL_SIGNING_SECRET`、`KOL_WORKER_SECRET`。脚本会复用现有配置/匹配的运行容器/服务器私密文件中的值，首次缺失时自动生成，并以 0600 权限保存在原项目 `.offy-runtime-secrets.json`。原 `.env` 不改写；此文件已排除出 Git、Docker 构建和源码同步，需与服务器配置一起私密备份。重复发布不轮换，来源冲突时停止并保留已有值。`--check` 仅使用临时候选，不创建或修改该持久文件。部署仍验证实际的入口秘密、归因签名和 worker 认证，只省去人工管理参数。
+
+`SHOPIFY_WEBHOOK_SECRET` 可暂时留空：后台登录和发布不受阻，原有 Admin API 增量扫描继续工作，完整扫描后每15分钟再扫，单轮实际处理还取决于分页/待处理任务；管理员也可执行同步与逐单核对。未配置时通知接口返回404，不接收未验签通知。以后接入实时通知时再配置真实签名密钥及 Shopify 订阅。此项与结账诊断采集无关，结算开关仍独立关闭。
 
 `--kol` 和 `update-admin.sh` 明确选择本次启用后台，会在解析 Compose 前设置运行时 `KOL_ENABLED=true`，覆盖私密文件或当前 Shell 中的 `false`，因此不再要求先手工改开关；该选择在 Git 拉取重载后继续生效。它们不改写 `.env`、不生成真实 Shopify 凭据，也不隐式开启 `KOL_SETTLEMENTS_ENABLED`。后续继续使用明确的后台命令；若希望无参数 `update.sh` 也自动包含后台，可在服务器私密配置中持久设置 `KOL_ENABLED=true`。
 
@@ -135,7 +134,7 @@ bash deploy/update-admin.sh --check
 
 ## 失败与恢复
 
-旧版 `KOL_ENABLED=true is required by --kol` 已在 2026-11-01 修复。服务器先 `git pull --ff-only` 获取新脚本，再运行 `bash deploy/update.sh --kol --check`。新脚本将显式模式作为本次启用，不要求修改文件中的默认 `false`。若仍有缺失配置，会列出缺少的后台键名，并指明实际运行文件；真实 Shopify Admin token、应用验签密钥、后台 HTTPS 地址和首次 owner 配置仍须在服务器私密提供，Git 中没有这些值。检查通过后执行 `bash deploy/update.sh --kol`。
+旧版 `KOL_ENABLED=true is required by --kol` 已在 2026-11-01 修复。服务器先 `git pull --ff-only` 获取新脚本，再运行 `bash deploy/update.sh --kol --check`。新脚本将显式模式作为本次启用，不要求修改文件中的默认 `false`。三个内部认证值自动准备，通知签名可选，首次 owner 从服务端哈希配置初始化。若仍有缺失配置，会列出后台键名，并指明实际运行文件；真实 Shopify Admin token 和后台 HTTPS 地址仍须在服务器提供。检查通过后执行 `bash deploy/update.sh --kol`。
 
 备份在持久卷中，与迁移前状态一致。配置备份/源码排除规则不会让业务卷被rsync删除。回退应用前确认新旧schema兼容；需要恢复DB时停写、保留当前卷、从经过完整性校验的备份恢复到新文件，再确认财务合计和只读数据。脚本不自动回滚数据库或撤销Shopify外部操作。
 

@@ -71,7 +71,7 @@ pnpm dev
 ```bash
 cd /opt/offy
 bash deploy/update-admin.sh       # 仅更新独立 admin 容器与 worker，不重启主站
-# bash deploy/update.sh --kol     # 首次启用 KOL / 整套更新主站、后台和 worker
+# bash deploy/update.sh --kol     # 整套更新；内部认证自动准备，首次 owner 从服务端哈希配置初始化
 ```
 
 两套应用使用不同镜像与 loopback 端口，共用原 Compose 项目中的 SQLite 持久卷。首次需要配置服务器 `.env`、Shopify 权限和 HTTPS 入口；后台外部访问地址只需在 `ADMIN_ORIGIN` 配置一次。独立发布会核对正在运行的主站配置，密钥/数据库不一致时要求先整套更新。
