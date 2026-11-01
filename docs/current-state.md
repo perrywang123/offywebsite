@@ -53,3 +53,5 @@ KOL平台实施与隔离验收见 [记录](kol-platform-validation.md)；运行�
 已补齐服务器Git一键Docker部署：同仓库独立主站/admin容器和镜像。`deploy/update-storefront.sh --kol`只更新主站并保留KOL，不动后台/worker/Nginx；`deploy/update-admin.sh`只更新后台与worker，不重启主站。首次启用可先主站后后台分次发布，共用原SQLite卷、锁、在线备份和1 CPU构建器。后台/整套发布验证worker与HTTPS；主站独立发布只验证app健康。共享工程仍整体编译，不是两个Next.js项目。见 [部署说明](deployment.md) 与 [独立主站验收](storefront-deployment-validation.md)；未执行生产发布。
 
 构建流程已改为lint先行，随后Next.js编译和内置类型检查，避免两类检查并发；阶段进度/耗时与私密Docker构建日志已补齐。服务器日志位于 `.deploy-logs/`，不进入源码交付；仍需在tmux内启动长任务，不能凭本地测试认定服务器长等待根因已修复。见 [串行构建验收](serial-build-validation.md)。
+
+2026-11-02：Shopify Admin 令牌采用可选的服务器手动配置，不自动获取或续期。未配置时不阻止后台部署/登录、本地记录及结账诊断；worker 仅做本地维护并标记同步暂停，保留远程队列和扫描进度，显式 Shopify 操作返回配置错误。令牌可通过后台独立发布替换，不要求主站同时更新；共享数据库、店铺和归因认证检查保留。已配置令牌的权限/同步失败与财务核验门槛不被跳过。见 [运行手册](kol-platform-operations.md#手动管理-admin-令牌) 与 [本地验收](optional-admin-token-validation.md)。

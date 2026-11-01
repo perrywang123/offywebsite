@@ -34,7 +34,8 @@ chmod 600 .env
 KOL_ENABLED=true
 KOL_SETTLEMENTS_ENABLED=false
 ADMIN_ORIGIN=https://你的管理域名或IPv4:8443
-SHOPIFY_ADMIN_TOKEN=实际服务端Admin令牌
+# 可选；留空仍可部署和登录后台，Shopify订单/优惠码功能暂不可用
+SHOPIFY_ADMIN_TOKEN=
 ```
 
 以上内容为说明，不能直接作为真实配置。`ADMIN_ORIGIN`使用精确origin，无尾部斜杠；后台外部端口与主站及源站3000/3001不同。管理员白名单仅`wangperry666@gmail.com`；用户已授权的 scrypt 密码哈希位于服务端 `config/admin-account.json`，首次迁移后自动初始化 owner，无需手工创建账号。已有 owner 密码保留，不会每次发布重置。`KOL_ADMIN_BOOTSTRAP_HASH` 仍可作为私密首次初始化覆盖，密码不进 build args 或客户端。详见 [KOL运行手册](kol-platform-operations.md)。
@@ -46,6 +47,24 @@ SHOPIFY_ADMIN_TOKEN=实际服务端Admin令牌
 `--kol` 和 `update-admin.sh` 明确选择本次启用后台，会在解析 Compose 前设置运行时 `KOL_ENABLED=true`，覆盖私密文件或当前 Shell 中的 `false`，因此不再要求先手工改开关；该选择在 Git 拉取重载后继续生效。它们不改写 `.env`、不生成真实 Shopify 凭据，也不隐式开启 `KOL_SETTLEMENTS_ENABLED`。后续继续使用明确的后台命令；若希望无参数 `update.sh` 也自动包含后台，可在服务器私密配置中持久设置 `KOL_ENABLED=true`。
 
 新功能与结算开关独立。上线前完成真实Shopify/税/付款退款/归因核验，再单独开启结算；部署脚本不会代替这些验收。
+
+### 手动配置 Shopify Admin 令牌（可选）
+
+后台不强依赖 Admin 令牌：未配置时仍可部署、登录、管理本地合作记录、查看历史账目和结账诊断。后台提示 Shopify 尚未配置，远程订单/优惠码操作返回明确错误；worker 保留待同步任务和扫描游标，只执行本地清理并记录暂停状态，不把这次运行当作 Shopify 同步成功。已填写但无效/权限不足的令牌仍会产生真实同步错误，部署的 worker 健康检查仍会失败；暂不接入时应清空错误值。
+
+在服务器实际选中的私密运行文件中手动填写 `SHOPIFY_ADMIN_TOKEN` 即可；不自动获取、续期或向 Shopify 申请权限，也不需要 Client ID/Client secret。原 `SHOPIFY_STOREFRONT_TOKEN` 继续供独立站使用，两种令牌不能混用。详细权限、有效期与来源说明见 [KOL 运行手册](kol-platform-operations.md#手动管理-admin-令牌)。
+
+以现有服务器目录为例：
+
+```bash
+cd /root/offywebsite
+# 编辑实际使用的私密文件；将 SHOPIFY_ADMIN_TOKEN 留空或换成真实 Admin API access token
+nano .env
+bash deploy/update-admin.sh --check
+bash deploy/update-admin.sh
+```
+
+如原本使用 `--env-file FILE`，编辑该文件并在两条命令中继续传同一个参数。仅 `docker compose restart` 不会载入修改后的环境。后台部署会按原流程构建/复用缓存、备份共享数据库并重新创建 admin，随后检查 worker 和入口；不会为了令牌变化重建或重启主站，不改变端口、数据库卷或归因密钥。仅令牌值变化不影响构建参数。后续主站独立发布也不会因后台已有不同 Admin 令牌而被拦截；店铺、共享数据库与归因认证配置仍须匹配。
 
 ## Nginx首次接入
 

@@ -60,6 +60,14 @@ function validate(config: unknown, args: string[] = []) {
   });
 }
 describe("deployment preflight", () => {
+  it("permits management deployment without an Admin token", () => {
+    const c = fixture();
+    for (const service of [c.services.app, c.services.admin])
+      service.environment.SHOPIFY_ADMIN_TOKEN = "";
+    const result = validate(c, ["--kol"]);
+    expect(result.status, result.stderr).toBe(0);
+    expect(result.stdout + result.stderr).not.toContain("test-storefront");
+  });
   it("permits management and scheduled reconciliation without Shopify webhook configuration", () => {
     const c = fixture();
     c.services.app.environment.SHOPIFY_WEBHOOK_SECRET = "";
@@ -112,6 +120,7 @@ describe("deployment preflight", () => {
 describe("running management compatibility", () => {
   it.each([
     "matching",
+    "older-admin-token",
     "legacy-disabled",
     "database",
     "legacy-database",
@@ -133,6 +142,7 @@ describe("running management compatibility", () => {
       if (scenario === "volume") volume = "other-data";
       if (scenario === "legacy-shop") environment.SHOPIFY_STORE_DOMAIN = "other.myshopify.com";
       if (scenario === "signing") environment.KOL_SIGNING_SECRET = "peer-private-value";
+      if (scenario === "older-admin-token") environment.SHOPIFY_ADMIN_TOKEN = "peer-private-value";
       if (scenario === "disable-active") environment.KOL_ENABLED = "true";
       const file = join(dir, "config.json");
       writeFileSync(file, JSON.stringify(config));
@@ -146,7 +156,9 @@ describe("running management compatibility", () => {
         ]),
         encoding: "utf8",
       });
-      expect(r.status, r.stderr).toBe(["matching", "legacy-disabled"].includes(scenario) ? 0 : 1);
+      expect(r.status, r.stderr).toBe(
+        ["matching", "legacy-disabled", "older-admin-token"].includes(scenario) ? 0 : 1,
+      );
       expect(r.stdout + r.stderr).not.toContain("peer-private-value");
     } finally {
       rmSync(dir, { recursive: true });

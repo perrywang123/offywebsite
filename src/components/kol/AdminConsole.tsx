@@ -378,6 +378,12 @@ export function AdminConsole({ view }: { view: View }) {
             </button>
           </div>
         </header>
+        {data.health.shopifyAdminConfigured === false && (
+          <p className="message" role="status">
+            未配置 Shopify Admin
+            令牌，订单同步与优惠码功能暂不可用。本地合作记录和结账诊断可正常查看。
+          </p>
+        )}
         {view === "checkouts" && <CheckoutDiagnostics />}
         {error && (
           <div className="message error" role="alert">

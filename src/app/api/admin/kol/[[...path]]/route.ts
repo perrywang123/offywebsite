@@ -25,7 +25,7 @@ import {
   signature,
 } from "@/server/kol/core";
 import { snapshot } from "@/server/kol/snapshot";
-import { codeGateway, campaigns } from "@/server/kol/shopify";
+import { codeGateway, campaigns, shopifyAdminConfigured } from "@/server/kol/shopify";
 import {
   bindExistingCode,
   queueCode,
@@ -249,6 +249,7 @@ export async function POST(request: Request, context: Context) {
       return json({ ok: true });
     }
     if (path[0] === "sync") {
+      if (!shopifyAdminConfigured()) throw new Error("shopify_admin_not_configured");
       audit(db, admin.id, "sync.run", "worker", {});
       return json(await runWorker(db));
     }

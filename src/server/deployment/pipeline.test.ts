@@ -304,12 +304,12 @@ describe("unified server deployment", () => {
     try {
       const c = JSON.parse(readFileSync(f.env.CONFIG, "utf8"));
       for (const name of ["app", "admin"])
-        for (const key of ["SHOPIFY_ADMIN_TOKEN", "SHOPIFY_WEBHOOK_SECRET"])
+        for (const key of ["ADMIN_ORIGIN", "SHOPIFY_WEBHOOK_SECRET"])
           c.services[name].environment[key] = "";
       writeFileSync(f.env.CONFIG, JSON.stringify(c));
       const r = f.run(["--kol"]);
       expect(r.status).not.toBe(0);
-      for (const key of ["SHOPIFY_ADMIN_TOKEN"]) expect(r.stderr).toContain(key);
+      expect(r.stderr).toContain("ADMIN_ORIGIN");
       expect(r.stderr).toContain(join(f.dir, ".env"));
       expect(r.stdout + r.stderr).not.toContain("test-token");
       expect(f.calls().filter(isImageBuild)).toHaveLength(0);
@@ -384,6 +384,40 @@ describe("unified server deployment", () => {
 });
 
 describe("independent server storefront deployment", () => {
+  it.each(["admin-token", ""])(
+    "applies manual Admin token %j without replacing the storefront",
+    (token) => {
+      const f = setup();
+      try {
+        const c = JSON.parse(readFileSync(f.env.CONFIG, "utf8"));
+        for (const name of ["app", "admin"])
+          c.services[name].environment.SHOPIFY_ADMIN_TOKEN = token;
+        writeFileSync(f.env.CONFIG, JSON.stringify(c));
+        writeFileSync(
+          join(f.dir, "running-app.json"),
+          JSON.stringify({
+            ...c.services.app.environment,
+            SHOPIFY_ADMIN_TOKEN: "old-private-admin-token",
+          }),
+        );
+        const r = f.run(["--admin-only"]);
+        expect(r.status, r.stdout + r.stderr).toBe(0);
+        expect(f.calls().find(isImageBuild)?.slice(-1)).toEqual(["admin"]);
+        const replacements = f.calls().filter((call) => call.includes("up"));
+        expect(replacements.map((call) => call.at(-1))).toEqual(["admin", "kol-worker"]);
+        expect(f.calls().find((call) => call.includes("run"))).toContain("admin");
+        expect(f.calls().some((call) => call.includes("scripts/kol-deployment-check.mjs"))).toBe(
+          true,
+        );
+        const running = JSON.parse(readFileSync(join(f.dir, "running-app.json"), "utf8"));
+        expect(running.SHOPIFY_ADMIN_TOKEN).toBe("old-private-admin-token");
+        expect(r.stdout + r.stderr).not.toContain("old-private-admin-token");
+        expect(r.stdout + r.stderr).not.toContain("admin-token");
+      } finally {
+        rmSync(f.dir, { recursive: true });
+      }
+    },
+  );
   it.each([true, false])(
     "releases app only while preserving the configured KOL switch: %s",
     (kol) => {

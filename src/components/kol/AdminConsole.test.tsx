@@ -1,7 +1,40 @@
-import { render, screen, waitFor } from "@testing-library/react";
+import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { describe, it, expect, vi } from "vitest";
 import { AdminConsole } from "./AdminConsole";
 describe("management states", () => {
+  it("shows a paused Shopify notice while local management remains usable", async () => {
+    vi.stubGlobal(
+      "fetch",
+      vi.fn().mockImplementation(async (url: string) =>
+        url.endsWith("connection")
+          ? Response.json({ error: "shopify_admin_not_configured" }, { status: 409 })
+          : Response.json({
+              partners: [],
+              codes: [],
+              jobs: [],
+              orders: [],
+              settlements: [],
+              balances: [],
+              audit: [],
+              health: {
+                shopifyAdminConfigured: false,
+                inbox: [],
+                failures: [],
+                worker: { at: Date.now(), error: null, shopify: "not_configured" },
+              },
+              admin: { email: "local@example.com" },
+              siteUrl: "https://offy.test",
+              settlementsEnabled: false,
+            }),
+      ),
+    );
+    render(<AdminConsole view="partners" />);
+    expect(await screen.findByText(/未配置 Shopify Admin 令牌/)).toBeInTheDocument();
+    expect(screen.getByRole("heading", { name: "合作达人" })).toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button", { name: /连接与同步/ }));
+    expect(await screen.findByText("Shopify Admin连接尚未配置")).toBeInTheDocument();
+    expect(screen.queryByText(/已连接 · 权限/)).not.toBeInTheDocument();
+  });
   it("requires login when the authenticated API returns 401 without displaying demonstration money", async () => {
     vi.stubGlobal(
       "fetch",

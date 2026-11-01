@@ -26,6 +26,7 @@ describe("read-only KOL deployment verification", () => {
               KOL_ENABLED: "true",
               DATABASE_URL: path,
               SHOPIFY_STORE_DOMAIN: "offy.test.myshopify.com",
+              SHOPIFY_ADMIN_TOKEN: "",
             },
             encoding: "utf8",
           },
@@ -52,6 +53,15 @@ describe("read-only KOL deployment verification", () => {
         JSON.stringify({ at: now, error: null }),
       );
       expect(run().status).toBe(0);
+      db.prepare("UPDATE kol_runtime SET value=? WHERE key='worker'").run(
+        JSON.stringify({ at: now, error: null, shopify: "not_configured" }),
+      );
+      const paused = run();
+      expect(paused.status).toBe(0);
+      expect(JSON.parse(paused.stdout)).toMatchObject({
+        workerReady: true,
+        shopifyAdminConfigured: false,
+      });
       db.prepare("UPDATE kol_runtime SET value=? WHERE key='worker'").run(
         JSON.stringify({ error: null }),
       );

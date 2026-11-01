@@ -54,7 +54,7 @@ def validate(c, explicit=False):
     need(not (env.get("KOL_SETTLEMENTS_ENABLED") == "true" and not kol), "KOL_SETTLEMENTS_ENABLED requires KOL_ENABLED")
     if not kol:
         return False
-    required = ("ADMIN_ORIGIN", "KOL_INGRESS_SECRET", "KOL_SIGNING_SECRET", "KOL_WORKER_SECRET", "SHOPIFY_ADMIN_TOKEN")
+    required = ("ADMIN_ORIGIN", "KOL_INGRESS_SECRET", "KOL_SIGNING_SECRET", "KOL_WORKER_SECRET")
     missing = [key for key in required if not isinstance(env.get(key), str) or not env[key].strip()]
     need(not missing, "KOL required keys: " + ", ".join(missing))
     _, site_host, site_port = origin(env["SITE_URL"], "SITE_URL")
@@ -68,8 +68,6 @@ def validate(c, explicit=False):
         secrets.append(value)
     need(len(set(secrets)) == 3, "KOL secrets must be distinct")
     need(re.fullmatch(r"[A-Za-z0-9_-]{32,128}", env["KOL_INGRESS_SECRET"]) is not None, "KOL_INGRESS_SECRET must use hex/base64url characters")
-    for key in ("SHOPIFY_ADMIN_TOKEN",):
-        need(bool(env.get(key, "").strip()), key)
     worker = c.get("services", {}).get("kol-worker", {})
     need(worker.get("environment", {}).get("KOL_WORKER_SECRET") == env["KOL_WORKER_SECRET"], "kol-worker KOL_WORKER_SECRET")
     admin = c.get("services", {}).get("admin", {})
@@ -110,7 +108,9 @@ def running_peer(c, containers, service="app"):
     # A disabled legacy admin can follow a first storefront-only KOL release.
     # Active management must retain all shared KOL settings while it keeps running.
     if service == "app" or actual.get("KOL_ENABLED") == "true":
-        keys += ("KOL_ENABLED", "KOL_SETTLEMENTS_ENABLED", "ADMIN_ORIGIN", "KOL_INGRESS_SECRET", "KOL_SIGNING_SECRET", "KOL_WORKER_SECRET", "SHOPIFY_WEBHOOK_SECRET", "SHOPIFY_ADMIN_TOKEN")
+        keys += ("KOL_ENABLED", "KOL_SETTLEMENTS_ENABLED", "ADMIN_ORIGIN", "KOL_INGRESS_SECRET", "KOL_SIGNING_SECRET", "KOL_WORKER_SECRET", "SHOPIFY_WEBHOOK_SECRET")
+    # Admin API credentials are local to the management consumer, not shared
+    # attribution state. Manual replacement must not require restarting its peer.
     for key in keys:
         guidance = "; shared configuration needs a coordinated update"
         if service == "app" and key == "KOL_ENABLED" and expected.get(key) == "true":

@@ -78,7 +78,7 @@ PostgreSQL env 枚举和依赖存在，但非 sqlite 会抛错，不能复用 SQ
 
 订单确认以高熵 session/order id 查询，拒绝顺序订单号枚举。政策 HTML 白名单消毒，JSON-LD 转义 `<`。KOL管理入口已实现管理员鉴权、Origin/CSRF、登录限流、审计及账本/结算事务；全站统一限流、客户账户和legacy完整订单事务仍未实现。
 
-新环境读取经 `env.ts`；instrumentation/health 的配置诊断、Next 配置、迁移与部署工具有现有直接读取 process.env 的边界。不得把密钥送入客户端。SHOPIFY_ADMIN_TOKEN现用于可选KOL订单/优惠服务，仅服务端读取；生产KOL默认关闭。新增纯Node管理员/worker工具各自校验最小输入，其配置项同时列入env.ts；独立集成编译目录是Next配置例外。
+新环境读取经 `env.ts`；instrumentation/health 的配置诊断、Next 配置、迁移与部署工具有现有直接读取 process.env 的边界。不得把密钥送入客户端。SHOPIFY_ADMIN_TOKEN现用于可选KOL订单/优惠服务，仅服务端读取，由服务器手动注入和更换；留空时不阻止后台登录/本地读取，worker暂停远程任务并保留队列，不自动获取/续期或假报扫描成功。生产KOL默认关闭。新增纯Node管理员/worker工具各自校验最小输入，其配置项同时列入env.ts；独立集成编译目录是Next配置例外。
 
 ## 展示、SEO 与发布
 

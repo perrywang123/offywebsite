@@ -1,13 +1,15 @@
 import { env, shopifyOrigin } from "@/lib/env";
 import type { CodeGateway, RemoteCode, Campaign } from "./codes";
 import { z } from "zod";
+export function shopifyAdminConfigured() {
+  return Boolean(env.SHOPIFY_ADMIN_TOKEN?.trim() && env.SHOPIFY_STORE_DOMAIN?.trim());
+}
 export async function adminRequest<T>(
   query: string,
   variables: Record<string, unknown> = {},
   fetchImpl: typeof fetch = fetch,
 ): Promise<T> {
-  if (!env.SHOPIFY_ADMIN_TOKEN || !env.SHOPIFY_STORE_DOMAIN)
-    throw new Error("shopify_admin_not_configured");
+  if (!shopifyAdminConfigured()) throw new Error("shopify_admin_not_configured");
   const response = await fetchImpl(
     `${shopifyOrigin()}/admin/api/${env.SHOPIFY_API_VERSION}/graphql.json`,
     {
@@ -16,7 +18,7 @@ export async function adminRequest<T>(
       signal: AbortSignal.timeout(15000),
       headers: {
         "Content-Type": "application/json",
-        "X-Shopify-Access-Token": env.SHOPIFY_ADMIN_TOKEN,
+        "X-Shopify-Access-Token": env.SHOPIFY_ADMIN_TOKEN!,
       },
       body: JSON.stringify({ query, variables }),
     },

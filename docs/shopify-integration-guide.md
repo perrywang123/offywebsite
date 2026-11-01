@@ -8,7 +8,7 @@ Next服务端经Storefront GraphQL读取商品/系列/政策并创建Cart，浏�
 
 配置：SHOPIFY_STORE_DOMAIN（不带协议的商店域名）、SHOPIFY_STOREFRONT_TOKEN、SHOPIFY_API_VERSION（当前默认2026-07）、SHOPIFY_MARKET_COUNTRY（缺国家时默认市场）。读商品和Cart创建使用X-Shopify-Storefront-Access-Token。不要在没有确认令牌类型时把私有凭据当可公开token。
 
-SHOPIFY_ADMIN_TOKEN虽然在env schema中，当前业务未使用，不是商品读取的必要条件。不要为文档或前台取数扩增Admin权限。
+SHOPIFY_ADMIN_TOKEN仅供可选KOL订单/优惠服务在服务端使用，不是商品读取、购物车或后台登录的必要条件。它由服务器手动注入，不自动获取或续期；留空时暂停远程同步，本地合作记录与结账诊断仍可使用。不要将 Storefront 令牌复用为 Admin 令牌，也不要为前台取数扩增 Admin 权限。见 [手动配置说明](kol-platform-operations.md#手动管理-admin-令牌)。
 
 ## 数据映射与查询
 

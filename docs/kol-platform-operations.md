@@ -1,6 +1,6 @@
 # KOL 平台运行手册
 
-2026-11-01；已实现，默认关闭。设计依据 [V2.1方案](kol-admin-proposal.md)，实现与测试证据见 [验收记录](kol-platform-validation.md)。本次没有部署生产、申请店铺权限、创建真实优惠码或付款。
+2026-11-02；已实现，默认关闭。设计依据 [V2.1方案](kol-admin-proposal.md)，实现与测试证据见 [验收记录](kol-platform-validation.md)。本次没有部署生产、申请店铺权限、创建真实优惠码或付款。
 
 ## 技术结构
 
@@ -19,7 +19,7 @@
 
 ## 配置与初始化
 
-先在隔离环境确认流程，再填运行时配置；不要把Admin token和秘密放Docker build args。模板见`.env.production.example`。
+先在隔离环境确认流程，再填运行时配置；不要把Admin token和秘密放Docker build args。模板见`.env.production.example`。Admin令牌可留空，不影响后台登录、本地数据与结账诊断。
 
 | 配置                                           | 用途                                                                     |
 | ---------------------------------------------- | ------------------------------------------------------------------------ |
@@ -29,7 +29,7 @@
 | `KOL_INGRESS_SECRET`                           | 部署工具自动准备的入口认证值；可兼容已有私密值                           |
 | `KOL_SIGNING_SECRET`                           | 自动准备并稳定保留的 checkout 归因签名值；不要随意轮换                   |
 | `KOL_WORKER_SECRET`                            | 自动准备的内网 worker 认证值                                             |
-| `SHOPIFY_ADMIN_TOKEN`                          | 订单与优惠查询，生成代码需受控写入优惠权限                               |
+| `SHOPIFY_ADMIN_TOKEN`                          | 可选，服务器手动注入；订单与优惠远程操作需要，未配置时暂停同步           |
 | `SHOPIFY_WEBHOOK_SECRET`                       | 可选实时通知验签；为空时接口404，仍按原计划通过 Admin API 扫描/核对订单  |
 | `SHOPIFY_STORE_DOMAIN` / `SHOPIFY_API_VERSION` | 仅接受本店事件，API继续固定2026-07                                       |
 | `KOL_ADMIN_BOOTSTRAP_HASH`                     | 可选生产初始scrypt哈希，只在owner尚不存在时创建；禁止明文                |
@@ -81,7 +81,21 @@ docker compose -f docker-compose.prod.yml --profile kol up -d --build
 
 ## Shopify授权与webhook
 
-Webhook 现在是可选增强，不是后台登录/发布的前置条件。未连接时，订单沿用现有 Admin API 分页增量扫描（完整一轮后15分钟再扫）及逐单核对，处理进度还受分页/队列影响，不宣称实时到账；结账诊断仍由站内 checkout 直接记录。通知接口在未配置签名密钥时返回404，后续配置后才接收验签事件。
+### 手动管理 Admin 令牌
+
+`SHOPIFY_ADMIN_TOKEN` 是保留的手动注入口，来自服务器选中的 `.env` / `.env.production` / `--env-file FILE`，经 Docker 运行时环境传入管理服务；不是构建参数或浏览器配置。不新增 Client ID、Client secret，也不自动获取或续期。配置更改后执行 `bash deploy/update-admin.sh`，无需同时重建/重启主站；简单 `restart` 不会更新容器环境。具体命令见 [部署说明](deployment.md#手动配置-shopify-admin-令牌可选)。
+
+留空时后台可部署、登录，读取本地合作/历史账目和结账诊断。界面明确提示未配置；worker 不调用 Shopify，不消费待处理订单/发码任务，不前推游标或最近成功扫描时间，继续本地过期数据清理和心跳。手动同步、连接检测、优惠码查询/创建等 Shopify 操作返回 `shopify_admin_not_configured`；本地未同步数据不能当作实时销售结果。重新手动注入有效令牌后，按原队列和游标继续处理。
+
+需填写的是 **Admin API access token**，不能用 Headless/Storefront 令牌、Client ID 或 Client secret 替代。独立站的 `SHOPIFY_STOREFRONT_TOKEN` 保持原用途。已配置但过期、撤销或权限不足时仍返回真实错误，并可能使部署的 worker 健康检查失败；暂不接入时清空错误的 Admin 值即可，不要改动 Storefront 配置。
+
+权限：读取近期订单需 `read_orders`；绑定现有码需优惠读取权限，平台追加新码需 `write_discounts`（含读取）。超过60天订单的重核对另涉及历史订单权限，不默认申请写订单、退款或转账权限。权限以应用实际安装授权为准，不能仅改应用配置就声称可用。参见 [Shopify 权限文档](https://shopify.dev/docs/api/usage/access-scopes)。
+
+手动维护不改变 Shopify 令牌的有效期：既有 legacy Admin 应用令牌与新应用换取的令牌来源不同，不能一概视为永久有效。自有组织应用通过 client credentials 换取的令牌约24小时有效，使用这种令牌需在过期前人工更换；Offy 不负责续取。参见 [Shopify 认证文档](https://shopify.dev/docs/apps/build/authentication-authorization/client-credentials-grant)。
+
+### 可选事件通知
+
+Webhook 是可选增强，不是后台登录/发布的前置条件。未连接通知但已配置有效 Admin 令牌时，订单沿用现有 Admin API 分页增量扫描（完整一轮后15分钟再扫）及逐单核对；无 Admin 令牌时暂停这些远程任务。处理进度还受分页/队列影响，不宣称实时到账；结账诊断仍由站内 checkout 直接记录。通知接口在未配置签名密钥时返回404，后续配置后才接收验签事件。
 
 使用本店隔离测试环境核对实际授权。需要`read_orders`；优惠绑定需要读取优惠能力，生成需要`write_discounts`。写权限可能涵盖读能力，以`currentAppInstallation.accessScopes`实际值为准。不申请写订单、退款或转账权限。超过60天订单的重核对涉及历史读取权限；读取不到就阻止该结算，不能声称已核对。
 

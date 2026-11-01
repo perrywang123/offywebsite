@@ -48,6 +48,7 @@ const envSchema = z.object({
   PAYPAL_CLIENT_SECRET: z.string().optional(),
   SHOPIFY_STORE_DOMAIN: z.string().optional(),
   SHOPIFY_STOREFRONT_TOKEN: z.string().optional(),
+  // Optional, manually injected server-only Admin API token; never a Storefront token.
   SHOPIFY_ADMIN_TOKEN: z.string().optional(),
   SHOPIFY_API_VERSION: z.string().default("2026-07"),
   // 用于 Shopify Markets 多币种的 presentment 市场。默认 US → 美国用户看/付 USD，

@@ -13,7 +13,7 @@ import {
 } from "../db/schema";
 import { secureEqual } from "./core";
 import { applyOrder } from "./ledger";
-import { fetchOrder, fetchOrderPage, codeGateway } from "./shopify";
+import { fetchOrder, fetchOrderPage, codeGateway, shopifyAdminConfigured } from "./shopify";
 import { processCodeJob } from "./codes";
 const topics = new Set([
   "orders/create",
@@ -130,67 +130,71 @@ export async function runWorker(db: Db, now = Date.now()) {
     return true;
   });
   if (!claimed) return { busy: true };
+  const shopify = shopifyAdminConfigured() ? "configured" : "not_configured";
   try {
-    await drainInbox(db, (id) => reconcileOrder(db, id), now);
-    const jobs = db
-      .select()
-      .from(kolCodeJobs)
-      .where(
-        and(
-          inArray(kolCodeJobs.status, ["queued", "sending", "uncertain", "pending"]),
-          lte(kolCodeJobs.nextAt, now),
-          lte(kolCodeJobs.leaseUntil, now),
-        ),
-      )
-      .limit(1)
-      .all();
-    for (const job of jobs) await processCodeJob(db, job.id, codeGateway, now);
-    let scan = runtime(db, "scan") as {
-      since: string;
-      after: string | null;
-      startedAt: number;
-      nextAt: number;
-    } | null;
-    if (!scan || scan.nextAt <= now) {
-      scan ??= {
-        since: new Date(now - 59 * 86400000).toISOString(),
-        after: null,
-        startedAt: now,
-        nextAt: now,
-      };
-      const result = await fetchOrderPage(scan.since, scan.after);
-      // Persist each page's IDs before advancing its cursor. Inbox retries survive worker restarts.
-      db.transaction((tx) => {
-        for (const o of result.orders.nodes)
-          tx.insert(kolInbox)
-            .values({
-              id: `scan:${scan!.startedAt}:${o.id}`,
-              orderId: o.id,
-              topic: "reconciliation",
-              status: "queued",
-              nextAt: now,
-              createdAt: now,
-            })
-            .onConflictDoNothing()
-            .run();
-        if (result.orders.pageInfo.hasNextPage) {
-          if (!result.orders.pageInfo.endCursor) throw new Error("scan_cursor_missing");
-          setRuntime(tx, "scan", { ...scan, after: result.orders.pageInfo.endCursor }, now);
-        } else {
-          setRuntime(
-            tx,
-            "scan",
-            {
-              since: new Date(scan!.startedAt - 5 * 60000).toISOString(),
-              after: null,
-              startedAt: now,
-              nextAt: now + 15 * 60000,
-            },
-            now,
-          );
-          setRuntime(tx, "lastFullScan", now, now);
-        }
-      });
+    // Keep pending remote work and scan progress intact until credentials exist.
+    if (shopify === "configured") {
+      await drainInbox(db, (id) => reconcileOrder(db, id), now);
+      const jobs = db
+        .select()
+        .from(kolCodeJobs)
+        .where(
+          and(
+            inArray(kolCodeJobs.status, ["queued", "sending", "uncertain", "pending"]),
+            lte(kolCodeJobs.nextAt, now),
+            lte(kolCodeJobs.leaseUntil, now),
+          ),
+        )
+        .limit(1)
+        .all();
+      for (const job of jobs) await processCodeJob(db, job.id, codeGateway, now);
+      let scan = runtime(db, "scan") as {
+        since: string;
+        after: string | null;
+        startedAt: number;
+        nextAt: number;
+      } | null;
+      if (!scan || scan.nextAt <= now) {
+        scan ??= {
+          since: new Date(now - 59 * 86400000).toISOString(),
+          after: null,
+          startedAt: now,
+          nextAt: now,
+        };
+        const result = await fetchOrderPage(scan.since, scan.after);
+        // Persist each page's IDs before advancing its cursor. Inbox retries survive worker restarts.
+        db.transaction((tx) => {
+          for (const o of result.orders.nodes)
+            tx.insert(kolInbox)
+              .values({
+                id: `scan:${scan!.startedAt}:${o.id}`,
+                orderId: o.id,
+                topic: "reconciliation",
+                status: "queued",
+                nextAt: now,
+                createdAt: now,
+              })
+              .onConflictDoNothing()
+              .run();
+          if (result.orders.pageInfo.hasNextPage) {
+            if (!result.orders.pageInfo.endCursor) throw new Error("scan_cursor_missing");
+            setRuntime(tx, "scan", { ...scan, after: result.orders.pageInfo.endCursor }, now);
+          } else {
+            setRuntime(
+              tx,
+              "scan",
+              {
+                since: new Date(scan!.startedAt - 5 * 60000).toISOString(),
+                after: null,
+                startedAt: now,
+                nextAt: now + 15 * 60000,
+              },
+              now,
+            );
+            setRuntime(tx, "lastFullScan", now, now);
+          }
+        });
+      }
     }
     db.delete(kolReferrals)
       .where(lt(kolReferrals.createdAt, now - 90 * 86400000))
@@ -200,13 +204,13 @@ export async function runWorker(db: Db, now = Date.now()) {
     db.delete(kolInbox)
       .where(and(eq(kolInbox.status, "done"), lt(kolInbox.createdAt, now - 90 * 86400000)))
       .run();
-    setRuntime(db, "worker", { at: now, error: null }, now);
-    return { ok: true };
+    setRuntime(db, "worker", { at: now, error: null, shopify }, now);
+    return { ok: true, shopify };
   } catch (error) {
     setRuntime(
       db,
       "worker",
-      { at: now, error: error instanceof Error ? error.message : "sync_failed" },
+      { at: now, error: error instanceof Error ? error.message : "sync_failed", shopify },
       now,
     );
     throw error;

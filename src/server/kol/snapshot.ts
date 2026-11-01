@@ -3,6 +3,7 @@ import type { Db } from "./db";
 import * as t from "../db/schema";
 import { currentTerms, type Cooperation } from "./core";
 import { runtime } from "./sync";
+import { shopifyAdminConfigured } from "./shopify";
 export function snapshot(db: Db) {
   const partners = db
     .select()
@@ -61,6 +62,7 @@ export function snapshot(db: Db) {
       .all(),
     audit: db.select().from(t.kolAudit).orderBy(desc(t.kolAudit.createdAt)).limit(100).all(),
     health: {
+      shopifyAdminConfigured: shopifyAdminConfigured(),
       worker: runtime(db, "worker"),
       lastFullScan: runtime(db, "lastFullScan"),
       attributionError: runtime(db, "attributionError"),
