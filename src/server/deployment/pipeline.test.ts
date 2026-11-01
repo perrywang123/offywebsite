@@ -23,6 +23,8 @@ function setup(kol = true) {
     "update-admin.sh",
     "compose-config.py",
     "runtime-secrets.py",
+    "build-limits.py",
+    "buildkitd.toml",
     "backup-db.mjs",
     "check-ingress.sh",
     "install-nginx.sh",
@@ -95,13 +97,25 @@ if '--env-file' in a:
    if key=='KOL_WORKER_SECRET':c['services']['kol-worker']['environment'][key]=os.environ[key]
  with open(os.environ['KOL_OBSERVATIONS'],'a') as f:f.write(json.dumps({'args':a,'kol':c['services']['app']['environment']['KOL_ENABLED'],'adminKol':c['services']['admin']['environment']['KOL_ENABLED'],'settlements':c['services']['app']['environment']['KOL_SETTLEMENTS_ENABLED'],'file':path})+'\\n')
 if 'config' in a and '--format' in a:print(json.dumps(c))
+if a[:2]==['buildx','version']:print('github.com/docker/buildx v0.38.0')
+if a[:2]==['compose','build'] and '--help' in a:print('--builder string')
+if a and a[0]=='info' and '--format' in a:print(json.dumps({'CpuCfsQuota':True,'CpuCfsPeriod':True}))
+if a[:2]==['context','show']:print('isolated-test')
+state=Path(os.environ['CONFIG']).with_name('build-builder.json')
+if a[:2]==['buildx','create']:
+ name=a[a.index('--name')+1];opts=dict(a[i+1].split('=',1) for i,v in enumerate(a) if v=='--driver-opt');state.write_text(json.dumps({'name':name,'opts':opts,'config':a[a.index('--buildkitd-config')+1]}));print(name)
+if a[:2]==['buildx','inspect']:
+ if not state.exists():print('no builder "fixture" found',file=sys.stderr);sys.exit(1)
+ s=json.loads(state.read_text());print('Name: '+s['name']+'\\nDriver: docker-container\\nNodes:\\nName: '+s['name']+'0\\nDriver Options: '+' '.join(k+'="'+v+'"' for k,v in s['opts'].items())+'\\nFile#buildkitd.toml:\\n'+''.join('> '+line+'\\n' for line in Path(s['config']).read_text().splitlines()))
 if 'run' in a:
  sys.stdin.read()
  if os.environ.get('FAIL_BACKUP')=='1':sys.exit(2)
-if 'exec' in a and os.environ.get('FAIL_WORKER')=='1':sys.exit(3)
+if 'exec' in a and 'admin' in a and os.environ.get('FAIL_WORKER')=='1':sys.exit(3)
+if a and a[0]=='exec' and any(v.startswith('buildx_buildkit_') for v in a):print(Path(json.loads(state.read_text())['config']).read_text())
 if 'ps' in a and '-q' in a:print('test-container')
 if a and a[0]=='inspect':
  if '--format' in a:print('true')
+ elif any(v.startswith('buildx_buildkit_') for v in a):print(json.dumps([{'State':{'Running':True},'HostConfig':{'CpuPeriod':100000,'CpuQuota':200000 if os.environ.get('FAIL_BUILD_QUOTA') else 100000}}]))
  else:
   e=c['services']['app']['environment'].copy()
   if os.environ.get('FAIL_STOREFRONT')=='1':e['KOL_SIGNING_SECRET']='drift'
@@ -144,9 +158,29 @@ if a and a[0]=='inspect':
       }),
   };
 }
+const isImageBuild = (args: string[]) => args.includes("build") && !args.includes("--help");
 describe("unified server deployment", () => {
-  it("explicit KOL enables every Compose phase despite a false or missing switch without editing private config", () => {
-    for (const runtime of ["KOL_ENABLED=false\n", "# switch absent\n"]) {
+  it("selects one capped builder for both service images and fails before builds if quota verification fails", () => {
+    const f = setup();
+    try {
+      const r = f.run(["--kol"]);
+      expect(r.status, r.stderr + r.stdout).toBe(0);
+      const build = f.calls().find(isImageBuild)!;
+      expect(build).toContain("--builder");
+      expect(build).toContain("app");
+      expect(build).toContain("admin");
+      expect(f.calls().find((c) => c.includes("create"))).toContain("cpu-quota=100000");
+      const count = f.calls().filter(isImageBuild).length;
+      const failed = f.run(["--kol"], { FAIL_BUILD_QUOTA: "1" });
+      expect(failed.status).not.toBe(0);
+      expect(f.calls().filter(isImageBuild)).toHaveLength(count);
+    } finally {
+      rmSync(f.dir, { recursive: true });
+    }
+  }, 15_000);
+  it.each(["KOL_ENABLED=false\n", "# switch absent\n"])(
+    "explicit KOL enables every Compose phase without editing private config: %s",
+    (runtime) => {
       const f = setup(false);
       try {
         const path = join(f.dir, ".env");
@@ -164,8 +198,8 @@ describe("unified server deployment", () => {
       } finally {
         rmSync(f.dir, { recursive: true });
       }
-    }
-  });
+    },
+  );
   it("explicit check-only accepts a false switch but leaves files and services untouched", () => {
     const f = setup(false);
     try {
@@ -175,7 +209,7 @@ describe("unified server deployment", () => {
       const r = f.run(["--kol", "--check"]);
       expect(r.status, r.stderr + r.stdout).toBe(0);
       expect(readFileSync(path, "utf8")).toBe(runtime);
-      expect(f.calls().flat()).not.toContain("build");
+      expect(f.calls().filter(isImageBuild)).toHaveLength(0);
       expect(f.calls().flat()).not.toContain("up");
     } finally {
       rmSync(f.dir, { recursive: true });
@@ -222,7 +256,7 @@ describe("unified server deployment", () => {
       for (const key of ["SHOPIFY_ADMIN_TOKEN"]) expect(r.stderr).toContain(key);
       expect(r.stderr).toContain(join(f.dir, ".env"));
       expect(r.stdout + r.stderr).not.toContain("test-token");
-      expect(f.calls().flat()).not.toContain("build");
+      expect(f.calls().filter(isImageBuild)).toHaveLength(0);
       expect(f.calls().flat()).not.toContain("up");
     } finally {
       rmSync(f.dir, { recursive: true });
@@ -234,9 +268,7 @@ describe("unified server deployment", () => {
       const r = f.run(["--kol"]);
       expect(r.status, r.stderr + r.stdout).toBe(0);
       const a = f.calls();
-      expect(a.findIndex((c) => c.includes("build"))).toBeLessThan(
-        a.findIndex((c) => c.includes("run")),
-      );
+      expect(a.findIndex(isImageBuild)).toBeLessThan(a.findIndex((c) => c.includes("run")));
       expect(a.findIndex((c) => c.includes("run"))).toBeLessThan(
         a.findIndex((c) => c.includes("up")),
       );
@@ -256,6 +288,7 @@ describe("unified server deployment", () => {
       expect(
         f
           .calls()
+          .filter((c) => !c.includes("--help"))
           .flat()
           .filter((c) => ["build", "run", "up", "exec", "stop"].includes(c)),
       ).toEqual([]);
@@ -263,8 +296,9 @@ describe("unified server deployment", () => {
       rmSync(f.dir, { recursive: true });
     }
   });
-  it("backup and worker readiness failures cannot report a successful deployment", () => {
-    for (const flag of ["FAIL_BACKUP", "FAIL_WORKER"]) {
+  it.each(["FAIL_BACKUP", "FAIL_WORKER"])(
+    "readiness failures cannot report success: %s",
+    (flag) => {
       const f = setup();
       try {
         const r = f.run(["--kol"], { [flag]: "1" });
@@ -273,24 +307,22 @@ describe("unified server deployment", () => {
       } finally {
         rmSync(f.dir, { recursive: true });
       }
-    }
-  });
-  it("ordinary deploy automatically includes KOL when enabled, stops stale worker when disabled", () => {
-    for (const kol of [true, false]) {
-      const f = setup(kol);
-      try {
-        const r = f.run();
-        expect(r.status, r.stderr + r.stdout).toBe(0);
-        const up = f
-          .calls()
-          .filter((c) => c.includes("up"))
-          .flat();
-        expect(up.includes("kol-worker")).toBe(kol);
-        if (!kol)
-          expect(f.calls().some((c) => c.includes("stop") && c.includes("kol-worker"))).toBe(true);
-      } finally {
-        rmSync(f.dir, { recursive: true });
-      }
+    },
+  );
+  it.each([true, false])("ordinary deploy follows the configured KOL switch: %s", (kol) => {
+    const f = setup(kol);
+    try {
+      const r = f.run();
+      expect(r.status, r.stderr + r.stdout).toBe(0);
+      const up = f
+        .calls()
+        .filter((c) => c.includes("up"))
+        .flat();
+      expect(up.includes("kol-worker")).toBe(kol);
+      if (!kol)
+        expect(f.calls().some((c) => c.includes("stop") && c.includes("kol-worker"))).toBe(true);
+    } finally {
+      rmSync(f.dir, { recursive: true });
     }
   });
 });
@@ -338,7 +370,7 @@ describe("independent server admin deployment", () => {
       });
       expect(r.status).not.toBe(0);
       expect(r.stderr).toContain("running storefront configuration differs: KOL_ENABLED");
-      expect(f.calls().flat()).not.toContain("build");
+      expect(f.calls().filter(isImageBuild)).toHaveLength(0);
       expect(f.calls().flat()).not.toContain("up");
       expect(readFileSync(join(f.dir, ".env"), "utf8")).toBe("KOL_ENABLED=false\n");
     } finally {
@@ -354,17 +386,19 @@ describe("independent server admin deployment", () => {
       });
       expect(r.status, r.stderr + r.stdout).toBe(0);
       const calls = f.calls();
-      const mutations = calls.filter((c) =>
-        ["build", "run", "up", "stop", "restart"].some((x) => c.includes(x)),
+      const mutations = calls.filter(
+        (c) =>
+          !c.includes("--help") &&
+          ["build", "run", "up", "stop", "restart"].some((x) => c.includes(x)),
       );
       expect(mutations.flat()).not.toContain("app");
-      expect(calls.find((c) => c.includes("build"))?.slice(-1)).toEqual(["admin"]);
+      expect(calls.find(isImageBuild)?.slice(-1)).toEqual(["admin"]);
       expect(calls.find((c) => c.includes("run"))).toContain("admin");
       expect(calls.findIndex((c) => c.includes("run"))).toBeLessThan(
         calls.findIndex((c) => c.includes("up")),
       );
       expect(calls.filter((c) => c.includes("up")).flat()).toContain("--no-deps");
-      expect(calls.find((c) => c.includes("exec"))).toContain("admin");
+      expect(calls.find((c) => c.includes("exec") && c.includes("admin"))).toContain("admin");
     } finally {
       rmSync(f.dir, { recursive: true });
     }
@@ -379,7 +413,7 @@ describe("independent server admin deployment", () => {
       expect(r.status).not.toBe(0);
       expect(r.stderr).toContain("KOL_SIGNING_SECRET");
       expect(r.stderr).not.toContain("drift");
-      expect(f.calls().flat()).not.toContain("build");
+      expect(f.calls().filter(isImageBuild)).toHaveLength(0);
     } finally {
       rmSync(f.dir, { recursive: true });
     }
@@ -391,7 +425,7 @@ describe("independent server admin deployment", () => {
       const r = spawnSync("bash", [script], { env: f.env, encoding: "utf8" });
       expect(r.status).not.toBe(0);
       expect(r.stderr).toContain("Git checkout");
-      expect(f.calls().flat()).not.toContain("build");
+      expect(f.calls().filter(isImageBuild)).toHaveLength(0);
       const check = spawnSync("bash", [script, "--check"], { env: f.env, encoding: "utf8" });
       expect(check.status, check.stderr).toBe(0);
       expect(f.calls().flat()).not.toContain("up");
@@ -450,18 +484,18 @@ describe("independent server admin deployment", () => {
       expect(
         f
           .calls()
-          .filter((c) => c.includes("up") || c.includes("build"))
+          .filter((c) => c.includes("up") || isImageBuild(c))
           .flat(),
       ).not.toContain("app");
       expect(git(f.dir, ["rev-parse", "HEAD"])).toBe(git(writer, ["rev-parse", "HEAD"]));
       git(f.dir, ["remote", "set-url", "origin", join(remote, "missing")]);
-      const before = f.calls().filter((c) => c.includes("build")).length;
+      const before = f.calls().filter(isImageBuild).length;
       const failed = spawnSync("bash", [join(f.dir, "deploy/update-admin.sh")], {
         env: f.env,
         encoding: "utf8",
       });
       expect(failed.status).not.toBe(0);
-      expect(f.calls().filter((c) => c.includes("build"))).toHaveLength(before);
+      expect(f.calls().filter(isImageBuild)).toHaveLength(before);
       writeFileSync(
         join(f.dir, "deploy/update.sh"),
         readFileSync(join(f.dir, "deploy/update.sh"), "utf8") + "\n# tracked dirty change\n",

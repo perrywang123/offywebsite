@@ -103,6 +103,7 @@ volumes:
 # Optional host-side deployment metadata; never passed to the application/browser.
 # Select an ACTIVE site config explicitly before allowing the deploy script to replace it.
 x-offy-deploy:
+  build_cpus: "${DEPLOY_BUILD_CPUS:-1}"
   nginx_config: "${DEPLOY_NGINX_CONFIG:-}"
   site_tls_certificate: "${DEPLOY_SITE_TLS_CERTIFICATE:-}"
   site_tls_key: "${DEPLOY_SITE_TLS_KEY:-}"

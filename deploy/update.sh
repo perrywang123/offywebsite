@@ -38,7 +38,8 @@ docker info >/dev/null 2>&1 || die 'Docker daemon is not running or inaccessible
 COMPOSE=(docker compose --env-file "$ENV_FILE" -f "$ROOT/docker-compose.prod.yml")
 OFFY_CONFIG_JSON="$(mktemp "${TMPDIR:-/tmp}/offy-compose.XXXXXX")"
 OFFY_SECRETS_JSON="$(mktemp "${TMPDIR:-/tmp}/offy-auth.XXXXXX")"
-trap 'rm -f "$OFFY_CONFIG_JSON" "$OFFY_SECRETS_JSON"' EXIT
+OFFY_BUILDER_JSON="$(mktemp "${TMPDIR:-/tmp}/offy-builder.XXXXXX")"
+trap 'rm -f "$OFFY_CONFIG_JSON" "$OFFY_SECRETS_JSON" "$OFFY_BUILDER_JSON"' EXIT
 "${COMPOSE[@]}" --profile kol config --format json > "$OFFY_CONFIG_JSON"
 if [ "$(python3 -c 'import json,sys; print(json.load(open(sys.argv[1]))["services"]["app"]["environment"].get("KOL_ENABLED", "false"))' "$OFFY_CONFIG_JSON")" = true ]; then
  PREPARE=(); [ "$CHECK_ONLY" = 0 ] || PREPARE=(--check)
@@ -58,7 +59,11 @@ value(){ python3 "$ROOT/deploy/compose-config.py" value "$OFFY_CONFIG_JSON" --ke
 KOL="$(value kol)"
 NGINX_TARGET="$(value nginx_config)"
 if [ "$KOL" = true ] && [ -n "$NGINX_TARGET" ]; then command -v nginx >/dev/null || die 'Nginx is required for the explicitly selected config'; fi
-if [ "$CHECK_ONLY" = 1 ]; then say 'Preflight passed; no git pull, build, backup, service update or Nginx change performed'; exit 0; fi
+if [ "$CHECK_ONLY" = 1 ]; then
+ python3 "$ROOT/deploy/build-limits.py" "$OFFY_CONFIG_JSON" --output "$OFFY_BUILDER_JSON" --check
+ say 'Preflight passed; no git pull, builder creation/start, build, backup, service update or Nginx change performed'
+ exit 0
+fi
 command -v flock >/dev/null || die 'flock (util-linux) is required on the deployment server'
 if [ "${OFFY_DEPLOY_LOCK_HELD:-0}" = 1 ]; then
  python3 -c 'import os,sys; a=os.fstat(9); b=os.stat(sys.argv[1]); sys.exit(0 if (a.st_dev,a.st_ino)==(b.st_dev,b.st_ino) else 1)' "$ROOT/.deploy.lock" || die 'invalid inherited deployment lock'
@@ -74,7 +79,7 @@ if [ "$SKIP_PULL" = 0 ]; then
   git diff --quiet && git diff --cached --quiet || die 'tracked local edits must be committed or resolved before deployment'
   say 'Fast-forwarding the configured Git upstream'
   git pull --ff-only
-  rm -f "$OFFY_CONFIG_JSON" "$OFFY_SECRETS_JSON"
+  rm -f "$OFFY_CONFIG_JSON" "$OFFY_SECRETS_JSON" "$OFFY_BUILDER_JSON"
   MODE=(); [ "$ADMIN_ONLY" = 0 ] || MODE=(--admin-only)
   # Reload new code while retaining the same lock and release scope.
   OFFY_DEPLOY_LOCK_HELD=1 exec bash "$ROOT/deploy/update.sh" --skip-pull ${VALIDATE[@]+"${VALIDATE[@]}"} ${MODE[@]+"${MODE[@]}"} --env-file "$ENV_FILE"
@@ -94,8 +99,10 @@ if [ "$ADMIN_ONLY" = 1 ]; then
 fi
 TARGET=app; [ "$ADMIN_ONLY" = 0 ] || TARGET=admin
 BUILD=("$TARGET"); if [ "$KOL" = true ] && [ "$ADMIN_ONLY" = 0 ]; then BUILD=(app admin); fi
+python3 "$ROOT/deploy/build-limits.py" "$OFFY_CONFIG_JSON" --output "$OFFY_BUILDER_JSON"
+OFFY_BUILD_BUILDER="$(python3 -c 'import json,sys; print(json.load(open(sys.argv[1]))["name"])' "$OFFY_BUILDER_JSON")"
 say "Building Linux Docker image(s): ${BUILD[*]}"
-"${COMPOSE[@]}" --profile kol build "${BUILD[@]}"
+"${COMPOSE[@]}" --profile kol build --builder "$OFFY_BUILD_BUILDER" "${BUILD[@]}"
 say 'Backing up the shared persistent SQLite database before service replacement'
 "${COMPOSE[@]}" --profile kol run --rm --no-deps --entrypoint node "$TARGET" --input-type=module < "$ROOT/deploy/backup-db.mjs"
 wait_health(){

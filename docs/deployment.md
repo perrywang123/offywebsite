@@ -13,7 +13,7 @@ bash deploy/update-admin.sh       # 自动拉 Git、构建、备份、更新后�
 
 ## 第一次部署：只配置一次
 
-服务器需要Docker Engine、Compose插件、Python3、curl、flock（Linux util-linux）；启用管理入口还需要已运行的Nginx及有效TLS证书。使用有Docker权限的部署用户；自动安装Nginx配置另需root或已配置的非交互sudo权限。
+服务器需要Docker Engine、Compose插件（`build --builder`）、Buildx >=0.14.0、Python3、curl、flock（Linux util-linux），Docker/内核需支持CPU CFS quota/period；启用管理入口还需要已运行的Nginx及有效TLS证书。使用有Docker权限的部署用户；自动安装Nginx配置另需root或已配置的非交互sudo权限。
 
 在服务器的**固定项目目录**（例如`/opt/offy`）维护私密运行配置。**仅新服务器尚无配置时**复制模板；已有 `.env` 或 `.env.production` 时保留原文件和真实配置：
 
@@ -102,6 +102,27 @@ bash deploy/update-admin.sh --check
 
 整套发布仍使用 `bash deploy/update.sh --kol`（已有 KOL 启用时普通 `bash deploy/update.sh` 也包含后台），同样默认更新 Git。不要同时手动运行 Compose 或覆盖源码绕过共享部署锁。
 
+## 构建 CPU 限制
+
+现有发布命令默认使用项目专属的 `docker-container` BuildKit 构建器。主站与后台的所有构建步骤合计使用 **1 CPU 的计算额度**，不是每个服务各1 CPU；OCI构建并行度为1。额度通过构建器容器的 CFS `cpu-period=100000` / `cpu-quota=100000` 实施，不在业务服务上添加 `cpus`，也不把相对权重 `cpu-shares` 当作硬上限。两核服务器上，它限制构建器的长期平均CPU预算约为总量一半，不绑定某个固定核心；系统总占用仍包含线上服务、Docker daemon镜像加载和其他进程。
+
+无需增加配置就会生效。可在服务器原私密运行文件中按需调整宿主侧参数：
+
+```dotenv
+DEPLOY_BUILD_CPUS=1
+# 更低额度示例：DEPLOY_BUILD_CPUS=0.5
+```
+
+允许0.1–64、最多两位小数；这是发布工具设置，不进入应用或客户端。builder名称包含项目路径、Docker context、额度和构建器配置的摘要；同一设置下重复发布复用原缓存，不修改用户的全局默认 builder。新额度/配置会创建对应新builder，不删除旧缓存或其他项目资源。首次部署需要下载官方 `moby/buildkit` 镜像并建立独立缓存，构建可能更慢；稳定后可复用该缓存。
+
+`--check` 只读检查插件、内核配额支持和已有builder声明，不创建/启动builder。正式发布在构建前引导专属builder，核对 driver、声明与实际容器的CPU配额、单任务并行配置；不支持或漂移就停止，绝不回退到无限制构建。`default-load=true` 将构建结果载入本机镜像仓库，继续使用原来的备份/启动流程。
+
+日志会打印实际builder名称。可用 `docker ps --filter name=buildx_buildkit_offy-build --format '{{.Names}}'` 找到本项目构建器，再用 `docker stats --no-stream 构建器容器名` 观察使用率。Docker按单核100%计数，1 CPU预算持续负载约显示100%，不是整台两核服务器的100%。CFS允许短时突发，平均额度与瞬时采样可能不同。
+
+限制作用于更新后由脚本新启动的Docker构建，不会追溯限制已运行的旧任务、宿主机直接执行的 `pnpm build` 或其他构建器。它不设内存上限，也不保证依赖追踪故障自行消失。独立后台发布仍只构建/替换admin和worker，主站端口、运行资源与原有持久卷保持原样。
+
+隔离Linux计算探针、双服务镜像加载与自动化检查结果见 [验证记录](docker-build-cpu-validation.md)。
+
 ## 容器、端口与数据互通
 
 | 服务       | 镜像             | 宿主机源站端口 | 职责                                        |
@@ -123,7 +144,7 @@ bash deploy/update-admin.sh --check
 ## 实际执行顺序
 
 1. 检查 Docker/Compose 和配置，私密解析 Compose JSON，不将 `.env` 当 Shell 执行。Git 更新后重新检查，并保留部署锁。
-2. 独立后台发布先核对运行中主站的实际设置/卷，再**只构建 admin 镜像**；整套发布构建 app、admin。旧容器在构建阶段继续服务。
+2. 独立后台发布先核对运行中主站的实际设置/卷，再**只构建 admin 镜像**；整套发布构建 app、admin。两者显式选择同一个已核验CPU预算的专属构建器。旧容器在构建阶段继续服务。
 3. 使用本次目标镜像的一次性容器，对共享 `/data` 做 SQLite 在线 backup、完整性校验，保存在卷内私密 `deploy-backups/`。失败不替换服务；首次无 DB 时跳过备份。
 4. 独立发布只启动 admin，健康后更新 worker；均使用 `--no-deps`，不会由依赖隐式启动/替换 app。后台 entrypoint 执行兼容迁移与首次 owner 初始化。整套发布则先启动 app 并等待健康，再按此顺序启动后台。
 5. 检查后台 3001 健康、worker 容器运行、owner/店铺匹配，以及本次发布后的成功 worker 心跳。

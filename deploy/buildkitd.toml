@@ -1,0 +1,3 @@
+# One active OCI build step; all services share the builder's aggregate CPU quota.
+[worker.oci]
+  max-parallelism = 1
