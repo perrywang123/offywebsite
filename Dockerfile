@@ -1,5 +1,5 @@
 # Multi-stage build for a self-hostable standalone Next.js server.
-# Builds with Turbopack (`next build --turbopack`) + `output: "standalone"`.
+# pnpm build completes lint, then Turbopack + retained Next.js type checking.
 
 FROM node:22-slim AS deps
 WORKDIR /app
@@ -43,6 +43,8 @@ ENV SITE_URL=$SITE_URL \
     SHOPIFY_STOREFRONT_TOKEN=$SHOPIFY_STOREFRONT_TOKEN \
     SHOPIFY_API_VERSION=$SHOPIFY_API_VERSION \
     SHOPIFY_MARKET_COUNTRY=$SHOPIFY_MARKET_COUNTRY
+# The mandatory lint gate finishes before Next.js starts; only duplicate lint is
+# disabled inside Next.js. The build runner prints phase timing/progress.
 RUN pnpm build
 # `next build` traces only what the server entrypoint reaches, so drizzle-orm —
 # imported by db/migrate.mjs, which CMD runs before the server — is missing from

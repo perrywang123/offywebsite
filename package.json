@@ -14,7 +14,7 @@
   },
   "scripts": {
     "dev": "next dev --turbopack",
-    "build": "next build --turbopack",
+    "build": "node scripts/build.mjs",
     "start": "next start",
     "package": "bash scripts/package.sh",
     "deploy": "bash scripts/deploy.sh",

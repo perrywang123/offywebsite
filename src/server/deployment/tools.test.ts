@@ -158,7 +158,14 @@ describe("source deployment archive", () => {
   it("excludes private env, database sidecars and caches while retaining Docker and admin tools", () => {
     const dir = mkdtempSync(join(tmpdir(), "offy-package-test-"));
     try {
-      for (const folder of ["scripts", "deploy", "public", ".next-kol-integration", "resources"])
+      for (const folder of [
+        "scripts",
+        "deploy",
+        "public",
+        ".next-kol-integration",
+        "resources",
+        ".deploy-logs",
+      ])
         mkdirSync(join(dir, folder), { recursive: true });
       for (const file of [
         "package.json",
@@ -176,6 +183,7 @@ describe("source deployment archive", () => {
         "public/asset.txt",
         ".next-kol-integration/private.txt",
         "resources/large.psd",
+        ".deploy-logs/private-output",
       ])
         writeFileSync(
           join(dir, file),
@@ -204,6 +212,7 @@ describe("source deployment archive", () => {
       expect(list).not.toContain(".next-kol");
       expect(list).not.toContain("large.psd");
       expect(list).not.toContain(".offy-runtime-");
+      expect(list).not.toContain(".deploy-logs");
     } finally {
       rmSync(dir, { recursive: true });
     }

@@ -78,3 +78,5 @@ bash deploy/update-admin.sh       # 仅更新独立 admin 容器与 worker，不
 以上两个独立命令按需执行；首次启用KOL可以先单独更新主站，成功后再单独更新后台。两套应用使用不同镜像与loopback端口，共用原Compose项目中的SQLite持久卷。首次需要配置服务器 `.env`、Shopify权限和HTTPS入口；后台外部访问地址只需在 `ADMIN_ORIGIN` 配置一次。独立发布会核对共享数据库及运行中另一端的共用设置；密钥/数据库真正变更仍需协调升级。每次选中的镜像仍会编译共享Next.js应用，不能保证解决构建耗时或终端断连。
 
 详见 [部署手册](docs/deployment.md)。`pnpm deploy` / `deploy:kol` 保留为可选的开发机 SSH 上传工具，仅这类远程工具需要指定服务器。当前改动没有发布到生产。
+
+生产构建先完成lint，再执行保留类型检查的Next.js编译。部署自动保存本次构建日志到服务器 `.deploy-logs/`，最近记录为 `.deploy-logs/latest-build.log`；这些日志不入库。耗时较长的发布从tmux内启动，执行与重连步骤见 [部署手册](docs/deployment.md#在服务器保留长任务与查看日志)。

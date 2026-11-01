@@ -25,6 +25,7 @@ resources
 .deploy.lock
 .offy-deploy-root
 .deploy-backups
+.deploy-logs
 *.db-*
 *.sqlite*
 

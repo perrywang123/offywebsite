@@ -20,7 +20,7 @@ done
 say(){ printf '\n==> %s\n' "$*"; }
 die(){ printf 'Deployment failed: %s\n' "$*" >&2; exit 1; }
 [ "$ADMIN_ONLY" = 0 ] || [ "$STOREFRONT_ONLY" = 0 ] || die '--admin-only and --storefront-only are mutually exclusive'
-for bin in docker python3 curl; do command -v "$bin" >/dev/null || die "$bin is required"; done
+for bin in docker python3 curl tee; do command -v "$bin" >/dev/null || die "$bin is required"; done
 if [ -z "$ENV_FILE" ]; then
  if [ -e "$ROOT/.env" ] || [ -L "$ROOT/.env" ]; then ENV_FILE="$ROOT/.env"
  else ENV_FILE="$ROOT/.env.production"; fi
@@ -111,7 +111,20 @@ BUILD=("$TARGET"); if [ "$KOL" = true ] && [ "$ADMIN_ONLY" = 0 ] && [ "$STOREFRO
 python3 "$ROOT/deploy/build-limits.py" "$OFFY_CONFIG_JSON" --output "$OFFY_BUILDER_JSON"
 OFFY_BUILD_BUILDER="$(python3 -c 'import json,sys; print(json.load(open(sys.argv[1]))["name"])' "$OFFY_BUILDER_JSON")"
 say "Building Linux Docker image(s): ${BUILD[*]}"
-"${COMPOSE[@]}" --profile kol build --builder "$OFFY_BUILD_BUILDER" "${BUILD[@]}"
+OFFY_LOG_DIR="$ROOT/.deploy-logs"
+mkdir -p "$OFFY_LOG_DIR"
+chmod 700 "$OFFY_LOG_DIR"
+OFFY_BUILD_LOG="$(mktemp "$OFFY_LOG_DIR/build-${TARGET}-$(date -u +%Y%m%dT%H%M%SZ).XXXXXX")"
+chmod 600 "$OFFY_BUILD_LOG"
+ln -sfn "${OFFY_BUILD_LOG##*/}" "$OFFY_LOG_DIR/latest-build.log"
+say "Build log: $OFFY_BUILD_LOG"
+set +e
+BUILDKIT_PROGRESS=plain "${COMPOSE[@]}" --profile kol build --builder "$OFFY_BUILD_BUILDER" "${BUILD[@]}" 2>&1 | tee "$OFFY_BUILD_LOG"
+OFFY_BUILD_CODES=("${PIPESTATUS[@]}")
+set -e
+printf '\nBuild finished at %s docker_exit=%s log_exit=%s\n' "$(date -u +%Y-%m-%dT%H:%M:%SZ)" "${OFFY_BUILD_CODES[0]}" "${OFFY_BUILD_CODES[1]}" | tee -a "$OFFY_BUILD_LOG"
+[ "${OFFY_BUILD_CODES[0]}" = 0 ] || die "Docker build failed or canceled (exit=${OFFY_BUILD_CODES[0]}); see $OFFY_BUILD_LOG"
+[ "${OFFY_BUILD_CODES[1]}" = 0 ] || die "build log output failed; see $OFFY_BUILD_LOG"
 say 'Backing up the shared persistent SQLite database before service replacement'
 "${COMPOSE[@]}" --profile kol run --rm --no-deps --entrypoint node "$TARGET" --input-type=module < "$ROOT/deploy/backup-db.mjs"
 wait_health(){

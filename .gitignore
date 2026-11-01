@@ -70,5 +70,6 @@ tmp/
 /.deploy.lock
 /.offy-deploy-root
 /.deploy-backups/
+/.deploy-logs/
 /.offy-runtime-secrets.json
 /.offy-runtime-*.local

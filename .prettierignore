@@ -11,6 +11,7 @@ db/migrations
 .pnpm-cache
 .npm-cache
 .home
+.deploy-logs
 
 # Historical drafts and extracted source evidence retain their original formatting.
 docs/history/**

@@ -7,6 +7,9 @@ import {
   copyFileSync,
   rmSync,
   renameSync,
+  existsSync,
+  statSync,
+  realpathSync,
 } from "node:fs";
 import { join, resolve } from "node:path";
 import { tmpdir } from "node:os";
@@ -100,6 +103,9 @@ if '--env-file' in a:
 if 'config' in a and '--format' in a:print(json.dumps(c))
 if a[:2]==['buildx','version']:print('github.com/docker/buildx v0.38.0')
 if a[:2]==['compose','build'] and '--help' in a:print('--builder string')
+if 'build' in a and '--help' not in a:
+ print('fixture build diagnostics; progress='+os.environ.get('BUILDKIT_PROGRESS',''),flush=True)
+ if os.environ.get('FAIL_IMAGE_BUILD'):print('fixture compiler failure',file=sys.stderr);sys.exit(23)
 if a and a[0]=='info' and '--format' in a:print(json.dumps({'CpuCfsQuota':True,'CpuCfsPeriod':True}))
 if a[:2]==['context','show']:print('isolated-test')
 state=Path(os.environ['CONFIG']).with_name('build-builder.json')
@@ -171,6 +177,44 @@ if a and a[0]=='inspect':
 }
 const isImageBuild = (args: string[]) => args.includes("build") && !args.includes("--help");
 describe("unified server deployment", () => {
+  it("retains a private plain-progress failure log and stops before backup/replacement", () => {
+    const f = setup();
+    try {
+      const r = f.run(["--kol"], { FAIL_IMAGE_BUILD: "1" });
+      expect(r.status).not.toBe(0);
+      const latest = join(f.dir, ".deploy-logs/latest-build.log");
+      expect(existsSync(latest)).toBe(true);
+      const body = readFileSync(latest, "utf8");
+      expect(body).toContain("fixture build diagnostics; progress=plain");
+      expect(body).toContain("fixture compiler failure");
+      expect(body).toContain("docker_exit=23");
+      expect(statSync(join(f.dir, ".deploy-logs")).mode & 0o777).toBe(0o700);
+      expect(statSync(realpathSync(latest)).mode & 0o777).toBe(0o600);
+      expect(r.stdout + r.stderr).toContain("Build log:");
+      expect(f.calls().flat()).not.toContain("run");
+      expect(f.calls().flat()).not.toContain("up");
+      const firstLog = realpathSync(latest);
+      expect(f.run(["--kol"], { FAIL_IMAGE_BUILD: "1" }).status).not.toBe(0);
+      expect(realpathSync(latest)).not.toBe(firstLog);
+      expect(readFileSync(firstLog, "utf8")).toBe(body);
+      expect(f.run(["--check", "--kol"]).status).toBe(0);
+    } finally {
+      rmSync(f.dir, { recursive: true });
+    }
+  }, 15_000);
+  it("stops before backup or replacement if build log output fails", () => {
+    const f = setup();
+    try {
+      writeFileSync(join(f.dir, "bin/tee"), "#!/bin/sh\ncat >/dev/null\nexit 4\n", { mode: 0o755 });
+      const r = f.run(["--kol"]);
+      expect(r.status).not.toBe(0);
+      expect(f.calls().filter(isImageBuild)).toHaveLength(1);
+      expect(f.calls().flat()).not.toContain("run");
+      expect(f.calls().flat()).not.toContain("up");
+    } finally {
+      rmSync(f.dir, { recursive: true });
+    }
+  });
   it("selects one capped builder for both service images and fails before builds if quota verification fails", () => {
     const f = setup();
     try {
@@ -222,6 +266,7 @@ describe("unified server deployment", () => {
       expect(readFileSync(path, "utf8")).toBe(runtime);
       expect(f.calls().filter(isImageBuild)).toHaveLength(0);
       expect(f.calls().flat()).not.toContain("up");
+      expect(existsSync(join(f.dir, ".deploy-logs"))).toBe(false);
     } finally {
       rmSync(f.dir, { recursive: true });
     }

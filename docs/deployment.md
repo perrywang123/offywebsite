@@ -122,6 +122,45 @@ bash deploy/update-admin.sh --check
 
 ## 构建 CPU 限制
 
+`pnpm build` 先单独完成 `pnpm lint`，成功后才执行 `next build --turbopack --no-lint`。这里仅取消Next.js内重复的lint，Next.js内置TypeScript检查保留，类型错误仍会让构建失败。Docker也使用同一入口，lint和类型检查不再同时启动；任一阶段失败都不会继续备份/替换服务。
+
+构建输出新增带UTC时间的 `[offy-build ...]` 阶段开始、成功/失败、耗时和退出码。等待时每30秒输出进度；Linux可读取时附带 `cgroup_memory_mib`，这是当前cgroup范围的内存观察值，不是某个worker的峰值，也不能单凭它确认OOM。无可用计数器时显示 `unavailable`。Next.js自己的 `Checking validity of types` 等阶段日志仍保留。
+
+正式发布会把本次Docker构建的stdout/stderr和plain进度保存在原项目 `.deploy-logs/build-目标-时间.随机值`，终端打印完整路径；`.deploy-logs/latest-build.log` 指向最近一次构建日志。目录0700、日志0600；每次创建独立文件，不覆盖旧记录。构建/日志输出失败会返回非零，正常返回时记录 `docker_exit` / `log_exit`。突然断电或不可捕获的进程终止可能使日志只保留中断前部分；这些文件不进入Git、Docker构建上下文或源码交付。`--check`不创建日志。记录范围是构建步骤，不是整个发布流水线；若配置/构建器预检查已失败，latest仍是上次记录，按本次终端输出的路径和时间确认。
+
+### 在服务器保留长任务与查看日志
+
+先在服务器安装并进入tmux（OpenCloudOS 9、root用户示例）：
+
+```bash
+dnf install -y tmux
+tmux new-session -A -s offy-deploy
+```
+
+确认已经进入会话，再执行以下命令。以你现有服务器目录 `/root/offywebsite` 为例，不另建checkout：
+
+```bash
+cd /root/offywebsite
+git pull --ff-only
+bash deploy/update-storefront.sh --kol
+```
+
+主站成功后，按需单独执行 `bash deploy/update-admin.sh`。原CPU预算和服务隔离范围保留，不需要手动拼接 `tee` 保存构建日志。
+
+按Ctrl+B、松开再按D可离开会话；断线后重新登录执行 `tmux attach-session -d -t offy-deploy` 恢复原任务。tmux不会自动接管先前在普通终端启动的构建；确认旧任务结束后再启动。日志保存本身不会让前台任务免受TAT断连影响，任务应从tmux会话内启动。
+
+重新登录后直接查看最近构建输出：
+
+```bash
+tail -n 160 /root/offywebsite/.deploy-logs/latest-build.log
+# 持续查看；Ctrl+C只退出查看，不会终止tmux里的部署
+tail -f /root/offywebsite/.deploy-logs/latest-build.log
+```
+
+分阶段检查旨在减少并发资源竞争并改善诊断，不保证解决原来的长耗时或取消。若再次在类型检查等待，结合这次日志、cgroup内存和系统进程/内核记录定位，不直接跳过类型检查。验证证据见 [串行构建验收](serial-build-validation.md)。
+
+### CPU预算边界
+
 现有发布命令默认使用项目专属的 `docker-container` BuildKit 构建器。主站与后台的所有构建步骤合计使用 **1 CPU 的计算额度**，不是每个服务各1 CPU；OCI构建并行度为1。额度通过构建器容器的 CFS `cpu-period=100000` / `cpu-quota=100000` 实施，不在业务服务上添加 `cpus`，也不把相对权重 `cpu-shares` 当作硬上限。两核服务器上，它限制构建器的长期平均CPU预算约为总量一半，不绑定某个固定核心；系统总占用仍包含线上服务、Docker daemon镜像加载和其他进程。
 
 无需增加配置就会生效。可在服务器原私密运行文件中按需调整宿主侧参数：
