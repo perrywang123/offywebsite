@@ -5,7 +5,8 @@ import type { Snapshot } from "@/server/kol/snapshot";
 import type { Cooperation } from "@/server/kol/core";
 import type { Campaign } from "@/server/kol/codes";
 import { decimal } from "@/server/kol/money";
-type View = "partners" | "codes" | "orders" | "settlements";
+import { CheckoutDiagnostics } from "./CheckoutDiagnostics";
+type View = "partners" | "codes" | "orders" | "settlements" | "checkouts";
 type Data = Snapshot & { admin: { email: string }; siteUrl: string; settlementsEnabled: boolean };
 type Partner = Snapshot["partners"][number];
 const nav = [
@@ -13,6 +14,7 @@ const nav = [
   ["codes", "02", "优惠码管理"],
   ["orders", "03", "订单佣金"],
   ["settlements", "04", "月度结算"],
+  ["checkouts", "05", "结账诊断"],
 ] as const;
 const labels: Record<string, string> = {
   active: "合作中",
@@ -356,7 +358,9 @@ export function AdminConsole({ view }: { view: View }) {
                   ? "代码在这里绑定，粉丝权益由 Shopify 执行。"
                   : view === "orders"
                     ? "只有可核验的当次链接成交，才进入佣金账本。"
-                    : "先核对，再锁单；线下付款，账内留痕。"}
+                    : view === "checkouts"
+                      ? "从一次点击，到 Shopify 响应，每一步都有据可查。"
+                      : "先核对，再锁单；线下付款，账内留痕。"}
             </p>
           </div>
           <div className="header-actions">
@@ -374,6 +378,7 @@ export function AdminConsole({ view }: { view: View }) {
             </button>
           </div>
         </header>
+        {view === "checkouts" && <CheckoutDiagnostics />}
         {error && (
           <div className="message error" role="alert">
             {error}
@@ -390,69 +395,71 @@ export function AdminConsole({ view }: { view: View }) {
             </button>
           </div>
         )}
-        <div className="toolbar">
-          <div className="search">
-            <label htmlFor="admin-search" className="sr-only">
-              搜索
-            </label>
-            <input
-              id="admin-search"
-              placeholder={
-                view === "orders"
-                  ? "搜索订单号"
-                  : view === "codes"
-                    ? "搜索达人 / 优惠码"
-                    : view === "settlements"
-                      ? "搜索达人 / 月份 / 批次"
-                      : "搜索姓名 / 别名 / 邮箱"
-              }
-              value={query}
-              onChange={(e) => setQuery(e.target.value)}
-            />
-          </div>
-          <div className="toolbar-actions">
-            <button disabled={busy} onClick={() => void refresh()}>
-              刷新数据
-            </button>
-            {view === "partners" && (
-              <button className="primary" onClick={() => setEditor("new")}>
-                ＋ 新增合作
+        {view !== "checkouts" && (
+          <div className="toolbar">
+            <div className="search">
+              <label htmlFor="admin-search" className="sr-only">
+                搜索
+              </label>
+              <input
+                id="admin-search"
+                placeholder={
+                  view === "orders"
+                    ? "搜索订单号"
+                    : view === "codes"
+                      ? "搜索达人 / 优惠码"
+                      : view === "settlements"
+                        ? "搜索达人 / 月份 / 批次"
+                        : "搜索姓名 / 别名 / 邮箱"
+                }
+                value={query}
+                onChange={(e) => setQuery(e.target.value)}
+              />
+            </div>
+            <div className="toolbar-actions">
+              <button disabled={busy} onClick={() => void refresh()}>
+                刷新数据
               </button>
-            )}
-            {view === "codes" && (
-              <>
-                <button
-                  onClick={() => {
-                    setCandidateCode("");
-                    setCodeMode("bind");
-                    void loadConnection();
-                  }}
-                >
-                  绑定已有码
+              {view === "partners" && (
+                <button className="primary" onClick={() => setEditor("new")}>
+                  ＋ 新增合作
                 </button>
+              )}
+              {view === "codes" && (
+                <>
+                  <button
+                    onClick={() => {
+                      setCandidateCode("");
+                      setCodeMode("bind");
+                      void loadConnection();
+                    }}
+                  >
+                    绑定已有码
+                  </button>
+                  <button
+                    className="primary"
+                    onClick={() => {
+                      setCandidateCode("");
+                      setCodeMode("generate");
+                      void loadConnection();
+                    }}
+                  >
+                    生成新码并同步
+                  </button>
+                </>
+              )}
+              {view === "settlements" && (
                 <button
                   className="primary"
-                  onClick={() => {
-                    setCandidateCode("");
-                    setCodeMode("generate");
-                    void loadConnection();
-                  }}
+                  disabled={!data.settlementsEnabled}
+                  onClick={() => setSettleForm(true)}
                 >
-                  生成新码并同步
+                  ＋ 创建月结草稿
                 </button>
-              </>
-            )}
-            {view === "settlements" && (
-              <button
-                className="primary"
-                disabled={!data.settlementsEnabled}
-                onClick={() => setSettleForm(true)}
-              >
-                ＋ 创建月结草稿
-              </button>
-            )}
+              )}
+            </div>
           </div>
-        </div>
+        )}
         {view === "partners" && (
           <>
             <div className="section-line">
@@ -960,7 +967,11 @@ export function AdminConsole({ view }: { view: View }) {
         )}
         <footer className="admin-footer">
           <span>OFFY / 合作账簿</span>
-          <span>时间 Asia/Shanghai · 金额按交易币种 · 付款后冻结30天</span>
+          <span>
+            {view === "checkouts"
+              ? "时间 Asia/Shanghai · 记录30天 · 原文7天"
+              : "时间 Asia/Shanghai · 金额按交易币种 · 付款后冻结30天"}
+          </span>
         </footer>
       </main>
       {editor && (

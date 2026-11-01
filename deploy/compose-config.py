@@ -47,6 +47,8 @@ def validate(c, explicit=False):
     need(len(ports) == 1 and ports[0].get("host_ip") == "127.0.0.1" and str(ports[0].get("published")) == "3000", "app.ports loopback 3000")
     need(env.get("KOL_ENABLED", "false") in ("true", "false"), "KOL_ENABLED")
     need(env.get("KOL_SETTLEMENTS_ENABLED", "false") in ("true", "false"), "KOL_SETTLEMENTS_ENABLED")
+    key = env.get("CHECKOUT_DIAGNOSTICS_KEY", "")
+    need(not key or re.fullmatch(r"[a-fA-F0-9]{64}", key) is not None, "CHECKOUT_DIAGNOSTICS_KEY must be 64 hex characters")
     kol = env.get("KOL_ENABLED") == "true"
     need(not explicit or kol, "KOL_ENABLED=true is required by --kol")
     need(not (env.get("KOL_SETTLEMENTS_ENABLED") == "true" and not kol), "KOL_SETTLEMENTS_ENABLED requires KOL_ENABLED")
@@ -69,7 +71,7 @@ def validate(c, explicit=False):
     need(worker.get("environment", {}).get("KOL_WORKER_SECRET") == env["KOL_WORKER_SECRET"], "kol-worker KOL_WORKER_SECRET")
     admin = c.get("services", {}).get("admin", {})
     admin_env = admin.get("environment", {})
-    for key in ("NODE_ENV", "DATABASE_PROVIDER", "DATABASE_URL", "SITE_URL", "SHOPIFY_STORE_DOMAIN", "SHOPIFY_STOREFRONT_TOKEN", "SHOPIFY_ADMIN_TOKEN", "SHOPIFY_API_VERSION", "KOL_ENABLED", "KOL_SETTLEMENTS_ENABLED", "ADMIN_ORIGIN", "KOL_INGRESS_SECRET", "KOL_SIGNING_SECRET", "KOL_WORKER_SECRET", "SHOPIFY_WEBHOOK_SECRET", "KOL_ADMIN_BOOTSTRAP_HASH"):
+    for key in ("NODE_ENV", "DATABASE_PROVIDER", "DATABASE_URL", "SITE_URL", "SHOPIFY_STORE_DOMAIN", "SHOPIFY_STOREFRONT_TOKEN", "SHOPIFY_ADMIN_TOKEN", "SHOPIFY_API_VERSION", "KOL_ENABLED", "KOL_SETTLEMENTS_ENABLED", "ADMIN_ORIGIN", "KOL_INGRESS_SECRET", "KOL_SIGNING_SECRET", "KOL_WORKER_SECRET", "SHOPIFY_WEBHOOK_SECRET", "KOL_ADMIN_BOOTSTRAP_HASH", "CHECKOUT_DIAGNOSTICS_KEY"):
         need(admin_env.get(key) == env.get(key), "admin must match app: " + key)
     app_data = [v for v in app.get("volumes", []) if v.get("target") == "/data"]
     admin_data = [v for v in admin.get("volumes", []) if v.get("target") == "/data"]
@@ -98,8 +100,8 @@ def running_storefront(c, containers):
     need(state.get("Running") is True and state.get("Health", {}).get("Status") == "healthy", "storefront must already be healthy")
     actual = dict(item.split("=", 1) for item in container.get("Config", {}).get("Env", []) if "=" in item)
     expected = c["services"]["app"]["environment"]
-    for key in ("NODE_ENV", "DATABASE_PROVIDER", "DATABASE_URL", "SITE_URL", "SHOPIFY_STORE_DOMAIN", "SHOPIFY_API_VERSION", "KOL_ENABLED", "KOL_SETTLEMENTS_ENABLED", "ADMIN_ORIGIN", "KOL_INGRESS_SECRET", "KOL_SIGNING_SECRET", "KOL_WORKER_SECRET", "SHOPIFY_WEBHOOK_SECRET", "SHOPIFY_ADMIN_TOKEN"):
-        need(actual.get(key) == expected.get(key), "running storefront configuration differs: " + key + "; deploy storefront and admin together first")
+    for key in ("NODE_ENV", "DATABASE_PROVIDER", "DATABASE_URL", "SITE_URL", "SHOPIFY_STORE_DOMAIN", "SHOPIFY_API_VERSION", "KOL_ENABLED", "KOL_SETTLEMENTS_ENABLED", "ADMIN_ORIGIN", "KOL_INGRESS_SECRET", "KOL_SIGNING_SECRET", "KOL_WORKER_SECRET", "SHOPIFY_WEBHOOK_SECRET", "SHOPIFY_ADMIN_TOKEN", "CHECKOUT_DIAGNOSTICS_KEY"):
+        need((actual.get(key) or "") == (expected.get(key) or ""), "running storefront configuration differs: " + key + "; deploy storefront and admin together first")
     data = next(v for v in c["services"]["app"]["volumes"] if v["target"] == "/data")
     volume_name = c.get("volumes", {}).get(data["source"], {}).get("name")
     mounts = [m for m in container.get("Mounts", []) if m.get("Destination") == "/data"]

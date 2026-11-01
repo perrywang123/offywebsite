@@ -1,0 +1,26 @@
+[
+  {
+    "navScrollWidth": 328,
+    "navWidth": 328,
+    "scrollWidth": 360,
+    "width": 360
+  },
+  {
+    "navScrollWidth": 720,
+    "navWidth": 720,
+    "scrollWidth": 768,
+    "width": 768
+  },
+  {
+    "navScrollWidth": 167,
+    "navWidth": 167,
+    "scrollWidth": 1440,
+    "width": 1440
+  },
+  {
+    "navScrollWidth": 167,
+    "navWidth": 167,
+    "scrollWidth": 1920,
+    "width": 1920
+  }
+]

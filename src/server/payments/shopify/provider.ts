@@ -13,6 +13,7 @@ import { getKolDb } from "../../kol/database";
 import { createIntent, bindCart } from "../../kol/core";
 import { setRuntime } from "../../kol/sync";
 import { cartCreate, type CartLineInput, type ShopifyCart } from "./client";
+import { observeCheckout } from "@/lib/checkout-diagnostics";
 
 /** CountryCode 是 GraphQL 枚举，必须作为字面量注入（用变量传不生效）。仅允许两位字母。 */
 function marketCountry(): string {
@@ -45,9 +46,24 @@ export class ShopifyPaymentProvider implements PaymentProvider {
     const country = input.country;
     const lines: CartLineInput[] = [];
     const failures: CheckoutItemFailure[] = [];
+    const resolved: unknown[] = [];
     try {
       for (const item of input.items) {
         const product = await getLiveProductByCode(item.code, country ?? marketCountry());
+        resolved.push({
+          code: item.code,
+          quantity: item.quantity,
+          product: product
+            ? {
+                name: product.name,
+                variantId: product.shopifyVariantId,
+                available: product.isAvailable,
+                quoteOnly: product.isQuoteOnly,
+                unitPriceCents: product.priceCents,
+                currency: product.currency,
+              }
+            : null,
+        });
         // 售罄/下架/仅有报价的商品此前只是在整单里被"顺带"拒掉,顾客拿到的是一个
         // 没有主语的 400(方案 P0-3:一路点到结算才被 400 拦下)。这里把原因分成
         // 两类并**逐件指名**,让购物袋能说清"哪一件买不了、先移除再试"。
@@ -62,8 +78,21 @@ export class ShopifyPaymentProvider implements PaymentProvider {
         lines.push({ merchandiseId: product.shopifyVariantId, quantity: item.quantity });
       }
     } catch {
+      observeCheckout(input.diagnostics, {
+        type: "catalog_checked",
+        data: {
+          country: country ?? marketCountry(),
+          resolved,
+          failures,
+          error: "catalog_unavailable",
+        },
+      });
       return { ok: false, status: 503, error: "catalog_unavailable" };
     }
+    observeCheckout(input.diagnostics, {
+      type: "catalog_checked",
+      data: { country: country ?? marketCountry(), resolved, failures },
+    });
     if (failures.length > 0) {
       return {
         ok: false,
@@ -100,11 +129,15 @@ export class ShopifyPaymentProvider implements PaymentProvider {
     const createCart =
       this.deps.createCart ??
       ((l: CartLineInput[]) =>
-        intent
-          ? cartCreate(l, fetch, input.locale, country, returnUrl, intent.reference)
-          : country
-            ? cartCreate(l, fetch, input.locale, country, returnUrl)
-            : cartCreate(l, fetch, input.locale, undefined, returnUrl));
+        cartCreate(
+          l,
+          fetch,
+          input.locale,
+          country,
+          returnUrl,
+          intent?.reference,
+          input.diagnostics,
+        ));
     try {
       const cart = await createCart(lines);
       if (intent) {
@@ -125,8 +158,8 @@ export class ShopifyPaymentProvider implements PaymentProvider {
         provider: "shopify",
         redirect: { kind: "redirect", url: cart.checkoutUrl },
       };
-    } catch (error) {
-      console.error("Shopify cartCreate error:", error);
+    } catch {
+      console.error("shopify_cart_create_failed");
       return { ok: false, status: 502, error: "shopify_error" };
     }
   }

@@ -16,10 +16,12 @@ Stripe/PayPal限制USD。数据库已经有currency列，不要重复源码旧�
 
 ## DAL / 订阅
 
-四张保留表＋16张kol_*表，迁移0000–0006。同步better-sqlite3/Drizzle使用run/get/all，PG分支抛错。订阅仅做邮箱trim/lowercase、格式校验和唯一入库，没有邮件发送服务。
+四张保留表＋16张kol_*表＋2张匿名结账诊断表，迁移0000–0007。同步better-sqlite3/Drizzle使用run/get/all，PG分支抛错。订阅仅做邮箱trim/lowercase、格式校验和唯一入库，没有邮件发送服务。
 
 ## 已知未完成
 
 KOL已实现管理员、登录限流、Origin/CSRF、Shopify最小收件箱与账本/结算事务，默认关闭。全站统一限流/监控、legacy完整订单事务/并发订单号、PayPal webhook兜底和PG仍未实现。商品严格失败保护见 [已实现变更](../../openspec/changes/archive/2026-10-31-shopify-authoritative-catalog/design.md)。
 
 KOL模块、独立入口、双方式优惠码、精确财务/结算快照、worker及运行门槛见 [运行手册](../kol-platform-operations.md)。没有自动转账、任意金额补单或优惠规则编辑。
+
+2026-11-01 新增独立于 KOL 采集的 [结账诊断](../checkout-diagnostics.md)：购物袋发起、国家证据、商品核对、Shopify 请求/响应和原始跳转链接入库；后台有权限地分页查看，原文加密7天、脱敏记录30天。诊断不改变市场选择、购买资格或支付事实。

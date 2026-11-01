@@ -140,3 +140,7 @@ Nginx恢复只针对显式管理的站点文件。健康检查失败时可能已
 源码包实际生成并检查了私密文件/DB/缓存排除；通过隔离命令替身执行部署、上传、备份失败中止、worker失败、只检查和Nginx恢复分支。生成的Nginx配置另用真实本地Nginx和独立CA做HTTPS边界测试。Compose配置和应用生产build均另行校验。
 
 本机Docker daemon未运行，未执行真实容器构建/启动；本轮没有SSH连接或修改生产服务器。独立 Git 后台发布的补充验证见 [独立后台验收](admin-deployment-validation.md)。前一轮记录见 [一键部署验收](deployment-validation.md)。
+
+## 2026-11-01 匿名结账诊断
+
+主站采集和后台第五页需一起更新，执行 `bash deploy/update.sh --kol`；SQLite 启动迁移新增表，不导入本地测试数据。主站/后台共用原持久卷和端口。可选 `CHECKOUT_DIAGNOSTICS_KEY` 留空会在数据库同目录自动创建 0600 密钥，两容器共用；在线部署备份同时保存已有密钥文件，恢复需使用对应密钥。保留期、权限与完整步骤见 [结账诊断](checkout-diagnostics.md)。

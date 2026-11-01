@@ -1,0 +1,54 @@
+{
+  "verifiedAt": "2026-11-01T10:22:23.279Z",
+  "requestedApiVersion": "2026-07",
+  "servedApiVersion": "2026-07",
+  "readOnlySchemaQuery": true,
+  "createdCartsOrOrders": false,
+  "checked": [
+    {
+      "name": "CartCreatePayload",
+      "fields": ["cart", "userErrors", "warnings"],
+      "missing": []
+    },
+    {
+      "name": "CartWarning",
+      "fields": ["code", "message", "target"],
+      "missing": []
+    },
+    {
+      "name": "Cart",
+      "fields": ["id", "checkoutUrl", "buyerIdentity", "cost", "lines", "totalQuantity"],
+      "missing": []
+    },
+    {
+      "name": "CartBuyerIdentity",
+      "fields": ["countryCode"],
+      "missing": []
+    },
+    {
+      "name": "BaseCartLine",
+      "fields": ["id", "quantity", "merchandise", "cost"],
+      "missing": []
+    },
+    {
+      "name": "CartLineCost",
+      "fields": ["amountPerQuantity", "totalAmount"],
+      "missing": []
+    },
+    {
+      "name": "CartCost",
+      "fields": ["subtotalAmount", "totalAmount"],
+      "missing": []
+    },
+    {
+      "name": "ProductVariant",
+      "fields": ["id", "title", "sku", "product"],
+      "missing": []
+    },
+    {
+      "name": "CartUserError",
+      "fields": ["field", "message", "code"],
+      "missing": []
+    }
+  ]
+}

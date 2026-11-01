@@ -1,0 +1,106 @@
+{
+  "verifiedAt": "2026-11-01T10:18:09.121Z",
+  "environment": "isolated-local-simulator",
+  "scenarios": [
+    {
+      "scenario": "normal",
+      "id": "eeffb2cf-c220-4354-a85f-714b1e32a771",
+      "httpStatus": 200,
+      "country": "GB",
+      "status": "redirect_ready",
+      "stages": [
+        "started",
+        "server_received",
+        "catalog_checked",
+        "shopify_request",
+        "shopify_response",
+        "server_result"
+      ]
+    },
+    {
+      "scenario": "warning",
+      "id": "a5044c0c-3d67-4a9d-92da-ae651581b9af",
+      "httpStatus": 200,
+      "country": "US",
+      "status": "redirect_ready",
+      "stages": [
+        "started",
+        "server_received",
+        "catalog_checked",
+        "shopify_request",
+        "shopify_response",
+        "server_result"
+      ]
+    },
+    {
+      "scenario": "http_error",
+      "id": "b31cafa7-6bff-41f1-9179-babb20c010f4",
+      "httpStatus": 502,
+      "country": "US",
+      "status": "failed",
+      "stages": [
+        "started",
+        "server_received",
+        "catalog_checked",
+        "shopify_request",
+        "shopify_response",
+        "server_result"
+      ]
+    },
+    {
+      "scenario": "graphql_error",
+      "id": "b7bd392e-badc-4489-ad94-89ca0fa3680a",
+      "httpStatus": 502,
+      "country": "US",
+      "status": "failed",
+      "stages": [
+        "started",
+        "server_received",
+        "catalog_checked",
+        "shopify_request",
+        "shopify_response",
+        "server_result"
+      ]
+    },
+    {
+      "scenario": "catalog_error",
+      "id": "0e840515-93d5-4827-a22c-9c1028fc0871",
+      "httpStatus": 503,
+      "country": "US",
+      "status": "failed",
+      "stages": ["started", "server_received", "catalog_checked", "server_result"]
+    },
+    {
+      "scenario": "normal-direct",
+      "id": "6f32e912-bcba-4b3d-ac62-058c32b7ddfb",
+      "httpStatus": 200,
+      "country": "US",
+      "status": "redirect_ready",
+      "stages": [
+        "started",
+        "server_received",
+        "catalog_checked",
+        "shopify_request",
+        "shopify_response",
+        "server_result"
+      ]
+    },
+    {
+      "scenario": "client-preflight-failed",
+      "id": "62207c9e-6b04-416e-9780-e89933dac9fd",
+      "status": "client_failed"
+    }
+  ],
+  "checks": [
+    "shared-db",
+    "encrypted-links-and-cart-keys",
+    "sensitive-read-audit",
+    "pagination-filter",
+    "public-ingress-hidden",
+    "authentication",
+    "csrf",
+    "database-integrity"
+  ],
+  "noRealShopifyRequests": true,
+  "noOrdersOrPayments": true
+}

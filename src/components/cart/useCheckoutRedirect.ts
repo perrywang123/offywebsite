@@ -3,6 +3,7 @@ import { useCallback, useRef, useState } from "react";
 import { referralTicket } from "@/components/kol/ReferralBridge";
 import { checkoutRedirectUrl } from "@/lib/checkout-redirect";
 import { useLocale } from "next-intl";
+import { beginCheckoutAttempt, reportCheckoutObservation } from "./checkout-diagnostics-client";
 export interface CheckoutItemInput {
   code: string;
   quantity: number;
@@ -31,8 +32,15 @@ export function useCheckoutRedirect(verify?: () => Promise<boolean>): CheckoutRe
       setPending(true);
       setFailed(false);
       setBlocked(null);
+      let receipt: string | undefined,
+        observedFailure = false;
       try {
-        if (verify && !(await verify())) throw new Error("catalog_unavailable");
+        receipt = await beginCheckoutAttempt(items, locale);
+        if (verify && !(await verify())) {
+          reportCheckoutObservation(receipt, "client_verification_failed");
+          observedFailure = true;
+          throw new Error("catalog_unavailable");
+        }
         const res = await fetch("/api/payments/checkout", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
@@ -43,12 +51,14 @@ export function useCheckoutRedirect(verify?: () => Promise<boolean>): CheckoutRe
             items,
             locale,
             referralTicket: referralTicket(),
+            diagnosticReceipt: receipt,
           }),
         });
         const data = await res.json().catch(() => null);
         if (res.ok) {
           const target = checkoutRedirectUrl(data?.redirect);
           if (target) {
+            reportCheckoutObservation(receipt, "redirect_requested");
             window.location.assign(target);
             return;
           }
@@ -63,7 +73,14 @@ export function useCheckoutRedirect(verify?: () => Promise<boolean>): CheckoutRe
           return;
         }
         throw new Error("checkout_unavailable");
-      } catch {
+      } catch (error) {
+        if (!observedFailure)
+          reportCheckoutObservation(
+            receipt,
+            error instanceof Error && ["TimeoutError", "AbortError"].includes(error.name)
+              ? "client_timeout"
+              : "client_error",
+          );
         setFailed(true);
         inFlight.current = false;
         setPending(false);

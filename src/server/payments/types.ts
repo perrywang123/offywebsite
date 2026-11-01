@@ -17,6 +17,8 @@ export interface ShippingInfo {
 }
 
 export interface CreateCheckoutInput {
+  /** Server-only diagnostic observer; must never influence commercial decisions. */
+  diagnostics?: import("@/lib/checkout-diagnostics").CheckoutObserver;
   /** Opaque tab-local referral ticket; never accepts a KOL ID or client rate. */
   referralTicket?: string;
   items: CheckoutItemInput[];

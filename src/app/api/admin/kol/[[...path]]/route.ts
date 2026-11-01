@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { z } from "zod";
 import { eq } from "drizzle-orm";
 import { env } from "@/lib/env";
+import { diagnosticAdminGet, diagnosticAdminPost } from "@/server/checkout-diagnostics/admin";
 import { getKolDb } from "@/server/kol/database";
 import { kolShopOrders } from "@/server/db/schema";
 import {
@@ -67,9 +68,10 @@ type Context = { params: Promise<{ path?: string[] }> };
 export async function GET(request: Request, context: Context) {
   try {
     requireIngress(request.headers);
+    const path = (await context.params).path ?? [];
+    if (path[0] === "checkouts") return diagnosticAdminGet(request, path);
     const db = getKolDb(),
       admin = requireAdmin(db, request.headers);
-    const path = (await context.params).path ?? [];
     if (path[0] === "state")
       return json({
         ...snapshot(db),
@@ -99,8 +101,9 @@ const idSchema = z.string().min(1).max(150),
 export async function POST(request: Request, context: Context) {
   try {
     requireMutation(request.headers);
-    const db = getKolDb(),
-      path = (await context.params).path ?? [];
+    const path = (await context.params).path ?? [];
+    if (path[0] === "checkouts") return diagnosticAdminPost(request, path);
+    const db = getKolDb();
     if (path[0] === "login") {
       throttle(
         db,

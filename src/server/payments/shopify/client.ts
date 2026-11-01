@@ -1,4 +1,5 @@
 import { env, shopifyOrigin } from "../../../lib/env";
+import { observeCheckout, type CheckoutObserver } from "@/lib/checkout-diagnostics";
 
 export class ShopifyError extends Error {
   constructor(
@@ -33,20 +34,54 @@ async function storefrontFetch<T>(
   query: string,
   variables: Record<string, unknown>,
   fetchImpl: typeof fetch = fetch,
+  observer?: CheckoutObserver,
 ): Promise<T> {
-  const res = await fetchImpl(storefrontEndpoint(), {
-    method: "POST",
-    cache: "no-store",
-    signal: AbortSignal.timeout(10000),
-    headers: {
-      "Content-Type": "application/json",
-      "X-Shopify-Storefront-Access-Token": env.SHOPIFY_STOREFRONT_TOKEN ?? "",
+  const startedAt = Date.now();
+  let res: Response;
+  try {
+    res = await fetchImpl(storefrontEndpoint(), {
+      method: "POST",
+      cache: "no-store",
+      signal: AbortSignal.timeout(10000),
+      headers: {
+        "Content-Type": "application/json",
+        "X-Shopify-Storefront-Access-Token": env.SHOPIFY_STOREFRONT_TOKEN ?? "",
+      },
+      body: JSON.stringify({ query, variables }),
+    });
+  } catch (error) {
+    observeCheckout(observer, {
+      type: "shopify_transport_failed",
+      data: {
+        reason:
+          error instanceof Error && ["TimeoutError", "AbortError"].includes(error.name)
+            ? "timeout"
+            : "network_error",
+        durationMs: Date.now() - startedAt,
+      },
+    });
+    throw error;
+  }
+  const raw = await res.text().catch(() => "");
+  let json: GraphQLResponse<T> | null;
+  try {
+    json = JSON.parse(raw) as GraphQLResponse<T>;
+  } catch {
+    json = null;
+  }
+  observeCheckout(observer, {
+    type: "shopify_response",
+    data: {
+      status: res.status,
+      contentType: res.headers.get("content-type"),
+      requestId: res.headers.get("x-request-id"),
+      durationMs: Date.now() - startedAt,
+      body: json ?? { invalidJson: true },
+      ...(json ? {} : { rawText: raw.slice(0, 4096), rawTextTruncated: raw.length > 4096 }),
     },
-    body: JSON.stringify({ query, variables }),
   });
   if (!res.ok) throw new ShopifyError("storefront_request_failed", res.status);
-
-  const json = (await res.json()) as GraphQLResponse<T>;
+  if (!json) throw new ShopifyError("storefront_invalid_response");
   if (json.errors && json.errors.length > 0) {
     throw new ShopifyError(json.errors[0]?.message ?? "storefront_graphql_error");
   }
@@ -54,7 +89,7 @@ async function storefrontFetch<T>(
   return json.data;
 }
 
-/** CountryCode 是 GraphQL 枚举，必须作为字面量注入（用变量传不生效）。仅允许两位字母。 */
+/** Current query interpolates only normalized country enum values. */
 function marketCountry(): string {
   const c = env.SHOPIFY_MARKET_COUNTRY;
   return /^[A-Z]{2}$/.test(c) ? c : "US";
@@ -84,8 +119,21 @@ export function cartMutation(country: string, language: CartLanguage): string {
   return `
 mutation CartCreate($lines: [CartLineInput!]!, $attributes: [AttributeInput!]) @inContext(country: ${country}, language: ${languageCode(language)}) {
   cartCreate(input: { lines: $lines, buyerIdentity: { countryCode: ${country} }, attributes: $attributes }) {
-    cart { id checkoutUrl }
-    userErrors { field message }
+    cart {
+      id checkoutUrl totalQuantity
+      buyerIdentity { countryCode }
+      cost { subtotalAmount { amount currencyCode } totalAmount { amount currencyCode } }
+      lines(first: 250) {
+        nodes {
+          id quantity
+          merchandise { ... on ProductVariant { id title sku product { handle title } } }
+          cost { amountPerQuantity { amount currencyCode } totalAmount { amount currencyCode } }
+        }
+        pageInfo { hasNextPage endCursor }
+      }
+    }
+    userErrors { code field message }
+    warnings { code message target }
   }
 }`;
 }
@@ -115,13 +163,29 @@ export async function cartCreate(
   country: string = marketCountry(),
   returnUrl?: string,
   referralReference?: string,
+  observer?: CheckoutObserver,
 ): Promise<ShopifyCart> {
   const attributes = returnUrl ? [{ key: "return_url", value: returnUrl }] : [];
   if (referralReference) attributes.push({ key: "offy_ref", value: referralReference });
+  const normalized = normalizeCountry(country);
+  observeCheckout(observer, {
+    type: "shopify_request",
+    data: {
+      apiVersion: env.SHOPIFY_API_VERSION,
+      shop: env.SHOPIFY_STORE_DOMAIN,
+      country: normalized,
+      language: languageCode(language),
+      lines,
+      attributes: attributes.map((a) =>
+        a.key === "offy_ref" ? { key: a.key, value: "[redacted]" } : a,
+      ),
+    },
+  });
   const data = await storefrontFetch<CartCreateData>(
-    cartMutation(normalizeCountry(country), language),
+    cartMutation(normalized, language),
     { lines, attributes },
     fetchImpl,
+    observer,
   );
   const { cart, userErrors } = data.cartCreate;
   if (userErrors && userErrors.length > 0) {

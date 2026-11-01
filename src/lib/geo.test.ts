@@ -4,6 +4,7 @@ import {
   normalizeCountryCode,
   parseRegionList,
   pickCountry,
+  countryDecision,
   regionBadgeLabel,
   regionBadgeShortLabel,
 } from "./geo";
@@ -21,6 +22,28 @@ vi.mock("geoip-lite", () => ({
 }));
 
 describe("pickCountry (访客国家判定)", () => {
+  it("explains the selected country without retaining raw IP or arbitrary headers", () => {
+    const decision = countryDecision(
+      new Headers({
+        "cf-ipcountry": "XX",
+        "x-country-code": "uk",
+        "x-real-ip": "8.8.8.8",
+        authorization: "secret",
+      }),
+      "SG",
+    );
+    expect(decision).toMatchObject({
+      country: "GB",
+      source: "header",
+      header: "x-country-code",
+      fallback: "SG",
+    });
+    expect(decision.candidates).toEqual(
+      expect.arrayContaining([{ header: "cf-ipcountry", value: "XX" }]),
+    );
+    expect(JSON.stringify(decision)).not.toMatch(/8\.8\.8\.8|secret/);
+    expect(countryDecision({}, "HK")).toMatchObject({ country: "HK", source: "default" });
+  });
   it("优先用 Cloudflare 的 cf-ipcountry", () => {
     expect(pickCountry({ "cf-ipcountry": "GB", "x-country-code": "DE" })).toBe("GB");
   });

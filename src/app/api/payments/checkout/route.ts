@@ -4,6 +4,7 @@ import { env } from "@/lib/env";
 import { pickCountry } from "@/lib/geo";
 import { clampQuantity } from "@/lib/pricing";
 import { resolveProvider } from "@/server/payments/registry";
+import { startCheckoutRecording } from "@/server/checkout-diagnostics/runtime";
 
 export const dynamic = "force-dynamic";
 
@@ -19,10 +20,11 @@ const shippingSchema = z.object({
 });
 
 const bodySchema = z.object({
+  diagnosticReceipt: z.string().max(100).optional(),
   referralTicket: z.string().uuid().optional(),
   provider: z.enum(["stripe", "paypal", "shopify"]).optional(),
   items: z
-    .array(z.object({ code: z.string(), quantity: z.number() }))
+    .array(z.object({ code: z.string().min(1).max(200), quantity: z.number() }))
     .min(1)
     .max(50),
   locale: z.string().optional(),
@@ -46,22 +48,51 @@ export async function POST(request: Request) {
   const country = pickCountry(request.headers, env.SHOPIFY_MARKET_COUNTRY);
 
   const provider = resolveProvider(parsed.provider);
-  const result = await provider.createCheckout({
-    items: parsed.items.map((i) => ({ code: i.code, quantity: clampQuantity(i.quantity) })),
-    locale: parsed.locale === "en" ? "en" : "zh",
-    email: parsed.email,
-    shipping: parsed.shipping,
-    country,
-    referralTicket: parsed.referralTicket,
-  });
+  const items = parsed.items.map((i) => ({ code: i.code, quantity: clampQuantity(i.quantity) }));
+  const recording =
+    provider.name === "shopify"
+      ? startCheckoutRecording(
+          request.headers,
+          items,
+          parsed.locale === "en" ? "en" : "zh",
+          parsed.diagnosticReceipt,
+        )
+      : undefined;
+  let result;
+  try {
+    result = await provider.createCheckout({
+      diagnostics: recording?.observe,
+      items,
+      locale: parsed.locale === "en" ? "en" : "zh",
+      email: parsed.email,
+      shipping: parsed.shipping,
+      country,
+      referralTicket: parsed.referralTicket,
+    });
+  } catch (error) {
+    recording?.finish({ ok: false, status: 502, error: "unexpected_checkout_error" });
+    if (provider.name !== "shopify") throw error;
+    return NextResponse.json(
+      { error: "shopify_error", attemptId: recording?.id },
+      { status: 502, headers: { "Cache-Control": "no-store" } },
+    );
+  }
+  recording?.finish(result);
 
   if (result.ok) {
-    return NextResponse.json({ provider: result.provider, redirect: result.redirect });
+    return NextResponse.json(
+      { provider: result.provider, redirect: result.redirect, attemptId: recording?.id },
+      { headers: { "Cache-Control": "no-store" } },
+    );
   }
   // 4xx 必须带上「哪些商品、为什么」—— 客户端据此在原地指名商品并让顾客重试,
   // 而不是把裸错误码(invalid_items / checkout_failed)印到界面上(方案 P0-3)。
   return NextResponse.json(
-    result.items ? { error: result.error, items: result.items } : { error: result.error },
-    { status: result.status },
+    {
+      error: result.error,
+      ...(result.items ? { items: result.items } : {}),
+      attemptId: recording?.id,
+    },
+    { status: result.status, headers: { "Cache-Control": "no-store" } },
   );
 }

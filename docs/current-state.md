@@ -16,6 +16,8 @@
 - Docker/Compose、nginx、服务启动迁移、GeoIP 国家判定与配置诊断。
 - 可选KOL平台：四页后台、独立入口/管理员、合作版本、自定义佣金、当次链路、双方式码、Shopify财务核对、分币种账本/月结与审计；默认关闭。见 [运行手册](kol-platform-operations.md)。
 
+2026-11-01 新增匿名结账诊断：购物袋点击、前置验证、服务端商品核对、Shopify 请求/响应与生成链接写入共用 SQLite；后台第五页筛选、时间线和有审计的原文查看。采集独立于 KOL 开关，记录 30 天/原文加密 7 天。见 [运行说明](checkout-diagnostics.md) 与 [验收](checkout-diagnostics-validation.md)。尚未部署生产。
+
 ## 当前数据事实与限制
 
 Shopify 是唯一商品事实来源。本地商品快照、旧 enrich 富化器和 check:catalog 已删除。商品名、描述、图、首variant价格/库存、币种、SKU和系列成员不采用本地覆盖。品牌/预告素材和路由配置保留。

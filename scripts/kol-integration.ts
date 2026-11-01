@@ -128,6 +128,7 @@ async function main() {
     .all() as { remote_id: string; candidate: string }[])
     jobs.set(row.remote_id, { code: row.candidate, polls: 2 });
   const orders = new Map<string, MockOrder>();
+  let checkoutMode = "normal";
   let eventCounter = 0;
   function send(res: ServerResponse, data: unknown, status = 200) {
     res.writeHead(status, { "Content-Type": "application/json", "Cache-Control": "no-store" });
@@ -162,6 +163,13 @@ async function main() {
   const mockServer = createServer(async (req, res) => {
     try {
       const url = new URL(req.url ?? "/", mock);
+      if (url.pathname === "/test/checkout-mode" && req.method === "POST") {
+        const { mode } = JSON.parse(await body(req));
+        if (!["normal", "warning", "http_error", "graphql_error", "catalog_error"].includes(mode))
+          throw new Error("invalid_mode");
+        checkoutMode = mode;
+        return send(res, { mode });
+      }
       if (url.pathname === "/test/state")
         return send(res, { directory, orders: [...orders.values()], codes: [...codes] });
       if (url.pathname === "/test/mature" && req.method === "POST") {
@@ -286,6 +294,8 @@ async function main() {
         return;
       }
       const { query: q = "", variables: v = {} } = JSON.parse(await body(req));
+      if (checkoutMode === "catalog_error" && !q.includes("Offy"))
+        return send(res, { errors: [{ message: "Isolated catalog failure" }] }, 503);
       let data: unknown;
       if (q.includes("OffyScopes"))
         data = {
@@ -330,6 +340,10 @@ async function main() {
         data = { orders: { nodes: [...orders.keys()].map((id) => ({ id })), pageInfo } };
       else if (q.includes("OffyOrder(")) data = { order: orders.get(v.id) ?? null };
       else if (q.includes("CartCreate")) {
+        if (checkoutMode === "http_error")
+          return send(res, { errors: [{ message: "Isolated rate limit" }] }, 429);
+        if (checkoutMode === "graphql_error")
+          return send(res, { errors: [{ message: "Isolated GraphQL failure" }] });
         const token = randomUUID();
         carts.set(token, {
           attributes: v.attributes ?? [],
@@ -340,10 +354,56 @@ async function main() {
             cart: {
               id: `gid://shopify/Cart/${token}?key=test-secret`,
               checkoutUrl: `${mock}/checkout/${token}`,
+              buyerIdentity: {
+                countryCode:
+                  q.match(/buyerIdentity:\s*\{\s*countryCode:\s*([A-Z]{2})/)?.[1] ?? "US",
+              },
+              totalQuantity:
+                checkoutMode === "warning"
+                  ? 0
+                  : v.lines.reduce((n: number, l: { quantity: number }) => n + l.quantity, 0),
+              lines: {
+                nodes:
+                  checkoutMode === "warning"
+                    ? []
+                    : v.lines.map((l: { merchandiseId: string; quantity: number }, i: number) => ({
+                        id: `gid://shopify/CartLine/${i}`,
+                        quantity: l.quantity,
+                        merchandise: {
+                          id: l.merchandiseId,
+                          title: "Default Title",
+                          sku: "TEST-ONLY",
+                          product: { handle: product.handle, title: product.title },
+                        },
+                        cost: {
+                          amountPerQuantity: { amount: "100.00", currencyCode: "USD" },
+                          totalAmount: {
+                            amount: (l.quantity * 100).toFixed(2),
+                            currencyCode: "USD",
+                          },
+                        },
+                      })),
+                pageInfo,
+              },
+              cost: {
+                subtotalAmount: { amount: "100.00", currencyCode: "USD" },
+                totalAmount: { amount: "100.00", currencyCode: "USD" },
+              },
             },
             userErrors: [],
+            warnings:
+              checkoutMode === "warning"
+                ? [
+                    {
+                      code: "PRODUCT_UNAVAILABLE_IN_BUYER_LOCATION",
+                      message: "Isolated unavailable-location warning",
+                      target: "cart",
+                    },
+                  ]
+                : [],
           },
         };
+        res.setHeader("x-request-id", `integration-cart-${token}`);
       } else if (q.includes("ProductEnrich"))
         data = { product: v.handle === product.handle ? product : null };
       else if (q.includes("CollectionProducts"))

@@ -1,5 +1,5 @@
 // Piped into a one-off app container before replacement; no migrations or account writes.
-import { existsSync, mkdirSync, chmodSync } from "node:fs";
+import { existsSync, mkdirSync, chmodSync, copyFileSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { randomUUID } from "node:crypto";
 import Database from "better-sqlite3";
@@ -20,6 +20,11 @@ if (!existsSync(path)) {
   await db.backup(target);
   db.close();
   chmodSync(target, 0o600);
+  const key = join(dirname(path), "checkout-diagnostics.key");
+  if (existsSync(key)) {
+    copyFileSync(key, `${target}.checkout-diagnostics.key`);
+    chmodSync(`${target}.checkout-diagnostics.key`, 0o600);
+  }
   const backup = new Database(target, { readonly: true, fileMustExist: true });
   const ok = backup.pragma("integrity_check", { simple: true }) === "ok";
   backup.close();

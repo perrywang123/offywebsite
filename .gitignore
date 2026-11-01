@@ -57,6 +57,8 @@ next-env.d.ts
 *.db-journal
 *.db-wal
 *.db-shm
+**/checkout-diagnostics.key
+**/*.checkout-diagnostics.key
 
 # raw source material (large, local-only). Curated site assets live in public/assets/.
 /resources/

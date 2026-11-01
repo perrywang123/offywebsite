@@ -97,14 +97,39 @@ function countryFromIp(ip: string | undefined): string | undefined {
 
 /** 选出可用的两字母国家码;拿不到就返回 `fallback`(大写归一)。 */
 export function pickCountry(headers: HeaderLookup, fallback = "US"): string {
+  return countryDecision(headers, fallback).country;
+}
+
+/** Diagnostic evidence only; neither raw IP nor unrelated headers are retained. */
+export function countryDecision(headers: HeaderLookup, fallback = "US") {
+  const candidates = COUNTRY_HEADERS.flatMap((header) => {
+    const raw = readHeader(headers, header);
+    return raw === undefined
+      ? []
+      : [{ header, value: /^[a-z0-9\s]{0,8}$/i.test(raw) ? raw.trim().toUpperCase() : "invalid" }];
+  });
+  const base = {
+    candidates,
+    fallback: asCountryCode(fallback) ?? "US",
+    ipSource: null as string | null,
+  };
   for (const name of COUNTRY_HEADERS) {
     const code = asCountryCode(readHeader(headers, name));
-    if (code) return code;
+    if (code) return { ...base, country: code, source: "header", header: name };
   }
   // 没有国家头 → 自己按客户端 IP 解析(裸 nginx / 无 CDN 的部署靠这一步)。
   const fromIp = countryFromIp(clientIp(headers));
-  if (fromIp) return fromIp;
-  return asCountryCode(fallback) ?? "US";
+  if (fromIp)
+    return {
+      ...base,
+      country: fromIp,
+      source: "ip",
+      header: null,
+      ipSource: readHeader(headers, "x-forwarded-for")?.split(",")[0]?.trim()
+        ? "x-forwarded-for"
+        : "x-real-ip",
+    };
+  return { ...base, country: base.fallback, source: "default", header: null };
 }
 
 /** 探测区域限定用的国家列表:优先 SHOPIFY_REGIONS,否则用内置默认。 */

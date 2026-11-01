@@ -14,11 +14,18 @@ vi.mock("next-intl", () => ({ useLocale: () => "en" }));
 vi.mock("@/i18n/navigation", () => ({ useRouter: () => ({ push: mockPush }) }));
 
 import { useCheckoutRedirect } from "./useCheckoutRedirect";
+import { beginCheckoutAttempt, reportCheckoutObservation } from "./checkout-diagnostics-client";
+vi.mock("./checkout-diagnostics-client", () => ({
+  beginCheckoutAttempt: vi.fn().mockResolvedValue(undefined),
+  reportCheckoutObservation: vi.fn(),
+}));
 
 const realLocation = window.location;
 let assign: ReturnType<typeof vi.fn>;
 
 beforeEach(() => {
+  vi.mocked(beginCheckoutAttempt).mockReset().mockResolvedValue(undefined);
+  vi.mocked(reportCheckoutObservation).mockClear();
   mockPush.mockClear();
   assign = vi.fn();
   Object.defineProperty(window, "location", {
@@ -65,6 +72,22 @@ function notJson(): Response {
     },
   } as unknown as Response;
 }
+
+it("registers before verification and records an anonymous preflight failure without creating checkout", async () => {
+  vi.mocked(beginCheckoutAttempt).mockResolvedValue("receipt");
+  const verify = vi.fn(async () => {
+    expect(beginCheckoutAttempt).toHaveBeenCalledWith(ITEMS, "en");
+    return false;
+  });
+  const fetchMock = mockFetch(async () => ok({}));
+  const { result } = renderHook(() => useCheckoutRedirect(verify));
+  await act(async () => {
+    await result.current.startCheckout(ITEMS);
+  });
+  expect(reportCheckoutObservation).toHaveBeenCalledWith("receipt", "client_verification_failed");
+  expect(fetchMock).not.toHaveBeenCalled();
+  expect(result.current.failed).toBe(true);
+});
 
 describe("useCheckoutRedirect · 成功路径", () => {
   it("POST /api/payments/checkout(provider=shopify + code/quantity + locale),拿到 url 后整页跳过去", async () => {

@@ -6,6 +6,13 @@ import { z } from "zod";
  * populated for client bundles.
  */
 const envSchema = z.object({
+  CHECKOUT_DIAGNOSTICS_KEY: z.preprocess(
+    (v) => (v === "" ? undefined : v),
+    z
+      .string()
+      .regex(/^[a-fA-F0-9]{64}$/)
+      .optional(),
+  ),
   KOL_ADMIN_BOOTSTRAP_HASH: z.preprocess(
     (v) => (v === "" ? undefined : v),
     z

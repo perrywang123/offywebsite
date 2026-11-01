@@ -20,6 +20,7 @@ const eslintConfig = [
       "build/**",
       "dist/**",
       "coverage/**",
+      "tmp/**",
       ".pnpm-store/**",
       ".pnpm-cache/**",
       ".npm-cache/**",

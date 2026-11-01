@@ -5,6 +5,10 @@ import { describe, expect, it, vi, beforeEach, afterEach } from "vitest";
 const mockClose = vi.fn();
 const mockUseCart = vi.fn();
 const mockPush = vi.fn();
+vi.mock("./checkout-diagnostics-client", () => ({
+  beginCheckoutAttempt: vi.fn().mockResolvedValue(undefined),
+  reportCheckoutObservation: vi.fn(),
+}));
 
 vi.mock("next-intl", () => ({
   useLocale: () => "zh",

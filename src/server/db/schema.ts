@@ -82,6 +82,48 @@ export type Order = typeof orders.$inferSelect;
 export type NewOrder = typeof orders.$inferInsert;
 export type CheckoutSession = typeof checkoutSessions.$inferSelect;
 
+/** Anonymous checkout evidence, never an order or a commercial catalog fallback. */
+export const checkoutAttempts = sqliteTable(
+  "checkout_attempts",
+  {
+    id: text("id").primaryKey(),
+    receiptDigest: text("receipt_digest").notNull().unique(),
+    createdAt: integer("created_at").notNull(),
+    updatedAt: integer("updated_at").notNull(),
+    claimedAt: integer("claimed_at"),
+    status: text("status").notNull(),
+    country: text("country").notNull(),
+    countryJson: text("country_json").notNull(),
+    itemsJson: text("items_json").notNull(),
+    locale: text("locale").notNull(),
+    pagePath: text("page_path").notNull(),
+    error: text("error"),
+    durationMs: integer("duration_ms"),
+    redirectHost: text("redirect_host"),
+    sensitiveJson: text("sensitive_json"),
+    sensitiveExpiresAt: integer("sensitive_expires_at").notNull(),
+  },
+  (t) => [
+    index("checkout_attempts_time_idx").on(t.createdAt),
+    index("checkout_attempts_country_status_idx").on(t.country, t.status, t.createdAt),
+  ],
+);
+
+export const checkoutAttemptEvents = sqliteTable(
+  "checkout_attempt_events",
+  {
+    id: integer("id").primaryKey({ autoIncrement: true }),
+    attemptId: text("attempt_id")
+      .notNull()
+      .references(() => checkoutAttempts.id, { onDelete: "cascade" }),
+    at: integer("at").notNull(),
+    type: text("type").notNull(),
+    dataJson: text("data_json").notNull(),
+    sensitiveJson: text("sensitive_json"),
+  },
+  (t) => [index("checkout_attempt_events_attempt_idx").on(t.attemptId, t.id)],
+);
+
 // KOL accounting is independent of the legacy payment tables. Times are UTC milliseconds.
 export const kolAdmins = sqliteTable("kol_admins", {
   id: text("id").primaryKey(),

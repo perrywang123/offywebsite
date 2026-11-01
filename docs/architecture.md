@@ -50,7 +50,7 @@ Shopify 商品/系列 fetch 为 no-store、5s超时；商业页面与共享布�
 
 CartProvider挂载、抽屉打开、加购、页面恢复可见和结算准备时重新验证。API目录外的本地code直查详情，明确404才删除；任何行未验证则保留记录、隐藏全部商品事实/小计/结算并显示重试。只存offy.cart.v1的code/quantity，合并并限制1–99。请求世代号防止旧响应覆盖用户加购/清袋，存储不可用时仍支持当前会话。
 
-useCheckoutRedirect固定shopify，先重新验证目录再请求服务端结算；pending与同步ref防重复。4xx指名商品；网络/5xx/无URL原地显示可重试提示，不再自动跳/checkout。保留/checkout用于旧回调和直接访问，其表单仍固定Shopify，provider不使用该email/shipping输入。
+useCheckoutRedirect固定shopify，先登记匿名诊断尝试，再重新验证目录并请求服务端结算；pending与同步ref防重复。4xx指名商品；网络/5xx/无URL原地显示可重试提示，不再自动跳/checkout。保留/checkout用于旧回调和直接访问，其表单仍固定Shopify，provider不使用该email/shipping输入。
 
 Shopify 持有订单，capture 不支持。`/checkout/return` 挂载清袋但不验证真实付款；商家仍需配置结账回站。Stripe webhook 验签后落订单，PayPal return 同步 capture 并对照快照金额；两条保留路径限制 USD，不在当前 UI 提供。
 
@@ -61,6 +61,7 @@ Shopify 持有订单，capture 不支持。`/checkout/return` 挂载清袋但不
 | /api/health                              | GET  | 存活和配置是否非空，不访问 Shopify、不校验凭据可用性                 |
 | /api/products、/api/products/[code]      | GET  | 当前市场商品/单品；200空集、404确认缺失、503不可用                   |
 | /api/payments/checkout                   | POST | 校验、数量 clamp、市场识别、provider 分派；未填 provider 默认 Stripe |
+| /api/checkout/attempts                   | POST | 匿名尝试登记与有界浏览器观察，回执不能读取记录                       |
 | /api/checkout/session                    | POST | 保留 Stripe 入口                                                     |
 | /api/webhooks/stripe                     | POST | 验签、paid 检查、幂等订单写入                                        |
 | /api/payments/paypal/orders/[id]/capture | POST | PayPal capture                                                       |
@@ -71,7 +72,7 @@ Shopify 持有订单，capture 不支持。`/checkout/return` 挂载清袋但不
 
 ## 数据库与安全边界
 
-`schema.ts` 使用 sqlite-core，client 使用同步 better-sqlite3，WAL + foreign_keys + busy_timeout。保留四张表newsletter_subscribers、checkout_sessions、orders、order_items；另有16张kol_*表独立保存身份、合作/链路、发码/事件任务、订单账本与结算/审计。Drizzle迁移0000–0006。
+`schema.ts` 使用 sqlite-core，client 使用同步 better-sqlite3，WAL + foreign_keys + busy_timeout。保留四张表newsletter_subscribers、checkout_sessions、orders、order_items；另有16张kol_*表独立保存身份、合作/链路、发码/事件任务、订单账本与结算/审计。2026-11-01新增checkout_attempts/checkout_attempt_events两张匿名结账诊断表，记录准备过程而不是订单。Drizzle迁移0000–0007。完整链接和Cart密钥加密，见 [结账诊断](checkout-diagnostics.md)。
 
 PostgreSQL env 枚举和依赖存在，但非 sqlite 会抛错，不能复用 SQLite schema 后只换连接字符串。迁移 PG 需 pg schema/迁移、异步服务改造与独立测试。
 

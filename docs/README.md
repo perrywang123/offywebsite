@@ -10,6 +10,7 @@
 | 开发纪律 / 设计契约            | [AGENTS](../AGENTS.md) / [DESIGN](../DESIGN.md)                                                                  | 执行约束                      |
 | 运行、发布、恢复               | [deployment](deployment.md) / [独立后台验收](admin-deployment-validation.md) / [public-deploy](public-deploy.md) | 当前脚本与边界                |
 | Shopify 接入与市场配置         | [integration](shopify-integration-guide.md) / [regional](shopify-regional-config.md)                             | 当前实现                      |
+| 匿名结账诊断                   | [运行说明](checkout-diagnostics.md) / [验收](checkout-diagnostics-validation.md)                                 | 2026-11-01 新增，生产未部署   |
 | Shopify 失败展示               | [方案](shopify-unavailable-design.md) / [HTML 原型](design/shopify-unavailable/index.html)                       | 已确认并实现                  |
 | 待做事项与依赖                 | [roadmap](roadmap.md)                                                                                            | 规划                          |
 | SEO                            | [seo-plan](seo-plan.md)                                                                                          | 已完成与待办分列              |
