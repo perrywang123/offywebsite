@@ -92,6 +92,6 @@ PostgreSQL env 枚举和依赖存在，但非 sqlite 会抛错，不能复用 SQ
 
 admin为独立root layout，逐请求入口校验，API再验证管理员session。独立Nginx端口分别转发app:3000/admin宿主loopback3001，独立容器共用原SQLite卷，worker为独立进程，经秘密认证内网接口消费任务。默认关闭、结算另设开关；详细配置、模型和运行限制见 [运行手册](kol-platform-operations.md)。
 
-部署复用 `deploy/update.sh` 的配置/锁/备份/检查流水线；服务器 `deploy/update-admin.sh` 自动从同一 Git 上游 fast-forward，仅构建/替换独立 admin 镜像和 worker，不重启 app。整套更新仍用 `deploy/update.sh --kol`，顺序启动两个应用避免并发启动迁移。worker改为调用admin的内部接口。独立更新会检查实际运行中主站的配置及真实共享卷；不兼容数据库变更需协调整套升级。`x-offy-deploy` 是宿主侧代理元数据，DEPLOY_*不传应用/浏览器。开发机 SSH 上传与源码包保留为可选工具；详见 [部署](deployment.md)。
+部署复用 `deploy/update.sh` 的配置/锁/备份/检查流水线。`deploy/update-storefront.sh --kol` 仅构建/替换app、检查3000健康，保留admin/worker和Nginx；`deploy/update-admin.sh` 仅构建/替换admin和worker，保留app。两者自动从同一Git上游fast-forward，重载后保留范围；首次KOL启用可先主站后后台分次发布。整套入口 `deploy/update.sh --kol` 仍顺序启动两个应用。worker调用admin内部接口；独立更新检查运行中另一端的共享设置与真实数据卷，不兼容schema/共用配置变更需协调升级。代码仍为一个Next.js应用，每个选中镜像编译同一工程。`x-offy-deploy` 是宿主侧代理元数据，DEPLOY_*不传应用/浏览器。详见 [部署](deployment.md)。
 
 镜像构建通过 `deploy/build-limits.py` 准备项目专属 BuildKit `docker-container` builder，`DEPLOY_BUILD_CPUS` 默认1 CPU，所有服务构建共用该预算；`buildkitd.toml` 限制单任务并行。脚本核验Buildx/Compose/内核能力及实际构建器配额，失败不使用无限制替代；不更改运行中的 app/admin/worker 资源设置。构建器缓存独立持久保留，具体边界见部署手册。

@@ -61,7 +61,7 @@ Docker内同理：`docker compose -f docker-compose.prod.yml exec app node scrip
 
 ## 一键部署
 
-在服务器原有 Git checkout 执行 `bash deploy/update-admin.sh`：自动 Git fast-forward 更新，仅构建/替换独立 admin 与 worker，不重启主站，无需填写服务器 IP 或上传源码。首次启用归因/切换新拓扑、或变更共用设置时先执行 `bash deploy/update.sh --kol` 整套发布。两者共享锁、备份/就绪/HTTPS检查及原持久卷。详见 [部署手册](deployment.md)、[独立后台验收](admin-deployment-validation.md)。
+在服务器原有Git checkout执行 `bash deploy/update-admin.sh`，自动Git fast-forward，仅构建/替换admin与worker，不重启主站。主站单独更新用 `bash deploy/update-storefront.sh --kol`，只构建/替换app，不动后台/worker/Nginx；首次启用可先主站、成功后再后台，不要求同次构建两个镜像。共享配置/数据库确实改变时仍需协调；普通独立发布保留原持久卷、锁、备份和CPU限额。详见 [部署手册](deployment.md)、[独立主站验收](storefront-deployment-validation.md)、[独立后台验收](admin-deployment-validation.md)。
 
 ## Nginx、端口与Docker
 

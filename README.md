@@ -70,10 +70,11 @@ pnpm dev
 
 ```bash
 cd /opt/offy
+bash deploy/update-storefront.sh --kol  # 只更新独立站，保留KOL，不动后台/worker/Nginx
 bash deploy/update-admin.sh       # 仅更新独立 admin 容器与 worker，不重启主站
 # bash deploy/update.sh --kol     # 整套更新；内部认证自动准备，首次 owner 从服务端哈希配置初始化
 ```
 
-两套应用使用不同镜像与 loopback 端口，共用原 Compose 项目中的 SQLite 持久卷。首次需要配置服务器 `.env`、Shopify 权限和 HTTPS 入口；后台外部访问地址只需在 `ADMIN_ORIGIN` 配置一次。独立发布会核对正在运行的主站配置，密钥/数据库不一致时要求先整套更新。
+以上两个独立命令按需执行；首次启用KOL可以先单独更新主站，成功后再单独更新后台。两套应用使用不同镜像与loopback端口，共用原Compose项目中的SQLite持久卷。首次需要配置服务器 `.env`、Shopify权限和HTTPS入口；后台外部访问地址只需在 `ADMIN_ORIGIN` 配置一次。独立发布会核对共享数据库及运行中另一端的共用设置；密钥/数据库真正变更仍需协调升级。每次选中的镜像仍会编译共享Next.js应用，不能保证解决构建耗时或终端断连。
 
 详见 [部署手册](docs/deployment.md)。`pnpm deploy` / `deploy:kol` 保留为可选的开发机 SSH 上传工具，仅这类远程工具需要指定服务器。当前改动没有发布到生产。

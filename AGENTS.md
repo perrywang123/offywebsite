@@ -19,15 +19,16 @@ Offy 是 is.offy 品牌展示与跨境电商站。技术栈：Next.js 15 App Rou
 
 ## 命令
 
-| 命令                                                          | 用途                               |
-| ------------------------------------------------------------- | ---------------------------------- |
-| `bash deploy/update-admin.sh` / `bash deploy/update.sh --kol` | 服务器Git独立后台 / 整套Docker发布 |
-| `pnpm dev`                                                    | 开发服务器，默认 localhost:3000    |
-| `pnpm build`                                                  | standalone 生产构建                |
-| `pnpm test` / `test:watch`                                    | 单次/监听 Vitest                   |
-| `pnpm typecheck` / `pnpm lint`                                | 类型/ESLint                        |
-| `pnpm format:check` / `pnpm format`                           | 检查/改写格式                      |
-| `pnpm db:generate` / `db:migrate` / `db:seed` / `db:studio`   | SQLite 工具；seed 仅订阅示例       |
+| 命令                                                          | 用途                                              |
+| ------------------------------------------------------------- | ------------------------------------------------- |
+| `bash deploy/update-admin.sh` / `bash deploy/update.sh --kol` | 服务器Git独立后台 / 整套Docker发布                |
+| `bash deploy/update-storefront.sh --kol`                      | 服务器Git独立主站，保留KOL，不动后台/worker/Nginx |
+| `pnpm dev`                                                    | 开发服务器，默认 localhost:3000                   |
+| `pnpm build`                                                  | standalone 生产构建                               |
+| `pnpm test` / `test:watch`                                    | 单次/监听 Vitest                                  |
+| `pnpm typecheck` / `pnpm lint`                                | 类型/ESLint                                       |
+| `pnpm format:check` / `pnpm format`                           | 检查/改写格式                                     |
+| `pnpm db:generate` / `db:migrate` / `db:seed` / `db:studio`   | SQLite 工具；seed 仅订阅示例                      |
 
 ## Spec-first
 

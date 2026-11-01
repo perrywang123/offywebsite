@@ -2,6 +2,8 @@
 
 日期：2026-11-01。只在本地工作区和隔离临时目录验证，没有连接或更新生产服务器。
 
+后续已补充独立主站脚本，首次KOL启用可以先主站、后后台分次发布。以下为各轮历史验收证据；当前操作与新增证据见 [部署手册](deployment.md)、[独立主站验收](storefront-deployment-validation.md)。
+
 ## 设计与实现
 
 - 同 GitHub 仓库、同服务器固定 checkout、同 Compose 项目及原命名卷。新增 `deploy/update-admin.sh`，默认 fast-forward pull，无 SSH/IP 输入和源码上传。

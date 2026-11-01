@@ -4,7 +4,7 @@
 
 现有页面包括合作达人、优惠码管理、订单佣金和月度结算；2026-11-01 新增第五页 [结账诊断](checkout-diagnostics.md)，查看所有已收到的匿名 Offy 结账尝试、国家/商品证据、Shopify 响应与加密链接。支持必填自定义百分比、历史合作版本、动态专属链接、绑定Shopify已有码或向现有活动异步追加新码。代码只提供粉丝权益；当次有效链接session才产生归因，码不产生/覆盖佣金。
 
-后台使用独立HTTPS入口和独立Docker容器，与主站保持同仓库Next.js工程，共用原SQLite持久卷，不需要RPC。服务器 `deploy/update-admin.sh` 自动拉Git、只更新后台和worker；首次启用执行整套发布，见 [部署手册](deployment.md)。公开入口拒绝管理路径；管理页/API同时要求可信代理标记与管理员登录，写操作校验Origin/CSRF。密码scrypt、会话过期/撤销、限流和审计已实现。生产白名单只允许wangperry666@gmail.com；可通过私密初始哈希配置引导创建，已有非白名单session同样失效。没有网页注册、内置默认密码、KOL门户或客户账户。
+后台使用独立HTTPS入口和独立Docker容器，与主站保持同仓库Next.js工程，共用原SQLite持久卷，不需要RPC。服务器 `deploy/update-admin.sh` 自动拉Git、只更新后台和worker；主站用 `deploy/update-storefront.sh --kol` 独立更新，首次启用可以先主站后后台分次发布，见 [部署手册](deployment.md)。公开入口拒绝管理路径；管理页/API同时要求可信代理标记与管理员登录，写操作校验Origin/CSRF。密码scrypt、会话过期/撤销、限流和审计已实现。生产白名单只允许wangperry666@gmail.com；可通过私密初始哈希配置引导创建，已有非白名单session同样失效。没有网页注册、内置默认密码、KOL门户或客户账户。
 
 商品与优惠规则仍由Shopify维护。订单通过HMAC收件箱、持久worker和主动核对进入独立KOL账本；精确计佣、冻结30天、分币种月结、批次快照和退款负调整。付款仅登记平台外凭证，不自动转账。真实店铺/TLS联调完成前，结算开关保持关闭。
 

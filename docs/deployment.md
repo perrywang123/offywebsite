@@ -1,9 +1,10 @@
 # 服务器 Git 部署：Offy 独立站与 KOL 后台
 
-更新：2026-11-01。推荐在服务器原有 Git checkout 中执行脚本。代码仍在同一个 GitHub 仓库；Docker Compose 运行独立的 `app`、`admin` 容器及 `kol-worker`。后台独立发布只替换 `admin` 和 worker，不重启主站。
+更新：2026-11-01。推荐在服务器原有 Git checkout 中执行脚本。代码仍在同一个 GitHub 仓库；Docker Compose 运行独立的 `app`、`admin` 容器及 `kol-worker`。主站和后台可分别发布，每次只构建/替换选中的服务。
 
 ```bash
 cd /opt/offy                    # 使用现有项目目录，不另 clone 一份后台
+bash deploy/update-storefront.sh --kol  # 只更新主站，保留KOL；不动后台/worker/Nginx
 bash deploy/update-admin.sh       # 自动拉 Git、构建、备份、更新后台、验证
 ```
 
@@ -74,13 +75,30 @@ DEPLOY_CA_FILE=
 cd /opt/offy
 # 首次获取新增脚本；后续由部署脚本自己拉取
 git pull --ff-only
-bash deploy/update.sh --kol --check
-bash deploy/update.sh --kol
+bash deploy/update-storefront.sh --kol --check
+bash deploy/update-storefront.sh --kol
+# 上一步成功后，再单独执行；也可以重新连接终端后执行
+bash deploy/update-admin.sh
 ```
 
-首次整套发布将 KOL 归因/Shopify webhook 代码更新到主站，并建立独立后台容器，Nginx 管理上游切换到 loopback3001。主站升级会有短暂重启窗口；后续兼容的后台更新才使用独立脚本。不能只启动后台就让尚未改造的旧主站自动拥有 KOL 归因能力。
+首次可以拆成两次发布：主站先更新 KOL 归因/Shopify webhook 代码并启用 KOL，只等待主站3000健康；后台随后建立/更新 admin 与 worker，并完成后台心跳及 HTTPS 边界检查，管理上游为 loopback3001。主站发布不要求后台已启动，不安装/重载Nginx；已有站点代理保留。主站升级仍有短暂重启窗口。旧主站未启用KOL时，后台脚本会提示先执行 `update-storefront.sh --kol`，不用为了启用主站而同时构建后台。
 
 服务器无需安装 Node/pnpm：Git、Python3、Docker、curl、flock 即可执行部署。已有 checkout 的 Git upstream 和服务器 GitHub 访问权限应可正常 `git pull`；脚本不切分支、不强制覆盖本地改动。首次还没有 checkout 时，用原仓库地址 `git clone` 到固定项目目录，随后按前述步骤配置，不另建后台仓库。
+
+## 日常只更新主站
+
+```bash
+cd /opt/offy
+bash deploy/update-storefront.sh --kol
+```
+
+该命令自动拉Git，只构建 `offy-app:local`，用app镜像备份共享DB，随后 `up --no-build --no-deps app` 并检查3000健康。不构建/替换/停止admin或worker，不等待后台心跳、不安装或重载Nginx。原后台镜像和容器保持运行；两种独立发布共用同一部署锁及1 CPU构建器。
+
+`--kol` 保证本次主站保留归因能力，即使私密文件的开关仍为 `false`；不改写配置文件。纯主站且未启用KOL的站点可以不加该参数，脚本遵循配置。若已有运行中的后台启用了KOL，却尝试把主站关闭KOL，兼容检查会拒绝。已有后台的真实数据库卷/路径和店铺必须匹配；已启用KOL的后台还要求共用参数一致。旧后台尚未启用KOL时可先升级主站，内部认证值仍由原有准备逻辑保留，不静默轮换。
+
+检查命令为 `bash deploy/update-storefront.sh --kol --check`；正式执行前的运行中后台检查与真实发布仍须另行通过。支持 `--env-file FILE`、`--skip-pull`，默认必须在原Git checkout。直接使用共享入口时等价为 `bash deploy/update.sh --storefront-only --kol`，不能同时指定 `--admin-only`。
+
+这只隔离发布范围，仍会编译共享的整个Next.js应用，不能保证单次构建不再长耗时，也不会防止网页终端连接中断；长任务宜运行在tmux内。预构建镜像流程尚未实现。
 
 ## 日常只更新后台
 
@@ -133,7 +151,7 @@ DEPLOY_BUILD_CPUS=1
 
 `app` 与 `admin` 是同一个 Next.js 工程的两个 Docker 实例，镜像标签和容器生命周期独立；不是两个仓库。两者挂载**同一个原有** `offy-data:/data`，使用相同的 `/data/offy.db`、店铺与 KOL 配置。数据库 WAL 与 busy timeout 支持进程间访问，后台直接读取主站已提交的记录，不通过公开端口传数据库或额外 RPC。保留原 Compose 项目名/目录，避免意外创建空卷。
 
-独立脚本在构建前私密检查实际运行中的 app 容器：必须健康，数据库卷真实名称/路径、KOL 开关、店铺、密钥和管理 origin 必须与声明配置一致；不一致先执行整套发布。不要在独立后台发布时顺便轮换共用密钥或切换数据库。
+后台独立脚本在构建前私密检查实际运行中的 app 容器：必须健康，数据库卷真实名称/路径、KOL 开关、店铺、密钥和管理 origin 必须与声明配置一致。主站仅缺少KOL启用时，先单独执行 `update-storefront.sh --kol` 再重试后台。主站独立脚本反向检查已有后台的真实卷/共享设置；真正改变共用密钥、数据库或店铺时仍需协调两端配置，不能靠独立更新自动绕过。
 
 共库意味着数据库升级须兼容仍在运行的主站。当前迁移为增量扩展；未来删除/重命名共享字段等不兼容迁移需专门安排整套协调升级，不能承诺任意版本后台都可独立更新。整套脚本先启动并确认 app 健康，再启动 admin，避免两个 entrypoint 同时迁移。
 
@@ -144,18 +162,18 @@ DEPLOY_BUILD_CPUS=1
 ## 实际执行顺序
 
 1. 检查 Docker/Compose 和配置，私密解析 Compose JSON，不将 `.env` 当 Shell 执行。Git 更新后重新检查，并保留部署锁。
-2. 独立后台发布先核对运行中主站的实际设置/卷，再**只构建 admin 镜像**；整套发布构建 app、admin。两者显式选择同一个已核验CPU预算的专属构建器。旧容器在构建阶段继续服务。
+2. 主站独立发布核对已有后台后**只构建app**；后台独立发布核对运行中主站后**只构建admin**；整套发布构建app、admin。均显式选择已核验CPU预算的专属构建器。旧容器在构建阶段继续服务。
 3. 使用本次目标镜像的一次性容器，对共享 `/data` 做 SQLite 在线 backup、完整性校验，保存在卷内私密 `deploy-backups/`。失败不替换服务；首次无 DB 时跳过备份。
-4. 独立发布只启动 admin，健康后更新 worker；均使用 `--no-deps`，不会由依赖隐式启动/替换 app。后台 entrypoint 执行兼容迁移与首次 owner 初始化。整套发布则先启动 app 并等待健康，再按此顺序启动后台。
-5. 检查后台 3001 健康、worker 容器运行、owner/店铺匹配，以及本次发布后的成功 worker 心跳。
-6. 明确选择了 Nginx 配置目标时安装/校验并 reload，否则验证现有配置。共享 Nginx 的 reload 仍会执行；不会重启主站容器。检查主站 admin/API 为404、后台登录200、未登录管理API401；正常校验 TLS。
+4. 主站独立发布只启动app并检查3000健康。后台独立发布只启动admin，健康后更新worker。均使用 `--no-deps`，不会由依赖隐式替换另一端。正常entrypoint执行兼容迁移与首次owner初始化；整套发布仍按主站、后台顺序启动。
+5. 整套/后台发布检查后台3001健康、worker容器运行、owner/店铺匹配，以及本次发布后的成功worker心跳；主站独立发布跳过这些后台就绪步骤。
+6. 整套/后台发布明确选择了Nginx配置目标时安装/校验并reload，否则验证现有入口。主站独立发布不动代理；后台发布检查主站admin/API为404、后台登录200、未登录管理API401，正常校验TLS。
 7. 全部通过才报告成功。不删除持久卷、不全局清理镜像。无显式后台选项且配置关闭 KOL 的整套发布会停止旧 worker；独立后台脚本显式启用 KOL，但仍要求运行中主站的配置一致，不会替旧版或关闭 KOL 的主站偷偷启用功能。
 
 运行设置可用`DEPLOY_WAIT_ATTEMPTS`（默认40）、`DEPLOY_WAIT_SECONDS`（默认3）调整等待；这些是部署工具选项，不进入浏览器/应用。KOL心跳失败可能是Shopify权限或连接问题，需查看admin/worker日志；脚本不会把它当成功，也不会自动向Shopify发测试付款。
 
 ## 失败与恢复
 
-旧版 `KOL_ENABLED=true is required by --kol` 已在 2026-11-01 修复。服务器先 `git pull --ff-only` 获取新脚本，再运行 `bash deploy/update.sh --kol --check`。新脚本将显式模式作为本次启用，不要求修改文件中的默认 `false`。三个内部认证值自动准备，通知签名可选，首次 owner 从服务端哈希配置初始化。若仍有缺失配置，会列出后台键名，并指明实际运行文件；真实 Shopify Admin token 和后台 HTTPS 地址仍须在服务器提供。检查通过后执行 `bash deploy/update.sh --kol`。
+旧版 `KOL_ENABLED=true is required by --kol` 已在2026-11-01修复。服务器先 `git pull --ff-only` 获取新脚本，再运行 `bash deploy/update-storefront.sh --kol --check`。显式模式作为本次启用，不要求修改文件中的默认 `false`。三个内部认证值自动准备，通知签名可选，首次owner从服务端哈希配置初始化。缺少真实Shopify Admin token或后台HTTPS地址时仍会列出键名并指明配置文件。检查通过后先单独发布主站，再执行 `bash deploy/update-admin.sh`；整套入口保留为可选方式。
 
 备份在持久卷中，与迁移前状态一致。配置备份/源码排除规则不会让业务卷被rsync删除。回退应用前确认新旧schema兼容；需要恢复DB时停写、保留当前卷、从经过完整性校验的备份恢复到新文件，再确认财务合计和只读数据。脚本不自动回滚数据库或撤销Shopify外部操作。
 
@@ -165,8 +183,8 @@ Nginx恢复只针对显式管理的站点文件。健康检查失败时可能已
 
 源码包实际生成并检查了私密文件/DB/缓存排除；通过隔离命令替身执行部署、上传、备份失败中止、worker失败、只检查和Nginx恢复分支。生成的Nginx配置另用真实本地Nginx和独立CA做HTTPS边界测试。Compose配置和应用生产build均另行校验。
 
-本机Docker daemon未运行，未执行真实容器构建/启动；本轮没有SSH连接或修改生产服务器。独立 Git 后台发布的补充验证见 [独立后台验收](admin-deployment-validation.md)。前一轮记录见 [一键部署验收](deployment-validation.md)。
+各轮验证有不同边界，记录见 [独立后台验收](admin-deployment-validation.md)、[CPU限制验证](docker-build-cpu-validation.md) 和 [独立主站验收](storefront-deployment-validation.md)。本次未SSH连接或修改生产服务器。
 
 ## 2026-11-01 匿名结账诊断
 
-主站采集和后台第五页需一起更新，执行 `bash deploy/update.sh --kol`；SQLite 启动迁移新增表，不导入本地测试数据。主站/后台共用原持久卷和端口。可选 `CHECKOUT_DIAGNOSTICS_KEY` 留空会在数据库同目录自动创建 0600 密钥，两容器共用；在线部署备份同时保存已有密钥文件，恢复需使用对应密钥。保留期、权限与完整步骤见 [结账诊断](checkout-diagnostics.md)。
+主站采集和后台第五页都需要更新到对应版本；可先执行 `bash deploy/update-storefront.sh --kol`，成功后再执行 `bash deploy/update-admin.sh`，不要求同一次构建两个镜像。SQLite启动迁移新增表，不导入本地测试数据。主站/后台共用原持久卷和端口。可选 `CHECKOUT_DIAGNOSTICS_KEY` 留空会在数据库同目录自动创建0600密钥，两容器共用；在线部署备份同时保存已有密钥文件，恢复需使用对应密钥。保留期、权限与完整步骤见 [结账诊断](checkout-diagnostics.md)。

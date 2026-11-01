@@ -1,23 +1,25 @@
 #!/usr/bin/env bash
-# Shared server-side pipeline; admin-only releases never replace the storefront.
+# Shared server-side pipeline with independent storefront and admin release scopes.
 set -euo pipefail
 umask 077
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 cd "$ROOT"
-SKIP_PULL=0; EXPLICIT_KOL=0; CHECK_ONLY=0; ADMIN_ONLY=0; ENV_FILE=""
+SKIP_PULL=0; EXPLICIT_KOL=0; CHECK_ONLY=0; ADMIN_ONLY=0; STOREFRONT_ONLY=0; ENV_FILE=""
 while [ "$#" -gt 0 ]; do
  case "$1" in
   --admin-only) ADMIN_ONLY=1; EXPLICIT_KOL=1; shift ;;
+  --storefront-only) STOREFRONT_ONLY=1; shift ;;
   --skip-pull) SKIP_PULL=1; shift ;;
   --kol) EXPLICIT_KOL=1; shift ;;
   --check) CHECK_ONLY=1; shift ;;
   --env-file) ENV_FILE="${2:?Missing runtime env file}"; shift 2 ;;
-  --help|-h) printf 'Usage: bash deploy/update.sh [--kol | --admin-only] [--skip-pull] [--check] [--env-file FILE]\n--kol/admin-only enable KOL for this invocation; private config is not modified.\nRuntime file: explicit --env-file, otherwise .env, otherwise .env.production.\n'; exit 0 ;;
+  --help|-h) printf 'Usage: bash deploy/update.sh [--kol] [--admin-only | --storefront-only] [--skip-pull] [--check] [--env-file FILE]\n--kol/admin-only enable KOL for this invocation; private config is not modified.\n--storefront-only builds/replaces app only, preserving admin/worker/proxy.\nRuntime file: explicit --env-file, otherwise .env, otherwise .env.production.\n'; exit 0 ;;
   *) printf 'Unknown deployment option: %s\n' "$1" >&2; exit 1 ;;
  esac
 done
 say(){ printf '\n==> %s\n' "$*"; }
 die(){ printf 'Deployment failed: %s\n' "$*" >&2; exit 1; }
+[ "$ADMIN_ONLY" = 0 ] || [ "$STOREFRONT_ONLY" = 0 ] || die '--admin-only and --storefront-only are mutually exclusive'
 for bin in docker python3 curl; do command -v "$bin" >/dev/null || die "$bin is required"; done
 if [ -z "$ENV_FILE" ]; then
  if [ -e "$ROOT/.env" ] || [ -L "$ROOT/.env" ]; then ENV_FILE="$ROOT/.env"
@@ -58,7 +60,7 @@ fi
 value(){ python3 "$ROOT/deploy/compose-config.py" value "$OFFY_CONFIG_JSON" --key "$1"; }
 KOL="$(value kol)"
 NGINX_TARGET="$(value nginx_config)"
-if [ "$KOL" = true ] && [ -n "$NGINX_TARGET" ]; then command -v nginx >/dev/null || die 'Nginx is required for the explicitly selected config'; fi
+if [ "$KOL" = true ] && [ "$STOREFRONT_ONLY" = 0 ] && [ -n "$NGINX_TARGET" ]; then command -v nginx >/dev/null || die 'Nginx is required for the explicitly selected config'; fi
 if [ "$CHECK_ONLY" = 1 ]; then
  python3 "$ROOT/deploy/build-limits.py" "$OFFY_CONFIG_JSON" --output "$OFFY_BUILDER_JSON" --check
  say 'Preflight passed; no git pull, builder creation/start, build, backup, service update or Nginx change performed'
@@ -81,10 +83,11 @@ if [ "$SKIP_PULL" = 0 ]; then
   git pull --ff-only
   rm -f "$OFFY_CONFIG_JSON" "$OFFY_SECRETS_JSON" "$OFFY_BUILDER_JSON"
   MODE=(); [ "$ADMIN_ONLY" = 0 ] || MODE=(--admin-only)
+  [ "$STOREFRONT_ONLY" = 0 ] || MODE=(--storefront-only)
   # Reload new code while retaining the same lock and release scope.
   OFFY_DEPLOY_LOCK_HELD=1 exec bash "$ROOT/deploy/update.sh" --skip-pull ${VALIDATE[@]+"${VALIDATE[@]}"} ${MODE[@]+"${MODE[@]}"} --env-file "$ENV_FILE"
- elif [ "$ADMIN_ONLY" = 1 ]; then
-  die 'admin updates require the server Git checkout; use --skip-pull only for deliberately prepared source'
+ elif [ "$ADMIN_ONLY" = 1 ] || [ "$STOREFRONT_ONLY" = 1 ]; then
+  die 'independent service updates require the server Git checkout; use --skip-pull only for deliberately prepared source'
  fi
 fi
 # A git re-exec reuses the verified inherited lock descriptor without an unlock gap.
@@ -94,11 +97,17 @@ ATTEMPTS="${DEPLOY_WAIT_ATTEMPTS:-40}"; DELAY="${DEPLOY_WAIT_SECONDS:-3}"
 if [ "$ADMIN_ONLY" = 1 ]; then
  say 'Verifying the running storefront uses the same KOL settings and data volume'
  storefront_id="$("${COMPOSE[@]}" ps -q app)"
- [ -n "$storefront_id" ] || die 'deploy the KOL-capable storefront once before independent admin updates'
+ [ -n "$storefront_id" ] || die 'deploy storefront first: bash deploy/update-storefront.sh --kol; then retry the admin update'
  docker inspect "$storefront_id" | python3 "$ROOT/deploy/compose-config.py" running-storefront "$OFFY_CONFIG_JSON"
+elif [ "$STOREFRONT_ONLY" = 1 ]; then
+ say 'Verifying any running admin uses compatible shared settings and the same data volume'
+ admin_id="$("${COMPOSE[@]}" --profile kol ps -q admin)"
+ if [ -n "$admin_id" ]; then
+  docker inspect "$admin_id" | python3 "$ROOT/deploy/compose-config.py" running-admin "$OFFY_CONFIG_JSON"
+ fi
 fi
 TARGET=app; [ "$ADMIN_ONLY" = 0 ] || TARGET=admin
-BUILD=("$TARGET"); if [ "$KOL" = true ] && [ "$ADMIN_ONLY" = 0 ]; then BUILD=(app admin); fi
+BUILD=("$TARGET"); if [ "$KOL" = true ] && [ "$ADMIN_ONLY" = 0 ] && [ "$STOREFRONT_ONLY" = 0 ]; then BUILD=(app admin); fi
 python3 "$ROOT/deploy/build-limits.py" "$OFFY_CONFIG_JSON" --output "$OFFY_BUILDER_JSON"
 OFFY_BUILD_BUILDER="$(python3 -c 'import json,sys; print(json.load(open(sys.argv[1]))["name"])' "$OFFY_BUILDER_JSON")"
 say "Building Linux Docker image(s): ${BUILD[*]}"
@@ -119,13 +128,13 @@ if [ "$ADMIN_ONLY" = 0 ]; then
  wait_health 3000
 fi
 SINCE="$(python3 -c 'import time; print(time.time_ns() // 1000000)')"
-if [ "$KOL" = true ]; then
+if [ "$KOL" = true ] && [ "$STOREFRONT_ONLY" = 0 ]; then
  say 'Starting independent admin and worker; storefront is not replaced by this step'
  "${COMPOSE[@]}" --profile kol up -d --no-build --no-deps admin
  wait_health 3001
  "${COMPOSE[@]}" --profile kol up -d --no-build --no-deps kol-worker
 fi
-if [ "$KOL" = true ]; then
+if [ "$KOL" = true ] && [ "$STOREFRONT_ONLY" = 0 ]; then
  say 'Checking production owner, matching shop and a fresh worker heartbeat'
  ready=0
  for ((i=1;i<=ATTEMPTS;i++)); do
@@ -136,8 +145,9 @@ if [ "$KOL" = true ]; then
  [ "$ready" = 1 ] || die 'KOL owner/worker is not ready; check owner startup initialization, Shopify permissions and worker logs'
  if [ -n "$NGINX_TARGET" ]; then bash "$ROOT/deploy/install-nginx.sh" "$OFFY_CONFIG_JSON"
  else say 'Verifying the existing Nginx setup'; bash "$ROOT/deploy/check-ingress.sh" "$OFFY_CONFIG_JSON"; fi
-else
+elif [ "$STOREFRONT_ONLY" = 0 ]; then
  if [ -n "$("${COMPOSE[@]}" --profile kol ps -q kol-worker)" ]; then "${COMPOSE[@]}" --profile kol stop kol-worker; fi
 fi
+if [ "$STOREFRONT_ONLY" = 1 ]; then say 'Storefront-only release verified; admin, worker and Nginx were not updated'; fi
 say 'Deployment verified; persistent volume and backup retained'
 "${COMPOSE[@]}" --profile kol ps

@@ -109,6 +109,51 @@ describe("deployment preflight", () => {
     expect(validate(e).status).not.toBe(0);
   });
 });
+describe("running management compatibility", () => {
+  it.each([
+    "matching",
+    "legacy-disabled",
+    "database",
+    "legacy-database",
+    "volume",
+    "legacy-shop",
+    "signing",
+    "disable-active",
+  ])("checks the actual peer before a storefront-only release: %s", (scenario) => {
+    const dir = mkdtempSync(join(tmpdir(), "offy-peer-check-"));
+    try {
+      const config = {
+        ...fixture(scenario !== "disable-active"),
+        volumes: { "offy-data": { name: "original-data" } },
+      };
+      const environment: Record<string, string> = { ...config.services.admin.environment };
+      let volume = "original-data";
+      if (scenario.startsWith("legacy")) environment.KOL_ENABLED = "false";
+      if (scenario.includes("database")) environment.DATABASE_URL = "/data/peer-private-value.db";
+      if (scenario === "volume") volume = "other-data";
+      if (scenario === "legacy-shop") environment.SHOPIFY_STORE_DOMAIN = "other.myshopify.com";
+      if (scenario === "signing") environment.KOL_SIGNING_SECRET = "peer-private-value";
+      if (scenario === "disable-active") environment.KOL_ENABLED = "true";
+      const file = join(dir, "config.json");
+      writeFileSync(file, JSON.stringify(config));
+      const r = spawnSync("python3", ["deploy/compose-config.py", "running-admin", file], {
+        input: JSON.stringify([
+          {
+            State: { Running: true },
+            Config: { Env: Object.entries(environment).map(([k, v]) => `${k}=${v}`) },
+            Mounts: [{ Type: "volume", Name: volume, Destination: "/data", RW: true }],
+          },
+        ]),
+        encoding: "utf8",
+      });
+      expect(r.status, r.stderr).toBe(["matching", "legacy-disabled"].includes(scenario) ? 0 : 1);
+      expect(r.stdout + r.stderr).not.toContain("peer-private-value");
+    } finally {
+      rmSync(dir, { recursive: true });
+    }
+  });
+});
+
 describe("source deployment archive", () => {
   it("excludes private env, database sidecars and caches while retaining Docker and admin tools", () => {
     const dir = mkdtempSync(join(tmpdir(), "offy-package-test-"));

@@ -6,8 +6,9 @@
 #   docker compose -f docker-compose.prod.yml up -d --build
 #
 # app/admin bind to loopback 3000/3001; keep both private behind Nginx TLS.
-# First KOL deployment: bash deploy/update.sh --kol
-# Subsequent admin-only Git updates: bash deploy/update-admin.sh
+# Independent storefront: bash deploy/update-storefront.sh --kol
+# Independent admin: bash deploy/update-admin.sh (after KOL-capable app is healthy)
+# Initial KOL setup may use those two commands in order, or bash deploy/update.sh --kol.
 # Keep the same checkout/Compose project to preserve offy-data.
 services:
   app: &offy-app

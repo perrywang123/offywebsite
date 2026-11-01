@@ -50,4 +50,4 @@ Shopify 是唯一商品事实来源。本地商品快照、旧 enrich 富化器�
 
 KOL平台实施与隔离验收见 [记录](kol-platform-validation.md)；运行配置和真实上线门槛见 [手册](kol-platform-operations.md)。
 
-已补齐服务器Git一键Docker部署：同仓库独立admin容器/镜像，`deploy/update-admin.sh`只更新后台与worker，不重启主站，共用原SQLite卷；整套与独立发布复用锁、在线备份、只读就绪与显式Nginx管理。见 [部署说明](deployment.md)；本轮仅本地隔离验证，未执行真实容器或生产发布。
+已补齐服务器Git一键Docker部署：同仓库独立主站/admin容器和镜像。`deploy/update-storefront.sh --kol`只更新主站并保留KOL，不动后台/worker/Nginx；`deploy/update-admin.sh`只更新后台与worker，不重启主站。首次启用可先主站后后台分次发布，共用原SQLite卷、锁、在线备份和1 CPU构建器。后台/整套发布验证worker与HTTPS；主站独立发布只验证app健康。共享工程仍整体编译，不是两个Next.js项目。见 [部署说明](deployment.md) 与 [独立主站验收](storefront-deployment-validation.md)；未执行生产发布。

@@ -37,7 +37,7 @@
 
 ## 发布、密钥和恢复
 
-这次同时修改主站采集和后台查看，需要在服务器执行整套 Git/Docker 更新：`bash deploy/update.sh --kol`。只更新后台不会给旧版主站增加采集能力。新增表由启动迁移创建，继续使用原 `/data` 卷和主站/后台端口，不导入本地测试库。
+主站采集和后台查看都需更新到对应版本。可以先执行 `bash deploy/update-storefront.sh --kol`，成功后再执行 `bash deploy/update-admin.sh`，分两次构建/发布；原整套入口 `bash deploy/update.sh --kol` 仍可用。只更新后台不会给旧版主站增加采集能力。新增表由启动迁移创建，继续使用原 `/data` 卷和主站/后台端口，不导入本地测试库。
 
 `CHECKOUT_DIAGNOSTICS_KEY` 为可选的 64 位十六进制密钥，通过 `src/lib/env.ts` 校验。留空时，首次需要加密会在数据库同目录原子创建 `checkout-diagnostics.key`（0600）；主站/后台共用卷，自动读取同一文件，无需手填密钥。
 

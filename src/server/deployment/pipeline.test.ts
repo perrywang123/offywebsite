@@ -21,6 +21,7 @@ function setup(kol = true) {
   for (const name of [
     "update.sh",
     "update-admin.sh",
+    "update-storefront.sh",
     "compose-config.py",
     "runtime-secrets.py",
     "build-limits.py",
@@ -112,19 +113,28 @@ if 'run' in a:
  if os.environ.get('FAIL_BACKUP')=='1':sys.exit(2)
 if 'exec' in a and 'admin' in a and os.environ.get('FAIL_WORKER')=='1':sys.exit(3)
 if a and a[0]=='exec' and any(v.startswith('buildx_buildkit_') for v in a):print(Path(json.loads(state.read_text())['config']).read_text())
-if 'ps' in a and '-q' in a:print('test-container')
+if 'up' in a and a[-1]=='app':Path(os.environ['CONFIG']).with_name('running-app.json').write_text(json.dumps(c['services']['app']['environment']))
+if 'ps' in a and '-q' in a:
+ for service in a[a.index('-q')+1:]:
+  if service in ('app','admin','kol-worker') and not (os.environ.get('NO_ADMIN') and service in ('admin','kol-worker')):print('test-'+service)
 if a and a[0]=='inspect':
  if '--format' in a:print('true')
  elif any(v.startswith('buildx_buildkit_') for v in a):print(json.dumps([{'State':{'Running':True},'HostConfig':{'CpuPeriod':100000,'CpuQuota':200000 if os.environ.get('FAIL_BUILD_QUOTA') else 100000}}]))
  else:
-  e=c['services']['app']['environment'].copy()
-  if os.environ.get('FAIL_STOREFRONT')=='1':e['KOL_SIGNING_SECRET']='drift'
-  print(json.dumps([{'State':{'Running':True,'Health':{'Status':'healthy'}},'Config':{'Env':[k+'='+v for k,v in e.items()]},'Mounts':[{'Type':'volume','Name':'offy_offy-data','Destination':'/data','RW':True}]}]))
+  containers=[]
+  for cid in a[1:]:
+   service='admin' if cid=='test-admin' else 'app';e=c['services'][service]['environment'].copy()
+   live=Path(os.environ['CONFIG']).with_name('running-app.json')
+   if service=='app' and live.exists():e=json.loads(live.read_text())
+   if service=='app' and os.environ.get('FAIL_STOREFRONT')=='1':e['KOL_SIGNING_SECRET']='drift'
+   if service=='admin' and os.environ.get('FAIL_ADMIN'):e[os.environ['FAIL_ADMIN']]='peer-private-value'
+   containers.append({'State':{'Running':True,'Health':{'Status':'healthy'}},'Config':{'Env':[k+'='+v for k,v in e.items()]},'Mounts':[{'Type':'volume','Name':'offy_offy-data','Destination':'/data','RW':True}]})
+  print(json.dumps(containers))
 `,
   );
   bin(
     "curl",
-    `#!/usr/bin/env python3\nimport sys\na=sys.argv[1:]\nif '--write-out' in a:\n u=a[-1];print('404' if 'shop.offy.test' in u else ('401' if '/api/admin/' in u else '200'),end='')\n`,
+    `#!/usr/bin/env python3\nimport sys,os,json\na=sys.argv[1:]\nwith open(os.environ['HTTP_CALLS'],'a') as f:f.write(json.dumps(a)+'\\n')\nif os.environ.get('FAIL_APP_HEALTH') and 'http://127.0.0.1:3000/api/health' in a:sys.exit(7)\nif '--write-out' in a:\n u=a[-1];print('404' if 'shop.offy.test' in u else ('401' if '/api/admin/' in u else '200'),end='')\n`,
   );
   bin("flock", "#!/bin/sh\nexit 0\n");
   bin("systemctl", "#!/bin/sh\nexit 1\n");
@@ -134,6 +144,7 @@ if a and a[0]=='inspect':
     CALLS: join(dir, "calls"),
     CONFIG: join(dir, "config.json"),
     KOL_OBSERVATIONS: join(dir, "kol-observations"),
+    HTTP_CALLS: join(dir, "http-calls"),
     KOL_ENABLED: undefined,
     DEPLOY_WAIT_ATTEMPTS: "1",
     DEPLOY_WAIT_SECONDS: "0",
@@ -327,6 +338,145 @@ describe("unified server deployment", () => {
   });
 });
 
+describe("independent server storefront deployment", () => {
+  it.each([true, false])(
+    "releases app only while preserving the configured KOL switch: %s",
+    (kol) => {
+      const f = setup(kol);
+      try {
+        const r = spawnSync("bash", [join(f.dir, "deploy/update-storefront.sh"), "--skip-pull"], {
+          env: f.env,
+          encoding: "utf8",
+        });
+        expect(r.status, r.stdout + r.stderr).toBe(0);
+        const calls = f.calls();
+        const mutations = calls.filter(
+          (c) =>
+            !c.includes("--help") &&
+            ["build", "run", "up", "stop", "restart"].some((x) => c.includes(x)),
+        );
+        expect(mutations.flat()).not.toContain("admin");
+        expect(mutations.flat()).not.toContain("kol-worker");
+        expect(calls.find(isImageBuild)?.slice(-1)).toEqual(["app"]);
+        expect(calls.find((c) => c.includes("run"))).toContain("app");
+        expect(calls.findIndex((c) => c.includes("run"))).toBeLessThan(
+          calls.findIndex((c) => c.includes("up")),
+        );
+        expect(calls.filter((c) => c.includes("up"))).toHaveLength(1);
+        expect(calls.find((c) => c.includes("up"))).toContain("--no-deps");
+        expect(calls.some((c) => c.includes("exec") && c.includes("admin"))).toBe(false);
+        const http = readFileSync(f.env.HTTP_CALLS, "utf8");
+        expect(http).toContain("127.0.0.1:3000/api/health");
+        expect(http).not.toContain("3001");
+        expect(http).not.toContain("--write-out");
+        const live = JSON.parse(readFileSync(join(f.dir, "running-app.json"), "utf8"));
+        expect(live.KOL_ENABLED).toBe(String(kol));
+        expect(readFileSync(join(f.dir, ".env"), "utf8")).toBe("# fake runtime only\n");
+      } finally {
+        rmSync(f.dir, { recursive: true });
+      }
+    },
+  );
+  it("enables the storefront first without admin, then independently releases admin and worker", () => {
+    const f = setup(false);
+    try {
+      writeFileSync(join(f.dir, ".env"), "KOL_ENABLED=false\n");
+      const first = f.run(["--storefront-only", "--kol"], { NO_ADMIN: "1" });
+      expect(first.status, first.stdout + first.stderr).toBe(0);
+      expect(f.calls().filter(isImageBuild).flat()).not.toContain("admin");
+      const count = f.calls().length;
+      const second = spawnSync("bash", [join(f.dir, "deploy/update-admin.sh"), "--skip-pull"], {
+        env: f.env,
+        encoding: "utf8",
+      });
+      expect(second.status, second.stdout + second.stderr).toBe(0);
+      expect(f.calls().slice(count).filter(isImageBuild).flat()).not.toContain("app");
+      expect(
+        f
+          .calls()
+          .slice(count)
+          .filter((c) => c.includes("up"))
+          .flat(),
+      ).not.toContain("app");
+      expect(readFileSync(join(f.dir, ".env"), "utf8")).toBe("KOL_ENABLED=false\n");
+    } finally {
+      rmSync(f.dir, { recursive: true });
+    }
+  }, 15_000);
+  it("rejects a running admin database mismatch before building the storefront", () => {
+    const f = setup();
+    try {
+      const r = f.run(["--storefront-only"], { FAIL_ADMIN: "DATABASE_URL" });
+      expect(r.status).not.toBe(0);
+      expect(r.stderr).toContain("running admin configuration differs: DATABASE_URL");
+      expect(r.stderr).not.toContain("peer-private-value");
+      expect(f.calls().filter(isImageBuild)).toHaveLength(0);
+      expect(f.calls().flat()).not.toContain("up");
+    } finally {
+      rmSync(f.dir, { recursive: true });
+    }
+  });
+  it("leaves a configured Nginx target untouched and does not require admin HTTPS readiness", () => {
+    const f = setup();
+    try {
+      const certificate = join(f.dir, "certificate.pem");
+      const target = join(f.dir, "active-nginx.conf");
+      writeFileSync(certificate, "fixture certificate path only");
+      writeFileSync(target, "existing site configuration\n");
+      const c = JSON.parse(readFileSync(f.env.CONFIG, "utf8"));
+      c["x-offy-deploy"] = {
+        nginx_config: target,
+        site_tls_certificate: certificate,
+        site_tls_key: certificate,
+        admin_tls_certificate: certificate,
+        admin_tls_key: certificate,
+      };
+      writeFileSync(f.env.CONFIG, JSON.stringify(c));
+      writeFileSync(join(f.dir, "bin/nginx"), "#!/bin/sh\nexit 73\n", { mode: 0o755 });
+      const r = f.run(["--storefront-only", "--kol"], { NO_ADMIN: "1" });
+      expect(r.status, r.stdout + r.stderr).toBe(0);
+      expect(readFileSync(target, "utf8")).toBe("existing site configuration\n");
+      expect(readFileSync(f.env.HTTP_CALLS, "utf8")).not.toContain("--write-out");
+    } finally {
+      rmSync(f.dir, { recursive: true });
+    }
+  });
+  it.each(["FAIL_BACKUP", "FAIL_APP_HEALTH"])(
+    "reports storefront failure without touching peers: %s",
+    (flag) => {
+      const f = setup();
+      try {
+        const r = f.run(["--storefront-only"], { [flag]: "1" });
+        expect(r.status).not.toBe(0);
+        expect(f.calls().filter(isImageBuild)).toHaveLength(1);
+        expect(f.calls().find((c) => c.includes("run"))).toContain("app");
+        const replacements = f.calls().filter((c) => c.includes("up") || c.includes("stop"));
+        expect(replacements.flat()).not.toContain("admin");
+        expect(replacements.flat()).not.toContain("kol-worker");
+        if (flag === "FAIL_BACKUP") expect(replacements).toHaveLength(0);
+        if (flag === "FAIL_APP_HEALTH") expect(r.stderr).toContain("health timed out");
+      } finally {
+        rmSync(f.dir, { recursive: true });
+      }
+    },
+  );
+  it("rejects conflicting scopes before Docker calls, and check-only remains read-only", () => {
+    const f = setup();
+    try {
+      const bad = f.run(["--admin-only", "--storefront-only"]);
+      expect(bad.status).not.toBe(0);
+      expect(bad.stderr).toContain("mutually exclusive");
+      expect(f.calls()).toHaveLength(0);
+      const check = f.run(["--storefront-only", "--kol", "--check"]);
+      expect(check.status, check.stderr).toBe(0);
+      expect(f.calls().filter(isImageBuild)).toHaveLength(0);
+      expect(f.calls().flat()).not.toContain("up");
+    } finally {
+      rmSync(f.dir, { recursive: true });
+    }
+  });
+});
+
 describe("private environment installation", () => {
   it("keeps the old file on invalid configuration and atomically installs a valid candidate", () => {
     const f = setup();
@@ -370,6 +520,7 @@ describe("independent server admin deployment", () => {
       });
       expect(r.status).not.toBe(0);
       expect(r.stderr).toContain("running storefront configuration differs: KOL_ENABLED");
+      expect(r.stderr).toContain("bash deploy/update-storefront.sh --kol");
       expect(f.calls().filter(isImageBuild)).toHaveLength(0);
       expect(f.calls().flat()).not.toContain("up");
       expect(readFileSync(join(f.dir, ".env"), "utf8")).toBe("KOL_ENABLED=false\n");
@@ -418,96 +569,106 @@ describe("independent server admin deployment", () => {
       rmSync(f.dir, { recursive: true });
     }
   });
-  it("requires Git by default but check-only never pulls or changes services", () => {
-    const f = setup();
-    try {
-      const script = join(f.dir, "deploy/update-admin.sh");
-      const r = spawnSync("bash", [script], { env: f.env, encoding: "utf8" });
-      expect(r.status).not.toBe(0);
-      expect(r.stderr).toContain("Git checkout");
-      expect(f.calls().filter(isImageBuild)).toHaveLength(0);
-      const check = spawnSync("bash", [script, "--check"], { env: f.env, encoding: "utf8" });
-      expect(check.status, check.stderr).toBe(0);
-      expect(f.calls().flat()).not.toContain("up");
-    } finally {
-      rmSync(f.dir, { recursive: true });
-    }
-  });
-  it("pulls a local upstream and re-executes new code without losing admin-only mode", () => {
-    const f = setup();
-    const remote = mkdtempSync(join(tmpdir(), "offy-local-upstream-"));
-    const git = (cwd: string, args: string[]) => {
-      const r = spawnSync("git", args, { cwd, encoding: "utf8" });
-      expect(r.status, r.stderr).toBe(0);
-      return r.stdout.trim();
-    };
-    try {
-      git(remote, ["init", "--bare"]);
-      git(f.dir, ["init"]);
-      git(f.dir, ["config", "user.email", "fixture@example.test"]);
-      git(f.dir, ["config", "user.name", "Fixture"]);
-      git(f.dir, ["add", "deploy", "docker-compose.prod.yml"]);
-      git(f.dir, ["commit", "-m", "fixture"]);
-      git(f.dir, ["remote", "add", "origin", remote]);
-      git(f.dir, ["push", "-u", "origin", "HEAD"]);
-      const writer = join(remote, "writer");
-      git(remote, ["clone", remote, writer]);
-      git(writer, ["config", "user.email", "fixture@example.test"]);
-      git(writer, ["config", "user.name", "Fixture"]);
-      const update = join(writer, "deploy/update.sh");
-      writeFileSync(
-        update,
-        readFileSync(update, "utf8").replace(
-          "set -euo pipefail",
-          "set -euo pipefail\nprintf 'UPDATED_DEPLOYMENT_CODE\\n'",
-        ),
-      );
-      const runtimePath = join(f.dir, ".env.production");
-      renameSync(join(f.dir, ".env"), runtimePath);
-      writeFileSync(runtimePath, "KOL_ENABLED=false\n");
-      git(writer, ["add", "deploy/update.sh"]);
-      git(writer, ["commit", "-m", "updated deployment"]);
-      git(writer, ["push"]);
-      const result = spawnSync("bash", [join(f.dir, "deploy/update-admin.sh")], {
-        env: f.env,
-        encoding: "utf8",
-      });
-      expect(result.status, result.stdout + result.stderr).toBe(0);
-      expect(result.stdout).toContain("UPDATED_DEPLOYMENT_CODE");
-      expect(readFileSync(runtimePath, "utf8")).toBe("KOL_ENABLED=false\n");
-      expect(
-        f
-          .calls()
-          .filter((c) => c.includes("config"))
-          .every((c) => c.includes(runtimePath)),
-      ).toBe(true);
-      expect(
-        f
-          .calls()
-          .filter((c) => c.includes("up") || isImageBuild(c))
-          .flat(),
-      ).not.toContain("app");
-      expect(git(f.dir, ["rev-parse", "HEAD"])).toBe(git(writer, ["rev-parse", "HEAD"]));
-      git(f.dir, ["remote", "set-url", "origin", join(remote, "missing")]);
-      const before = f.calls().filter(isImageBuild).length;
-      const failed = spawnSync("bash", [join(f.dir, "deploy/update-admin.sh")], {
-        env: f.env,
-        encoding: "utf8",
-      });
-      expect(failed.status).not.toBe(0);
-      expect(f.calls().filter(isImageBuild)).toHaveLength(before);
-      writeFileSync(
-        join(f.dir, "deploy/update.sh"),
-        readFileSync(join(f.dir, "deploy/update.sh"), "utf8") + "\n# tracked dirty change\n",
-      );
-      const dirty = spawnSync("bash", [join(f.dir, "deploy/update-admin.sh")], {
-        env: f.env,
-        encoding: "utf8",
-      });
-      expect(dirty.status).not.toBe(0);
-    } finally {
-      rmSync(f.dir, { recursive: true });
-      rmSync(remote, { recursive: true });
-    }
-  }, 60_000);
+  it.each(["update-admin.sh", "update-storefront.sh"])(
+    "requires Git but check-only stays read-only: %s",
+    (entry) => {
+      const f = setup();
+      try {
+        const script = join(f.dir, "deploy", entry);
+        const r = spawnSync("bash", [script], { env: f.env, encoding: "utf8" });
+        expect(r.status).not.toBe(0);
+        expect(r.stderr).toContain("Git checkout");
+        expect(f.calls().filter(isImageBuild)).toHaveLength(0);
+        const check = spawnSync("bash", [script, "--check"], { env: f.env, encoding: "utf8" });
+        expect(check.status, check.stderr).toBe(0);
+        expect(f.calls().flat()).not.toContain("up");
+      } finally {
+        rmSync(f.dir, { recursive: true });
+      }
+    },
+  );
+  it.each([
+    { entry: "update-admin.sh", untouched: "app" },
+    { entry: "update-storefront.sh", untouched: "admin" },
+  ])(
+    "pulls a local upstream and reloads without losing scope: $entry",
+    ({ entry, untouched }) => {
+      const f = setup();
+      const remote = mkdtempSync(join(tmpdir(), "offy-local-upstream-"));
+      const git = (cwd: string, args: string[]) => {
+        const r = spawnSync("git", args, { cwd, encoding: "utf8" });
+        expect(r.status, r.stderr).toBe(0);
+        return r.stdout.trim();
+      };
+      try {
+        git(remote, ["init", "--bare"]);
+        git(f.dir, ["init"]);
+        git(f.dir, ["config", "user.email", "fixture@example.test"]);
+        git(f.dir, ["config", "user.name", "Fixture"]);
+        git(f.dir, ["add", "deploy", "docker-compose.prod.yml"]);
+        git(f.dir, ["commit", "-m", "fixture"]);
+        git(f.dir, ["remote", "add", "origin", remote]);
+        git(f.dir, ["push", "-u", "origin", "HEAD"]);
+        const writer = join(remote, "writer");
+        git(remote, ["clone", remote, writer]);
+        git(writer, ["config", "user.email", "fixture@example.test"]);
+        git(writer, ["config", "user.name", "Fixture"]);
+        const update = join(writer, "deploy/update.sh");
+        writeFileSync(
+          update,
+          readFileSync(update, "utf8").replace(
+            "set -euo pipefail",
+            "set -euo pipefail\nprintf 'UPDATED_DEPLOYMENT_CODE\\n'",
+          ),
+        );
+        const runtimePath = join(f.dir, ".env.production");
+        renameSync(join(f.dir, ".env"), runtimePath);
+        writeFileSync(runtimePath, "KOL_ENABLED=false\n");
+        git(writer, ["add", "deploy/update.sh"]);
+        git(writer, ["commit", "-m", "updated deployment"]);
+        git(writer, ["push"]);
+        const result = spawnSync("bash", [join(f.dir, "deploy", entry), "--kol"], {
+          env: f.env,
+          encoding: "utf8",
+        });
+        expect(result.status, result.stdout + result.stderr).toBe(0);
+        expect(result.stdout).toContain("UPDATED_DEPLOYMENT_CODE");
+        expect(readFileSync(runtimePath, "utf8")).toBe("KOL_ENABLED=false\n");
+        expect(
+          f
+            .calls()
+            .filter((c) => c.includes("config"))
+            .every((c) => c.includes(runtimePath)),
+        ).toBe(true);
+        expect(
+          f
+            .calls()
+            .filter((c) => c.includes("up") || isImageBuild(c))
+            .flat(),
+        ).not.toContain(untouched);
+        expect(git(f.dir, ["rev-parse", "HEAD"])).toBe(git(writer, ["rev-parse", "HEAD"]));
+        git(f.dir, ["remote", "set-url", "origin", join(remote, "missing")]);
+        const before = f.calls().filter(isImageBuild).length;
+        const failed = spawnSync("bash", [join(f.dir, "deploy", entry), "--kol"], {
+          env: f.env,
+          encoding: "utf8",
+        });
+        expect(failed.status).not.toBe(0);
+        expect(f.calls().filter(isImageBuild)).toHaveLength(before);
+        writeFileSync(
+          join(f.dir, "deploy/update.sh"),
+          readFileSync(join(f.dir, "deploy/update.sh"), "utf8") + "\n# tracked dirty change\n",
+        );
+        const dirty = spawnSync("bash", [join(f.dir, "deploy", entry), "--kol"], {
+          env: f.env,
+          encoding: "utf8",
+        });
+        expect(dirty.status).not.toBe(0);
+      } finally {
+        rmSync(f.dir, { recursive: true });
+        rmSync(remote, { recursive: true });
+      }
+    },
+    60_000,
+  );
 });

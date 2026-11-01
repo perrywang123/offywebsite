@@ -96,19 +96,30 @@ def validate(c, explicit=False):
         need(Path(meta["ca_file"]).is_file(), "DEPLOY_CA_FILE")
     return True
 
-def running_storefront(c, containers):
-    need(isinstance(containers, list) and len(containers) == 1, "running storefront container")
+def running_peer(c, containers, service="app"):
+    label = "storefront" if service == "app" else "admin"
+    need(isinstance(containers, list) and len(containers) == 1, "running " + label + " container")
     container = containers[0]
     state = container.get("State", {})
-    need(state.get("Running") is True and state.get("Health", {}).get("Status") == "healthy", "storefront must already be healthy")
+    need(state.get("Running") is True, label + " must be running")
+    if service == "app":
+        need(state.get("Health", {}).get("Status") == "healthy", "storefront must already be healthy")
     actual = dict(item.split("=", 1) for item in container.get("Config", {}).get("Env", []) if "=" in item)
     expected = c["services"]["app"]["environment"]
-    for key in ("NODE_ENV", "DATABASE_PROVIDER", "DATABASE_URL", "SITE_URL", "SHOPIFY_STORE_DOMAIN", "SHOPIFY_API_VERSION", "KOL_ENABLED", "KOL_SETTLEMENTS_ENABLED", "ADMIN_ORIGIN", "KOL_INGRESS_SECRET", "KOL_SIGNING_SECRET", "KOL_WORKER_SECRET", "SHOPIFY_WEBHOOK_SECRET", "SHOPIFY_ADMIN_TOKEN", "CHECKOUT_DIAGNOSTICS_KEY"):
-        need((actual.get(key) or "") == (expected.get(key) or ""), "running storefront configuration differs: " + key + "; deploy storefront and admin together first")
+    keys = ("NODE_ENV", "DATABASE_PROVIDER", "DATABASE_URL", "SITE_URL", "SHOPIFY_STORE_DOMAIN", "SHOPIFY_API_VERSION", "CHECKOUT_DIAGNOSTICS_KEY")
+    # A disabled legacy admin can follow a first storefront-only KOL release.
+    # Active management must retain all shared KOL settings while it keeps running.
+    if service == "app" or actual.get("KOL_ENABLED") == "true":
+        keys += ("KOL_ENABLED", "KOL_SETTLEMENTS_ENABLED", "ADMIN_ORIGIN", "KOL_INGRESS_SECRET", "KOL_SIGNING_SECRET", "KOL_WORKER_SECRET", "SHOPIFY_WEBHOOK_SECRET", "SHOPIFY_ADMIN_TOKEN")
+    for key in keys:
+        guidance = "; shared configuration needs a coordinated update"
+        if service == "app" and key == "KOL_ENABLED" and expected.get(key) == "true":
+            guidance = "; first run bash deploy/update-storefront.sh --kol, then retry the admin update"
+        need((actual.get(key) or "") == (expected.get(key) or ""), "running " + label + " configuration differs: " + key + guidance)
     data = next(v for v in c["services"]["app"]["volumes"] if v["target"] == "/data")
     volume_name = c.get("volumes", {}).get(data["source"], {}).get("name")
     mounts = [m for m in container.get("Mounts", []) if m.get("Destination") == "/data"]
-    need(bool(volume_name) and len(mounts) == 1 and mounts[0].get("Type") == "volume" and mounts[0].get("Name") == volume_name and mounts[0].get("RW") is True, "running storefront must share the existing writable data volume")
+    need(bool(volume_name) and len(mounts) == 1 and mounts[0].get("Type") == "volume" and mounts[0].get("Name") == volume_name and mounts[0].get("RW") is True, "running " + label + " must share the existing writable data volume")
 
 def quoted(value):
     need(isinstance(value, str) and not any(ch in value for ch in ("\n", "\r", "\x00")), "Nginx value")
@@ -168,7 +179,7 @@ server {{
 
 def main():
     parser = argparse.ArgumentParser()
-    parser.add_argument("command", choices=("validate", "value", "render-nginx", "running-storefront"))
+    parser.add_argument("command", choices=("validate", "value", "render-nginx", "running-storefront", "running-admin"))
     parser.add_argument("input", nargs="?", default="-")
     parser.add_argument("--kol", action="store_true")
     parser.add_argument("--key")
@@ -179,9 +190,9 @@ def main():
         if args.command == "validate":
             mode = validate(c, args.kol)
             print("Configuration valid: " + ("storefront + KOL" if mode else "storefront"))
-        elif args.command == "running-storefront":
-            running_storefront(c, json.load(sys.stdin))
-            print("Running storefront configuration and shared volume match")
+        elif args.command in ("running-storefront", "running-admin"):
+            running_peer(c, json.load(sys.stdin), "app" if args.command == "running-storefront" else "admin")
+            print("Running peer configuration and shared volume match")
         elif args.command == "value":
             env, meta = c["services"]["app"]["environment"], c.get("x-offy-deploy", {})
             values = {"kol": str(env.get("KOL_ENABLED") == "true").lower(), "site_url": env["SITE_URL"], "admin_origin": env.get("ADMIN_ORIGIN", ""), "nginx_config": meta.get("nginx_config", ""), "ca_file": meta.get("ca_file", "")}
