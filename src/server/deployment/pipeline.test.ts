@@ -1,5 +1,13 @@
 // @vitest-environment node
-import { mkdtempSync, writeFileSync, readFileSync, mkdirSync, copyFileSync, rmSync } from "node:fs";
+import {
+  mkdtempSync,
+  writeFileSync,
+  readFileSync,
+  mkdirSync,
+  copyFileSync,
+  rmSync,
+  renameSync,
+} from "node:fs";
 import { join, resolve } from "node:path";
 import { tmpdir } from "node:os";
 import { spawnSync } from "node:child_process";
@@ -67,7 +75,33 @@ function setup(kol = true) {
   }
   bin(
     "docker",
-    `#!/usr/bin/env python3\nimport sys,os,json\na=sys.argv[1:]\nwith open(os.environ['CALLS'],'a') as f:f.write(json.dumps(a)+'\\n')\nif 'config' in a and '--format' in a:print(open(os.environ['CONFIG']).read())\nif 'run' in a:\n sys.stdin.read()\n if os.environ.get('FAIL_BACKUP')=='1':sys.exit(2)\nif 'exec' in a and os.environ.get('FAIL_WORKER')=='1':sys.exit(3)\nif 'ps' in a and '-q' in a:print('test-container')\nif a and a[0]=='inspect':\n if '--format' in a:print('true')\n else:\n  c=json.load(open(os.environ['CONFIG']));e=c['services']['app']['environment'].copy()\n  if os.environ.get('FAIL_STOREFRONT')=='1':e['KOL_SIGNING_SECRET']='drift'\n  print(json.dumps([{'State':{'Running':True,'Health':{'Status':'healthy'}},'Config':{'Env':[k+'='+v for k,v in e.items()]},'Mounts':[{'Type':'volume','Name':'offy_offy-data','Destination':'/data','RW':True}]}]))\n`,
+    `#!/usr/bin/env python3
+import sys,os,json
+from pathlib import Path
+a=sys.argv[1:]
+with open(os.environ['CALLS'],'a') as f:f.write(json.dumps(a)+'\\n')
+c=json.load(open(os.environ['CONFIG']))
+if '--env-file' in a:
+ path=a[a.index('--env-file')+1]
+ for line in Path(path).read_text().splitlines():
+  if line.startswith('KOL_ENABLED='):
+   for name in ('app','admin'):c['services'][name]['environment']['KOL_ENABLED']=line.split('=',1)[1]
+ if os.environ.get('KOL_ENABLED'):
+  for name in ('app','admin'):c['services'][name]['environment']['KOL_ENABLED']=os.environ['KOL_ENABLED']
+ with open(os.environ['KOL_OBSERVATIONS'],'a') as f:f.write(json.dumps({'args':a,'kol':c['services']['app']['environment']['KOL_ENABLED'],'adminKol':c['services']['admin']['environment']['KOL_ENABLED'],'settlements':c['services']['app']['environment']['KOL_SETTLEMENTS_ENABLED'],'file':path})+'\\n')
+if 'config' in a and '--format' in a:print(json.dumps(c))
+if 'run' in a:
+ sys.stdin.read()
+ if os.environ.get('FAIL_BACKUP')=='1':sys.exit(2)
+if 'exec' in a and os.environ.get('FAIL_WORKER')=='1':sys.exit(3)
+if 'ps' in a and '-q' in a:print('test-container')
+if a and a[0]=='inspect':
+ if '--format' in a:print('true')
+ else:
+  e=c['services']['app']['environment'].copy()
+  if os.environ.get('FAIL_STOREFRONT')=='1':e['KOL_SIGNING_SECRET']='drift'
+  print(json.dumps([{'State':{'Running':True,'Health':{'Status':'healthy'}},'Config':{'Env':[k+'='+v for k,v in e.items()]},'Mounts':[{'Type':'volume','Name':'offy_offy-data','Destination':'/data','RW':True}]}]))
+`,
   );
   bin(
     "curl",
@@ -80,6 +114,8 @@ function setup(kol = true) {
     PATH: join(dir, "bin") + ":" + process.env.PATH,
     CALLS: join(dir, "calls"),
     CONFIG: join(dir, "config.json"),
+    KOL_OBSERVATIONS: join(dir, "kol-observations"),
+    KOL_ENABLED: undefined,
     DEPLOY_WAIT_ATTEMPTS: "1",
     DEPLOY_WAIT_SECONDS: "0",
   };
@@ -104,6 +140,90 @@ function setup(kol = true) {
   };
 }
 describe("unified server deployment", () => {
+  it("explicit KOL enables every Compose phase despite a false or missing switch without editing private config", () => {
+    for (const runtime of ["KOL_ENABLED=false\n", "# switch absent\n"]) {
+      const f = setup(false);
+      try {
+        const path = join(f.dir, ".env");
+        writeFileSync(path, runtime);
+        const r = f.run(["--kol"], { KOL_ENABLED: "false" });
+        expect(r.status, r.stderr + r.stdout).toBe(0);
+        const observations = readFileSync(f.env.KOL_OBSERVATIONS, "utf8")
+          .trim()
+          .split("\n")
+          .map((line) => JSON.parse(line));
+        expect(observations.length).toBeGreaterThan(5);
+        expect(observations.every((o) => o.kol === "true" && o.adminKol === "true")).toBe(true);
+        expect(observations.every((o) => o.settlements === "false")).toBe(true);
+        expect(readFileSync(path, "utf8")).toBe(runtime);
+      } finally {
+        rmSync(f.dir, { recursive: true });
+      }
+    }
+  });
+  it("explicit check-only accepts a false switch but leaves files and services untouched", () => {
+    const f = setup(false);
+    try {
+      const path = join(f.dir, ".env"),
+        runtime = "KOL_ENABLED=false\n";
+      writeFileSync(path, runtime);
+      const r = f.run(["--kol", "--check"]);
+      expect(r.status, r.stderr + r.stdout).toBe(0);
+      expect(readFileSync(path, "utf8")).toBe(runtime);
+      expect(f.calls().flat()).not.toContain("build");
+      expect(f.calls().flat()).not.toContain("up");
+    } finally {
+      rmSync(f.dir, { recursive: true });
+    }
+  });
+  it("selects explicit env, then .env, then .env.production and never falls back from a missing explicit file", () => {
+    const f = setup();
+    try {
+      const primary = join(f.dir, ".env"),
+        production = join(f.dir, ".env.production");
+      renameSync(primary, production);
+      const fallback = f.run(["--check"]);
+      expect(fallback.status, fallback.stderr).toBe(0);
+      expect(fallback.stdout).toContain(production);
+      expect(f.calls().find((c) => c.includes("config"))).toContain(production);
+      writeFileSync(primary, "KOL_ENABLED=false\n");
+      const preferred = f.run(["--check"]);
+      expect(preferred.status, preferred.stderr).toBe(0);
+      expect(preferred.stdout).toContain(primary);
+      expect(preferred.stdout).toContain("Configuration valid: storefront");
+      const explicit = f.run(["--check", "--env-file", ".env.production"]);
+      expect(explicit.status, explicit.stderr).toBe(0);
+      expect(explicit.stdout).toContain(production);
+      expect(explicit.stdout).toContain("Configuration valid: storefront + KOL");
+      const count = f.calls().length;
+      const missing = f.run(["--check", "--env-file", "missing.env"]);
+      expect(missing.status).not.toBe(0);
+      expect(missing.stderr).toContain("missing.env");
+      expect(f.calls()).toHaveLength(count);
+    } finally {
+      rmSync(f.dir, { recursive: true });
+    }
+  });
+  it("explicit mode still rejects missing KOL credentials before service changes with private-file guidance", () => {
+    const f = setup(false);
+    try {
+      const c = JSON.parse(readFileSync(f.env.CONFIG, "utf8"));
+      for (const name of ["app", "admin"])
+        for (const key of ["SHOPIFY_ADMIN_TOKEN", "SHOPIFY_WEBHOOK_SECRET", "KOL_WORKER_SECRET"])
+          c.services[name].environment[key] = "";
+      writeFileSync(f.env.CONFIG, JSON.stringify(c));
+      const r = f.run(["--kol"]);
+      expect(r.status).not.toBe(0);
+      for (const key of ["SHOPIFY_ADMIN_TOKEN", "SHOPIFY_WEBHOOK_SECRET", "KOL_WORKER_SECRET"])
+        expect(r.stderr).toContain(key);
+      expect(r.stderr).toContain(join(f.dir, ".env"));
+      expect(r.stdout + r.stderr).not.toContain("test-token");
+      expect(f.calls().flat()).not.toContain("build");
+      expect(f.calls().flat()).not.toContain("up");
+    } finally {
+      rmSync(f.dir, { recursive: true });
+    }
+  });
   it("builds then backs up before starting app + worker, with no git or volume deletion", () => {
     const f = setup();
     try {
@@ -204,6 +324,23 @@ describe("private environment installation", () => {
 });
 
 describe("independent server admin deployment", () => {
+  it("explicit admin mode does not enable a disabled storefront or bypass its configuration check", () => {
+    const f = setup(false);
+    try {
+      writeFileSync(join(f.dir, ".env"), "KOL_ENABLED=false\n");
+      const r = spawnSync("bash", [join(f.dir, "deploy/update-admin.sh"), "--skip-pull"], {
+        env: f.env,
+        encoding: "utf8",
+      });
+      expect(r.status).not.toBe(0);
+      expect(r.stderr).toContain("running storefront configuration differs: KOL_ENABLED");
+      expect(f.calls().flat()).not.toContain("build");
+      expect(f.calls().flat()).not.toContain("up");
+      expect(readFileSync(join(f.dir, ".env"), "utf8")).toBe("KOL_ENABLED=false\n");
+    } finally {
+      rmSync(f.dir, { recursive: true });
+    }
+  });
   it("builds and replaces only admin + worker, backing up the shared DB first", () => {
     const f = setup();
     try {
@@ -287,6 +424,9 @@ describe("independent server admin deployment", () => {
           "set -euo pipefail\nprintf 'UPDATED_DEPLOYMENT_CODE\\n'",
         ),
       );
+      const runtimePath = join(f.dir, ".env.production");
+      renameSync(join(f.dir, ".env"), runtimePath);
+      writeFileSync(runtimePath, "KOL_ENABLED=false\n");
       git(writer, ["add", "deploy/update.sh"]);
       git(writer, ["commit", "-m", "updated deployment"]);
       git(writer, ["push"]);
@@ -296,6 +436,13 @@ describe("independent server admin deployment", () => {
       });
       expect(result.status, result.stdout + result.stderr).toBe(0);
       expect(result.stdout).toContain("UPDATED_DEPLOYMENT_CODE");
+      expect(readFileSync(runtimePath, "utf8")).toBe("KOL_ENABLED=false\n");
+      expect(
+        f
+          .calls()
+          .filter((c) => c.includes("config"))
+          .every((c) => c.includes(runtimePath)),
+      ).toBe(true);
       expect(
         f
           .calls()

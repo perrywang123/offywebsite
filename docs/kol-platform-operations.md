@@ -21,19 +21,19 @@
 
 先在隔离环境确认流程，再填运行时配置；不要把Admin token和秘密放Docker build args。模板见`.env.production.example`。
 
-| 配置                                           | 用途                                                               |
-| ---------------------------------------------- | ------------------------------------------------------------------ |
-| `KOL_ENABLED=false`                            | 默认关；打开前必须配置下面三个独立随机秘密与ADMIN_ORIGIN           |
-| `KOL_SETTLEMENTS_ENABLED=false`                | 独立结算门槛；开启KOL不自动允许锁单/登记付款                       |
-| `ADMIN_ORIGIN`                                 | 精确HTTPS origin，包括独立端口，例如`https://管理域名:8443`        |
-| `KOL_INGRESS_SECRET`                           | 至少32字符，Nginx后台覆盖写入的入口秘密                            |
-| `KOL_SIGNING_SECRET`                           | 至少32字符，checkout归因签名；不要随意轮换，否则旧在途引用不能核验 |
-| `KOL_WORKER_SECRET`                            | 至少32字符，仅内网worker调用认证                                   |
-| `SHOPIFY_ADMIN_TOKEN`                          | 订单与优惠查询，生成代码需受控写入优惠权限                         |
-| `SHOPIFY_WEBHOOK_SECRET`                       | Shopify应用对应的webhook验签秘密（不同于Admin token）              |
-| `SHOPIFY_STORE_DOMAIN` / `SHOPIFY_API_VERSION` | 仅接受本店事件，API继续固定2026-07                                 |
-| `KOL_ADMIN_BOOTSTRAP_HASH`                     | 可选生产初始scrypt哈希，只在owner尚不存在时创建；禁止明文          |
-| `DATABASE_URL`                                 | 应用迁移、管理员初始化指向同一持久卷文件，默认`/data/offy.db`      |
+| 配置                                           | 用途                                                                                       |
+| ---------------------------------------------- | ------------------------------------------------------------------------------------------ |
+| `KOL_ENABLED=false`                            | 无显式发布选项时默认关；`--kol`/后台独立发布为当次启用，仍需配置三个独立秘密与ADMIN_ORIGIN |
+| `KOL_SETTLEMENTS_ENABLED=false`                | 独立结算门槛；开启KOL不自动允许锁单/登记付款                                               |
+| `ADMIN_ORIGIN`                                 | 精确HTTPS origin，包括独立端口，例如`https://管理域名:8443`                                |
+| `KOL_INGRESS_SECRET`                           | 至少32字符，Nginx后台覆盖写入的入口秘密                                                    |
+| `KOL_SIGNING_SECRET`                           | 至少32字符，checkout归因签名；不要随意轮换，否则旧在途引用不能核验                         |
+| `KOL_WORKER_SECRET`                            | 至少32字符，仅内网worker调用认证                                                           |
+| `SHOPIFY_ADMIN_TOKEN`                          | 订单与优惠查询，生成代码需受控写入优惠权限                                                 |
+| `SHOPIFY_WEBHOOK_SECRET`                       | Shopify应用对应的webhook验签秘密（不同于Admin token）                                      |
+| `SHOPIFY_STORE_DOMAIN` / `SHOPIFY_API_VERSION` | 仅接受本店事件，API继续固定2026-07                                                         |
+| `KOL_ADMIN_BOOTSTRAP_HASH`                     | 可选生产初始scrypt哈希，只在owner尚不存在时创建；禁止明文                                  |
+| `DATABASE_URL`                                 | 应用迁移、管理员初始化指向同一持久卷文件，默认`/data/offy.db`                              |
 
 生成三个不同的随机值（分别运行；结果仅用于私密运行配置）：
 

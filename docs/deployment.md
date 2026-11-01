@@ -15,7 +15,7 @@ bash deploy/update-admin.sh       # 自动拉 Git、构建、备份、更新后�
 
 服务器需要Docker Engine、Compose插件、Python3、curl、flock（Linux util-linux）；启用管理入口还需要已运行的Nginx及有效TLS证书。使用有Docker权限的部署用户；自动安装Nginx配置另需root或已配置的非交互sudo权限。
 
-在服务器的**固定项目目录**（例如`/opt/offy`）维护`.env`：
+在服务器的**固定项目目录**（例如`/opt/offy`）维护私密运行配置。**仅新服务器尚无配置时**复制模板；已有 `.env` 或 `.env.production` 时保留原文件和真实配置：
 
 ```bash
 cp .env.production.example .env
@@ -24,6 +24,8 @@ chmod 600 .env
 ```
 
 至少填写`SITE_URL`、`SHOPIFY_STORE_DOMAIN`、`SHOPIFY_STOREFRONT_TOKEN`。`DATABASE_URL`保持`/data/offy.db`等`/data/`内路径，不能把开发机的`./data/offy.db`原样传给容器。保持原Compose项目目录/项目名和`offy-data`卷；换目录或改项目名可能指向另一份卷，需先确认数据迁移。
+
+配置选择顺序为显式 `--env-file FILE`、已有项目 `.env`、仅在 `.env` 不存在时读取 `.env.production`。不合并两个文件，显式指定的文件不存在时直接失败；脚本会显示实际选中的绝对路径，Git 重载后沿用该文件。配置内容和凭据不输出。
 
 启用KOL另需：
 
@@ -40,6 +42,8 @@ KOL_ADMIN_BOOTSTRAP_HASH=私密的初始scrypt哈希
 ```
 
 以上内容为说明，不能直接作为真实配置。`ADMIN_ORIGIN`使用精确origin，无尾部斜杠；后台外部端口与主站及源站3000/3001不同。管理员白名单仅`wangperry666@gmail.com`；密码哈希通过`pnpm kol:admin prepare-production wangperry666@gmail.com`隐藏输入生成（已准备的私密配置也可使用）。把该**哈希配置**私密提供给服务器，不写明文密码，不放build args。Docker在迁移后首次初始化owner，已有密码保留。详见 [KOL运行手册](kol-platform-operations.md)。
+
+`--kol` 和 `update-admin.sh` 明确选择本次启用后台，会在解析 Compose 前设置运行时 `KOL_ENABLED=true`，覆盖私密文件或当前 Shell 中的 `false`，因此不再要求先手工改开关；该选择在 Git 拉取重载后继续生效。它们不改写 `.env`、不生成真实 Shopify 凭据，也不隐式开启 `KOL_SETTLEMENTS_ENABLED`。后续继续使用明确的后台命令；若希望无参数 `update.sh` 也自动包含后台，可在服务器私密配置中持久设置 `KOL_ENABLED=true`。
 
 新功能与结算开关独立。上线前完成真实Shopify/税/付款退款/归因核验，再单独开启结算；部署脚本不会代替这些验收。
 
@@ -95,7 +99,7 @@ bash deploy/update-admin.sh
 bash deploy/update-admin.sh --check
 ```
 
-只有已经有意准备好源码时才使用 `--skip-pull`；可用 `--env-file /私密路径/production.env` 指定服务器配置，默认使用原项目 `.env`。`--check` 仅验证声明配置和依赖，不代替正式发布对运行中主站和 HTTPS 的检查。
+只有已经有意准备好源码时才使用 `--skip-pull`；可用 `--env-file /私密路径/production.env` 指定服务器配置，默认优先原项目 `.env`，不存在时读取 `.env.production`。`--check` 仅验证声明配置和依赖，不代替正式发布对运行中主站和 HTTPS 的检查；不会修改私密配置。
 
 整套发布仍使用 `bash deploy/update.sh --kol`（已有 KOL 启用时普通 `bash deploy/update.sh` 也包含后台），同样默认更新 Git。不要同时手动运行 Compose 或覆盖源码绕过共享部署锁。
 
@@ -125,11 +129,13 @@ bash deploy/update-admin.sh --check
 4. 独立发布只启动 admin，健康后更新 worker；均使用 `--no-deps`，不会由依赖隐式启动/替换 app。后台 entrypoint 执行兼容迁移与首次 owner 初始化。整套发布则先启动 app 并等待健康，再按此顺序启动后台。
 5. 检查后台 3001 健康、worker 容器运行、owner/店铺匹配，以及本次发布后的成功 worker 心跳。
 6. 明确选择了 Nginx 配置目标时安装/校验并 reload，否则验证现有配置。共享 Nginx 的 reload 仍会执行；不会重启主站容器。检查主站 admin/API 为404、后台登录200、未登录管理API401；正常校验 TLS。
-7. 全部通过才报告成功。不删除持久卷、不全局清理镜像。停用 KOL 的整套发布会停止旧 worker；独立后台脚本在 KOL 关闭时拒绝发布。
+7. 全部通过才报告成功。不删除持久卷、不全局清理镜像。无显式后台选项且配置关闭 KOL 的整套发布会停止旧 worker；独立后台脚本显式启用 KOL，但仍要求运行中主站的配置一致，不会替旧版或关闭 KOL 的主站偷偷启用功能。
 
 运行设置可用`DEPLOY_WAIT_ATTEMPTS`（默认40）、`DEPLOY_WAIT_SECONDS`（默认3）调整等待；这些是部署工具选项，不进入浏览器/应用。KOL心跳失败可能是Shopify权限或连接问题，需查看admin/worker日志；脚本不会把它当成功，也不会自动向Shopify发测试付款。
 
 ## 失败与恢复
+
+旧版 `KOL_ENABLED=true is required by --kol` 已在 2026-11-01 修复。服务器先 `git pull --ff-only` 获取新脚本，再运行 `bash deploy/update.sh --kol --check`。新脚本将显式模式作为本次启用，不要求修改文件中的默认 `false`。若仍有缺失配置，会列出缺少的后台键名，并指明实际运行文件；真实 Shopify Admin token、应用验签密钥、后台 HTTPS 地址和首次 owner 配置仍须在服务器私密提供，Git 中没有这些值。检查通过后执行 `bash deploy/update.sh --kol`。
 
 备份在持久卷中，与迁移前状态一致。配置备份/源码排除规则不会让业务卷被rsync删除。回退应用前确认新旧schema兼容；需要恢复DB时停写、保留当前卷、从经过完整性校验的备份恢复到新文件，再确认财务合计和只读数据。脚本不自动回滚数据库或撤销Shopify外部操作。
 

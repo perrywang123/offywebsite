@@ -4,7 +4,7 @@ set -euo pipefail
 umask 077
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 cd "$ROOT"
-SKIP_PULL=0; EXPLICIT_KOL=0; CHECK_ONLY=0; ADMIN_ONLY=0; ENV_FILE="$ROOT/.env"
+SKIP_PULL=0; EXPLICIT_KOL=0; CHECK_ONLY=0; ADMIN_ONLY=0; ENV_FILE=""
 while [ "$#" -gt 0 ]; do
  case "$1" in
   --admin-only) ADMIN_ONLY=1; EXPLICIT_KOL=1; shift ;;
@@ -12,14 +12,27 @@ while [ "$#" -gt 0 ]; do
   --kol) EXPLICIT_KOL=1; shift ;;
   --check) CHECK_ONLY=1; shift ;;
   --env-file) ENV_FILE="${2:?Missing runtime env file}"; shift 2 ;;
-  --help|-h) printf 'Usage: bash deploy/update.sh [--kol | --admin-only] [--skip-pull] [--check] [--env-file FILE]\n'; exit 0 ;;
+  --help|-h) printf 'Usage: bash deploy/update.sh [--kol | --admin-only] [--skip-pull] [--check] [--env-file FILE]\n--kol/admin-only enable KOL for this invocation; private config is not modified.\nRuntime file: explicit --env-file, otherwise .env, otherwise .env.production.\n'; exit 0 ;;
   *) printf 'Unknown deployment option: %s\n' "$1" >&2; exit 1 ;;
  esac
 done
 say(){ printf '\n==> %s\n' "$*"; }
 die(){ printf 'Deployment failed: %s\n' "$*" >&2; exit 1; }
 for bin in docker python3 curl; do command -v "$bin" >/dev/null || die "$bin is required"; done
-[ -f "$ENV_FILE" ] || die 'runtime env file missing; configure the production template first'
+if [ -z "$ENV_FILE" ]; then
+ if [ -e "$ROOT/.env" ] || [ -L "$ROOT/.env" ]; then ENV_FILE="$ROOT/.env"
+ else ENV_FILE="$ROOT/.env.production"; fi
+fi
+[ -f "$ENV_FILE" ] || die "runtime env file missing: $ENV_FILE; configure the production template or select --env-file FILE"
+# Resolve once so Git re-exec keeps exactly the same runtime-file selection.
+ENV_FILE="$(python3 -c 'import os,sys; print(os.path.abspath(sys.argv[1]))' "$ENV_FILE")"
+say "Runtime configuration file: $ENV_FILE"
+# The operator explicitly selected this scope. Apply it to every Compose call,
+# including check-only and Git re-exec, without editing the private env file.
+if [ "$EXPLICIT_KOL" = 1 ]; then
+ export KOL_ENABLED=true
+ say 'KOL enabled for this command; settlement settings and private config unchanged'
+fi
 docker compose version >/dev/null 2>&1 || die 'Docker Compose plugin is unavailable'
 docker info >/dev/null 2>&1 || die 'Docker daemon is not running or inaccessible'
 COMPOSE=(docker compose --env-file "$ENV_FILE" -f "$ROOT/docker-compose.prod.yml")
@@ -27,7 +40,10 @@ OFFY_CONFIG_JSON="$(mktemp "${TMPDIR:-/tmp}/offy-compose.XXXXXX")"
 trap 'rm -f "$OFFY_CONFIG_JSON"' EXIT
 "${COMPOSE[@]}" --profile kol config --format json > "$OFFY_CONFIG_JSON"
 VALIDATE=(); [ "$EXPLICIT_KOL" = 0 ] || VALIDATE=(--kol)
-python3 "$ROOT/deploy/compose-config.py" validate "$OFFY_CONFIG_JSON" ${VALIDATE[@]+"${VALIDATE[@]}"}
+if ! python3 "$ROOT/deploy/compose-config.py" validate "$OFFY_CONFIG_JSON" ${VALIDATE[@]+"${VALIDATE[@]}"}; then
+ printf 'Check the named configuration keys in %s. Private credentials are not supplied by Git.\n' "$ENV_FILE" >&2
+ exit 1
+fi
 value(){ python3 "$ROOT/deploy/compose-config.py" value "$OFFY_CONFIG_JSON" --key "$1"; }
 KOL="$(value kol)"
 NGINX_TARGET="$(value nginx_config)"
