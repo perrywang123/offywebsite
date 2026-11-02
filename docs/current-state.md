@@ -6,6 +6,7 @@
 
 - 英文单语、默认语言无前缀。中文保留代码，`/zh/*` 308 去前缀；`/en/*` 307 去前缀。
 - 品牌首页：五屏 Hero → NEWS → New Looks/区域限定/商品名册 → 包挂预告 → 联名 → 订阅 → 未来 IP。
+- NEWS 的五张宣传图使用 `lib/content.ts` 登记的本地品牌素材；仅用 Shopify 核验绑定商品的市场可售状态，不以商品首图覆盖宣传构图。2026-11-02 从 `808d9b8` 之前的映射恢复；商品详情、价格、库存和结账继续使用 Shopify。见 [恢复验收](news-editorial-restoration-validation.md)。
 - 三大系列名称来自 Shopify；slug/Collection handle/系列图/tagline 的站点映射仍本地配置。
 - 实时商品清单、详情、市场金额/币种、SKU、多图、售罄列表状态；周边仅在 All Looks，排在公仔之后。
 - localStorage 购物袋、公开商品 API 验证、抽屉与独立页、手机 sticky 购买条。

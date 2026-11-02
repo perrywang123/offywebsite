@@ -9,8 +9,7 @@ export interface NewsItem {
   image: string;
   /**
    * Shopify handle(= 商品详情页路由 code),点击卡片跳转到 /products/${productCode}。
-   * 必须是当前 Shopify 真实在售的 handle —— 若填错/该商品下架,链接会指向 404,
-   * 这是预期行为(不做隐藏兜底,方便运营第一时间发现配置错误)。
+   * 当前首页会核验该 handle 在访客市场的可售状态；无对应可售商品时隐藏卡片。
    */
   productCode: string;
 }
@@ -19,7 +18,8 @@ export interface NewsItem {
  * 首页"最新资讯 · 揭晓"模块(NewsGrid):1 张大卡(feature)+ 4 张副卡(items)。
  * 卡片标题按 最新资讯.psd 逐个图层的原文登记(英文),中文沿用首页文案表,
  * 两者不是互译关系(PSD 没有中文稿)—— 若要中文也改成对应说法,需要运营给稿。
- * 布局固定在 NewsGrid.tsx,这里只是数据。
+ * 布局固定在 NewsGrid.tsx,这里只是数据。五张图片是运营选定的本地宣传素材，
+ * 不随 Shopify 商品首图变化；商品详情、价格、库存和可售状态仍以 Shopify 为准。
  *
  * 当前 5 张卡对应的真实商品(2026-10 由运营指定):
  *   1(大卡) CARAMEL RÊVE → warm-biscuit

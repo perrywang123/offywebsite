@@ -1,4 +1,4 @@
-import { render, screen } from "@testing-library/react";
+import { render, screen, within } from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import type { Product } from "@/lib/catalog/types";
 import type { ShopifyListItem } from "@/server/shopify/catalog";
@@ -72,7 +72,10 @@ vi.mock("next/image", () => ({
 }));
 
 /** 数据层替身:名册(含 3 款周边)+ 空的最新造型 + 可切换的区域限定。 */
-const homeState = vi.hoisted(() => ({ regionals: [] as ShopifyListItem[] }));
+const homeState = vi.hoisted(() => ({
+  regionals: [] as ShopifyListItem[],
+  newsProducts: [] as Product[],
+}));
 
 function liveProduct(item: ShopifyListItem, series: string, sortOrder: number): Product {
   return {
@@ -119,6 +122,7 @@ vi.mock("@/server/catalog/live", () => ({
     DOLL,
     liveProduct(item("noir", "NOIR"), "outdoor-sporty", 0),
     ...MERCH,
+    ...homeState.newsProducts,
   ],
   toLiveProduct: (entry: ShopifyListItem, series: string, sortOrder: number) =>
     liveProduct(entry, series, sortOrder),
@@ -132,6 +136,7 @@ import HomePage from "./page";
 
 afterEach(() => {
   homeState.regionals = [];
+  homeState.newsProducts = [];
 });
 
 async function renderHome(locale: "en" | "zh" = "en") {
@@ -139,6 +144,40 @@ async function renderHome(locale: "en" | "zh" = "en") {
   const ui = await HomePage({ params: Promise.resolve({ locale }) });
   return render(ui);
 }
+
+describe("homepage NEWS editorial photographs", () => {
+  const handles = ["warm-biscuit", "bunny-hug", "ace", "wander", "offy_redrush"];
+  const images = ["news-01.jpg", "news-04.jpg", "news-03.jpg", "news-08.jpg", "news-02.jpg"];
+  function setNewsProducts(withRemoteImages: boolean) {
+    homeState.newsProducts = handles.map((handle, i) => ({
+      ...liveProduct(item(handle, `Verified ${handle}`), "princess-lady", i),
+      images: withRemoteImages ? [`https://cdn.shopify.com/news-test-${i}.jpg`] : [],
+    }));
+  }
+  it.each([true, false])(
+    "keeps all five curated images when Shopify has primary images: %s",
+    async (withRemoteImages) => {
+      setNewsProducts(withRemoteImages);
+      await renderHome();
+      const section = screen.getByRole("heading", { name: en.home.newsTitle }).closest("section")!;
+      const renderedImages = within(section).getAllByRole("img");
+      expect(renderedImages.map((img) => img.getAttribute("src"))).toEqual(
+        images.map((file) => `/assets/news/${file}`),
+      );
+      expect(renderedImages.map((img) => img.closest("a")?.getAttribute("href"))).toEqual(
+        handles.map((handle) => `/products/${handle}`),
+      );
+    },
+  );
+  it("still hides a card whose bound product is unavailable in the visitor market", async () => {
+    setNewsProducts(true);
+    homeState.newsProducts[1].isAvailable = false;
+    await renderHome();
+    const section = screen.getByRole("heading", { name: en.home.newsTitle }).closest("section")!;
+    expect(within(section).getAllByRole("img")).toHaveLength(4);
+    expect(section.querySelector('a[href="/products/bunny-hug"]')).toBeNull();
+  });
+});
 
 describe("首页 · 语义 H1", () => {
   it("有且只有一个 h1,且是 sr-only(头图文字烧在图片里,语义层补标题 / 视觉零变化)", async () => {

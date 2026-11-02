@@ -55,16 +55,13 @@ export default async function HomePage({ params }: { params: Promise<{ locale: s
             : [];
         })
       : [];
-  // Product-bound editorial cards are shown only when their actual products were verified in this market.
+  // Shopify verifies market availability; NEWS photography stays editorial brand content.
   const featureProduct = allProducts.find(
     (p) => p.code === newsFeature.productCode && p.isAvailable,
   );
-  const verifiedNews = newsItems
-    .flatMap((item) => {
-      const p = allProducts.find((p) => p.code === item.productCode && p.isAvailable);
-      return p ? [{ ...item, image: p.images[0] ?? "" }] : [];
-    })
-    .filter((item) => item.image);
+  const verifiedNews = newsItems.filter((item) =>
+    allProducts.some((p) => p.code === item.productCode && p.isAvailable),
+  );
 
   return (
     <>
@@ -103,7 +100,7 @@ export default async function HomePage({ params }: { params: Promise<{ locale: s
           今天靠"无层级压过 @layer utilities"才显示为 #efefef —— 谁把那条规则挪进
           @layer base,首页底色就整体变白。也不要写 `bg-background`:
           --background 定义在 :root 而非 @theme,Tailwind v4 不生成该工具类。 */}
-        {featureProduct?.images[0] && verifiedNews.length > 0 && (
+        {featureProduct && verifiedNews.length > 0 && (
           <section className="relative overflow-hidden bg-[#efefef]">
             <div className="container-site section-y relative">
               {/* 标题区(最新资讯.psd 组「最新咨询·标题」):PSD 里是一行居中
@@ -126,7 +123,7 @@ export default async function HomePage({ params }: { params: Promise<{ locale: s
                 </Link>
               </Reveal>
               <NewsGrid
-                feature={{ ...newsFeature, image: featureProduct.images[0] }}
+                feature={newsFeature}
                 items={verifiedNews}
                 texts={{
                   featureTitle: t("newsFeatureTitle"),

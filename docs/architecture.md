@@ -21,16 +21,16 @@ Next.js 15 App Router 单应用，服务端页面读 Shopify，客户端通过�
 
 ## 数据源与失败行为
 
-| 数据                          | 主来源                             | 当前失败行为                             |
-| ----------------------------- | ---------------------------------- | ---------------------------------------- |
-| 商品成员/商业字段             | Storefront collection/product 查询 | 不可用结果；页面重试/API503              |
-| 无系列周边                    | products outside known collections | 不可用结果                               |
-| 系列名                        | Shopify Collections                | 隐藏未验证的系列导航                     |
-| 系列 slug/映射/hero/tagline   | `lib/catalog/series.ts`、live 映射 | 本地站点配置                             |
-| 首页 Hero/NEWS 链接与品牌内容 | `lib/content.ts`、字典、品牌资产   | 品牌内容静态；NEWS验证绑定商品并取实时图 |
-| FAQ/故事/联系信息             | `lib/faq.ts`、字典、policies 常量  | 静态                                     |
-| 四条政策正文                  | Shopify shop policies              | 200 页面中的正文不可用提示               |
-| 订阅/旧支付订单               | SQLite                             | 现有同步 DAL，不是 Shopify 订单镜像      |
+| 数据                          | 主来源                             | 当前失败行为                                       |
+| ----------------------------- | ---------------------------------- | -------------------------------------------------- |
+| 商品成员/商业字段             | Storefront collection/product 查询 | 不可用结果；页面重试/API503                        |
+| 无系列周边                    | products outside known collections | 不可用结果                                         |
+| 系列名                        | Shopify Collections                | 隐藏未验证的系列导航                               |
+| 系列 slug/映射/hero/tagline   | `lib/catalog/series.ts`、live 映射 | 本地站点配置                                       |
+| 首页 Hero/NEWS 链接与品牌内容 | `lib/content.ts`、字典、品牌资产   | 品牌内容与NEWS宣传图静态；NEWS验证绑定商品可售状态 |
+| FAQ/故事/联系信息             | `lib/faq.ts`、字典、policies 常量  | 静态                                               |
+| 四条政策正文                  | Shopify shop policies              | 200 页面中的正文不可用提示                         |
+| 订阅/旧支付订单               | SQLite                             | 现有同步 DAL，不是 Shopify 订单镜像                |
 
 真实系列映射：princess-lady→frontpage；outdoor-sporty→outdoor-sporty系列；playful-life→趣味生活系列。当前不会自动把任意新建 Collection 加进导航。商品使用 code=handle；SKU 是展示字段；首个 variant 是结算变体，多规格 UI 未实现。
 
