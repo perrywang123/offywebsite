@@ -356,8 +356,20 @@ export function CheckoutDiagnostics() {
     [detail, setDetail] = useState<DiagnosticDetail | null>(null),
     [opening, setOpening] = useState<string | null>(null);
   const [ready, setReady] = useState(false);
+  const [advancedOpen, setAdvancedOpen] = useState(false);
   const detailRequest = useRef<AbortController | null>(null);
   const opener = useRef<HTMLButtonElement | null>(null);
+  const dateRangeError = from && to && from > to ? "结束日期不能早于开始日期" : "";
+  const hasFilters = Boolean(query || country || status || from || to || parameters);
+  const advancedCount = [country, status, from, to].filter(Boolean).length;
+  const filterSummary = [
+    country ? `国家 ${country.toUpperCase()}` : "",
+    status ? `结果 ${statusLabels[status]}` : "",
+    from ? `自 ${from}` : "",
+    to ? `至 ${to}` : "",
+  ]
+    .filter(Boolean)
+    .join(" · ");
   useEffect(() => {
     const p = new URLSearchParams(window.location.search);
     setQuery(p.get("query") ?? "");
@@ -378,7 +390,9 @@ export function CheckoutDiagnostics() {
     p.delete("dateFrom");
     p.delete("dateTo");
     void request(`?${p}`, controller.signal)
-      .then(setData)
+      .then((result) => {
+        if (!controller.signal.aborted) setData(result);
+      })
       .catch((e) => {
         if (!controller.signal.aborted) setError((e as Error).message);
       })
@@ -389,6 +403,7 @@ export function CheckoutDiagnostics() {
   }, [parameters, revision, ready]);
   const apply = (e: FormEvent) => {
     e.preventDefault();
+    if (dateRangeError) return;
     const p = new URLSearchParams();
     if (query.trim()) p.set("query", query.trim());
     if (country.trim()) p.set("country", country.trim().toUpperCase());
@@ -406,7 +421,15 @@ export function CheckoutDiagnostics() {
   };
   const changeParameters = (p: URLSearchParams) => {
     setParameters(p.toString());
-    window.history.replaceState(null, "", `${window.location.pathname}?${p}`);
+    window.history.replaceState(null, "", `${window.location.pathname}${p.size ? `?${p}` : ""}`);
+  };
+  const reset = () => {
+    setQuery("");
+    setCountry("");
+    setStatus("");
+    setFrom("");
+    setTo("");
+    changeParameters(new URLSearchParams());
   };
   const open = useCallback(async (row: DiagnosticSummary) => {
     detailRequest.current?.abort();
@@ -435,55 +458,100 @@ export function CheckoutDiagnostics() {
           </p>
         </details>
       </div>
-      <form className="diagnostic-filters" onSubmit={apply}>
-        <label className="diag-search">
-          编号或商品
-          <input
-            aria-label="编号或商品"
-            value={query}
-            onChange={(e) => setQuery(e.target.value)}
-            placeholder="搜索编号、商品名或 handle"
-            maxLength={200}
-          />
-        </label>
-        <label>
-          国家代码
-          <input
-            value={country}
-            onChange={(e) => setCountry(e.target.value)}
-            placeholder="如 US"
-            maxLength={2}
-            pattern="[a-zA-Z]{2}"
-          />
-        </label>
-        <label>
-          准备结果
-          <select value={status} onChange={(e) => setStatus(e.target.value)}>
-            <option value="">全部结果</option>
-            {Object.entries(statusLabels).map(([key, label]) => (
-              <option key={key} value={key}>
-                {label}
-              </option>
-            ))}
-          </select>
-        </label>
-        <label>
-          开始日期
-          <input type="date" value={from} onChange={(e) => setFrom(e.target.value)} />
-        </label>
-        <label>
-          结束日期
-          <input
-            type="date"
-            value={to}
-            onChange={(e) => setTo(e.target.value)}
-            min={from || undefined}
-          />
-        </label>
-        <button type="submit" className="primary" disabled={loading}>
-          筛选记录
-        </button>
+      <form
+        className="diagnostic-filters"
+        onSubmit={apply}
+        onInvalidCapture={() => setAdvancedOpen(true)}
+      >
+        <div className="diagnostic-query">
+          <label className="diag-search">
+            编号或商品
+            <input
+              aria-label="编号或商品"
+              value={query}
+              onChange={(e) => setQuery(e.target.value)}
+              placeholder="搜索编号、商品名或 handle"
+              maxLength={200}
+            />
+          </label>
+          <button type="submit" className="primary" disabled={loading || Boolean(dateRangeError)}>
+            筛选记录
+          </button>
+        </div>
+        <div className="filter-panel-controls">
+          <button
+            type="button"
+            className="filter-toggle"
+            aria-expanded={advancedOpen}
+            aria-controls="diagnostic-advanced"
+            onClick={() => setAdvancedOpen((open) => !open)}
+          >
+            更多筛选{advancedCount ? `（${advancedCount}项）` : ""}
+            <span aria-hidden>{advancedOpen ? "⌃" : "⌄"}</span>
+          </button>
+          {hasFilters && (
+            <button type="button" onClick={reset}>
+              清空筛选
+            </button>
+          )}
+        </div>
+        {filterSummary && <p className="filter-summary">已选：{filterSummary}</p>}
+        <div
+          id="diagnostic-advanced"
+          className={advancedOpen ? "diagnostic-advanced is-expanded" : "diagnostic-advanced"}
+          role="group"
+          aria-label="诊断高级筛选"
+        >
+          <label>
+            国家代码
+            <input
+              value={country}
+              onChange={(e) => setCountry(e.target.value)}
+              placeholder="如 US"
+              maxLength={2}
+              pattern="[a-zA-Z]{2}"
+            />
+          </label>
+          <label>
+            准备结果
+            <select value={status} onChange={(e) => setStatus(e.target.value)}>
+              <option value="">全部结果</option>
+              {Object.entries(statusLabels).map(([key, label]) => (
+                <option key={key} value={key}>
+                  {label}
+                </option>
+              ))}
+            </select>
+          </label>
+          <div className="filter-date-range" role="group" aria-label="诊断日期范围">
+            <label>
+              开始日期
+              <input
+                type="date"
+                value={from}
+                max={to || undefined}
+                onChange={(e) => setFrom(e.target.value)}
+              />
+            </label>
+            <label>
+              结束日期
+              <input
+                type="date"
+                value={to}
+                onChange={(e) => setTo(e.target.value)}
+                min={from || undefined}
+                aria-invalid={Boolean(dateRangeError)}
+                aria-describedby={dateRangeError ? "diagnostic-date-error" : undefined}
+              />
+            </label>
+          </div>
+        </div>
       </form>
+      {dateRangeError && (
+        <p className="message error" id="diagnostic-date-error" role="alert">
+          {dateRangeError}。列表仍显示上次筛选结果，请先调整日期。
+        </p>
+      )}
       <div className="section-line">
         <div>
           <strong>{data ? `${data.total} 次结账尝试` : "结账尝试记录"}</strong>

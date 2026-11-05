@@ -14,6 +14,10 @@ import Database from "better-sqlite3";
 import { drizzle } from "drizzle-orm/better-sqlite3";
 import { migrate } from "drizzle-orm/better-sqlite3/migrator";
 async function main() {
+  const automaticAdmin = process.env.OFFY_TEST_ADMIN_AUTH === "automatic";
+  let adminGrants = 0,
+    adminRequests = 0,
+    rejectNextAdmin = false;
   const directory = process.argv[2] ?? mkdtempSync(join(tmpdir(), "offy-kol-integration-"));
   if (!directory.startsWith(join(tmpdir(), "offy-kol-integration-")))
     throw new Error("Only isolated integration directories may be reused");
@@ -163,6 +167,31 @@ async function main() {
   const mockServer = createServer(async (req, res) => {
     try {
       const url = new URL(req.url ?? "/", mock);
+      if (url.pathname === "/test/admin-auth") {
+        if (req.method === "POST")
+          rejectNextAdmin = Boolean(JSON.parse(await body(req)).rejectNext);
+        return send(res, { automaticAdmin, grants: adminGrants, requests: adminRequests });
+      }
+      if (url.pathname === "/admin/oauth/access_token") {
+        const form = new URLSearchParams(await body(req));
+        if (
+          !automaticAdmin ||
+          form.get("grant_type") !== "client_credentials" ||
+          form.get("client_id") !== "integration-client" ||
+          form.get("client_secret") !== "integration-secret" ||
+          form.has("scope")
+        )
+          return send(res, { error: "invalid_client" }, 401);
+        return send(res, { access_token: `integration-auto-${++adminGrants}`, expires_in: 12 });
+      }
+      if (url.pathname.startsWith("/admin/api/")) {
+        adminRequests++;
+        const expected = automaticAdmin ? `integration-auto-${adminGrants}` : "integration-dummy";
+        if (rejectNextAdmin || req.headers["x-shopify-access-token"] !== expected) {
+          rejectNextAdmin = false;
+          return send(res, { error: "unauthorized" }, 401);
+        }
+      }
       if (url.pathname === "/test/checkout-mode" && req.method === "POST") {
         const { mode } = JSON.parse(await body(req));
         if (!["normal", "warning", "http_error", "graphql_error", "catalog_error"].includes(mode))
@@ -303,7 +332,7 @@ async function main() {
             accessScopes: [
               { handle: "read_orders" },
               { handle: "read_discounts" },
-              { handle: "write_discounts" },
+              ...(automaticAdmin ? [] : [{ handle: "write_discounts" }]),
             ],
           },
         };
@@ -500,7 +529,9 @@ async function main() {
         SITE_URL: site,
         SHOPIFY_STORE_DOMAIN: "offy-integration.myshopify.com",
         SHOPIFY_STOREFRONT_TOKEN: "integration-dummy",
-        SHOPIFY_ADMIN_TOKEN: "integration-dummy",
+        SHOPIFY_ADMIN_TOKEN: automaticAdmin ? "" : "integration-dummy",
+        SHOPIFY_ADMIN_CLIENT_ID: automaticAdmin ? "integration-client" : "",
+        SHOPIFY_ADMIN_CLIENT_SECRET: automaticAdmin ? "integration-secret" : "",
         SHOPIFY_WEBHOOK_SECRET: webhook,
         SHOPIFY_TEST_ORIGIN: mock,
         SHOPIFY_API_VERSION: "2026-07",

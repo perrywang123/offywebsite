@@ -418,6 +418,33 @@ describe("independent server storefront deployment", () => {
       }
     },
   );
+  it("deploys automatic Admin authentication without sharing the application credentials with the running storefront", () => {
+    const f = setup();
+    try {
+      const c = JSON.parse(readFileSync(f.env.CONFIG, "utf8"));
+      Object.assign(c.services.admin.environment, {
+        SHOPIFY_ADMIN_CLIENT_ID: "dummy-independent-client",
+        SHOPIFY_ADMIN_CLIENT_SECRET: "dummy-independent-secret",
+      });
+      writeFileSync(f.env.CONFIG, JSON.stringify(c));
+      writeFileSync(join(f.dir, "running-app.json"), JSON.stringify(c.services.app.environment));
+      const r = f.run(["--admin-only"]);
+      expect(r.status, r.stdout + r.stderr).toBe(0);
+      expect(f.calls().find(isImageBuild)?.slice(-1)).toEqual(["admin"]);
+      expect(
+        f
+          .calls()
+          .filter((call) => call.includes("up"))
+          .map((call) => call.at(-1)),
+      ).toEqual(["admin", "kol-worker"]);
+      expect(r.stdout + r.stderr).not.toContain("dummy-independent");
+      const running = JSON.parse(readFileSync(join(f.dir, "running-app.json"), "utf8"));
+      expect(running.SHOPIFY_ADMIN_CLIENT_ID).toBeUndefined();
+      expect(running.SHOPIFY_ADMIN_CLIENT_SECRET).toBeUndefined();
+    } finally {
+      rmSync(f.dir, { recursive: true });
+    }
+  });
   it.each([true, false])(
     "releases app only while preserving the configured KOL switch: %s",
     (kol) => {

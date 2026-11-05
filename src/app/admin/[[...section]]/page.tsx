@@ -1,5 +1,4 @@
 import { notFound } from "next/navigation";
-import { AdminConsole } from "@/components/kol/AdminConsole";
 export default async function AdminPage({ params }: { params: Promise<{ section?: string[] }> }) {
   const section = (await params).section ?? [],
     view = section[0] ?? "partners";
@@ -8,7 +7,6 @@ export default async function AdminPage({ params }: { params: Promise<{ section?
     !["partners", "codes", "orders", "settlements", "checkouts"].includes(view)
   )
     notFound();
-  return (
-    <AdminConsole view={view as "partners" | "codes" | "orders" | "settlements" | "checkouts"} />
-  );
+  // The shared layout owns the console; this leaf only validates direct URLs.
+  return null;
 }

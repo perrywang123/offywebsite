@@ -1,0 +1,10 @@
+{
+  "simulator": true,
+  "automatic": true,
+  "concurrentCache": true,
+  "expiryRenewal": true,
+  "unauthorizedRecovery": true,
+  "workerSync": true,
+  "storefrontCheckout": true,
+  "privateResponses": true
+}

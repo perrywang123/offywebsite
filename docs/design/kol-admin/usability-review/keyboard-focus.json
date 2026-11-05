@@ -1,0 +1,17 @@
+[
+  {
+    "label": null,
+    "stage": "opened",
+    "tag": "BUTTON"
+  },
+  {
+    "name": "platform",
+    "stage": "tab",
+    "tag": "INPUT"
+  },
+  {
+    "dialogOpen": false,
+    "focus": "＋ 新增合作",
+    "stage": "escape"
+  }
+]

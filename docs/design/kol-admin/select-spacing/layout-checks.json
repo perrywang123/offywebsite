@@ -1,0 +1,318 @@
+[
+  {
+    "view": "checkouts",
+    "width": 375,
+    "controls": [
+      {
+        "appearance": "none",
+        "height": 44,
+        "paddingRight": "40px",
+        "position": "calc(100% - 12px) 50%",
+        "size": "16px 16px",
+        "width": 165.5
+      }
+    ],
+    "pageWidth": 375
+  },
+  {
+    "view": "checkouts",
+    "width": 1440,
+    "controls": [
+      {
+        "appearance": "none",
+        "height": 44,
+        "paddingRight": "40px",
+        "position": "calc(100% - 12px) 50%",
+        "size": "16px 16px",
+        "width": 279
+      }
+    ],
+    "pageWidth": 1440
+  },
+  {
+    "view": "partner-dialog",
+    "width": 1440,
+    "controls": [
+      {
+        "appearance": "none",
+        "height": 44,
+        "paddingRight": "40px",
+        "position": "calc(100% - 12px) 50%",
+        "size": "16px 16px",
+        "width": 302
+      },
+      {
+        "appearance": "none",
+        "height": 44,
+        "paddingRight": "40px",
+        "position": "calc(100% - 12px) 50%",
+        "size": "16px 16px",
+        "width": 624
+      }
+    ]
+  },
+  {
+    "view": "partner-dialog",
+    "width": 375,
+    "controls": [
+      {
+        "appearance": "none",
+        "height": 44,
+        "paddingRight": "40px",
+        "position": "calc(100% - 12px) 50%",
+        "size": "16px 16px",
+        "width": 301
+      },
+      {
+        "appearance": "none",
+        "height": 44,
+        "paddingRight": "40px",
+        "position": "calc(100% - 12px) 50%",
+        "size": "16px 16px",
+        "width": 301
+      }
+    ]
+  },
+  {
+    "view": "code-dialog",
+    "width": 375,
+    "controls": [
+      {
+        "appearance": "none",
+        "disabledOptions": ["选择达人"],
+        "height": 44,
+        "paddingRight": "40px",
+        "position": "calc(100% - 12px) 50%",
+        "width": 301
+      },
+      {
+        "appearance": "none",
+        "disabledOptions": ["选择可追加代码的活动"],
+        "height": 44,
+        "paddingRight": "40px",
+        "position": "calc(100% - 12px) 50%",
+        "width": 301
+      }
+    ]
+  },
+  {
+    "view": "settlement-dialog",
+    "width": 375,
+    "controls": [
+      {
+        "appearance": "none",
+        "height": 44,
+        "paddingRight": "40px",
+        "position": "calc(100% - 12px) 50%",
+        "width": 301
+      },
+      {
+        "appearance": "none",
+        "height": 44,
+        "paddingRight": "40px",
+        "position": "calc(100% - 12px) 50%",
+        "width": 301
+      }
+    ]
+  },
+  {
+    "view": "orders",
+    "width": 360,
+    "controls": [
+      {
+        "appearance": "none",
+        "hasIndicator": true,
+        "height": 44,
+        "label": "合作达人",
+        "paddingRight": "40px",
+        "position": "calc(100% - 12px) 50%",
+        "selected": "全部达人",
+        "size": "16px 16px",
+        "width": 328
+      },
+      {
+        "appearance": "none",
+        "hasIndicator": true,
+        "height": 44,
+        "label": "交易币种",
+        "paddingRight": "40px",
+        "position": "calc(100% - 12px) 50%",
+        "selected": "全部币种（分开核算）",
+        "size": "16px 16px",
+        "width": 328
+      },
+      {
+        "appearance": "none",
+        "hasIndicator": true,
+        "height": 44,
+        "label": "订单状态",
+        "paddingRight": "40px",
+        "position": "calc(100% - 12px) 50%",
+        "selected": "全部状态",
+        "size": "16px 16px",
+        "width": 328
+      }
+    ],
+    "pageWidth": 360
+  },
+  {
+    "view": "orders",
+    "width": 375,
+    "controls": [
+      {
+        "appearance": "none",
+        "hasIndicator": true,
+        "height": 44,
+        "label": "合作达人",
+        "paddingRight": "40px",
+        "position": "calc(100% - 12px) 50%",
+        "selected": "全部达人",
+        "size": "16px 16px",
+        "width": 343
+      },
+      {
+        "appearance": "none",
+        "hasIndicator": true,
+        "height": 44,
+        "label": "交易币种",
+        "paddingRight": "40px",
+        "position": "calc(100% - 12px) 50%",
+        "selected": "全部币种（分开核算）",
+        "size": "16px 16px",
+        "width": 343
+      },
+      {
+        "appearance": "none",
+        "hasIndicator": true,
+        "height": 44,
+        "label": "订单状态",
+        "paddingRight": "40px",
+        "position": "calc(100% - 12px) 50%",
+        "selected": "全部状态",
+        "size": "16px 16px",
+        "width": 343
+      }
+    ],
+    "pageWidth": 375
+  },
+  {
+    "view": "orders",
+    "width": 768,
+    "controls": [
+      {
+        "appearance": "none",
+        "hasIndicator": true,
+        "height": 44,
+        "label": "合作达人",
+        "paddingRight": "40px",
+        "position": "calc(100% - 12px) 50%",
+        "selected": "全部达人",
+        "size": "16px 16px",
+        "width": 232
+      },
+      {
+        "appearance": "none",
+        "hasIndicator": true,
+        "height": 44,
+        "label": "交易币种",
+        "paddingRight": "40px",
+        "position": "calc(100% - 12px) 50%",
+        "selected": "全部币种（分开核算）",
+        "size": "16px 16px",
+        "width": 232
+      },
+      {
+        "appearance": "none",
+        "hasIndicator": true,
+        "height": 44,
+        "label": "订单状态",
+        "paddingRight": "40px",
+        "position": "calc(100% - 12px) 50%",
+        "selected": "全部状态",
+        "size": "16px 16px",
+        "width": 232
+      }
+    ],
+    "pageWidth": 768
+  },
+  {
+    "view": "orders",
+    "width": 1440,
+    "controls": [
+      {
+        "appearance": "none",
+        "hasIndicator": true,
+        "height": 44,
+        "label": "合作达人",
+        "paddingRight": "40px",
+        "position": "calc(100% - 12px) 50%",
+        "selected": "全部达人",
+        "size": "16px 16px",
+        "width": 220.796875
+      },
+      {
+        "appearance": "none",
+        "hasIndicator": true,
+        "height": 44,
+        "label": "交易币种",
+        "paddingRight": "40px",
+        "position": "calc(100% - 12px) 50%",
+        "selected": "全部币种（分开核算）",
+        "size": "16px 16px",
+        "width": 220.796875
+      },
+      {
+        "appearance": "none",
+        "hasIndicator": true,
+        "height": 44,
+        "label": "订单状态",
+        "paddingRight": "40px",
+        "position": "calc(100% - 12px) 50%",
+        "selected": "全部状态",
+        "size": "16px 16px",
+        "width": 220.8046875
+      }
+    ],
+    "pageWidth": 1440
+  },
+  {
+    "view": "orders",
+    "width": 1920,
+    "controls": [
+      {
+        "appearance": "none",
+        "hasIndicator": true,
+        "height": 44,
+        "label": "合作达人",
+        "paddingRight": "40px",
+        "position": "calc(100% - 12px) 50%",
+        "selected": "全部达人",
+        "size": "16px 16px",
+        "width": 262.3984375
+      },
+      {
+        "appearance": "none",
+        "hasIndicator": true,
+        "height": 44,
+        "label": "交易币种",
+        "paddingRight": "40px",
+        "position": "calc(100% - 12px) 50%",
+        "selected": "全部币种（分开核算）",
+        "size": "16px 16px",
+        "width": 262.3984375
+      },
+      {
+        "appearance": "none",
+        "hasIndicator": true,
+        "height": 44,
+        "label": "订单状态",
+        "paddingRight": "40px",
+        "position": "calc(100% - 12px) 50%",
+        "selected": "全部状态",
+        "size": "16px 16px",
+        "width": 262.3984375
+      }
+    ],
+    "pageWidth": 1920
+  }
+]

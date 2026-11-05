@@ -72,6 +72,9 @@ def validate(c, explicit=False):
     need(worker.get("environment", {}).get("KOL_WORKER_SECRET") == env["KOL_WORKER_SECRET"], "kol-worker KOL_WORKER_SECRET")
     admin = c.get("services", {}).get("admin", {})
     admin_env = admin.get("environment", {})
+    client_id = admin_env.get("SHOPIFY_ADMIN_CLIENT_ID", "") or ""
+    client_secret = admin_env.get("SHOPIFY_ADMIN_CLIENT_SECRET", "") or ""
+    need(bool(client_id.strip()) == bool(client_secret.strip()), "SHOPIFY_ADMIN_CLIENT_ID and SHOPIFY_ADMIN_CLIENT_SECRET must be supplied together")
     for key in ("NODE_ENV", "DATABASE_PROVIDER", "DATABASE_URL", "SITE_URL", "SHOPIFY_STORE_DOMAIN", "SHOPIFY_STOREFRONT_TOKEN", "SHOPIFY_ADMIN_TOKEN", "SHOPIFY_API_VERSION", "KOL_ENABLED", "KOL_SETTLEMENTS_ENABLED", "ADMIN_ORIGIN", "KOL_INGRESS_SECRET", "KOL_SIGNING_SECRET", "KOL_WORKER_SECRET", "SHOPIFY_WEBHOOK_SECRET", "KOL_ADMIN_BOOTSTRAP_HASH", "CHECKOUT_DIAGNOSTICS_KEY"):
         need(admin_env.get(key) == env.get(key), "admin must match app: " + key)
     app_data = [v for v in app.get("volumes", []) if v.get("target") == "/data"]

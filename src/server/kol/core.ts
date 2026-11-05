@@ -8,19 +8,24 @@ export const SESSION_MS = 30 * 60_000;
 const optionalText = z.string().max(2000).default("");
 export const cooperationSchema = z
   .object({
-    name: z.string().trim().min(1).max(120),
+    name: z.string().trim().min(1, "请填写 KOL 名称").max(120, "名称最多120个字符"),
     alias: z
       .string()
       .trim()
       .toLowerCase()
-      .regex(/^[a-z0-9][a-z0-9-]{1,47}$/),
-    platform: z.string().trim().min(1).max(100),
+      .regex(/^[a-z0-9][a-z0-9-]{1,47}$/, "推广别名须为2–48位英文、数字或短横线")
+      .optional(),
+    platform: z.string().trim().min(1, "请填写合作平台").max(100, "平台最多100个字符"),
     socialUrl: z
       .string()
-      .url()
-      .max(1000)
-      .refine((v) => /^https:\/\//.test(v)),
-    email: z.string().email().max(254),
+      .trim()
+      .max(1000, "社媒主页链接最多1000个字符")
+      .refine(
+        (v) => v === "" || (/^https:\/\//i.test(v) && z.url().safeParse(v).success),
+        "请填写完整的 HTTPS 链接，或留空",
+      )
+      .default(""),
+    email: z.string().trim().email("请填写有效联系邮箱").max(254),
     rate: z.string().refine((v) => {
       try {
         rateBps(v);
@@ -29,9 +34,14 @@ export const cooperationSchema = z
         return false;
       }
     }, "佣金须为0–100%，最多两位小数"),
-    startsAt: z.iso.date(),
-    endsAt: z.iso.date(),
-    target: z.string().regex(/^\/(?:products(?:\/[a-z0-9-]+)?|collections(?:\/[a-z0-9-]+)?)?$/),
+    startsAt: z.iso.date("请选择有效开始日期"),
+    endsAt: z.iso.date("请选择有效结束日期"),
+    target: z
+      .string()
+      .regex(
+        /^\/(?:products(?:\/[a-z0-9-]+)?|collections(?:\/[a-z0-9-]+)?)?$/,
+        "请选择有效站内购物页面（首页、商品或系列页）；达人推广链接由系统生成",
+      ),
     status: z.enum(["draft", "active", "paused"]),
     contractUrl: z
       .union([
@@ -50,9 +60,20 @@ export const cooperationSchema = z
   })
   .refine(
     (v) => Number.isFinite(Date.parse(v.startsAt)) && Date.parse(v.endsAt) > Date.parse(v.startsAt),
-    "合作结束日须晚于开始日",
+    { message: "合作结束日须晚于开始日", path: ["endsAt"] },
   );
 export type Cooperation = z.input<typeof cooperationSchema>;
+function generatedAlias(name: string) {
+  const slug = name
+    .normalize("NFKD")
+    .replace(/\p{M}/gu, "")
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-+|-+$/g, "")
+    .slice(0, 48)
+    .replace(/-+$/, "");
+  return slug.length >= 2 ? slug : `kol-${randomUUID().slice(0, 8)}`;
+}
 export function audit(
   db: Db,
   actor: string,
@@ -86,13 +107,26 @@ export function createPartner(db: Db, input: Cooperation, actor: string, now = D
   return db.transaction((tx) => {
     const partner = {
       id,
-      alias: data.alias,
+      alias: data.alias ?? generatedAlias(data.name),
       name: data.name,
       status: data.status,
       version: 1,
       createdAt: now,
     };
-    tx.insert(kolPartners).values(partner).run();
+    if (data.alias) tx.insert(kolPartners).values(partner).run();
+    else {
+      const base = partner.alias.slice(0, 39).replace(/-+$/, "");
+      // The unique index also reserves paused/historical aliases; retry only that conflict.
+      while (
+        !tx
+          .insert(kolPartners)
+          .values(partner)
+          .onConflictDoNothing({ target: kolPartners.alias })
+          .run().changes
+      )
+        partner.alias = `${base}-${randomUUID().slice(0, 8)}`;
+    }
+    const saved = { ...data, alias: partner.alias };
     tx.insert(kolTerms)
       .values({
         id: randomUUID(),
@@ -101,11 +135,11 @@ export function createPartner(db: Db, input: Cooperation, actor: string, now = D
         rateBps: rateBps(data.rate),
         startsAt: Date.parse(`${data.startsAt}T00:00:00+08:00`),
         endsAt: Date.parse(`${data.endsAt}T00:00:00+08:00`) + 86400000,
-        data: JSON.stringify(data),
+        data: JSON.stringify(saved),
         createdAt: now,
       })
       .run();
-    audit(tx, actor, "partner.create", id, data, now);
+    audit(tx, actor, "partner.create", id, saved, now);
     return partner;
   });
 }
@@ -120,7 +154,7 @@ export function updatePartner(
   return db.transaction((tx) => {
     const old = tx.select().from(kolPartners).where(eq(kolPartners.id, id)).get();
     if (!old) throw new Error("partner_not_found");
-    if (old.alias !== data.alias) throw new Error("alias_immutable");
+    if (data.alias !== undefined && old.alias !== data.alias) throw new Error("alias_immutable");
     tx.update(kolPartners)
       .set({ name: data.name, status: data.status, version: old.version + 1 })
       .where(eq(kolPartners.id, id))
@@ -133,7 +167,7 @@ export function updatePartner(
         rateBps: rateBps(data.rate),
         startsAt: Date.parse(`${data.startsAt}T00:00:00+08:00`),
         endsAt: Date.parse(`${data.endsAt}T00:00:00+08:00`) + 86400000,
-        data: JSON.stringify(data),
+        data: JSON.stringify({ ...data, alias: old.alias }),
         createdAt: now,
       })
       .run();

@@ -37,12 +37,27 @@ The system SHALL require a trusted ingress and authenticated expiring revocable 
 
 ### Requirement: Versioned KOL cooperation
 
-The system SHALL support stable unique aliases, required custom commission from 0 to 100 percent with at most two decimals, versioned terms and dates, pause/end state, contract/video references and immutable audits. New KOL links SHALL not require deployment.
+The system SHALL support stable unique aliases, required custom commission from 0 to 100 percent with at most two decimals, versioned terms and dates, pause/end state, contract/video references and immutable audits. New KOL links SHALL not require deployment. The management form SHALL require only one KOL name input and generate a unique reserved referral alias on the server, including duplicate and non-Latin names; editing a name SHALL preserve the existing alias and past attribution. Explicit aliases from existing API clients SHALL remain supported and immutable. Social profile URLs SHALL be optional, and non-empty values SHALL be valid HTTPS URLs. The form SHALL distinguish the generated referral link from its shopping destination, offer existing home/products destinations and preserve valid legacy destinations on edit. Failed validation SHALL show actionable field-specific reasons rather than only a generic failure.
 
 #### Scenario: Rate changes after checkout
 
 - **WHEN** an administrator changes a cooperation rate after a checkout was created
 - **THEN** the existing checkout retains its original version and rate and future checkouts use the new valid terms
+
+#### Scenario: Create without alias or social profile
+
+- **WHEN** an administrator provides a KOL name and valid cooperation terms without an alias or social profile URL
+- **THEN** creation succeeds with a unique fixed referral alias and an empty profile, including when another KOL has the same name
+
+#### Scenario: Rename an existing cooperation
+
+- **WHEN** an administrator changes the name or terms of an existing KOL without supplying a new alias
+- **THEN** the original referral link remains unchanged and the new terms are versioned
+
+#### Scenario: Invalid shopping destination
+
+- **WHEN** a client submits `/maya` as a destination or an invalid non-empty profile URL
+- **THEN** no cooperation is created and the administrator can identify the failing field and how to correct it
 
 ### Requirement: Session-only referral attribution
 
@@ -124,19 +139,85 @@ Production SHALL allow only `wangperry666@gmail.com` to authenticate. A server-o
 
 ### Requirement: Optional Shopify Admin connectivity
 
-Management login, local cooperation/accounting records and checkout diagnostics SHALL remain available without a Shopify Admin token. The worker SHALL skip Shopify calls and preserve queued inbox/code tasks, scan cursors and successful-scan timestamps while unconfigured; it SHALL still perform local retention cleanup and publish a fresh heartbeat identifying the paused Shopify state. Explicit remote reads, manual synchronization and Shopify-dependent writes SHALL fail with a clear configuration error rather than fabricate results or report synchronization success. The management interface SHALL distinguish absent credentials, a running local worker and successful Shopify synchronization. Supplying a valid token SHALL resume existing work without resetting task history. Configured-token authorization failures and financial verification requirements SHALL remain enforced.
+Management login, local cooperation/accounting records and checkout diagnostics SHALL remain available without Shopify Admin credentials. The worker SHALL skip Shopify calls and preserve queued inbox/code tasks, scan cursors and successful-scan timestamps while unconfigured; it SHALL still perform local retention cleanup and publish a fresh heartbeat identifying the paused Shopify state. Explicit remote reads, manual synchronization and Shopify-dependent writes SHALL fail with a clear configuration error rather than fabricate results or report synchronization success. The management interface SHALL distinguish absent credentials, a running local worker and successful Shopify synchronization. Supplying valid manual or automatic credentials SHALL resume existing work without resetting task history. Configured authorization failures and financial verification requirements SHALL remain enforced.
 
 #### Scenario: Worker runs before credentials are provided
 
-- **WHEN** the worker runs with a missing or blank Admin token
+- **WHEN** the worker runs with no manual token or application credentials
 - **THEN** it makes no Shopify requests, does not consume queued work or advance scan state, performs local maintenance and records that Shopify synchronization is paused
 
 #### Scenario: Explicit Shopify operation without credentials
 
-- **WHEN** an authenticated administrator requests synchronization or another Shopify-dependent operation without a token
+- **WHEN** an authenticated administrator requests synchronization or another Shopify-dependent operation without credentials
 - **THEN** that operation returns a clear unconfigured error, while local management data and diagnostics remain accessible
 
 #### Scenario: Credentials later supplied
 
-- **WHEN** an administrator injects a valid token and updates only the management service
-- **THEN** existing pending work and scans resume, and no automatic token exchange is required
+- **WHEN** an administrator injects a valid manual token or complete application credentials and updates only the management service
+- **THEN** existing pending work and scans resume without resetting history or updating the storefront
+
+### Requirement: Persistent management navigation
+
+The management console SHALL use client-side navigation inside a persistent shared administrator layout. After initial authentication/data loading, switching valid sections SHALL preserve the navigation and existing local snapshot, refresh data in the background and keep partner, coupon, order and settlement filters independent. Direct section URLs and browser history SHALL remain supported, and unknown sections SHALL remain not found. Section changes SHALL close temporary dialogs. Failed background reads SHALL preserve the last data with an explicit stale-data warning; unauthorized responses SHALL clear it and return to login. Aborted or superseded reads SHALL not replace newer data or authorization state. Existing trusted-ingress checks and server-side authentication of every management API SHALL remain enforced. Checkout diagnostics SHALL retain their URL-based filtering and MAY show a section-local loading state without replacing the management frame.
+
+#### Scenario: Switch between sections
+
+- **WHEN** an authenticated administrator switches from partners to orders or another valid section
+- **THEN** the same management frame remains mounted, the full-page connecting screen does not reappear and existing data remains visible while a fresh snapshot is requested
+
+#### Scenario: Filters and history
+
+- **WHEN** an administrator applies a partner search, switches to orders and returns using navigation or browser history
+- **THEN** order filters remain independent and the partner search is restored
+
+#### Scenario: Background read fails or session expires
+
+- **WHEN** a background read fails with a transient error or returns unauthorized
+- **THEN** a transient error keeps the prior snapshot with a clear warning, while unauthorized access clears the snapshot and shows login
+
+### Requirement: Consistent administrator workspace usability
+
+The five management sections SHALL use visible associated labels, consistent readable controls, responsive content boundaries and keyboard-accessible actions. Active filters SHALL offer a current-section reset; invalid date ranges SHALL identify the error rather than appear as a legitimate empty result. Empty datasets and zero search matches SHALL have distinct actionable states. Modal forms SHALL keep the header, scrollable body and normal-flow action footer separate so fields and submit actions do not overlap on mobile; native validation, Escape and focus restoration SHALL remain available. Confirmation of consequential operations SHALL show the existing target identity and applicable amount/currency without changing financial authorization or business rules. Narrow-screen records SHALL retain field labels, amounts and actions, and any necessary horizontal scrolling SHALL be contained and identified rather than overflowing the whole page. Layout refinements SHALL preserve Shopify authority, currency separation, immutable history, session-only attribution, optional Admin connectivity and persistent navigation.
+
+#### Scenario: Order filters on desktop and mobile
+
+- **WHEN** an administrator filters orders using KOL, currency, status and payment dates
+- **THEN** every control has a visible label and consistent sizing, invalid date order is explained and the current filters can be cleared
+
+#### Scenario: Search finds no coupon or settlement
+
+- **WHEN** existing data is filtered to zero matches
+- **THEN** the section shows an explicit no-match explanation and a reset action rather than only empty table headers
+
+#### Scenario: Mobile cooperation or financial confirmation
+
+- **WHEN** an administrator scrolls a modal form or confirms a consequential action on a narrow viewport
+- **THEN** all fields and the full action button remain reachable without footer overlap and the relevant target is visible before submitting
+
+### Requirement: Automatic Admin token lifecycle
+
+The management backend SHALL support client credentials token acquisition using an installed application, without requesting additional scopes. A complete Client ID and Client Secret pair SHALL take precedence over a manual Admin token; a partial pair SHALL fail remote operations with an incomplete-configuration error rather than silently fall back. Without a pair, manual token behavior SHALL remain supported. Automatic tokens SHALL be kept only in server memory, renewed ahead of the response-derived expiry, and acquired through a single shared in-flight exchange per process/configuration. Failures SHALL be sanitized and rate-limited; expired or rejected tokens SHALL never be used. A still-valid cached token MAY be used after proactive renewal failure. Authentication recovery SHALL replay an Admin operation at most once after HTTP 401 in automatic mode; other authorization, GraphQL and transport failures SHALL not cause automatic operation replay.
+
+#### Scenario: Long-running worker and concurrent requests
+
+- **WHEN** a token is absent or approaching expiry and multiple remote operations start
+- **THEN** the backend performs one credential exchange, uses its token, and renews again on later demand without manual environment edits or restarts
+
+#### Scenario: Shopify rejects authentication or permissions
+
+- **WHEN** an automatic Admin request returns 401
+- **THEN** the rejected token is invalidated and the operation is retried at most once with a newly acquired or concurrently refreshed token; a permission denial or GraphQL error does not trigger token exchange or replay
+
+#### Scenario: Renewal unavailable
+
+- **WHEN** credential exchange fails or returns malformed token/expiry data
+- **THEN** the backend exposes only a fixed sanitized error and suppresses repeated exchanges during a cooldown; after hard expiry it cannot fall back to the expired token
+
+### Requirement: Admin application credential isolation
+
+New Client ID and Client Secret configuration SHALL be optional server-only runtime configuration, supplied only to the admin service. They SHALL NOT enter the storefront, worker, build arguments, images, browser responses or database. Credential exchange SHALL target a validated HTTPS Shopify shop domain and reject redirects, except for explicitly guarded loopback integration transport. Independent admin deployment SHALL remain available without changing storefront credentials or requiring matching Admin application secrets in the storefront.
+
+#### Scenario: Independent management deployment
+
+- **WHEN** application credentials are configured and the management service is deployed independently
+- **THEN** only admin receives them, the worker continues calling admin by internal RPC, and the running storefront retains its existing Storefront credentials and lifecycle

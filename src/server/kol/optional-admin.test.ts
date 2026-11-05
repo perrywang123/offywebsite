@@ -5,6 +5,8 @@ const state = vi.hoisted(() => ({ db: null as unknown }));
 const config = vi.hoisted(() => ({
   NODE_ENV: "test",
   SHOPIFY_ADMIN_TOKEN: "",
+  SHOPIFY_ADMIN_CLIENT_ID: "",
+  SHOPIFY_ADMIN_CLIENT_SECRET: "",
   SHOPIFY_STORE_DOMAIN: "offy-test.myshopify.com",
   SHOPIFY_API_VERSION: "2026-07",
   KOL_SIGNING_SECRET: "test-signing",
@@ -31,6 +33,7 @@ beforeEach(() => {
   db = testDb();
   state.db = db;
   config.SHOPIFY_ADMIN_TOKEN = "";
+  config.SHOPIFY_ADMIN_CLIENT_ID = config.SHOPIFY_ADMIN_CLIENT_SECRET = "";
   vi.stubGlobal("fetch", vi.fn().mockRejectedValue(new Error("unexpected_network")));
 });
 afterEach(() => {
@@ -137,6 +140,37 @@ describe("optional manually supplied Shopify Admin token", () => {
     expect(local.status).toBe(200);
     expect((await local.json()).health.shopifyAdminConfigured).toBe(false);
     expect((await GET(req("checkouts"), ctx("checkouts"))).status).toBe(200);
+    const terms = {
+      name: "Maya",
+      platform: "Instagram",
+      email: "maya@example.com",
+      rate: "10",
+      startsAt: "2026-11-04",
+      endsAt: "2026-11-05",
+      status: "active",
+      target: "/products",
+    };
+    const invalid = await POST(req("partners", { ...terms, target: "/maya" }), ctx("partners"));
+    expect(invalid.status).toBe(400);
+    expect(await invalid.json()).toMatchObject({
+      error: "invalid_input",
+      details: [{ field: "target", message: expect.stringContaining("站内") }],
+    });
+    expect(snapshot(db).partners).toHaveLength(0);
+    const created = await POST(req("partners", terms), ctx("partners"));
+    expect(created.status).toBe(200);
+    const partner = await created.json();
+    expect(partner.alias).toBe("maya");
+    const updated = await POST(req(`partners/${partner.id}`, { ...terms, name: "Maya Updated" }), {
+      params: Promise.resolve({ path: ["partners", partner.id] }),
+    });
+    expect(updated.status).toBe(200);
+    expect(snapshot(db).partners[0]).toMatchObject({
+      name: "Maya Updated",
+      alias: "maya",
+      version: 2,
+      terms: { alias: "maya", socialUrl: "" },
+    });
     for (const path of ["connection", "sync"]) {
       const result =
         path === "sync" ? await POST(req(path, {}), ctx(path)) : await GET(req(path), ctx(path));
@@ -161,6 +195,34 @@ describe("optional manually supplied Shopify Admin token", () => {
     });
     expect(runtime(db, "lastFullScan")).toBe(now);
     expect(snapshot(db).health).toMatchObject({ shopifyAdminConfigured: true });
+  });
+  it("resumes the worker using application credentials without a manual token or changing queues", async () => {
+    const now = Date.now();
+    config.SHOPIFY_ADMIN_CLIENT_ID = "dummy-worker-client";
+    config.SHOPIFY_ADMIN_CLIENT_SECRET = "dummy-worker-secret";
+    vi.mocked(fetch).mockImplementation(async (url) =>
+      String(url).endsWith("/access_token")
+        ? Response.json({ access_token: "dummy-worker-token", expires_in: 86399 })
+        : Response.json({
+            data: { orders: { nodes: [], pageInfo: { hasNextPage: false, endCursor: null } } },
+          }),
+    );
+    await expect(runWorker(db, now)).resolves.toMatchObject({ ok: true });
+    expect(snapshot(db).health).toMatchObject({ shopifyAdminConfigured: true });
+    expect(runtime(db, "lastFullScan")).toBe(now);
+    expect(fetch).toHaveBeenCalledTimes(2);
+    expect(vi.mocked(fetch).mock.calls[1][1]?.headers).toMatchObject({
+      "X-Shopify-Access-Token": "dummy-worker-token",
+    });
+    expect(JSON.stringify(snapshot(db))).not.toMatch(/dummy-worker-(secret|token)/);
+  });
+  it("keeps a partial application configuration visible as a worker error without preventing local state", async () => {
+    config.SHOPIFY_ADMIN_CLIENT_ID = "dummy-incomplete";
+    await expect(runWorker(db)).rejects.toThrow("shopify_admin_credentials_incomplete");
+    expect(runtime(db, "worker").error).toBe("shopify_admin_credentials_incomplete");
+    expect(runtime(db, "lastFullScan")).toBeNull();
+    expect(snapshot(db).partners).toEqual([]);
+    expect(fetch).not.toHaveBeenCalled();
   });
   it("keeps configured-token permission errors visible instead of fabricating a successful scan", async () => {
     config.SHOPIFY_ADMIN_TOKEN = "test-insufficient-admin-token";

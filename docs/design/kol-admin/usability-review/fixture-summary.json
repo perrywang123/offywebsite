@@ -1,0 +1,55 @@
+{
+  "environment": "isolated-local-simulator",
+  "productionWrites": false,
+  "integrity": [
+    {
+      "integrity_check": "ok"
+    }
+  ],
+  "partners": {
+    "count": 4
+  },
+  "orders": [
+    {
+      "name": "#TEST-1000",
+      "currency": "USD",
+      "status": "verified",
+      "net": 6000,
+      "commission": 435
+    },
+    {
+      "name": "#TEST-1001",
+      "currency": "USD",
+      "status": "unattributed",
+      "net": 9000,
+      "commission": null
+    },
+    {
+      "name": "#UI-GBP-900001",
+      "currency": "GBP",
+      "status": "unattributed",
+      "net": 9000,
+      "commission": null
+    }
+  ],
+  "codes": [
+    {
+      "length": 13,
+      "status": "ended"
+    },
+    {
+      "length": 64,
+      "status": "bound"
+    }
+  ],
+  "negativeAdjustments": [
+    {
+      "currency": "USD",
+      "amount": -218
+    }
+  ],
+  "diagnostics": {
+    "count": 10
+  },
+  "syntheticFixtureNote": "#UI-GBP-900001 is a local UI fixture applied via the ledger, not a remote Shopify order."
+}

@@ -60,6 +60,19 @@ function validate(config: unknown, args: string[] = []) {
   });
 }
 describe("deployment preflight", () => {
+  it("accepts admin-only application credentials and rejects partial credentials without exposing values", () => {
+    const c = fixture();
+    Object.assign(c.services.admin.environment, {
+      SHOPIFY_ADMIN_CLIENT_ID: "dummy-id",
+      SHOPIFY_ADMIN_CLIENT_SECRET: "dummy-secret",
+    });
+    expect(validate(c, ["--kol"]).status).toBe(0);
+    Object.assign(c.services.admin.environment, { SHOPIFY_ADMIN_CLIENT_SECRET: "" });
+    const result = validate(c, ["--kol"]);
+    expect(result.status).not.toBe(0);
+    expect(result.stderr).toContain("SHOPIFY_ADMIN_CLIENT_ID and SHOPIFY_ADMIN_CLIENT_SECRET");
+    expect(result.stderr).not.toContain("dummy-id");
+  });
   it("permits management deployment without an Admin token", () => {
     const c = fixture();
     for (const service of [c.services.app, c.services.admin])

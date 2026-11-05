@@ -4,6 +4,8 @@
 
 ## 技术结构
 
+2026-11-04 导航优化：管理控制台常驻共享 `/admin` layout，侧栏使用站内导航。首次连接后，切换栏目保留侧栏和最近读到的数据，后台刷新仅在按钮显示“更新中…”。合作、优惠码、订单、月结的搜索和筛选独立保留，诊断沿用 URL 筛选，前进/后退与直接 URL 继续可用；切页关闭临时操作弹窗。刷新失败会说明当前显示上次数据；认证失效清除内存数据并返回登录。结账诊断自身的读取提示仅占内容区。数据不写浏览器持久存储，公开站点入口与 API 认证保持不变。
+
 同仓库 Next.js 工程、独立 app/admin Docker 容器、两个 Nginx 入口、一个持久 SQLite 库。主站443负责商店、`/r/[alias]`与验签webhook；后台HTTPS独立端口（示例8443）负责`/admin`及`/api/admin/kol/*`。主站/后台源站分别仅暴露loopback3000/3001，后台服务端直接查询同一数据库，无需RPC。Docker运行Next.js，两者不冲突。
 
 - `src/server/kol/core.ts`：KOL身份、版本条款、随机推广链路、签名checkout及cartToken关联。
@@ -19,21 +21,26 @@
 
 ## 配置与初始化
 
+新增合作只需填写一次“KOL 名称”，推广链接由服务器自动分配。英文名称如 Maya 优先使用 `/r/maya`；重名追加唯一后缀，纯中文等名称使用 `kol-` 系统编号。名称以后可修改，原链接始终保留，暂停/到期的别名也不会再分给其他 KOL；旧 API 的显式别名仍兼容。
+
+“社媒主页”可留空，填写时须为完整 HTTPS URL。“链接打开页面”选择首页或全部商品，是粉丝点击推广链接后的目的地；不用填写 `/maya`。历史合法商品/系列目标在编辑时保留。结束日期须晚于开始日期；服务端拒绝时会在弹窗说明具体字段，保留输入，修正后可再次保存。本地新增/编辑合作不依赖 Shopify Admin 令牌。
+
 先在隔离环境确认流程，再填运行时配置；不要把Admin token和秘密放Docker build args。模板见`.env.production.example`。Admin令牌可留空，不影响后台登录、本地数据与结账诊断。
 
-| 配置                                           | 用途                                                                     |
-| ---------------------------------------------- | ------------------------------------------------------------------------ |
-| `KOL_ENABLED=false`                            | 无显式发布选项时默认关；`--kol`/后台独立发布为当次启用，内部认证自动准备 |
-| `KOL_SETTLEMENTS_ENABLED=false`                | 独立结算门槛；开启KOL不自动允许锁单/登记付款                             |
-| `ADMIN_ORIGIN`                                 | 精确HTTPS origin，包括独立端口，例如`https://管理域名:8443`              |
-| `KOL_INGRESS_SECRET`                           | 部署工具自动准备的入口认证值；可兼容已有私密值                           |
-| `KOL_SIGNING_SECRET`                           | 自动准备并稳定保留的 checkout 归因签名值；不要随意轮换                   |
-| `KOL_WORKER_SECRET`                            | 自动准备的内网 worker 认证值                                             |
-| `SHOPIFY_ADMIN_TOKEN`                          | 可选，服务器手动注入；订单与优惠远程操作需要，未配置时暂停同步           |
-| `SHOPIFY_WEBHOOK_SECRET`                       | 可选实时通知验签；为空时接口404，仍按原计划通过 Admin API 扫描/核对订单  |
-| `SHOPIFY_STORE_DOMAIN` / `SHOPIFY_API_VERSION` | 仅接受本店事件，API继续固定2026-07                                       |
-| `KOL_ADMIN_BOOTSTRAP_HASH`                     | 可选生产初始scrypt哈希，只在owner尚不存在时创建；禁止明文                |
-| `DATABASE_URL`                                 | 应用迁移、管理员初始化指向同一持久卷文件，默认`/data/offy.db`            |
+| 配置                                                      | 用途                                                                       |
+| --------------------------------------------------------- | -------------------------------------------------------------------------- |
+| `KOL_ENABLED=false`                                       | 无显式发布选项时默认关；`--kol`/后台独立发布为当次启用，内部认证自动准备   |
+| `KOL_SETTLEMENTS_ENABLED=false`                           | 独立结算门槛；开启KOL不自动允许锁单/登记付款                               |
+| `ADMIN_ORIGIN`                                            | 精确HTTPS origin，包括独立端口，例如`https://管理域名:8443`                |
+| `KOL_INGRESS_SECRET`                                      | 部署工具自动准备的入口认证值；可兼容已有私密值                             |
+| `KOL_SIGNING_SECRET`                                      | 自动准备并稳定保留的 checkout 归因签名值；不要随意轮换                     |
+| `KOL_WORKER_SECRET`                                       | 自动准备的内网 worker 认证值                                               |
+| `SHOPIFY_ADMIN_CLIENT_ID` / `SHOPIFY_ADMIN_CLIENT_SECRET` | 可选后台专用应用凭据，须成对配置，优先于手动令牌并自动续取；不进主站或构建 |
+| `SHOPIFY_ADMIN_TOKEN`                                     | 可选，未提供应用凭据时兼容手动模式；需自行更新                             |
+| `SHOPIFY_WEBHOOK_SECRET`                                  | 可选实时通知验签；为空时接口404，仍按原计划通过 Admin API 扫描/核对订单    |
+| `SHOPIFY_STORE_DOMAIN` / `SHOPIFY_API_VERSION`            | 仅接受本店事件，API继续固定2026-07                                         |
+| `KOL_ADMIN_BOOTSTRAP_HASH`                                | 可选生产初始scrypt哈希，只在owner尚不存在时创建；禁止明文                  |
+| `DATABASE_URL`                                            | 应用迁移、管理员初始化指向同一持久卷文件，默认`/data/offy.db`              |
 
 部署工具会自动生成和稳定保留内部认证参数，保存到服务器项目 `.offy-runtime-secrets.json`（0600），不用手工生成三组值。已设置的环境值和匹配运行容器的值会保留；冲突时停止，避免破坏在途归因。该文件不提交 Git、不进 Docker 构建、不随源码同步覆盖，需私密备份。
 
@@ -81,21 +88,25 @@ docker compose -f docker-compose.prod.yml --profile kol up -d --build
 
 ## Shopify授权与webhook
 
-### 手动管理 Admin 令牌
+### Admin 令牌自动续取与手动兼容
 
-`SHOPIFY_ADMIN_TOKEN` 是保留的手动注入口，来自服务器选中的 `.env` / `.env.production` / `--env-file FILE`，经 Docker 运行时环境传入管理服务；不是构建参数或浏览器配置。不新增 Client ID、Client secret，也不自动获取或续期。配置更改后执行 `bash deploy/update-admin.sh`，无需同时重建/重启主站；简单 `restart` 不会更新容器环境。具体命令见 [部署说明](deployment.md#手动配置-shopify-admin-令牌可选)。
+推荐在服务器选中的 `.env` / `.env.production` / `--env-file FILE` 中一次配置 `SHOPIFY_ADMIN_CLIENT_ID` 与 `SHOPIFY_ADMIN_CLIENT_SECRET`。适用于已安装至本店、符合 Shopify client credentials 条件的同组织自有应用。后台通过本店 HTTPS OAuth 端点获取令牌，按响应有效期在到期前续取；令牌仅缓存于服务端进程内存，重启后按需重新获取，不写数据库、日志或环境文件。无需每天人工更换或重启容器。新应用凭据只进入 admin 容器；worker 继续通过内网 RPC 调用 admin，主站不接收这两项。
 
-留空时后台可部署、登录，读取本地合作/历史账目和结账诊断。界面明确提示未配置；worker 不调用 Shopify，不消费待处理订单/发码任务，不前推游标或最近成功扫描时间，继续本地过期数据清理和心跳。手动同步、连接检测、优惠码查询/创建等 Shopify 操作返回 `shopify_admin_not_configured`；本地未同步数据不能当作实时销售结果。重新手动注入有效令牌后，按原队列和游标继续处理。
+完整应用凭据优先于 `SHOPIFY_ADMIN_TOKEN`，避免遗留的过期手动令牌阻止自动认证。两项都不填时保留手动令牌模式；仅填一项会明确报 `shopify_admin_credentials_incomplete`，不会静默使用旧令牌。配置更改后单独执行 `bash deploy/update-admin.sh`，无需重建/重启主站；简单 `restart` 不会更新容器环境。具体命令见 [部署说明](deployment.md#配置-shopify-admin-连接可选)。
 
-需填写的是 **Admin API access token**，不能用 Headless/Storefront 令牌、Client ID 或 Client secret 替代。独立站的 `SHOPIFY_STOREFRONT_TOKEN` 保持原用途。已配置但过期、撤销或权限不足时仍返回真实错误，并可能使部署的 worker 健康检查失败；暂不接入时清空错误的 Admin 值即可，不要改动 Storefront 配置。
+三项全空时后台可部署、登录，读取本地合作/历史账目和结账诊断。界面明确提示未配置；worker 不调用 Shopify，不消费待处理订单/发码任务，不前推游标或最近成功扫描时间，继续本地过期数据清理和心跳。手动同步、连接检测、优惠码查询/创建等 Shopify 操作返回 `shopify_admin_not_configured`；本地未同步数据不能当作实时销售结果。配置有效应用凭据或手动令牌后，按原队列和游标继续处理。
 
-权限：读取近期订单需 `read_orders`；绑定现有码需优惠读取权限，平台追加新码需 `write_discounts`（含读取）。超过60天订单的重核对另涉及历史订单权限，不默认申请写订单、退款或转账权限。权限以应用实际安装授权为准，不能仅改应用配置就声称可用。参见 [Shopify 权限文档](https://shopify.dev/docs/api/usage/access-scopes)。
+手动字段需填写 **Admin API access token**，不能用 Headless/Storefront 令牌、Client ID 或 Client Secret 替代。应用凭据应填入各自的新字段。独立站的 `SHOPIFY_STOREFRONT_TOKEN` 保持原用途。应用卸载、凭据撤销或权限不足仍产生真实错误，并可能使 worker 健康检查失败；暂不接入时清空三项 Admin 值即可，不要改动 Storefront 配置。
 
-手动维护不改变 Shopify 令牌的有效期：既有 legacy Admin 应用令牌与新应用换取的令牌来源不同，不能一概视为永久有效。自有组织应用通过 client credentials 换取的令牌约24小时有效，使用这种令牌需在过期前人工更换；Offy 不负责续取。参见 [Shopify 认证文档](https://shopify.dev/docs/apps/build/authentication-authorization/client-credentials-grant)。
+权限：读取近期订单需 `read_orders`；绑定现有码需 `read_discounts`，平台追加新码需 `write_discounts`（含读取）。超过60天订单的重核对另涉及历史订单权限，不默认申请写订单、退款或转账权限。权限以应用实际安装授权为准，不能仅改应用配置就声称可用。本次已安装应用只授权 `read_orders,read_discounts`，未获得追加优惠码所需的 `write_discounts`，自动认证不会扩大授权。参见 [Shopify 权限文档](https://shopify.dev/docs/api/usage/access-scopes)。
+
+自动模式按 `expires_in` 计算硬截止，提前 min(5分钟, 有效期的10%) 按需续取，并发只做一次交换。获取失败后退避30秒；仍有效且未被拒绝的旧令牌可暂时继续使用，过期令牌绝不继续发请求。自动模式遇到 HTTP401 最多重新取令牌并重放一次；403、GraphQL权限错误、429、5xx和网络失败不自动重放业务操作。错误使用固定脱敏代码，界面给出可读提示。
+
+自有应用交换的令牌当前约24小时有效，自动续取不改变 Shopify 有效期政策；应用卸载、密钥重置、授权撤销仍需维护。手动令牌模式不自动续取。参见 [Shopify 认证文档](https://shopify.dev/docs/apps/build/authentication-authorization/client-credentials-grant) 与 [自动认证验收](admin-token-auto-renewal-validation.md)。
 
 ### 可选事件通知
 
-Webhook 是可选增强，不是后台登录/发布的前置条件。未连接通知但已配置有效 Admin 令牌时，订单沿用现有 Admin API 分页增量扫描（完整一轮后15分钟再扫）及逐单核对；无 Admin 令牌时暂停这些远程任务。处理进度还受分页/队列影响，不宣称实时到账；结账诊断仍由站内 checkout 直接记录。通知接口在未配置签名密钥时返回404，后续配置后才接收验签事件。
+Webhook 是可选增强，不是后台登录/发布的前置条件。未连接通知但已配置有效 Admin 令牌时，订单沿用现有 Admin API 分页增量扫描（完整一轮后15分钟再扫）及逐单核对；无 Admin 凭据时暂停这些远程任务。处理进度还受分页/队列影响，不宣称实时到账；结账诊断仍由站内 checkout 直接记录。通知接口在未配置签名密钥时返回404，后续配置后才接收验签事件。
 
 使用本店隔离测试环境核对实际授权。需要`read_orders`；优惠绑定需要读取优惠能力，生成需要`write_discounts`。写权限可能涵盖读能力，以`currentAppInstallation.accessScopes`实际值为准。不申请写订单、退款或转账权限。超过60天订单的重核对涉及历史读取权限；读取不到就阻止该结算，不能声称已核对。
 
@@ -137,6 +148,8 @@ CSV不含买家邮箱/地址/电话，文本处理公式注入。时间UTC毫秒
 本次对隔离测试库实际执行在线backup、重新打开备份、完整性检查、7类表行数及分币种账本合计核对通过。生产异地备份、灾备切换和写入压力仍需部署环境验收。
 
 ## 可重复本地验证
+
+2026-11-04 后台五栏目采用统一可见标签、当前栏目清空筛选、明确日期错误和手机折叠筛选；手机账簿保留带标签的对象/金额/操作。长弹窗正文与操作页脚分离，冻结/结束绑定/月结确认显示对象摘要，继续由服务端核验动作。交互、美术专家复评与有数据/空库、长文本、退款及响应式证据见 [专项验收](admin-usability-validation.md)。本地验证不等同生产发布或真实Shopify财务验收。
 
 ```bash
 pnpm kol:integration

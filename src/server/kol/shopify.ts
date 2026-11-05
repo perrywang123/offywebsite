@@ -1,33 +1,29 @@
 import { env, shopifyOrigin } from "@/lib/env";
 import type { CodeGateway, RemoteCode, Campaign } from "./codes";
 import { z } from "zod";
+import { adminAuthMode, createAdminClient } from "./shopify-auth";
+function adminConfig() {
+  return {
+    shop: env.SHOPIFY_STORE_DOMAIN,
+    origin: shopifyOrigin(),
+    apiVersion: env.SHOPIFY_API_VERSION,
+    manualToken: env.SHOPIFY_ADMIN_TOKEN,
+    clientId: env.SHOPIFY_ADMIN_CLIENT_ID,
+    clientSecret: env.SHOPIFY_ADMIN_CLIENT_SECRET,
+    allowLoopback: env.OFFY_INTEGRATION_TEST === "true" && env.NODE_ENV !== "production",
+  };
+}
+const adminClient = createAdminClient(adminConfig);
 export function shopifyAdminConfigured() {
-  return Boolean(env.SHOPIFY_ADMIN_TOKEN?.trim() && env.SHOPIFY_STORE_DOMAIN?.trim());
+  // A partial pair is configured-but-invalid: remote work must report its error, not pause silently.
+  return adminAuthMode(adminConfig()) !== "unconfigured";
 }
 export async function adminRequest<T>(
   query: string,
   variables: Record<string, unknown> = {},
   fetchImpl: typeof fetch = fetch,
 ): Promise<T> {
-  if (!shopifyAdminConfigured()) throw new Error("shopify_admin_not_configured");
-  const response = await fetchImpl(
-    `${shopifyOrigin()}/admin/api/${env.SHOPIFY_API_VERSION}/graphql.json`,
-    {
-      method: "POST",
-      cache: "no-store",
-      signal: AbortSignal.timeout(15000),
-      headers: {
-        "Content-Type": "application/json",
-        "X-Shopify-Access-Token": env.SHOPIFY_ADMIN_TOKEN!,
-      },
-      body: JSON.stringify({ query, variables }),
-    },
-  );
-  if (!response.ok) throw new Error(`shopify_admin_http_${response.status}`);
-  const body = await response.json();
-  if (body.errors?.length) throw new Error("shopify_admin_graphql_error");
-  if (!body.data) throw new Error("shopify_admin_empty");
-  return body.data as T;
+  return adminClient.request<T>(query, variables, fetchImpl);
 }
 const discountFragments = `__typename
  ... on DiscountCodeBasic { title status summary startsAt endsAt }

@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { headers } from "next/headers";
 import { notFound } from "next/navigation";
 import { requireIngress } from "@/server/kol/auth";
+import { AdminWorkspace } from "@/components/kol/AdminWorkspace";
 import "./admin.css";
 export const dynamic = "force-dynamic";
 export const metadata: Metadata = {
@@ -16,7 +17,9 @@ export default async function AdminLayout({ children }: { children: React.ReactN
   }
   return (
     <html lang="zh-CN">
-      <body>{children}</body>
+      <body>
+        <AdminWorkspace>{children}</AdminWorkspace>
+      </body>
     </html>
   );
 }

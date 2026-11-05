@@ -7,6 +7,15 @@ import type { Campaign } from "@/server/kol/codes";
 import { decimal } from "@/server/kol/money";
 import { CheckoutDiagnostics } from "./CheckoutDiagnostics";
 type View = "partners" | "codes" | "orders" | "settlements" | "checkouts";
+type ConfirmationAction = { kind: string; id: string; title: string };
+type Filters = {
+  query: string;
+  kolFilter: string;
+  currencyFilter: string;
+  statusFilter: string;
+  from: string;
+  to: string;
+};
 type Data = Snapshot & { admin: { email: string }; siteUrl: string; settlementsEnabled: boolean };
 type Partner = Snapshot["partners"][number];
 const nav = [
@@ -55,10 +64,39 @@ const errorLabels: Record<string, string> = {
   campaign_not_eligible: "该活动不可追加代码，请选择有效的原生活动",
   code_reserved: "此代码已被占用，历史码不能转给另一位KOL",
   shopify_admin_not_configured: "Shopify Admin连接尚未配置",
+  shopify_admin_credentials_incomplete: "Shopify应用凭据不完整，请同时配置Client ID和Client Secret",
+  shopify_admin_auth_network_error: "暂时无法获取Shopify令牌，系统会稍后重试",
+  shopify_admin_auth_invalid_response:
+    "Shopify令牌响应异常，系统会稍后重试；持续失败时请检查应用配置",
+  shopify_admin_auth_unsafe_origin: "Shopify店铺域名配置无效，请使用本店的myshopify.com域名",
+  shopify_admin_network_error: "Shopify连接失败，请稍后重试",
+  shopify_admin_http_401: "Shopify认证失败，请检查应用凭据或手动令牌是否有效",
   shopify_admin_graphql_error: "Shopify查询失败，请检查权限及API版本",
   order_unavailable_or_scope: "订单读取失败，请检查订单权限（超过60天需历史权限）",
   cooperation_not_eligible: "合作已暂停或到期，不能发码",
   operation_failed: "操作未完成，请核对状态后重试",
+};
+function errorLabel(reason: string) {
+  if (/^shopify_admin_auth_http_\d+$/.test(reason))
+    return "Shopify令牌获取失败，请检查应用安装和服务器凭据；系统会稍后重试";
+  return errorLabels[reason] || reason;
+}
+const fieldLabels: Record<string, string> = {
+  name: "KOL 名称",
+  alias: "推广别名",
+  platform: "平台",
+  email: "联系邮箱",
+  socialUrl: "社媒主页",
+  rate: "自定义佣金",
+  startsAt: "合作开始日",
+  endsAt: "合作结束日",
+  target: "链接打开页面",
+  status: "合作状态",
+  contractUrl: "合同链接",
+  contractStatus: "签署状态",
+  videos: "视频交付",
+  payout: "收款备注",
+  notes: "合作备注",
 };
 function date(value: number | null | undefined) {
   return value
@@ -93,18 +131,33 @@ function Badge({ status }: { status: string }) {
     </span>
   );
 }
-async function api(path: string, body?: unknown) {
+async function api(path: string, body?: unknown, signal?: AbortSignal) {
   const response = await fetch(`/api/admin/kol/${path}`, {
     method: body === undefined ? "GET" : "POST",
     cache: "no-store",
     headers: body === undefined ? {} : { "Content-Type": "application/json", "x-offy-csrf": "1" },
     body: body === undefined ? undefined : JSON.stringify(body),
+    ...(signal ? { signal } : {}),
   });
   const data = await response.json().catch(() => ({ error: "operation_failed" }));
-  if (!response.ok)
-    throw Object.assign(new Error(errorLabels[data.error] ?? data.error ?? "连接失败"), {
+  if (!response.ok) {
+    const details =
+      data.error === "invalid_input" && Array.isArray(data.details)
+        ? data.details
+            .filter(
+              (d: { field?: string; message?: string }) =>
+                typeof d.message === "string" && typeof d.field === "string",
+            )
+            .map(
+              (d: { field: string; message: string }) =>
+                `${fieldLabels[d.field] ?? "表单"}：${d.message}`,
+            )
+            .join("；")
+        : "";
+    throw Object.assign(new Error(details || errorLabel(data.error ?? "") || "连接失败"), {
       status: response.status,
     });
+  }
   return data;
 }
 function Dialog({
@@ -128,6 +181,9 @@ function Dialog({
       if (opener?.isConnected) opener.focus({ preventScroll: true });
     };
   }, []);
+  useEffect(() => {
+    if (error) ref.current?.querySelector<HTMLElement>('[role="alert"]')?.focus();
+  }, [error]);
   return (
     <dialog
       ref={ref}
@@ -145,7 +201,7 @@ function Dialog({
         </button>
       </header>
       {error && (
-        <p className="dialog-content error" role="alert">
+        <p className="dialog-content error" role="alert" tabIndex={-1}>
           {error}
         </p>
       )}
@@ -159,13 +215,24 @@ export function AdminConsole({ view }: { view: View }) {
     [loading, setLoading] = useState(true),
     [error, setError] = useState(""),
     [notice, setNotice] = useState(""),
-    [busy, setBusy] = useState(false);
-  const [query, setQuery] = useState(""),
-    [kolFilter, setKolFilter] = useState(""),
-    [currencyFilter, setCurrencyFilter] = useState(""),
-    [statusFilter, setStatusFilter] = useState(""),
-    [from, setFrom] = useState(""),
-    [to, setTo] = useState("");
+    [busy, setBusy] = useState(false),
+    [refreshing, setRefreshing] = useState(false);
+  const stateRequest = useRef<AbortController | null>(null);
+  const hasSnapshot = useRef(false);
+  const [filters, setFilters] = useState<Partial<Record<View, Partial<Filters>>>>({});
+  const [orderFiltersOpen, setOrderFiltersOpen] = useState(false);
+  const {
+    query = "",
+    kolFilter = "",
+    currencyFilter = "",
+    statusFilter = "",
+    from = "",
+    to = "",
+  } = filters[view] ?? {};
+  const setFilter = (field: keyof Filters, value: string) =>
+    setFilters((previous) => ({ ...previous, [view]: { ...previous[view], [field]: value } }));
+  const hasFilters = Object.values(filters[view] ?? {}).some(Boolean);
+  const clearFilters = () => setFilters((previous) => ({ ...previous, [view]: {} }));
   const [editor, setEditor] = useState<Partner | "new" | null>(null),
     [detail, setDetail] = useState<Partner | null>(null),
     [codeMode, setCodeMode] = useState<"bind" | "generate" | null>(null),
@@ -177,25 +244,63 @@ export function AdminConsole({ view }: { view: View }) {
     [connectionError, setConnectionError] = useState(""),
     [showHealth, setShowHealth] = useState(false),
     [settleForm, setSettleForm] = useState(false);
-  const [action, setAction] = useState<{ kind: string; id: string; title: string } | null>(null);
+  const [action, setAction] = useState<ConfirmationAction | null>(null);
+  const openAction = (value: ConfirmationAction) => {
+    setError("");
+    setAction(value);
+  };
+  const closeDialogs = useCallback(() => {
+    setEditor(null);
+    setDetail(null);
+    setCodeMode(null);
+    setCandidateCode("");
+    setConnection(null);
+    setConnectionError("");
+    setShowHealth(false);
+    setSettleForm(false);
+    setAction(null);
+  }, []);
+  const expireSession = useCallback(() => {
+    hasSnapshot.current = false;
+    setLogin(true);
+    setData(null);
+    setFilters({});
+    closeDialogs();
+  }, [closeDialogs]);
   const refresh = useCallback(async () => {
+    stateRequest.current?.abort();
+    const controller = new AbortController();
+    stateRequest.current = controller;
+    setRefreshing(true);
     try {
-      const d = await api("state");
+      const d = await api("state", undefined, controller.signal);
+      if (controller.signal.aborted) return;
+      hasSnapshot.current = true;
       setData(d);
       setLogin(false);
       setError("");
     } catch (e) {
+      if (controller.signal.aborted) return;
       if ((e as { status?: number }).status === 401) {
-        setLogin(true);
-        setData(null);
-      } else setError(`连接失败：${(e as Error).message}`);
+        expireSession();
+      } else
+        setError(
+          `${hasSnapshot.current ? "刷新失败，当前显示上次读取的数据" : "连接失败"}：${(e as Error).message}`,
+        );
     } finally {
-      setLoading(false);
+      if (!controller.signal.aborted) {
+        setLoading(false);
+        setRefreshing(false);
+      }
     }
-  }, []);
+  }, [expireSession]);
   useEffect(() => {
+    closeDialogs();
+    setError("");
+    setNotice("");
     void refresh();
-  }, [refresh]);
+    return () => stateRequest.current?.abort();
+  }, [view, refresh, closeDialogs]);
   const operate = async (path: string, body: unknown, message: string) => {
     setBusy(true);
     setError("");
@@ -206,8 +311,8 @@ export function AdminConsole({ view }: { view: View }) {
       return result;
     } catch (e) {
       if ((e as { status?: number }).status === 401) {
-        setLogin(true);
-        setData(null);
+        stateRequest.current?.abort();
+        expireSession();
       }
       setError((e as Error).message);
       return null;
@@ -223,6 +328,16 @@ export function AdminConsole({ view }: { view: View }) {
       setConnection(null);
       setConnectionError((e as Error).message);
     }
+  };
+  const openCode = (mode: "bind" | "generate") => {
+    setError("");
+    setCandidateCode("");
+    setCodeMode(mode);
+    void loadConnection();
+  };
+  const openSettlement = () => {
+    setError("");
+    setSettleForm(true);
   };
   const copy = async (text: string) => {
     try {
@@ -294,6 +409,19 @@ export function AdminConsole({ view }: { view: View }) {
       !query ||
       [p.name, p.alias, p.terms.email].join(" ").toLowerCase().includes(query.toLowerCase()),
   );
+  const dateRangeError = from && to && from > to ? "付款止日不能早于付款起日" : "";
+  const orderFilterCount = [kolFilter, currencyFilter, statusFilter, from, to].filter(
+    Boolean,
+  ).length;
+  const orderFilterSummary = [
+    kolFilter ? `达人 ${name(kolFilter)}` : "",
+    currencyFilter ? `币种 ${currencyFilter}` : "",
+    statusFilter ? `状态 ${labels[statusFilter]}` : "",
+    from ? `付款自 ${from}` : "",
+    to ? `至 ${to}` : "",
+  ]
+    .filter(Boolean)
+    .join(" · ");
   const orders = data.orders.filter(
     (o) =>
       (!kolFilter || o.kolId === kolFilter) &&
@@ -303,6 +431,22 @@ export function AdminConsole({ view }: { view: View }) {
       (!from || (o.paidAt ?? 0) >= Date.parse(`${from}T00:00:00+08:00`)) &&
       (!to || (o.paidAt ?? 0) < Date.parse(`${to}T00:00:00+08:00`) + 86400000),
   );
+  const codes = data.codes.filter(
+    (c) => !query || `${name(c.kolId)} ${c.normalized}`.toLowerCase().includes(query.toLowerCase()),
+  );
+  const settlements = data.settlements.filter(
+    (s) =>
+      !query || `${name(s.kolId)} ${s.month} ${s.id}`.toLowerCase().includes(query.toLowerCase()),
+  );
+  const actionTarget = action?.kind.startsWith("codes/")
+    ? data.codes.find((c) => c.id === action.id)
+    : undefined;
+  const actionOrder = action?.kind.startsWith("orders/")
+    ? data.orders.find((o) => o.id === action.id)
+    : undefined;
+  const actionSettlement = action?.kind.startsWith("settlements/")
+    ? data.settlements.find((s) => s.id === action.id)
+    : undefined;
   const pack = (p: Partner) => {
     const c = data.codes.find(
       (c) =>
@@ -328,10 +472,10 @@ export function AdminConsole({ view }: { view: View }) {
         <p className="sidebar-label">品牌合作管理</p>
         <nav aria-label="后台导航">
           {nav.map(([key, num, label]) => (
-            <a key={key} href={`/admin/${key}`} aria-current={view === key ? "page" : undefined}>
+            <Link key={key} href={`/admin/${key}`} aria-current={view === key ? "page" : undefined}>
               <span>{num}</span>
               {label}
-            </a>
+            </Link>
           ))}
         </nav>
         <div className="sidebar-bottom">
@@ -367,6 +511,7 @@ export function AdminConsole({ view }: { view: View }) {
             <button
               className="connection-button"
               onClick={() => {
+                setError("");
                 setShowHealth(true);
                 void loadConnection();
               }}
@@ -381,11 +526,11 @@ export function AdminConsole({ view }: { view: View }) {
         {data.health.shopifyAdminConfigured === false && (
           <p className="message" role="status">
             未配置 Shopify Admin
-            令牌，订单同步与优惠码功能暂不可用。本地合作记录和结账诊断可正常查看。
+            连接凭据（应用凭据或手动令牌），订单同步与优惠码功能暂不可用。本地合作记录和结账诊断可正常查看。
           </p>
         )}
         {view === "checkouts" && <CheckoutDiagnostics />}
-        {error && (
+        {error && !editor && !detail && !codeMode && !settleForm && !action && !showHealth && (
           <div className="message error" role="alert">
             {error}
             <button onClick={() => setError("")} aria-label="关闭错误">
@@ -402,11 +547,9 @@ export function AdminConsole({ view }: { view: View }) {
           </div>
         )}
         {view !== "checkouts" && (
-          <div className="toolbar">
+          <div className={view === "orders" ? "toolbar orders-toolbar" : "toolbar"}>
             <div className="search">
-              <label htmlFor="admin-search" className="sr-only">
-                搜索
-              </label>
+              <label htmlFor="admin-search">搜索</label>
               <input
                 id="admin-search"
                 placeholder={
@@ -419,37 +562,33 @@ export function AdminConsole({ view }: { view: View }) {
                         : "搜索姓名 / 别名 / 邮箱"
                 }
                 value={query}
-                onChange={(e) => setQuery(e.target.value)}
+                onChange={(e) => setFilter("query", e.target.value)}
               />
             </div>
             <div className="toolbar-actions">
-              <button disabled={busy} onClick={() => void refresh()}>
-                刷新数据
+              {hasFilters && view !== "orders" && <button onClick={clearFilters}>清空筛选</button>}
+              <button
+                className="refresh-button"
+                disabled={busy || refreshing}
+                onClick={() => void refresh()}
+              >
+                {refreshing ? "更新中…" : "刷新数据"}
               </button>
               {view === "partners" && (
-                <button className="primary" onClick={() => setEditor("new")}>
+                <button
+                  className="primary"
+                  onClick={() => {
+                    setError("");
+                    setEditor("new");
+                  }}
+                >
                   ＋ 新增合作
                 </button>
               )}
               {view === "codes" && (
                 <>
-                  <button
-                    onClick={() => {
-                      setCandidateCode("");
-                      setCodeMode("bind");
-                      void loadConnection();
-                    }}
-                  >
-                    绑定已有码
-                  </button>
-                  <button
-                    className="primary"
-                    onClick={() => {
-                      setCandidateCode("");
-                      setCodeMode("generate");
-                      void loadConnection();
-                    }}
-                  >
+                  <button onClick={() => openCode("bind")}>绑定已有码</button>
+                  <button className="primary" onClick={() => openCode("generate")}>
                     生成新码并同步
                   </button>
                 </>
@@ -458,7 +597,7 @@ export function AdminConsole({ view }: { view: View }) {
                 <button
                   className="primary"
                   disabled={!data.settlementsEnabled}
-                  onClick={() => setSettleForm(true)}
+                  onClick={openSettlement}
                 >
                   ＋ 创建月结草稿
                 </button>
@@ -469,7 +608,11 @@ export function AdminConsole({ view }: { view: View }) {
         {view === "partners" && (
           <>
             <div className="section-line">
-              <p>{partners.length} 位合作达人</p>
+              <p>
+                {query
+                  ? `匹配 ${partners.length} / 共 ${data.partners.length} 位合作达人`
+                  : `${partners.length} 位合作达人`}
+              </p>
               <small>访问为过滤后请求次数；到站按链路确认去重。访客自然人数不可确认。</small>
             </div>
             <div className="partner-list">
@@ -479,7 +622,13 @@ export function AdminConsole({ view }: { view: View }) {
                     <div className="partner-identity">
                       <span className="avatar">{p.name.slice(0, 1).toUpperCase()}</span>
                       <div>
-                        <button className="text-button partner-name" onClick={() => setDetail(p)}>
+                        <button
+                          className="text-button partner-name"
+                          onClick={() => {
+                            setError("");
+                            setDetail(p);
+                          }}
+                        >
                           {p.name}
                         </button>
                         <p className="muted">
@@ -530,7 +679,13 @@ export function AdminConsole({ view }: { view: View }) {
                       >
                         复制合作包 ↗
                       </button>
-                      <button className="text-button" onClick={() => setEditor(p)}>
+                      <button
+                        className="text-button"
+                        onClick={() => {
+                          setError("");
+                          setEditor(p);
+                        }}
+                      >
                         编辑合作
                       </button>
                     </div>
@@ -544,6 +699,18 @@ export function AdminConsole({ view }: { view: View }) {
                       ? "更换关键词后再试。"
                       : "新增合作并填写自定义佣金，即可获得专属推广链接。"
                   }
+                  onReset={query ? clearFilters : undefined}
+                  action={
+                    !query
+                      ? {
+                          label: "创建第一份合作",
+                          run: () => {
+                            setError("");
+                            setEditor("new");
+                          },
+                        }
+                      : undefined
+                  }
                 />
               )}
             </div>
@@ -555,79 +722,88 @@ export function AdminConsole({ view }: { view: View }) {
               暂停合作或结束本地绑定，不会停用 Shopify
               优惠码。不同代码可能共享同一活动规则与总额度。
             </p>
-            <div className="table-wrap">
-              <table>
-                <thead>
-                  <tr>
-                    <th>KOL / 优惠码</th>
-                    <th>来源与状态</th>
-                    <th>Shopify 活动摘要</th>
-                    <th>最近核验</th>
-                    <th>操作</th>
+            <div className="table-wrap" role="region" aria-label="优惠码清单" tabIndex={0}>
+              <p className="table-scroll-hint">可左右滚动查看全部字段</p>
+              <table role="table" aria-label="优惠码清单">
+                <thead role="rowgroup">
+                  <tr role="row">
+                    <th role="columnheader">KOL / 优惠码</th>
+                    <th role="columnheader">来源与状态</th>
+                    <th role="columnheader">Shopify 活动摘要</th>
+                    <th role="columnheader">最近核验</th>
+                    <th role="columnheader">操作</th>
                   </tr>
                 </thead>
-                <tbody>
-                  {data.codes
-                    .filter(
-                      (c) =>
-                        !query ||
-                        `${name(c.kolId)} ${c.normalized}`
-                          .toLowerCase()
-                          .includes(query.toLowerCase()),
-                    )
-                    .map((c) => (
-                      <tr key={c.id}>
-                        <td>
-                          {name(c.kolId)}
-                          <strong className="code">{c.normalized}</strong>
-                        </td>
-                        <td>
-                          {c.source === "generated" ? "Offy生成" : "Shopify已有"}
-                          <div>
-                            <Badge status={c.status} /> <Badge status={c.remoteStatus} />
-                          </div>
-                        </td>
-                        <td className="summary-cell">
-                          {c.summary}
-                          <small className="muted code">{c.campaignId}</small>
-                        </td>
-                        <td>{date(c.syncedAt)}</td>
-                        <td>
-                          <div className="table-actions">
-                            <button
-                              disabled={busy}
-                              onClick={() =>
-                                void operate("codes/refresh", { id: c.id }, "已重新核验Shopify状态")
-                              }
-                            >
-                              核验状态
-                            </button>
-                            {c.status === "bound" && (
-                              <>
-                                <button onClick={() => void copy(c.normalized)}>复制代码</button>
-                                <button
-                                  onClick={() =>
-                                    setAction({
-                                      kind: "codes/end",
-                                      id: c.id,
-                                      title: "结束本地绑定",
-                                    })
-                                  }
-                                >
-                                  结束绑定
-                                </button>
-                              </>
-                            )}
-                          </div>
-                        </td>
-                      </tr>
-                    ))}
+                <tbody role="rowgroup">
+                  {codes.map((c) => (
+                    <tr role="row" key={c.id}>
+                      <td data-label="KOL / 优惠码" role="cell">
+                        {name(c.kolId)}
+                        <strong className="code">{c.normalized}</strong>
+                      </td>
+                      <td data-label="来源与状态" role="cell">
+                        {c.source === "generated" ? "Offy生成" : "Shopify已有"}
+                        <div>
+                          <Badge status={c.status} /> <Badge status={c.remoteStatus} />
+                        </div>
+                      </td>
+                      <td className="summary-cell" data-label="Shopify 活动摘要" role="cell">
+                        {c.summary}
+                        <small className="muted code">{c.campaignId}</small>
+                      </td>
+                      <td data-label="最近核验" role="cell">
+                        {date(c.syncedAt)}
+                      </td>
+                      <td data-label="操作" role="cell">
+                        <div className="table-actions">
+                          <button
+                            disabled={busy}
+                            onClick={() =>
+                              void operate("codes/refresh", { id: c.id }, "已重新核验Shopify状态")
+                            }
+                          >
+                            核验状态
+                          </button>
+                          {c.status === "bound" && (
+                            <>
+                              <button onClick={() => void copy(c.normalized)}>复制代码</button>
+                              <button
+                                className="danger-button"
+                                onClick={() =>
+                                  openAction({
+                                    kind: "codes/end",
+                                    id: c.id,
+                                    title: "结束本地绑定",
+                                  })
+                                }
+                              >
+                                结束绑定
+                              </button>
+                            </>
+                          )}
+                        </div>
+                      </td>
+                    </tr>
+                  ))}
                 </tbody>
               </table>
-              {!data.codes.length && (
+              {!codes.length && (
                 <Empty
-                  title="尚未绑定优惠码"
-                  text="可绑定Shopify已有码，或向已有活动追加一个唯一代码。"
+                  title={query ? "未找到匹配优惠码" : "尚未绑定优惠码"}
+                  text={
+                    query
+                      ? "更换关键词，或清空筛选查看全部代码。"
+                      : "可绑定Shopify已有码，或向已有活动追加一个唯一代码。"
+                  }
+                  onReset={query ? clearFilters : undefined}
+                  action={
+                    !query
+                      ? {
+                          label: "绑定 Shopify 优惠码",
+                          run: () => openCode("bind"),
+                        }
+                      : undefined
+                  }
                 />
               )}
             </div>
@@ -641,33 +817,34 @@ export function AdminConsole({ view }: { view: View }) {
                   核对任务
                 </button>
               </div>
-              <div className="table-wrap">
-                <table>
-                  <thead>
-                    <tr>
-                      <th>KOL / 候选码</th>
-                      <th>任务状态</th>
-                      <th>说明</th>
-                      <th>操作</th>
+              <div className="table-wrap" role="region" aria-label="发码任务清单" tabIndex={0}>
+                <p className="table-scroll-hint">可左右滚动查看全部字段</p>
+                <table role="table" aria-label="发码任务清单">
+                  <thead role="rowgroup">
+                    <tr role="row">
+                      <th role="columnheader">KOL / 候选码</th>
+                      <th role="columnheader">任务状态</th>
+                      <th role="columnheader">说明</th>
+                      <th role="columnheader">操作</th>
                     </tr>
                   </thead>
-                  <tbody>
+                  <tbody role="rowgroup">
                     {data.jobs.map((j) => (
-                      <tr key={j.id}>
-                        <td>
+                      <tr role="row" key={j.id}>
+                        <td data-label="KOL / 候选码" role="cell">
                           {name(j.kolId)}
                           <strong className="code">{j.candidate}</strong>
                         </td>
-                        <td>
+                        <td data-label="任务状态" role="cell">
                           <Badge status={j.status} />
                         </td>
-                        <td className="summary-cell">
+                        <td className="summary-cell" data-label="说明" role="cell">
                           {j.status === "bound"
                             ? "远端已确认并完成绑定"
                             : (j.error ?? "远端确认前不可分发；旧绑定继续保留")}
                           <small className="code muted">{j.id}</small>
                         </td>
-                        <td>
+                        <td data-label="操作" role="cell">
                           {j.status !== "bound" && (
                             <button
                               disabled={busy}
@@ -689,6 +866,7 @@ export function AdminConsole({ view }: { view: View }) {
                 </table>
                 {!data.jobs.length && (
                   <Empty
+                    compact
                     title="没有发码任务"
                     text="只有生成新码需要异步同步；已有绑定会直接核验。"
                   />
@@ -699,132 +877,187 @@ export function AdminConsole({ view }: { view: View }) {
         )}
         {view === "orders" && (
           <>
-            <div className="filters">
-              <select
-                aria-label="筛选KOL"
-                value={kolFilter}
-                onChange={(e) => setKolFilter(e.target.value)}
+            <div className="filter-panel-controls">
+              <button
+                className="filter-toggle"
+                type="button"
+                aria-expanded={orderFiltersOpen}
+                aria-controls="order-filters"
+                onClick={() => setOrderFiltersOpen((open) => !open)}
               >
-                <option value="">全部达人</option>
-                {data.partners.map((p) => (
-                  <option key={p.id} value={p.id}>
-                    {p.name}
-                  </option>
-                ))}
-              </select>
-              <select
-                aria-label="筛选币种"
-                value={currencyFilter}
-                onChange={(e) => setCurrencyFilter(e.target.value)}
-              >
-                <option value="">全部币种（分开核算）</option>
-                {[...new Set(data.orders.map((o) => o.currency))].map((c) => (
-                  <option key={c}>{c}</option>
-                ))}
-              </select>
-              <select
-                aria-label="筛选订单状态"
-                value={statusFilter}
-                onChange={(e) => setStatusFilter(e.target.value)}
-              >
-                <option value="">全部状态</option>
-                {["verified", "review", "unattributed"].map((s) => (
-                  <option key={s} value={s}>
-                    {labels[s]}
-                  </option>
-                ))}
-              </select>
-              <label>
-                付款起日
-                <input type="date" value={from} onChange={(e) => setFrom(e.target.value)} />
-              </label>
-              <label>
-                付款止日
-                <input type="date" value={to} onChange={(e) => setTo(e.target.value)} />
-              </label>
-            </div>
-            <div className="table-wrap">
-              <table>
-                <thead>
-                  <tr>
-                    <th>订单 / KOL</th>
-                    <th>商品净额</th>
-                    <th>比例快照 / 佣金</th>
-                    <th>归因与核验</th>
-                    <th>解冻时间</th>
-                    <th>操作</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {orders.map((o) => (
-                    <tr key={o.id}>
-                      <td>
-                        <strong>{o.name}</strong>
-                        <p>{name(o.kolId)}</p>
-                        <small className="muted">付款 {date(o.paidAt)}</small>
-                      </td>
-                      <td className="numbers">
-                        {money(o.net, o.currency)}
-                        <details>
-                          <summary>计算依据</summary>
-                          <pre>{JSON.stringify(JSON.parse(o.evidence), null, 2)}</pre>
-                          <p className="small muted">
-                            签名引用、服务端checkout及Shopify cart核验；优惠码不改变归属。
-                          </p>
-                        </details>
-                      </td>
-                      <td className="numbers">
-                        {o.rateBps === null ? "—" : `${o.rateBps / 100}%`}
-                        <strong>{money(o.commission, o.currency)}</strong>
-                      </td>
-                      <td>
-                        <Badge status={o.status} />
-                        {o.reason && <p className="reason">{o.reason}</p>}
-                        <small className="muted">核验 {date(o.checkedAt)}</small>
-                      </td>
-                      <td>{date(o.holdUntil)}</td>
-                      <td>
-                        <div className="table-actions">
-                          <button
-                            disabled={busy}
-                            onClick={() =>
-                              void operate(
-                                "orders/reconcile",
-                                { id: o.id },
-                                "已从Shopify重新读取订单",
-                              )
-                            }
-                          >
-                            重新核对
-                          </button>
-                          <button
-                            onClick={() =>
-                              setAction({
-                                kind: o.reason?.startsWith("manual_hold:")
-                                  ? "orders/release"
-                                  : "orders/hold",
-                                id: o.id,
-                                title: o.reason?.startsWith("manual_hold:")
-                                  ? "解除人工冻结并核对"
-                                  : "人工冻结待核查",
-                              })
-                            }
-                          >
-                            {o.reason?.startsWith("manual_hold:") ? "解除冻结" : "标记待核查"}
-                          </button>
-                        </div>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-              {!orders.length && (
-                <Empty
-                  title="暂无匹配订单"
-                  text="订单付款事实与归因验证完成后显示；使用优惠码本身不产生转化。"
-                />
+                筛选条件{orderFilterCount ? `（${orderFilterCount}项）` : ""}
+                <span aria-hidden>{orderFiltersOpen ? "⌃" : "⌄"}</span>
+              </button>
+              {hasFilters && (
+                <button type="button" onClick={clearFilters}>
+                  清空筛选
+                </button>
               )}
             </div>
+            {orderFilterSummary && <p className="filter-summary">已选：{orderFilterSummary}</p>}
+            <div
+              id="order-filters"
+              className={orderFiltersOpen ? "filters is-expanded" : "filters"}
+              role="group"
+              aria-label="订单高级筛选"
+            >
+              <label>
+                合作达人
+                <select value={kolFilter} onChange={(e) => setFilter("kolFilter", e.target.value)}>
+                  <option value="">全部达人</option>
+                  {data.partners.map((p) => (
+                    <option key={p.id} value={p.id}>
+                      {p.name}
+                    </option>
+                  ))}
+                </select>
+              </label>
+              <label>
+                交易币种
+                <select
+                  value={currencyFilter}
+                  onChange={(e) => setFilter("currencyFilter", e.target.value)}
+                >
+                  <option value="">全部币种（分开核算）</option>
+                  {[...new Set(data.orders.map((o) => o.currency))].map((c) => (
+                    <option key={c}>{c}</option>
+                  ))}
+                </select>
+              </label>
+              <label>
+                订单状态
+                <select
+                  value={statusFilter}
+                  onChange={(e) => setFilter("statusFilter", e.target.value)}
+                >
+                  <option value="">全部状态</option>
+                  {["verified", "review", "unattributed"].map((s) => (
+                    <option key={s} value={s}>
+                      {labels[s]}
+                    </option>
+                  ))}
+                </select>
+              </label>
+              <div className="filter-date-range" role="group" aria-label="付款日期范围">
+                <label>
+                  付款起日
+                  <input
+                    type="date"
+                    value={from}
+                    max={to || undefined}
+                    onChange={(e) => setFilter("from", e.target.value)}
+                  />
+                </label>
+                <label>
+                  付款止日
+                  <input
+                    type="date"
+                    value={to}
+                    min={from || undefined}
+                    aria-invalid={Boolean(dateRangeError)}
+                    aria-describedby={dateRangeError ? "order-date-error" : undefined}
+                    onChange={(e) => setFilter("to", e.target.value)}
+                  />
+                </label>
+              </div>
+            </div>
+            {dateRangeError && (
+              <p id="order-date-error" role="alert" className="message error">
+                {dateRangeError}。请调整日期或清空筛选。
+              </p>
+            )}
+            {!dateRangeError && (
+              <div className="table-wrap" role="region" aria-label="订单佣金清单" tabIndex={0}>
+                <p className="table-scroll-hint">可左右滚动查看全部字段</p>
+                <table role="table" aria-label="订单佣金清单">
+                  <thead role="rowgroup">
+                    <tr role="row">
+                      <th role="columnheader">订单 / KOL</th>
+                      <th role="columnheader">商品净额</th>
+                      <th role="columnheader">比例快照 / 佣金</th>
+                      <th role="columnheader">归因与核验</th>
+                      <th role="columnheader">解冻时间</th>
+                      <th role="columnheader">操作</th>
+                    </tr>
+                  </thead>
+                  <tbody role="rowgroup">
+                    {orders.map((o) => (
+                      <tr role="row" key={o.id}>
+                        <td data-label="订单 / KOL" role="cell">
+                          <strong>{o.name}</strong>
+                          <p>{name(o.kolId)}</p>
+                          <small className="muted">付款 {date(o.paidAt)}</small>
+                        </td>
+                        <td className="numbers" data-label="商品净额" role="cell">
+                          {money(o.net, o.currency)}
+                          <details>
+                            <summary>计算依据</summary>
+                            <pre>{JSON.stringify(JSON.parse(o.evidence), null, 2)}</pre>
+                            <p className="small muted">
+                              签名引用、服务端checkout及Shopify cart核验；优惠码不改变归属。
+                            </p>
+                          </details>
+                        </td>
+                        <td className="numbers" data-label="比例快照 / 佣金" role="cell">
+                          {o.rateBps === null ? "—" : `${o.rateBps / 100}%`}
+                          <strong>{money(o.commission, o.currency)}</strong>
+                        </td>
+                        <td data-label="归因与核验" role="cell">
+                          <Badge status={o.status} />
+                          {o.reason && <p className="reason">{o.reason}</p>}
+                          <small className="muted">核验 {date(o.checkedAt)}</small>
+                        </td>
+                        <td data-label="解冻时间" role="cell">
+                          {date(o.holdUntil)}
+                        </td>
+                        <td data-label="操作" role="cell">
+                          <div className="table-actions">
+                            <button
+                              disabled={busy}
+                              onClick={() =>
+                                void operate(
+                                  "orders/reconcile",
+                                  { id: o.id },
+                                  "已从Shopify重新读取订单",
+                                )
+                              }
+                            >
+                              重新核对
+                            </button>
+                            <button
+                              onClick={() =>
+                                openAction({
+                                  kind: o.reason?.startsWith("manual_hold:")
+                                    ? "orders/release"
+                                    : "orders/hold",
+                                  id: o.id,
+                                  title: o.reason?.startsWith("manual_hold:")
+                                    ? "解除人工冻结并核对"
+                                    : "人工冻结待核查",
+                                })
+                              }
+                            >
+                              {o.reason?.startsWith("manual_hold:") ? "解除冻结" : "标记待核查"}
+                            </button>
+                          </div>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+                {!orders.length && (
+                  <Empty
+                    title={hasFilters ? "暂无匹配订单" : "暂无订单记录"}
+                    text={
+                      hasFilters
+                        ? "请调整条件，或清空筛选查看全部订单。"
+                        : "订单付款事实与归因验证完成后显示；使用优惠码本身不产生转化。"
+                    }
+                    onReset={hasFilters ? clearFilters : undefined}
+                  />
+                )}
+              </div>
+            )}
             {data.truncated && (
               <p className="inline-note">
                 显示最近500笔核验记录。财务结算从完整账本选择，不受此列表限制。
@@ -852,120 +1085,119 @@ export function AdminConsole({ view }: { view: View }) {
               ))}
               {!data.balances.length && <p className="muted">暂无未结余额</p>}
             </div>
-            <div className="table-wrap">
-              <table>
-                <thead>
-                  <tr>
-                    <th>月份 / 达人</th>
-                    <th>应付金额</th>
-                    <th>状态</th>
-                    <th>付款记录</th>
-                    <th>操作</th>
+            <div className="table-wrap" role="region" aria-label="月结批次清单" tabIndex={0}>
+              <p className="table-scroll-hint">可左右滚动查看全部字段</p>
+              <table role="table" aria-label="月结批次清单">
+                <thead role="rowgroup">
+                  <tr role="row">
+                    <th role="columnheader">月份 / 达人</th>
+                    <th role="columnheader">应付金额</th>
+                    <th role="columnheader">状态</th>
+                    <th role="columnheader">付款记录</th>
+                    <th role="columnheader">操作</th>
                   </tr>
                 </thead>
-                <tbody>
-                  {data.settlements
-                    .filter(
-                      (s) =>
-                        !query ||
-                        `${name(s.kolId)} ${s.month} ${s.id}`
-                          .toLowerCase()
-                          .includes(query.toLowerCase()),
-                    )
-                    .map((s) => (
-                      <tr key={s.id}>
-                        <td>
-                          <strong>{s.month}</strong>
-                          {name(s.kolId)}
-                          <small className="code muted">{s.id.slice(0, 8)}</small>
-                        </td>
-                        <td className="numbers">
-                          {money(s.total, s.currency)}
-                          {s.total <= 0 && (
-                            <small className="muted">负余额需追回或在后续正佣金中抵扣</small>
-                          )}
-                        </td>
-                        <td>
-                          <Badge status={s.status} />
-                        </td>
-                        <td>
-                          {s.paymentRef ?? "—"}
-                          <small className="muted">{date(s.paidAt)}</small>
-                          {s.paymentNote && <p className="small">{s.paymentNote}</p>}
-                        </td>
-                        <td>
-                          <div className="table-actions">
-                            <a
-                              className="button"
-                              href={`/api/admin/kol/settlements/${s.id}/csv`}
-                              download
+                <tbody role="rowgroup">
+                  {settlements.map((s) => (
+                    <tr role="row" key={s.id}>
+                      <td data-label="月份 / 达人" role="cell">
+                        <strong>{s.month}</strong>
+                        {name(s.kolId)}
+                        <small className="code muted">{s.id.slice(0, 8)}</small>
+                      </td>
+                      <td className="numbers" data-label="应付金额" role="cell">
+                        {money(s.total, s.currency)}
+                        {s.total <= 0 && (
+                          <small className="muted">负余额需追回或在后续正佣金中抵扣</small>
+                        )}
+                      </td>
+                      <td data-label="状态" role="cell">
+                        <Badge status={s.status} />
+                      </td>
+                      <td data-label="付款记录" role="cell">
+                        {s.paymentRef ?? "—"}
+                        <small className="muted">{date(s.paidAt)}</small>
+                        {s.paymentNote && <p className="small">{s.paymentNote}</p>}
+                      </td>
+                      <td data-label="操作" role="cell">
+                        <div className="table-actions">
+                          <a
+                            className="button"
+                            href={`/api/admin/kol/settlements/${s.id}/csv`}
+                            download
+                          >
+                            导出清单
+                          </a>
+                          {s.status === "draft" && s.total > 0 && (
+                            <button
+                              disabled={busy || !data.settlementsEnabled}
+                              onClick={() =>
+                                void operate(
+                                  "settlements/lock",
+                                  { id: s.id },
+                                  "已重新核对并锁定批次",
+                                )
+                              }
                             >
-                              导出清单
-                            </a>
-                            {s.status === "draft" && s.total > 0 && (
-                              <button
-                                disabled={busy || !data.settlementsEnabled}
-                                onClick={() =>
-                                  void operate(
-                                    "settlements/lock",
-                                    { id: s.id },
-                                    "已重新核对并锁定批次",
-                                  )
-                                }
-                              >
-                                核对并锁单
-                              </button>
-                            )}
-                            {s.status === "locked" && s.total > 0 && (
-                              <button
-                                disabled={!data.settlementsEnabled}
-                                onClick={() =>
-                                  setAction({
-                                    kind: "settlements/pay",
-                                    id: s.id,
-                                    title: "登记线下付款",
-                                  })
-                                }
-                              >
-                                登记付款
-                              </button>
-                            )}
-                            {!["paid", "canceled"].includes(s.status) && (
-                              <button
-                                onClick={() =>
-                                  setAction({
-                                    kind: "settlements/cancel",
-                                    id: s.id,
-                                    title: "取消草稿并释放条目",
-                                  })
-                                }
-                              >
-                                取消 / 重建
-                              </button>
-                            )}
-                            {s.status === "paid" && (
-                              <button
-                                onClick={() =>
-                                  setAction({
-                                    kind: "settlements/correct",
-                                    id: s.id,
-                                    title: "更正付款凭证",
-                                  })
-                                }
-                              >
-                                更正凭证
-                              </button>
-                            )}
-                          </div>
-                        </td>
-                      </tr>
-                    ))}
+                              核对并锁单
+                            </button>
+                          )}
+                          {s.status === "locked" && s.total > 0 && (
+                            <button
+                              disabled={!data.settlementsEnabled}
+                              onClick={() =>
+                                openAction({
+                                  kind: "settlements/pay",
+                                  id: s.id,
+                                  title: "登记线下付款",
+                                })
+                              }
+                            >
+                              登记付款
+                            </button>
+                          )}
+                          {!["paid", "canceled"].includes(s.status) && (
+                            <button
+                              className="danger-button"
+                              onClick={() =>
+                                openAction({
+                                  kind: "settlements/cancel",
+                                  id: s.id,
+                                  title: "取消草稿并释放条目",
+                                })
+                              }
+                            >
+                              取消 / 重建
+                            </button>
+                          )}
+                          {s.status === "paid" && (
+                            <button
+                              onClick={() =>
+                                openAction({
+                                  kind: "settlements/correct",
+                                  id: s.id,
+                                  title: "更正付款凭证",
+                                })
+                              }
+                            >
+                              更正凭证
+                            </button>
+                          )}
+                        </div>
+                      </td>
+                    </tr>
+                  ))}
                 </tbody>
               </table>
-              {!data.settlements.length && (
+              {!settlements.length && (
                 <Empty
-                  title="还没有结算批次"
-                  text="按达人和币种建立月结草稿。登记付款只记录线下凭证，不发起转账。"
+                  title={query ? "未找到匹配结算批次" : "还没有结算批次"}
+                  text={
+                    query
+                      ? "更换关键词，或清空筛选查看全部批次。"
+                      : "按达人和币种建立月结草稿。登记付款只记录线下凭证，不发起转账。"
+                  }
+                  onReset={query ? clearFilters : undefined}
                 />
               )}
             </div>
@@ -988,6 +1220,7 @@ export function AdminConsole({ view }: { view: View }) {
         >
           <PartnerForm
             initial={editor === "new" ? undefined : editor.terms}
+            referralUrl={editor === "new" ? undefined : `${data.siteUrl}/r/${editor.alias}`}
             busy={busy}
             onSubmit={async (value) => {
               const result = await operate(
@@ -1015,9 +1248,13 @@ export function AdminConsole({ view }: { view: View }) {
             <dl className="detail-grid">
               <dt>社媒</dt>
               <dd>
-                <a href={detail.terms.socialUrl} target="_blank" rel="noreferrer">
-                  {detail.terms.socialUrl}
-                </a>
+                {detail.terms.socialUrl ? (
+                  <a href={detail.terms.socialUrl} target="_blank" rel="noreferrer">
+                    {detail.terms.socialUrl}
+                  </a>
+                ) : (
+                  "未填写"
+                )}
               </dd>
               <dt>联系邮箱</dt>
               <dd>{detail.terms.email}</dd>
@@ -1058,7 +1295,7 @@ export function AdminConsole({ view }: { view: View }) {
           onClose={() => setCodeMode(null)}
         >
           <form
-            className="dialog-content form-grid"
+            className="dialog-form"
             onSubmit={async (e) => {
               e.preventDefault();
               const f = Object.fromEntries(new FormData(e.currentTarget));
@@ -1072,82 +1309,84 @@ export function AdminConsole({ view }: { view: View }) {
                 setCodeMode(null);
             }}
           >
-            <label className="full">
-              合作达人
-              <select
-                name="kolId"
-                required
-                defaultValue=""
-                onChange={(e) => {
-                  if (codeMode === "generate") {
-                    const alias = data.partners.find((p) => p.id === e.target.value)?.alias;
-                    if (alias)
-                      setCandidateCode(
-                        `${alias.toUpperCase()}-${crypto.randomUUID().replace(/-/g, "").slice(0, 8).toUpperCase()}`,
-                      );
-                  }
-                }}
-              >
-                <option value="" disabled>
-                  选择达人
-                </option>
-                {data.partners.map((p) => (
-                  <option key={p.id} value={p.id}>
-                    {p.name} · {labels[p.status]}
-                  </option>
-                ))}
-              </select>
-            </label>
-            {codeMode === "generate" && (
+            <div className="dialog-content form-grid">
               <label className="full">
-                Shopify 已有活动
-                <select name="campaignId" required defaultValue="">
+                合作达人
+                <select
+                  name="kolId"
+                  required
+                  defaultValue=""
+                  onChange={(e) => {
+                    if (codeMode === "generate") {
+                      const alias = data.partners.find((p) => p.id === e.target.value)?.alias;
+                      if (alias)
+                        setCandidateCode(
+                          `${alias.toUpperCase()}-${crypto.randomUUID().replace(/-/g, "").slice(0, 8).toUpperCase()}`,
+                        );
+                    }
+                  }}
+                >
                   <option value="" disabled>
-                    选择可追加代码的活动
+                    选择达人
                   </option>
-                  {connection?.campaigns.nodes.map((c) => (
-                    <option
-                      key={c.id}
-                      value={c.id}
-                      disabled={c.type === "DiscountCodeApp" || c.status !== "ACTIVE"}
-                    >
-                      {c.title} · {c.summary}
+                  {data.partners.map((p) => (
+                    <option key={p.id} value={p.id}>
+                      {p.name} · {labels[p.status]}
                     </option>
                   ))}
                 </select>
               </label>
-            )}
-            <label className="full">
-              {codeMode === "bind" ? "已有优惠码" : "唯一候选码"}
-              <input
-                name="code"
-                value={candidateCode}
-                onChange={(e) => setCandidateCode(e.target.value)}
-                required
-                minLength={3}
-                maxLength={64}
-                pattern="[A-Za-z0-9][A-Za-z0-9_-]{2,63}"
-                placeholder={
-                  codeMode === "generate" ? "例如 MAYA-OFFY-26" : "粘贴 Shopify 中的代码"
-                }
-              />
-            </label>
-            <p className="inline-note full">
-              {codeMode === "generate"
-                ? "向所选活动追加代码，所有KOL代码共享该活动规则、期限和可能的总额度。不会创建或编辑权益规则。同步中保留旧绑定。"
-                : "将先查询Shopify。规则、适用性和最终优惠由Shopify结账决定。"}
-            </p>
-            {connectionError && (
-              <p role="alert" className="error full">
-                {connectionError}
-              </p>
-            )}
-            {codeMode === "generate" &&
-              connection &&
-              !connection.scopes.includes("write_discounts") && (
-                <p className="error full">缺少 write_discounts 权限，请改用绑定已有码。</p>
+              {codeMode === "generate" && (
+                <label className="full">
+                  Shopify 已有活动
+                  <select name="campaignId" required defaultValue="">
+                    <option value="" disabled>
+                      选择可追加代码的活动
+                    </option>
+                    {connection?.campaigns.nodes.map((c) => (
+                      <option
+                        key={c.id}
+                        value={c.id}
+                        disabled={c.type === "DiscountCodeApp" || c.status !== "ACTIVE"}
+                      >
+                        {c.title} · {c.summary}
+                      </option>
+                    ))}
+                  </select>
+                </label>
               )}
-            <div className="dialog-actions full">
+              <label className="full">
+                {codeMode === "bind" ? "已有优惠码" : "唯一候选码"}
+                <input
+                  name="code"
+                  value={candidateCode}
+                  onChange={(e) => setCandidateCode(e.target.value)}
+                  required
+                  minLength={3}
+                  maxLength={64}
+                  pattern="[A-Za-z0-9][A-Za-z0-9_-]{2,63}"
+                  placeholder={
+                    codeMode === "generate" ? "例如 MAYA-OFFY-26" : "粘贴 Shopify 中的代码"
+                  }
+                />
+              </label>
+              <p className="inline-note full">
+                {codeMode === "generate"
+                  ? "向所选活动追加代码，所有KOL代码共享该活动规则、期限和可能的总额度。不会创建或编辑权益规则。同步中保留旧绑定。"
+                  : "将先查询Shopify。规则、适用性和最终优惠由Shopify结账决定。"}
+              </p>
+              {connectionError && (
+                <p role="alert" className="error full">
+                  {connectionError}
+                </p>
+              )}
+              {codeMode === "generate" &&
+                connection &&
+                !connection.scopes.includes("write_discounts") && (
+                  <p className="error full">缺少 write_discounts 权限，请改用绑定已有码。</p>
+                )}
+            </div>
+            <div className="dialog-actions">
               <button type="button" onClick={() => setCodeMode(null)}>
                 取消
               </button>
@@ -1168,7 +1407,7 @@ export function AdminConsole({ view }: { view: View }) {
       {settleForm && (
         <Dialog error={error} title="创建月结草稿" onClose={() => setSettleForm(false)}>
           <form
-            className="dialog-content form-grid"
+            className="dialog-form"
             onSubmit={async (e) => {
               e.preventDefault();
               if (
@@ -1181,43 +1420,45 @@ export function AdminConsole({ view }: { view: View }) {
                 setSettleForm(false);
             }}
           >
-            <label className="full">
-              合作达人
-              <select name="kolId" required defaultValue="">
-                <option value="" disabled>
-                  选择达人
-                </option>
-                {data.partners.map((p) => (
-                  <option key={p.id} value={p.id}>
-                    {p.name}
+            <div className="dialog-content form-grid">
+              <label className="full">
+                合作达人
+                <select name="kolId" required defaultValue="">
+                  <option value="" disabled>
+                    选择达人
                   </option>
-                ))}
-              </select>
-            </label>
-            <label>
-              结算月份
-              <input
-                name="month"
-                type="month"
-                required
-                defaultValue={new Date().toISOString().slice(0, 7)}
-              />
-            </label>
-            <label>
-              交易币种
-              <select name="currency" required defaultValue="">
-                <option value="" disabled>
-                  选择币种
-                </option>
-                {[...new Set(data.balances.map((b) => b.currency))].map((c) => (
-                  <option key={c}>{c}</option>
-                ))}
-              </select>
-            </label>
-            <p className="inline-note full">
-              选择该月及更早的未结正佣金，同时纳入现有负调整。仅已付款30天且核验通过的条目可加入，同一条目不能进入两个批次。
-            </p>
-            <div className="dialog-actions full">
+                  {data.partners.map((p) => (
+                    <option key={p.id} value={p.id}>
+                      {p.name}
+                    </option>
+                  ))}
+                </select>
+              </label>
+              <label>
+                结算月份
+                <input
+                  name="month"
+                  type="month"
+                  required
+                  defaultValue={new Date().toISOString().slice(0, 7)}
+                />
+              </label>
+              <label>
+                交易币种
+                <select name="currency" required defaultValue="">
+                  <option value="" disabled>
+                    选择币种
+                  </option>
+                  {[...new Set(data.balances.map((b) => b.currency))].map((c) => (
+                    <option key={c}>{c}</option>
+                  ))}
+                </select>
+              </label>
+              <p className="inline-note full">
+                选择该月及更早的未结正佣金，同时纳入现有负调整。仅已付款30天且核验通过的条目可加入，同一条目不能进入两个批次。
+              </p>
+            </div>
+            <div className="dialog-actions">
               <button type="button" onClick={() => setSettleForm(false)}>
                 取消
               </button>
@@ -1231,7 +1472,7 @@ export function AdminConsole({ view }: { view: View }) {
       {action && (
         <Dialog error={error} title={action.title} onClose={() => setAction(null)}>
           <form
-            className="dialog-content form-grid"
+            className="dialog-form"
             onSubmit={async (e) => {
               e.preventDefault();
               const f = Object.fromEntries(new FormData(e.currentTarget));
@@ -1239,35 +1480,85 @@ export function AdminConsole({ view }: { view: View }) {
                 setAction(null);
             }}
           >
-            <p className="inline-note full">
-              {action.kind === "codes/end"
-                ? "只结束Offy本地绑定，不会停用Shopify代码或活动。"
-                : action.kind === "settlements/pay"
-                  ? "请先完成平台外付款。本操作重新核对订单后登记凭证，不会发起银行转账。"
-                  : "操作保留审计记录；不删除历史账本。"}
-            </p>
-            {action.kind.startsWith("settlements/p") || action.kind === "settlements/correct" ? (
+            <div className="dialog-content form-grid">
+              <dl className="confirmation-target full">
+                <dt>操作对象</dt>
+                <dd>
+                  {actionTarget ? (
+                    <>
+                      <strong>{actionTarget.normalized}</strong>
+                      <span>{name(actionTarget.kolId)}</span>
+                    </>
+                  ) : actionOrder ? (
+                    <>
+                      <strong>{actionOrder.name}</strong>
+                      <span>{name(actionOrder.kolId)}</span>
+                    </>
+                  ) : actionSettlement ? (
+                    <>
+                      <strong>{actionSettlement.month}</strong>
+                      <span>{name(actionSettlement.kolId)}</span>
+                    </>
+                  ) : (
+                    <span>{action.id}</span>
+                  )}
+                </dd>
+                {(actionOrder || actionSettlement) && (
+                  <>
+                    <dt>{actionOrder ? "商品净额" : "应付金额"}</dt>
+                    <dd className="numbers">
+                      {actionOrder
+                        ? money(actionOrder.net, actionOrder.currency)
+                        : money(actionSettlement!.total, actionSettlement!.currency)}
+                    </dd>
+                  </>
+                )}
+                <dt>记录编号</dt>
+                <dd className="code">{action.id}</dd>
+              </dl>
+              <p className="inline-note full">
+                {action.kind === "codes/end"
+                  ? "只结束Offy本地绑定，不会停用Shopify代码或活动。"
+                  : action.kind === "settlements/pay"
+                    ? "请先完成平台外付款。本操作重新核对订单后登记凭证，不会发起银行转账。"
+                    : "操作保留审计记录；不删除历史账本。"}
+              </p>
+              {action.kind.startsWith("settlements/p") || action.kind === "settlements/correct" ? (
+                <label className="full">
+                  付款流水 / 凭证引用
+                  <input name="reference" required maxLength={500} />
+                </label>
+              ) : null}
               <label className="full">
-                付款流水 / 凭证引用
-                <input name="reference" required maxLength={500} />
+                {action.kind === "settlements/pay" ? "付款备注" : "操作原因"}
+                <textarea name="reason" required maxLength={2000} />
               </label>
-            ) : null}
-            <label className="full">
-              {action.kind === "settlements/pay" ? "付款备注" : "操作原因"}
-              <textarea name="reason" required maxLength={2000} />
-            </label>
-            {action.kind === "settlements/pay" && (
-              <label className="checkbox full">
-                <input type="checkbox" required />
-                我已在平台外完成此批次付款，并核对金额与币种
-              </label>
-            )}
-            <div className="dialog-actions full">
+              {action.kind === "settlements/pay" && (
+                <label className="checkbox full">
+                  <input type="checkbox" required />
+                  我已在平台外完成此批次付款，并核对金额与币种
+                </label>
+              )}
+            </div>
+            <div className="dialog-actions">
               <button type="button" onClick={() => setAction(null)}>
                 返回
               </button>
-              <button className="primary" disabled={busy}>
-                {busy ? "核对中…" : "确认并记录"}
+              <button
+                className={
+                  action.kind === "codes/end" || action.kind === "settlements/cancel"
+                    ? "primary danger-button"
+                    : "primary"
+                }
+                disabled={busy}
+              >
+                {busy
+                  ? "核对中…"
+                  : action.kind === "codes/end"
+                    ? "确认结束绑定"
+                    : action.kind === "settlements/cancel"
+                      ? "确认取消批次"
+                      : "确认并记录"}
               </button>
             </div>
           </form>
@@ -1287,7 +1578,7 @@ export function AdminConsole({ view }: { view: View }) {
               <dd>
                 {date(data.health.worker?.at)}{" "}
                 {data.health.worker?.error && (
-                  <span className="error">{data.health.worker.error}</span>
+                  <span className="error">{errorLabel(data.health.worker.error)}</span>
                 )}
               </dd>
               <dt>最近完整增量扫描</dt>
@@ -1333,139 +1624,163 @@ export function AdminConsole({ view }: { view: View }) {
     </div>
   );
 }
-function Empty({ title, text }: { title: string; text: string }) {
+function Empty({
+  title,
+  text,
+  onReset,
+  action,
+  compact = false,
+}: {
+  title: string;
+  text: string;
+  onReset?: () => void;
+  compact?: boolean;
+  action?: { label: string; run: () => void };
+}) {
   return (
-    <div className="empty">
-      <span aria-hidden>↗</span>
+    <div className={compact ? "empty compact" : "empty"}>
       <h3>{title}</h3>
       <p>{text}</p>
+      {onReset && <button onClick={onReset}>清空筛选</button>}
+      {action && (
+        <button className="primary" onClick={action.run}>
+          {action.label}
+        </button>
+      )}
     </div>
   );
 }
 function PartnerForm({
   initial,
+  referralUrl,
   busy,
   onSubmit,
 }: {
   initial?: Cooperation;
+  referralUrl?: string;
   busy: boolean;
   onSubmit: (value: Cooperation) => Promise<void>;
 }) {
   return (
     <form
-      className="dialog-content form-grid"
+      className="dialog-form"
       onSubmit={async (e) => {
         e.preventDefault();
         await onSubmit(Object.fromEntries(new FormData(e.currentTarget)) as Cooperation);
       }}
     >
-      <label>
-        展示名
-        <input name="name" required maxLength={120} defaultValue={initial?.name} />
-      </label>
-      <label>
-        固定推广别名
-        <input
-          name="alias"
-          required
-          minLength={2}
-          maxLength={48}
-          pattern="[a-z0-9][a-z0-9-]{1,47}"
-          readOnly={Boolean(initial)}
-          defaultValue={initial?.alias}
-          placeholder="maya"
-        />
-      </label>
-      <label>
-        平台
-        <input
-          name="platform"
-          required
-          defaultValue={initial?.platform}
-          placeholder="Instagram / YouTube"
-        />
-      </label>
-      <label>
-        联系邮箱
-        <input type="email" name="email" required defaultValue={initial?.email} />
-      </label>
-      <label className="full">
-        社媒主页
-        <input
-          name="socialUrl"
-          type="url"
-          required
-          pattern="https://.*"
-          defaultValue={initial?.socialUrl}
-        />
-      </label>
-      <label>
-        自定义佣金（%）
-        <input
-          name="rate"
-          required
-          type="number"
-          min="0"
-          max="100"
-          step="0.01"
-          defaultValue={initial?.rate}
-          placeholder="必填，例如 7.25"
-        />
-      </label>
-      <label>
-        合作状态
-        <select name="status" defaultValue={initial?.status ?? "draft"}>
-          <option value="draft">草稿</option>
-          <option value="active">合作中</option>
-          <option value="paused">已暂停</option>
-        </select>
-      </label>
-      <label>
-        合作开始日
-        <input name="startsAt" type="date" required defaultValue={initial?.startsAt} />
-      </label>
-      <label>
-        合作结束日
-        <input name="endsAt" type="date" required defaultValue={initial?.endsAt} />
-      </label>
-      <label className="full">
-        推广落地路径
-        <input
-          name="target"
-          required
-          defaultValue={initial?.target ?? "/products"}
-          placeholder="/products 或 /collections/系列"
-        />
-      </label>
-      <details className="full">
-        <summary>合同、视频与收款备注（可选）</summary>
-        <div className="form-grid optional-fields">
-          <label className="full">
-            合同链接
-            <input name="contractUrl" type="url" defaultValue={initial?.contractUrl} />
-          </label>
-          <label className="full">
-            签署状态
-            <input name="contractStatus" defaultValue={initial?.contractStatus} />
-          </label>
-          <label className="full">
-            视频交付 / 已发布链接
-            <textarea name="videos" defaultValue={initial?.videos} />
-          </label>
-          <label className="full">
-            收款方式 / 脱敏账号
-            <textarea name="payout" defaultValue={initial?.payout} />
-          </label>
-          <label className="full">
-            合作备注
-            <textarea name="notes" defaultValue={initial?.notes} />
-          </label>
-        </div>
-      </details>
-      <p className="inline-note full">
-        0%为有效比例；改比例仅影响之后创建的checkout。别名一经创建保留，不转给其他KOL。暂停不会停用Shopify优惠码。
-      </p>
-      <div className="dialog-actions full">
+      <div className="dialog-content form-grid">
+        <label className="full">
+          KOL 名称
+          <input name="name" required maxLength={120} defaultValue={initial?.name} />
+        </label>
+        <p className="inline-note full">
+          {referralUrl ? (
+            <>
+              固定推广链接：<span className="referral-url">{referralUrl}</span>
+              修改名称不会改变此链接。
+            </>
+          ) : (
+            "保存后自动生成唯一推广链接，例如 /r/maya；同名会自动区分，无需填写推广别名。"
+          )}
+        </p>
+        <label>
+          平台
+          <input
+            name="platform"
+            required
+            maxLength={100}
+            defaultValue={initial?.platform}
+            placeholder="Instagram / YouTube"
+          />
+        </label>
+        <label>
+          联系邮箱
+          <input type="email" name="email" required maxLength={254} defaultValue={initial?.email} />
+        </label>
+        <label className="full">
+          社媒主页（可选）
+          <input
+            name="socialUrl"
+            type="url"
+            maxLength={1000}
+            pattern="[Hh][Tt][Tt][Pp][Ss]://.*"
+            defaultValue={initial?.socialUrl}
+            placeholder="https://www.instagram.com/…（可留空）"
+          />
+        </label>
+        <label>
+          自定义佣金（%）
+          <input
+            name="rate"
+            required
+            type="number"
+            min="0"
+            max="100"
+            step="0.01"
+            defaultValue={initial?.rate}
+            placeholder="必填，例如 7.25"
+          />
+        </label>
+        <label>
+          合作状态
+          <select name="status" defaultValue={initial?.status ?? "draft"}>
+            <option value="draft">草稿</option>
+            <option value="active">合作中</option>
+            <option value="paused">已暂停</option>
+          </select>
+        </label>
+        <label>
+          合作开始日
+          <input name="startsAt" type="date" required defaultValue={initial?.startsAt} />
+        </label>
+        <label>
+          合作结束日
+          <input name="endsAt" type="date" required defaultValue={initial?.endsAt} />
+        </label>
+        <label className="full">
+          链接打开页面
+          <select name="target" required defaultValue={initial?.target ?? "/products"}>
+            <option value="/products">全部商品（/products）</option>
+            <option value="/">首页（/）</option>
+            {initial?.target && !["/", "/products"].includes(initial.target) && (
+              <option value={initial.target}>当前页面（{initial.target}）</option>
+            )}
+          </select>
+        </label>
+        <p className="muted small full">
+          粉丝点击推广链接后到达此页面；这里无需填写 /maya 等达人路径。
+        </p>
+        <details className="full">
+          <summary>合同、视频与收款备注（可选）</summary>
+          <div className="form-grid optional-fields">
+            <label className="full">
+              合同链接
+              <input name="contractUrl" type="url" defaultValue={initial?.contractUrl} />
+            </label>
+            <label className="full">
+              签署状态
+              <input name="contractStatus" defaultValue={initial?.contractStatus} />
+            </label>
+            <label className="full">
+              视频交付 / 已发布链接
+              <textarea name="videos" defaultValue={initial?.videos} />
+            </label>
+            <label className="full">
+              收款方式 / 脱敏账号
+              <textarea name="payout" defaultValue={initial?.payout} />
+            </label>
+            <label className="full">
+              合作备注
+              <textarea name="notes" defaultValue={initial?.notes} />
+            </label>
+          </div>
+        </details>
+        <p className="inline-note full">
+          0%为有效比例；改比例仅影响之后创建的checkout。别名一经创建保留，不转给其他KOL。暂停不会停用Shopify优惠码。
+        </p>
+      </div>
+      <div className="dialog-actions">
         <button className="primary" disabled={busy}>
           {busy ? "保存中…" : "保存合作"}
         </button>

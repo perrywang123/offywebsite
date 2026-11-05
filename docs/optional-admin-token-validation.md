@@ -1,5 +1,7 @@
 # 可选 Shopify Admin 令牌验收
 
+2026-11-05 补充：本文记录此前手动模式的验收；当前已支持自动续取，见 [新验收记录](admin-token-auto-renewal-validation.md)。
+
 日期：2026-11-02。本地实现验证，不代表已向真实店铺申请权限、完成生产 Docker 部署或验证真实订单同步。
 
 ## 行为与范围
@@ -32,4 +34,4 @@
 
 截图：[桌面](design/kol-admin/optional-admin-token-1440.jpg)、[手机](design/kol-admin/optional-admin-token-375.jpg)。截图为空的隔离测试库，不能当作生产没有记录的证据。
 
-服务器操作见 [部署手册](deployment.md#手动配置-shopify-admin-令牌可选)。线上需先拉取本次代码；如果原先误填 Storefront 令牌而暂不接入 Admin API，应将 `SHOPIFY_ADMIN_TOKEN` 清空后只发布后台，保持 `SHOPIFY_STOREFRONT_TOKEN` 原值。
+服务器操作见 [部署手册](deployment.md#配置-shopify-admin-连接可选)。线上需先拉取本次代码；如果原先误填 Storefront 令牌而暂不接入 Admin API，应将 `SHOPIFY_ADMIN_TOKEN` 清空后只发布后台，保持 `SHOPIFY_STOREFRONT_TOKEN` 原值。

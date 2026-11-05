@@ -48,23 +48,36 @@ SHOPIFY_ADMIN_TOKEN=
 
 新功能与结算开关独立。上线前完成真实Shopify/税/付款退款/归因核验，再单独开启结算；部署脚本不会代替这些验收。
 
-### 手动配置 Shopify Admin 令牌（可选）
+### 配置 Shopify Admin 连接（可选）
 
-后台不强依赖 Admin 令牌：未配置时仍可部署、登录、管理本地合作记录、查看历史账目和结账诊断。后台提示 Shopify 尚未配置，远程订单/优惠码操作返回明确错误；worker 保留待同步任务和扫描游标，只执行本地清理并记录暂停状态，不把这次运行当作 Shopify 同步成功。已填写但无效/权限不足的令牌仍会产生真实同步错误，部署的 worker 健康检查仍会失败；暂不接入时应清空错误值。
+后台不强依赖 Admin 凭据：未配置时仍可部署、登录、管理本地合作记录、查看历史账目和结账诊断。远程操作明确报错；worker 保留队列和游标，只做本地维护，不把运行当作远程同步成功。已配置但无效的凭据仍产生真实错误，可能使 worker 健康检查失败。
 
-在服务器实际选中的私密运行文件中手动填写 `SHOPIFY_ADMIN_TOKEN` 即可；不自动获取、续期或向 Shopify 申请权限，也不需要 Client ID/Client secret。原 `SHOPIFY_STOREFRONT_TOKEN` 继续供独立站使用，两种令牌不能混用。详细权限、有效期与来源说明见 [KOL 运行手册](kol-platform-operations.md#手动管理-admin-令牌)。
+推荐在实际选中的服务器私密运行文件中一次填写 `SHOPIFY_ADMIN_CLIENT_ID` 与 `SHOPIFY_ADMIN_CLIENT_SECRET`，由后台自动获取、缓存和续取已安装应用的 Admin token。完整 pair 优先于历史 `SHOPIFY_ADMIN_TOKEN`；仅填一项会被预检拒绝。两项全空时仍兼容手动令牌；三项全空维持可选连接行为。原 `SHOPIFY_STOREFRONT_TOKEN` 继续供独立站使用，不能混用。详细权限、有效期与错误说明见 [KOL 运行手册](kol-platform-operations.md#admin-令牌自动续取与手动兼容)。
 
-以现有服务器目录为例：
+代码推送后，在现有服务器目录执行：
 
 ```bash
 cd /root/offywebsite
-# 编辑实际使用的私密文件；将 SHOPIFY_ADMIN_TOKEN 留空或换成真实 Admin API access token
-nano .env
+git pull --ff-only
+# 编辑实际使用的私密文件；填应用凭据，不能把秘密提交Git
+vi .env
 bash deploy/update-admin.sh --check
 bash deploy/update-admin.sh
 ```
 
-如原本使用 `--env-file FILE`，编辑该文件并在两条命令中继续传同一个参数。仅 `docker compose restart` 不会载入修改后的环境。后台部署会按原流程构建/复用缓存、备份共享数据库并重新创建 admin，随后检查 worker 和入口；不会为了令牌变化重建或重启主站，不改变端口、数据库卷或归因密钥。仅令牌值变化不影响构建参数。后续主站独立发布也不会因后台已有不同 Admin 令牌而被拦截；店铺、共享数据库与归因认证配置仍须匹配。
+私密配置键（真实值只保存在服务器；以下是占位说明）：
+
+凭据来源是 Shopify Dev Dashboard 中已安装的 **Offy Admin → Settings → Credentials**，不是 Headless 页面中的 public/private Storefront token。
+
+```dotenv
+SHOPIFY_ADMIN_CLIENT_ID=填写已安装应用的Client_ID
+SHOPIFY_ADMIN_CLIENT_SECRET=填写同一个应用的Client_Secret
+SHOPIFY_ADMIN_TOKEN=
+```
+
+如原本使用 `--env-file FILE`，编辑该文件并在两条部署命令中继续传同一个参数。仅 `docker compose restart` 不会载入修改后的环境。后台部署按原流程构建/复用缓存、备份共享数据库并重新创建 admin，随后检查 worker 和入口；不会为了应用凭据变化重建或重启主站，不改变端口、数据库卷或归因密钥。后台新的 Client ID/Secret 不传给主站和 worker，不进 build args、镜像或浏览器。无需为了自动认证同时发布独立站。
+
+部署后在“连接与同步”检查读取权限；以后续期自动完成。应用需预先安装且符合 client credentials 使用条件，服务器可访问 Shopify；自动续取不会申请新权限。没有 `write_discounts` 时仍不能追加优惠码。只修改服务器配置，不需要把秘密推送到 Git。店铺、共享数据库与归因认证配置仍须匹配。
 
 ## Nginx首次接入
 
@@ -231,7 +244,7 @@ DEPLOY_BUILD_CPUS=1
 
 ## 失败与恢复
 
-旧版 `KOL_ENABLED=true is required by --kol` 已在2026-11-01修复。服务器先 `git pull --ff-only` 获取新脚本，再运行 `bash deploy/update-storefront.sh --kol --check`。显式模式作为本次启用，不要求修改文件中的默认 `false`。三个内部认证值自动准备，通知签名可选，首次owner从服务端哈希配置初始化。缺少真实Shopify Admin token或后台HTTPS地址时仍会列出键名并指明配置文件。检查通过后先单独发布主站，再执行 `bash deploy/update-admin.sh`；整套入口保留为可选方式。
+旧版 `KOL_ENABLED=true is required by --kol` 已在2026-11-01修复。服务器先 `git pull --ff-only` 获取新脚本，再运行 `bash deploy/update-storefront.sh --kol --check`。显式模式作为本次启用，不要求修改文件中的默认 `false`。三个内部认证值自动准备，通知签名可选，首次owner从服务端哈希配置初始化。缺少后台HTTPS地址或应用凭据只填一项时仍会列出键名并指明配置文件。检查通过后先单独发布主站，再执行 `bash deploy/update-admin.sh`；整套入口保留为可选方式。
 
 备份在持久卷中，与迁移前状态一致。配置备份/源码排除规则不会让业务卷被rsync删除。回退应用前确认新旧schema兼容；需要恢复DB时停写、保留当前卷、从经过完整性校验的备份恢复到新文件，再确认财务合计和只读数据。脚本不自动回滚数据库或撤销Shopify外部操作。
 

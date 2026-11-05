@@ -15,7 +15,10 @@
 - SQLite 订阅/旧支付会话/订单；Stripe 验签 webhook，PayPal 同步 capture。
 - 自 canonical、首页语义 H1、Product/Offer、BreadcrumbList、Organization/WebSite、FAQPage；sitemap/robots。
 - Docker/Compose、nginx、服务启动迁移、GeoIP 国家判定与配置诊断。
-- 可选KOL平台：四页后台、独立入口/管理员、合作版本、自定义佣金、当次链路、双方式码、Shopify财务核对、分币种账本/月结与审计；默认关闭。见 [运行手册](kol-platform-operations.md)。
+- 可选KOL平台：合作、优惠码、订单、月结及诊断五个后台栏目、独立入口/管理员、合作版本、自定义佣金、当次链路、双方式码、Shopify财务核对、分币种账本/月结与审计；默认关闭。见 [运行手册](kol-platform-operations.md)。
+- 2026-11-04 合作表单：单一 KOL 名称输入、服务端自动分配固定唯一链接，社媒主页可选，落地页选择，字段级中文错误；保留旧别名和历史条款，无数据库迁移。见 [表单验收](partner-form-validation.md)。
+- 2026-11-04 后台侧栏采用站内导航与持久控制台，切换栏目后台刷新、保留框架及各账簿栏目独立筛选，错误和认证失效状态明确处理。首次进入连接态与结账诊断局部读取仍保留。见 [导航验收](admin-navigation-validation.md)。
+- 2026-11-04 后台完成交互/视觉专项改造：统一字段、清空和日期反馈，手机折叠筛选与带标签记录，独立弹窗正文/页脚及操作目标摘要；五栏目隔离数据、空库与45组宽度验收完成。交互62→86、视觉58→86为专家启发式评分，非用户实验；见 [专项验收](admin-usability-validation.md)。实现已完成本地验收，生产状态以服务器部署结果为准。
 
 2026-11-01 新增匿名结账诊断：购物袋点击、前置验证、服务端商品核对、Shopify 请求/响应与生成链接写入共用 SQLite；后台第五页筛选、时间线和有审计的原文查看。采集独立于 KOL 开关，记录 30 天/原文加密 7 天。见 [运行说明](checkout-diagnostics.md) 与 [验收](checkout-diagnostics-validation.md)。尚未部署生产。
 
@@ -55,4 +58,4 @@ KOL平台实施与隔离验收见 [记录](kol-platform-validation.md)；运行�
 
 构建流程已改为lint先行，随后Next.js编译和内置类型检查，避免两类检查并发；阶段进度/耗时与私密Docker构建日志已补齐。服务器日志位于 `.deploy-logs/`，不进入源码交付；仍需在tmux内启动长任务，不能凭本地测试认定服务器长等待根因已修复。见 [串行构建验收](serial-build-validation.md)。
 
-2026-11-02：Shopify Admin 令牌采用可选的服务器手动配置，不自动获取或续期。未配置时不阻止后台部署/登录、本地记录及结账诊断；worker 仅做本地维护并标记同步暂停，保留远程队列和扫描进度，显式 Shopify 操作返回配置错误。令牌可通过后台独立发布替换，不要求主站同时更新；共享数据库、店铺和归因认证检查保留。已配置令牌的权限/同步失败与财务核验门槛不被跳过。见 [运行手册](kol-platform-operations.md#手动管理-admin-令牌) 与 [本地验收](optional-admin-token-validation.md)。
+2026-11-05：Shopify Admin 连接支持后台专用应用凭据自动获取、内存缓存和到期续取，保留手动令牌模式。无凭据仍可登录、读取本地记录和结账诊断；远程同步暂停并保留队列。Client ID/Secret 仅传入 admin，不进入主站、worker 或构建；可单独更新后台。自动续取不扩大 Shopify 权限，当前已安装应用为 `read_orders,read_discounts`，追加优惠码写权限仍未获批。应用卸载、无效凭据和授权失败继续明确报错。见 [运行手册](kol-platform-operations.md#admin-令牌自动续取与手动兼容) 与 [自动认证验收](admin-token-auto-renewal-validation.md)；此前手动模式验收保留为历史记录。

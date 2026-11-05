@@ -1,0 +1,464 @@
+[
+  {
+    "route": "partners",
+    "viewport": 360,
+    "docWidth": 360,
+    "firstRecordTop": 626.0234375,
+    "localScrollRegions": [],
+    "smallTargets": [],
+    "width": 360
+  },
+  {
+    "route": "codes",
+    "viewport": 360,
+    "docWidth": 360,
+    "firstRecordTop": 626.625,
+    "localScrollRegions": [],
+    "smallTargets": [],
+    "width": 360
+  },
+  {
+    "route": "orders",
+    "viewport": 360,
+    "docWidth": 360,
+    "firstRecordTop": 540.234375,
+    "localScrollRegions": [],
+    "smallTargets": [],
+    "width": 360
+  },
+  {
+    "route": "settlements",
+    "viewport": 360,
+    "docWidth": 360,
+    "firstRecordTop": 744.21875,
+    "localScrollRegions": [],
+    "smallTargets": [],
+    "width": 360
+  },
+  {
+    "route": "checkouts",
+    "viewport": 360,
+    "docWidth": 360,
+    "firstRecordTop": null,
+    "localScrollRegions": [],
+    "smallTargets": [],
+    "width": 360
+  },
+  {
+    "route": "partners",
+    "viewport": 375,
+    "docWidth": 375,
+    "firstRecordTop": 626.0234375,
+    "localScrollRegions": [],
+    "smallTargets": [],
+    "width": 375
+  },
+  {
+    "route": "codes",
+    "viewport": 375,
+    "docWidth": 375,
+    "firstRecordTop": 626.625,
+    "localScrollRegions": [],
+    "smallTargets": [],
+    "width": 375
+  },
+  {
+    "route": "orders",
+    "viewport": 375,
+    "docWidth": 375,
+    "firstRecordTop": 540.234375,
+    "localScrollRegions": [],
+    "smallTargets": [],
+    "width": 375
+  },
+  {
+    "route": "settlements",
+    "viewport": 375,
+    "docWidth": 375,
+    "firstRecordTop": 744.21875,
+    "localScrollRegions": [],
+    "smallTargets": [],
+    "width": 375
+  },
+  {
+    "route": "checkouts",
+    "viewport": 375,
+    "docWidth": 375,
+    "firstRecordTop": 769.21875,
+    "localScrollRegions": [],
+    "smallTargets": [],
+    "width": 375
+  },
+  {
+    "route": "partners",
+    "viewport": 768,
+    "docWidth": 768,
+    "firstRecordTop": 546.984375,
+    "localScrollRegions": [],
+    "smallTargets": [],
+    "width": 768
+  },
+  {
+    "route": "codes",
+    "viewport": 768,
+    "docWidth": 768,
+    "firstRecordTop": 660.671875,
+    "localScrollRegions": [
+      {
+        "focusable": "0",
+        "label": "优惠码清单"
+      },
+      {
+        "focusable": "0",
+        "label": "发码任务清单"
+      }
+    ],
+    "smallTargets": [],
+    "width": 768
+  },
+  {
+    "route": "orders",
+    "viewport": 768,
+    "docWidth": 768,
+    "firstRecordTop": 767.0703125,
+    "localScrollRegions": [
+      {
+        "focusable": "0",
+        "label": "订单佣金清单"
+      }
+    ],
+    "smallTargets": [],
+    "width": 768
+  },
+  {
+    "route": "settlements",
+    "viewport": 768,
+    "docWidth": 768,
+    "firstRecordTop": 737.0703125,
+    "localScrollRegions": [
+      {
+        "focusable": "0",
+        "label": "月结批次清单"
+      }
+    ],
+    "smallTargets": [],
+    "width": 768
+  },
+  {
+    "route": "checkouts",
+    "viewport": 768,
+    "docWidth": 768,
+    "firstRecordTop": 765.7734375,
+    "localScrollRegions": [],
+    "smallTargets": [],
+    "width": 768
+  },
+  {
+    "route": "partners",
+    "viewport": 900,
+    "docWidth": 900,
+    "firstRecordTop": 546.984375,
+    "localScrollRegions": [],
+    "smallTargets": [],
+    "width": 900
+  },
+  {
+    "route": "codes",
+    "viewport": 900,
+    "docWidth": 900,
+    "firstRecordTop": 660.671875,
+    "localScrollRegions": [],
+    "smallTargets": [],
+    "width": 900
+  },
+  {
+    "route": "orders",
+    "viewport": 900,
+    "docWidth": 900,
+    "firstRecordTop": 767.0703125,
+    "localScrollRegions": [],
+    "smallTargets": [],
+    "width": 900
+  },
+  {
+    "route": "settlements",
+    "viewport": 900,
+    "docWidth": 900,
+    "firstRecordTop": 737.0703125,
+    "localScrollRegions": [],
+    "smallTargets": [],
+    "width": 900
+  },
+  {
+    "route": "checkouts",
+    "viewport": 900,
+    "docWidth": 900,
+    "firstRecordTop": 765.7734375,
+    "localScrollRegions": [],
+    "smallTargets": [],
+    "width": 900
+  },
+  {
+    "route": "partners",
+    "viewport": 901,
+    "docWidth": 901,
+    "firstRecordTop": 318.484375,
+    "localScrollRegions": [],
+    "smallTargets": [],
+    "width": 901
+  },
+  {
+    "route": "codes",
+    "viewport": 901,
+    "docWidth": 901,
+    "firstRecordTop": 416.1796875,
+    "localScrollRegions": [
+      {
+        "focusable": "0",
+        "label": "优惠码清单"
+      },
+      {
+        "focusable": "0",
+        "label": "发码任务清单"
+      }
+    ],
+    "smallTargets": [],
+    "width": 901
+  },
+  {
+    "route": "orders",
+    "viewport": 901,
+    "docWidth": 901,
+    "firstRecordTop": 522.578125,
+    "localScrollRegions": [
+      {
+        "focusable": "0",
+        "label": "订单佣金清单"
+      }
+    ],
+    "smallTargets": [],
+    "width": 901
+  },
+  {
+    "route": "settlements",
+    "viewport": 901,
+    "docWidth": 901,
+    "firstRecordTop": 498.96875,
+    "localScrollRegions": [
+      {
+        "focusable": "0",
+        "label": "月结批次清单"
+      }
+    ],
+    "smallTargets": [],
+    "width": 901
+  },
+  {
+    "route": "checkouts",
+    "viewport": 901,
+    "docWidth": 901,
+    "firstRecordTop": 577.28125,
+    "localScrollRegions": [],
+    "smallTargets": [],
+    "width": 901
+  },
+  {
+    "route": "partners",
+    "viewport": 1024,
+    "docWidth": 1024,
+    "firstRecordTop": 302.4921875,
+    "localScrollRegions": [],
+    "smallTargets": [],
+    "width": 1024
+  },
+  {
+    "route": "codes",
+    "viewport": 1024,
+    "docWidth": 1024,
+    "firstRecordTop": 416.1796875,
+    "localScrollRegions": [
+      {
+        "focusable": "0",
+        "label": "优惠码清单"
+      },
+      {
+        "focusable": "0",
+        "label": "发码任务清单"
+      }
+    ],
+    "smallTargets": [],
+    "width": 1024
+  },
+  {
+    "route": "orders",
+    "viewport": 1024,
+    "docWidth": 1024,
+    "firstRecordTop": 522.578125,
+    "localScrollRegions": [
+      {
+        "focusable": "0",
+        "label": "订单佣金清单"
+      }
+    ],
+    "smallTargets": [],
+    "width": 1024
+  },
+  {
+    "route": "settlements",
+    "viewport": 1024,
+    "docWidth": 1024,
+    "firstRecordTop": 492.578125,
+    "localScrollRegions": [
+      {
+        "focusable": "0",
+        "label": "月结批次清单"
+      }
+    ],
+    "smallTargets": [],
+    "width": 1024
+  },
+  {
+    "route": "checkouts",
+    "viewport": 1024,
+    "docWidth": 1024,
+    "firstRecordTop": 577.28125,
+    "localScrollRegions": [],
+    "smallTargets": [],
+    "width": 1024
+  },
+  {
+    "route": "partners",
+    "viewport": 1280,
+    "docWidth": 1280,
+    "firstRecordTop": 302.4921875,
+    "localScrollRegions": [],
+    "smallTargets": [],
+    "width": 1280
+  },
+  {
+    "route": "codes",
+    "viewport": 1280,
+    "docWidth": 1280,
+    "firstRecordTop": 416.1796875,
+    "localScrollRegions": [],
+    "smallTargets": [],
+    "width": 1280
+  },
+  {
+    "route": "orders",
+    "viewport": 1280,
+    "docWidth": 1280,
+    "firstRecordTop": 522.578125,
+    "localScrollRegions": [],
+    "smallTargets": [],
+    "width": 1280
+  },
+  {
+    "route": "settlements",
+    "viewport": 1280,
+    "docWidth": 1280,
+    "firstRecordTop": 492.578125,
+    "localScrollRegions": [],
+    "smallTargets": [],
+    "width": 1280
+  },
+  {
+    "route": "checkouts",
+    "viewport": 1280,
+    "docWidth": 1280,
+    "firstRecordTop": 577.28125,
+    "localScrollRegions": [],
+    "smallTargets": [],
+    "width": 1280
+  },
+  {
+    "route": "partners",
+    "viewport": 1440,
+    "docWidth": 1440,
+    "firstRecordTop": 318.4921875,
+    "localScrollRegions": [],
+    "smallTargets": [],
+    "width": 1440
+  },
+  {
+    "route": "codes",
+    "viewport": 1440,
+    "docWidth": 1440,
+    "firstRecordTop": 392.984375,
+    "localScrollRegions": [],
+    "smallTargets": [],
+    "width": 1440
+  },
+  {
+    "route": "orders",
+    "viewport": 1440,
+    "docWidth": 1440,
+    "firstRecordTop": 416.5859375,
+    "localScrollRegions": [],
+    "smallTargets": [],
+    "width": 1440
+  },
+  {
+    "route": "settlements",
+    "viewport": 1440,
+    "docWidth": 1440,
+    "firstRecordTop": 469.3828125,
+    "localScrollRegions": [],
+    "smallTargets": [],
+    "width": 1440
+  },
+  {
+    "route": "checkouts",
+    "viewport": 1440,
+    "docWidth": 1440,
+    "firstRecordTop": 593.28125,
+    "localScrollRegions": [],
+    "smallTargets": [],
+    "width": 1440
+  },
+  {
+    "route": "partners",
+    "viewport": 1920,
+    "docWidth": 1920,
+    "firstRecordTop": 318.4921875,
+    "localScrollRegions": [],
+    "smallTargets": [],
+    "width": 1920
+  },
+  {
+    "route": "codes",
+    "viewport": 1920,
+    "docWidth": 1920,
+    "firstRecordTop": 392.984375,
+    "localScrollRegions": [],
+    "smallTargets": [],
+    "width": 1920
+  },
+  {
+    "route": "orders",
+    "viewport": 1920,
+    "docWidth": 1920,
+    "firstRecordTop": 416.5859375,
+    "localScrollRegions": [],
+    "smallTargets": [],
+    "width": 1920
+  },
+  {
+    "route": "settlements",
+    "viewport": 1920,
+    "docWidth": 1920,
+    "firstRecordTop": 469.3828125,
+    "localScrollRegions": [],
+    "smallTargets": [],
+    "width": 1920
+  },
+  {
+    "route": "checkouts",
+    "viewport": 1920,
+    "docWidth": 1920,
+    "firstRecordTop": 593.28125,
+    "localScrollRegions": [],
+    "smallTargets": [],
+    "width": 1920
+  }
+]

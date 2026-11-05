@@ -15,6 +15,7 @@ describe("read-only KOL deployment verification", () => {
     try {
       migrate(drizzle(db), { migrationsFolder: "db/migrations" });
       const now = Date.now();
+      let automatic = false;
       const run = () =>
         spawnSync(
           process.execPath,
@@ -27,6 +28,8 @@ describe("read-only KOL deployment verification", () => {
               DATABASE_URL: path,
               SHOPIFY_STORE_DOMAIN: "offy.test.myshopify.com",
               SHOPIFY_ADMIN_TOKEN: "",
+              SHOPIFY_ADMIN_CLIENT_ID: automatic ? "dummy-id" : "",
+              SHOPIFY_ADMIN_CLIENT_SECRET: automatic ? "dummy-secret" : "",
             },
             encoding: "utf8",
           },
@@ -62,6 +65,10 @@ describe("read-only KOL deployment verification", () => {
         workerReady: true,
         shopifyAdminConfigured: false,
       });
+      automatic = true;
+      const configured = run();
+      expect(JSON.parse(configured.stdout)).toMatchObject({ shopifyAdminConfigured: true });
+      expect(configured.stdout + configured.stderr).not.toContain("dummy-secret");
       db.prepare("UPDATE kol_runtime SET value=? WHERE key='worker'").run(
         JSON.stringify({ error: null }),
       );

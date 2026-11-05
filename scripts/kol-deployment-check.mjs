@@ -47,7 +47,11 @@ else {
             ownerReady: true,
             workerReady: true,
             shopMatched: true,
-            shopifyAdminConfigured: Boolean(process.env.SHOPIFY_ADMIN_TOKEN?.trim()),
+            shopifyAdminConfigured: Boolean(
+              process.env.SHOPIFY_ADMIN_CLIENT_ID?.trim() ||
+              process.env.SHOPIFY_ADMIN_CLIENT_SECRET?.trim() ||
+              process.env.SHOPIFY_ADMIN_TOKEN?.trim(),
+            ),
           }),
         );
     } catch {
