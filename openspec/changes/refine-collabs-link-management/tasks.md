@@ -1,0 +1,7 @@
+- [x] Read actual Offy bindings and inspect the Shopify personalized link redirect without following it or creating a purchase.
+- [x] Validate the spec delta, then reproduce the current table mismatch with a failing test.
+- [x] Render numeric zero and explain its display-only meaning; retain raw null observations and the collection boundary.
+- [x] Reject duplicate official tracking identities transactionally, including changed targets and disabled reservations; preserve and disclose legacy duplicate records.
+- [x] Document the dt_id / PV / anonymous UV proposal as pending, not implemented.
+- [x] Run full tests, typecheck, lint, build and isolated responsive browser verification.
+- [ ] Archive, push Git, build a CI image and deploy only admin; verify storefront container and Nginx remain unchanged.

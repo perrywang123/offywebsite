@@ -100,3 +100,41 @@ it("allows a pending report identity to be supplied but locks a bound identity",
   expect(screen.getByLabelText(/^报告中的创作者标识（可后补）/)).toHaveAttribute("readonly");
   expect(screen.getByLabelText(/^固定推广别名/)).toHaveAttribute("readonly");
 });
+it("discloses historical duplicate tracking links without disabling them", async () => {
+  vi.stubGlobal(
+    "fetch",
+    vi.fn().mockResolvedValue(
+      Response.json({
+        creators: [unboundCreator, { ...unboundCreator, id: "another", alias: "maya-test" }],
+        reports: [],
+      }),
+    ),
+  );
+  render(<CollabsWorkspace siteUrl="https://isoffy.com" />);
+  const warning = await screen.findByText(/推广标识重复：dt_id=test-only/);
+  expect(warning).toHaveTextContent("推广标识重复：dt_id=test-only");
+  expect(warning).toHaveTextContent("/r/maya、/r/maya-test");
+  expect(screen.getAllByText(/短链已启用/)).toHaveLength(2);
+});
+it("explains a rejected duplicate binding and preserves the entered form", async () => {
+  const user = userEvent.setup();
+  vi.stubGlobal(
+    "fetch",
+    vi.fn(async (_url: string, options?: RequestInit) =>
+      options?.method === "POST"
+        ? Response.json({ error: "official_tracking_already_bound" }, { status: 409 })
+        : Response.json({ creators: [], reports: [] }),
+    ),
+  );
+  render(<CollabsWorkspace siteUrl="https://isoffy.com" />);
+  await user.click(await screen.findByRole("button", { name: "新增链接记录" }));
+  await user.type(screen.getByLabelText("达人名称"), "Maya");
+  await user.type(screen.getByLabelText(/^固定推广别名/), "maya");
+  await user.type(screen.getByLabelText("Collabs 官方推广链接"), unboundCreator.officialLink);
+  await user.click(screen.getByRole("button", { name: "保存链接记录" }));
+  expect(await screen.findByRole("alert")).toHaveTextContent(
+    "该官方 dt_id 或优惠码已绑定其他合作记录",
+  );
+  expect(screen.getByLabelText("达人名称")).toHaveValue("Maya");
+  expect(screen.getByLabelText("Collabs 官方推广链接")).toHaveValue(unboundCreator.officialLink);
+});

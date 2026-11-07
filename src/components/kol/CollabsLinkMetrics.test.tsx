@@ -35,7 +35,7 @@ const metrics = {
     },
   ],
 };
-it("shows per-link source, collection boundary and accessible daily evidence without presenting unknown visits as zero", async () => {
+it("shows missing daily request counts as zero while retaining collection boundaries", async () => {
   const user = userEvent.setup();
   render(<CollabsLinkMetrics initial={metrics} load={async () => metrics} />);
   expect(screen.getByRole("heading", { name: "Offy 短链打开次数" })).toBeInTheDocument();
@@ -49,7 +49,10 @@ it("shows per-link source, collection boundary and accessible daily evidence wit
   expect(screen.queryByText("累计 0 次")).not.toBeInTheDocument();
   await user.click(screen.getByRole("button", { name: /perry-test/ }));
   await user.click(screen.getByText("查看每日明细"));
-  expect(screen.getByRole("cell", { name: "未采集" })).toBeInTheDocument();
+  expect(screen.getByRole("cell", { name: /^0$/ })).toBeInTheDocument();
+  expect(screen.queryByRole("cell", { name: "未采集" })).not.toBeInTheDocument();
+  expect(screen.getByText(/未采集日期按 0 显示/)).toBeInTheDocument();
+  expect(screen.getByText("空白斜纹：未采集")).toBeInTheDocument();
   expect(screen.getByRole("cell", { name: "4" })).toBeInTheDocument();
 });
 it("keeps existing evidence visible on a failed period refresh", async () => {

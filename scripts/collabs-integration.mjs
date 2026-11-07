@@ -33,6 +33,16 @@ const pending = await call("collabs/creators", {
   enabled: true,
 });
 assert.equal(pending.creatorKey, null);
+await call(
+  "collabs/creators",
+  {
+    name: "Duplicate tracking simulation",
+    alias: pendingAlias + "-duplicate-tracking",
+    officialLink: site + "/collections/all?utm_source=test&dt_id=isolated-test-only",
+    enabled: true,
+  },
+  409,
+);
 const pendingShort = await fetch(site + "/r/" + pendingAlias, { redirect: "manual" });
 assert.equal(pendingShort.status, 303);
 assert.equal(pendingShort.headers.get("location"), pending.officialLink);

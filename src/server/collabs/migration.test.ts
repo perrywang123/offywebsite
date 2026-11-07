@@ -85,7 +85,12 @@ it("preserves bound evidence and previous storefront readers across the identity
     expect(() =>
       saveCreator(
         db,
-        { ...pending, id: undefined, alias: "existing" },
+        {
+          ...pending,
+          id: undefined,
+          alias: "existing",
+          officialLink: "https://isoffy.com/products?dt_id=separate-test",
+        },
         "owner",
         "https://isoffy.com",
       ),

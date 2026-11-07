@@ -138,6 +138,9 @@ export function CollabsLinkMetrics({
               </div>
               <details>
                 <summary>查看每日明细</summary>
+                <p className="muted">
+                  未采集日期按 0 显示，仅表示没有已记录请求，不代表历史实际访问量为零。
+                </p>
                 <div
                   className="table-scroll"
                   tabIndex={0}
@@ -155,7 +158,7 @@ export function CollabsLinkMetrics({
                       {current.daily.map((d) => (
                         <tr key={d.day}>
                           <td>{d.day}</td>
-                          <td>{d.count === null ? "未采集" : d.count}</td>
+                          <td>{d.count ?? 0}</td>
                         </tr>
                       ))}
                     </tbody>

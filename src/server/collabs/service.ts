@@ -2,6 +2,7 @@ import { createHash, randomUUID } from "node:crypto";
 import { and, desc, eq, lte, gte } from "drizzle-orm";
 import { z } from "zod";
 import { officialLink } from "@/lib/collabs/links";
+import { officialBindingKeys } from "@/lib/collabs/bindings";
 import {
   previewReport,
   reportFields,
@@ -44,43 +45,61 @@ export function saveCreator(
 ) {
   const input = creatorSchema.parse(raw),
     link = officialLink(input.officialLink, siteUrl),
+    bindingKeys = officialBindingKeys(link),
     now = Date.now();
-  return db.transaction((tx) => {
-    const old = input.id
-      ? tx.select().from(collabsCreators).where(eq(collabsCreators.id, input.id)).get()
-      : undefined;
-    if (input.id && !old) throw new Error("creator_missing");
-    if (
-      old &&
-      (old.alias !== input.alias ||
-        (old.creatorKey !== null && old.creatorKey !== input.creatorKey))
-    )
-      throw new Error("creator_identity_immutable");
-    const row = {
-      ...input,
-      id: old?.id ?? randomUUID(),
-      officialLink: link,
-      createdAt: old?.createdAt ?? now,
-      updatedAt: now,
-    };
-    tx.insert(collabsCreators)
-      .values(row)
-      .onConflictDoUpdate({
-        target: collabsCreators.id,
-        set: {
-          name: row.name,
-          creatorKey: row.creatorKey,
-          officialLink: link,
-          enabled: row.enabled,
-          updatedAt: now,
-        },
-      })
-      .run();
-    audit(tx, actor, "collabs.creator.save", row.id, { alias: row.alias, enabled: row.enabled });
-    if (old && old.creatorKey === null && row.creatorKey !== null)
-      audit(tx, actor, "collabs.creator.bind", row.id, { creatorKey: row.creatorKey });
-    return row;
-  });
+  return db.transaction(
+    (tx) => {
+      const old = input.id
+        ? tx.select().from(collabsCreators).where(eq(collabsCreators.id, input.id)).get()
+        : undefined;
+      if (input.id && !old) throw new Error("creator_missing");
+      if (
+        old &&
+        (old.alias !== input.alias ||
+          (old.creatorKey !== null && old.creatorKey !== input.creatorKey))
+      )
+        throw new Error("creator_identity_immutable");
+      const oldKeys = old ? officialBindingKeys(old.officialLink) : [];
+      // Allow maintenance of historical duplicates, but never introduce a new collision.
+      const addedKeys = bindingKeys.filter((key) => !oldKeys.includes(key));
+      if (addedKeys.length) {
+        const reserved = tx.select().from(collabsCreators).all();
+        if (
+          reserved.some(
+            (record) =>
+              record.id !== old?.id &&
+              officialBindingKeys(record.officialLink).some((key) => addedKeys.includes(key)),
+          )
+        )
+          throw new Error("official_tracking_already_bound");
+      }
+      const row = {
+        ...input,
+        id: old?.id ?? randomUUID(),
+        officialLink: link,
+        createdAt: old?.createdAt ?? now,
+        updatedAt: now,
+      };
+      tx.insert(collabsCreators)
+        .values(row)
+        .onConflictDoUpdate({
+          target: collabsCreators.id,
+          set: {
+            name: row.name,
+            creatorKey: row.creatorKey,
+            officialLink: link,
+            enabled: row.enabled,
+            updatedAt: now,
+          },
+        })
+        .run();
+      audit(tx, actor, "collabs.creator.save", row.id, { alias: row.alias, enabled: row.enabled });
+      if (old && old.creatorKey === null && row.creatorKey !== null)
+        audit(tx, actor, "collabs.creator.bind", row.id, { creatorKey: row.creatorKey });
+      return row;
+    },
+    { behavior: "immediate" },
+  );
 }
 function metadata(batch: typeof collabsReports.$inferSelect) {
   const { originalEncrypted: _, mappingJson, totalsJson, warningsJson, ...rest } = batch;

@@ -11,7 +11,8 @@ import {
   reviewFinding,
 } from "./service";
 import type { ReportInput } from "@/lib/collabs/reports";
-import { kolAudit } from "../db/schema";
+import { collabsCreators, kolAudit } from "../db/schema";
+import { randomUUID } from "node:crypto";
 const input: ReportInput = {
   filename: "official.csv",
   csv: "Creator,Order,Currency,Sales,Commission\nMaya,#1040,USD,41.31,3.10",
@@ -36,6 +37,113 @@ const pendingCreator = {
   officialLink: "https://isoffy.com/products?dt_id=test-only",
   enabled: true,
 };
+describe("unique official tracking bindings", () => {
+  it.each([
+    "https://isoffy.com/collections/new?utm_source=video&dt_id=test-only",
+    "https://isoffy.com/products?dt_id=test%2Donly&utm_source=another",
+    "https://isoffy.com/discount/FANS?dt_id=test-only&redirect=/products",
+  ])("rejects another alias with the same decoded dt_id: %s", (officialLink) => {
+    const db = testDb();
+    saveCreator(db, pendingCreator, "owner", "https://isoffy.com");
+    const before = db.select().from(kolAudit).all();
+    expect(() =>
+      saveCreator(
+        db,
+        { ...pendingCreator, alias: "another", officialLink },
+        "owner",
+        "https://isoffy.com",
+      ),
+    ).toThrow("official_tracking_already_bound");
+    expect(listCreators(db)).toHaveLength(1);
+    expect(db.select().from(kolAudit).all()).toEqual(before);
+  });
+  it("reserves disabled bindings and rejects a changed target without changing the record", () => {
+    const db = testDb();
+    const first = saveCreator(
+      db,
+      { ...pendingCreator, enabled: false },
+      "owner",
+      "https://isoffy.com",
+    );
+    const second = saveCreator(
+      db,
+      {
+        ...pendingCreator,
+        alias: "another",
+        officialLink: "https://isoffy.com/products?dt_id=distinct",
+      },
+      "owner",
+      "https://isoffy.com",
+    );
+    expect(() =>
+      saveCreator(
+        db,
+        { ...second, officialLink: first.officialLink },
+        "owner",
+        "https://isoffy.com",
+      ),
+    ).toThrow("official_tracking_already_bound");
+    expect(listCreators(db)).toEqual(expect.arrayContaining([first, second]));
+  });
+  it("reserves case-insensitive discount codes even without a dt_id", () => {
+    const db = testDb();
+    saveCreator(
+      db,
+      { ...pendingCreator, officialLink: "https://isoffy.com/discount/FANS" },
+      "owner",
+      "https://isoffy.com",
+    );
+    expect(() =>
+      saveCreator(
+        db,
+        {
+          ...pendingCreator,
+          alias: "another",
+          officialLink: "https://isoffy.com/discount/fans?redirect=/products&dt_id=distinct",
+        },
+        "owner",
+        "https://isoffy.com",
+      ),
+    ).toThrow("official_tracking_already_bound");
+  });
+  it("rejects ambiguous dt_id parameters before storing a binding", () => {
+    const db = testDb();
+    expect(() =>
+      saveCreator(
+        db,
+        { ...pendingCreator, officialLink: "https://isoffy.com/products?dt_id=first&dt_id=second" },
+        "owner",
+        "https://isoffy.com",
+      ),
+    ).toThrow("invalid_official_tracking");
+    expect(listCreators(db)).toHaveLength(0);
+  });
+  it("preserves historical duplicates and permits unchanged maintenance or a distinct replacement", () => {
+    const db = testDb();
+    const first = saveCreator(db, pendingCreator, "owner", "https://isoffy.com");
+    const legacy = { ...first, id: randomUUID(), alias: "legacy-test" };
+    db.insert(collabsCreators).values(legacy).run();
+    const edited = saveCreator(
+      db,
+      { ...legacy, name: "Legacy test", enabled: false, creatorKey: "real-report-key" },
+      "owner",
+      "https://isoffy.com",
+    );
+    expect(edited).toMatchObject({
+      id: legacy.id,
+      officialLink: first.officialLink,
+      enabled: false,
+    });
+    const distinct = saveCreator(
+      db,
+      { ...edited, officialLink: "https://isoffy.com/products?dt_id=distinct" },
+      "owner",
+      "https://isoffy.com",
+    );
+    expect(distinct.id).toBe(legacy.id);
+    expect(listCreators(db)).toEqual(expect.arrayContaining([first, distinct]));
+  });
+});
 describe("deferred Collabs report identity", () => {
   it("creates an enabled link before a report exists without inventing an identity", () => {
     const db = testDb();
@@ -48,7 +156,12 @@ describe("deferred Collabs report identity", () => {
     saveCreator(db, { ...pendingCreator, creatorKey }, "owner", "https://isoffy.com");
     saveCreator(
       db,
-      { ...pendingCreator, alias: "another-pending", creatorKey },
+      {
+        ...pendingCreator,
+        alias: "another-pending",
+        creatorKey,
+        officialLink: "https://isoffy.com/products?dt_id=another",
+      },
       "owner",
       "https://isoffy.com",
     );
@@ -90,14 +203,25 @@ describe("deferred Collabs report identity", () => {
     );
     const second = saveCreator(
       db,
-      { ...pendingCreator, alias: "another-pending" },
+      {
+        ...pendingCreator,
+        alias: "another-pending",
+        officialLink: "https://isoffy.com/products?dt_id=another",
+      },
       "owner",
       "https://isoffy.com",
     );
     expect(() =>
       saveCreator(db, { ...second, creatorKey: "Maya" }, "owner", "https://isoffy.com"),
     ).toThrow(/UNIQUE/);
-    expect(() => saveCreator(db, pendingCreator, "owner", "https://isoffy.com")).toThrow(/UNIQUE/);
+    expect(() =>
+      saveCreator(
+        db,
+        { ...pendingCreator, officialLink: "https://isoffy.com/products?dt_id=new" },
+        "owner",
+        "https://isoffy.com",
+      ),
+    ).toThrow(/UNIQUE/);
     expect(listCreators(db)).toEqual(expect.arrayContaining([first, second]));
   });
   it("does not infer report identity from an unbound name and keeps official amounts intact", async () => {

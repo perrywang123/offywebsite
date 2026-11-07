@@ -1,5 +1,6 @@
 "use client";
 import { COLLABS_CONTACT_EMAIL } from "@/lib/collabs/content";
+import { duplicateOfficialBindings } from "@/lib/collabs/bindings";
 import { CollabsLinkMetrics } from "./CollabsLinkMetrics";
 import { CollabsAttribution } from "./CollabsAttribution";
 import type { attributionState } from "@/server/collabs/events";
@@ -56,6 +57,9 @@ const errors: Record<string, string> = {
   official_redirect_missing:
     "Shopify 未返回此个性化链接的有效跳转，请从 Collabs 复制包含 dt_id 的完整链接后重试",
   official_tracking_required: "链接缺少 Collabs 追踪参数，请从 Collabs 原样复制",
+  invalid_official_tracking: "dt_id 格式无效或出现多次，请从 Collabs 原样复制官方链接",
+  official_tracking_already_bound:
+    "该官方 dt_id 或优惠码已绑定其他合作记录（含已停用记录）。请编辑原记录，或使用该 KOL 自己的官方推广链接。",
   invalid_storefront_target: "链接跳转目标不安全",
   invalid_report_money: "金额格式与所选数字格式不符",
   money_precision: "金额小数位超过该币种精度",
@@ -450,6 +454,12 @@ export function CollabsWorkspace({ siteUrl }: { siteUrl: string }) {
               新增链接记录
             </button>
           </div>
+          {duplicateOfficialBindings(state.creators).map(([key, aliases]) => (
+            <p className="message" role="status" key={key}>
+              推广标识重复：{key} 同时用于 {aliases.map((alias) => `/r/${alias}`).join("、")}。
+              历史记录已保留，请核对并整理测试记录；新增或改绑不能重复使用此标识。
+            </p>
+          ))}
           {panel === "creator" && (
             <form
               className="collabs-form"
