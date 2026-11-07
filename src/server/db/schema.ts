@@ -305,7 +305,7 @@ export const collabsCreators = sqliteTable("collabs_creators", {
   id: text("id").primaryKey(),
   alias: text("alias").notNull().unique(),
   name: text("name").notNull(),
-  creatorKey: text("creator_key").notNull().unique(),
+  creatorKey: text("creator_key").unique(),
   officialLink: text("official_link").notNull(),
   enabled: integer("enabled", { mode: "boolean" }).notNull(),
   createdAt: integer("created_at").notNull(),

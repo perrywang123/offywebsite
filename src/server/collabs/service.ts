@@ -24,7 +24,12 @@ export const creatorSchema = z.object({
   id: z.string().uuid().optional(),
   name: z.string().trim().min(1).max(100),
   alias: z.string().regex(/^[a-z0-9][a-z0-9-]{1,48}$/),
-  creatorKey: z.string().trim().min(1).max(254),
+  creatorKey: z
+    .string()
+    .trim()
+    .max(254)
+    .nullish()
+    .transform((value) => value || null),
   officialLink: z.string().max(2000),
   enabled: z.boolean(),
 });
@@ -33,7 +38,7 @@ export function listCreators(db: Db) {
 }
 export function saveCreator(
   db: Db,
-  raw: z.infer<typeof creatorSchema>,
+  raw: z.input<typeof creatorSchema>,
   actor: string,
   siteUrl: string,
 ) {
@@ -45,7 +50,11 @@ export function saveCreator(
       ? tx.select().from(collabsCreators).where(eq(collabsCreators.id, input.id)).get()
       : undefined;
     if (input.id && !old) throw new Error("creator_missing");
-    if (old && (old.alias !== input.alias || old.creatorKey !== input.creatorKey))
+    if (
+      old &&
+      (old.alias !== input.alias ||
+        (old.creatorKey !== null && old.creatorKey !== input.creatorKey))
+    )
       throw new Error("creator_identity_immutable");
     const row = {
       ...input,
@@ -58,10 +67,18 @@ export function saveCreator(
       .values(row)
       .onConflictDoUpdate({
         target: collabsCreators.id,
-        set: { name: row.name, officialLink: link, enabled: row.enabled, updatedAt: now },
+        set: {
+          name: row.name,
+          creatorKey: row.creatorKey,
+          officialLink: link,
+          enabled: row.enabled,
+          updatedAt: now,
+        },
       })
       .run();
     audit(tx, actor, "collabs.creator.save", row.id, { alias: row.alias, enabled: row.enabled });
+    if (old && old.creatorKey === null && row.creatorKey !== null)
+      audit(tx, actor, "collabs.creator.bind", row.id, { creatorKey: row.creatorKey });
     return row;
   });
 }
@@ -245,6 +262,13 @@ export async function reconcileReport(
   }
   const add = (code: string, row: number | null, detail: string) =>
     findings.push({ key: `${row ?? "all"}:${code}`, row, code, detail });
+  const pendingIdentities = creators.filter((c) => c.creatorKey === null).length;
+  if (!offset && pendingIdentities)
+    add(
+      "creator_identity_pending",
+      null,
+      `${pendingIdentities} 条合作记录的报告标识待绑定，暂不进行按创作者核对；不会按姓名或推广别名猜测归属。订单核对独立进行。`,
+    );
   if (!offset && batch.granularity !== "order")
     add(
       "aggregate_only",
@@ -259,7 +283,7 @@ export async function reconcileReport(
     );
   for (const [i, row] of batch.rows.slice(offset, end).entries()) {
     const line = offset + i + 2;
-    if (row.creator && !creators.some((c) => c.creatorKey === row.creator))
+    if (row.creator && !creators.some((c) => c.creatorKey !== null && c.creatorKey === row.creator))
       add("creator_unmapped", line, `来源创作者 ${row.creator} 尚未关联本地合作记录。`);
     if (batch.granularity !== "order") continue;
     let order: OrderEvidence | null;

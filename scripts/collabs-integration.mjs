@@ -1,5 +1,6 @@
 // Isolated HTTP workflow only. This script refuses any destination outside the local simulator.
 import assert from "node:assert/strict";
+import { randomUUID } from "node:crypto";
 const site = "http://127.0.0.1:3901",
   admin = "http://127.0.0.1:3902",
   mock = "http://127.0.0.1:3903";
@@ -24,6 +25,31 @@ assert.equal((await call("state")).accountingMode, "collabs");
 await call("partners", {}, 409);
 await call("settlements", {}, 409);
 await call("codes/generate", {}, 409);
+const pendingAlias = `qa-deferred-${randomUUID().slice(0, 8)}`;
+const pending = await call("collabs/creators", {
+  name: "Deferred identity simulation",
+  alias: pendingAlias,
+  officialLink: site + "/products?dt_id=isolated-test-only",
+  enabled: true,
+});
+assert.equal(pending.creatorKey, null);
+const pendingShort = await fetch(site + "/r/" + pendingAlias, { redirect: "manual" });
+assert.equal(pendingShort.status, 303);
+assert.equal(pendingShort.headers.get("location"), pending.officialLink);
+checks++;
+const bound = await call("collabs/creators", {
+  ...pending,
+  creatorKey: `isolated-report-source-${pendingAlias}`,
+});
+assert.equal(bound.id, pending.id);
+assert.equal(bound.alias, pendingAlias);
+await call("collabs/creators", { ...bound, creatorKey: null }, 409);
+await call("collabs/creators", { ...bound, creatorKey: "reassigned-test-only" }, 409);
+await call(
+  "collabs/creators",
+  { ...bound, id: undefined, alias: pendingAlias + "-duplicate" },
+  409,
+);
 const existing = (await call("collabs")).creators.find((c) => c.alias === "qa-collabs");
 await call("collabs/creators", {
   id: existing?.id,

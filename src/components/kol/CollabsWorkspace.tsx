@@ -428,7 +428,7 @@ export function CollabsWorkspace({ siteUrl }: { siteUrl: string }) {
                     id: creator?.id,
                     name: f.get("name"),
                     alias: f.get("alias"),
-                    creatorKey: f.get("creatorKey"),
+                    creatorKey: String(f.get("creatorKey") ?? "").trim() || null,
                     officialLink: f.get("officialLink"),
                     enabled: f.get("enabled") === "on",
                   });
@@ -454,15 +454,18 @@ export function CollabsWorkspace({ siteUrl }: { siteUrl: string }) {
                   <small>{siteUrl}/r/别名</small>
                 </label>
                 <label>
-                  报告中的创作者标识
+                  报告中的创作者标识（可后补）
                   <input
                     name="creatorKey"
-                    required
                     maxLength={254}
-                    defaultValue={creator?.creatorKey}
-                    readOnly={!!creator}
+                    defaultValue={creator?.creatorKey ?? ""}
+                    readOnly={!!creator?.creatorKey}
                   />
-                  <small>与来源报告完全一致，创建后保留身份</small>
+                  <small>
+                    {creator?.creatorKey
+                      ? "已绑定来源报告标识，不能更改或清空"
+                      : "尚无官方报告可先留空，取得真实报告后再绑定一次；不影响推广短链"}
+                  </small>
                 </label>
                 <label>
                   Collabs 官方推广链接
@@ -499,7 +502,11 @@ export function CollabsWorkspace({ siteUrl }: { siteUrl: string }) {
               {state.creators.map((c) => (
                 <article className="collabs-creator-card" key={c.id}>
                   <strong>{c.name}</strong>
-                  <p className="muted">来源标识：{c.creatorKey}</p>
+                  <p className="muted">
+                    {c.creatorKey
+                      ? `来源标识：${c.creatorKey}`
+                      : "报告标识待绑定 · 暂不进行按创作者核对"}
+                  </p>
                   <p>
                     {c.enabled ? "短链已启用" : "短链已停用"} · {siteUrl}/r/{c.alias}
                   </p>

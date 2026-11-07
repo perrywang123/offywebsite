@@ -11,6 +11,7 @@ import {
   reviewFinding,
 } from "./service";
 import type { ReportInput } from "@/lib/collabs/reports";
+import { kolAudit } from "../db/schema";
 const input: ReportInput = {
   filename: "official.csv",
   csv: "Creator,Order,Currency,Sales,Commission\nMaya,#1040,USD,41.31,3.10",
@@ -29,6 +30,100 @@ const input: ReportInput = {
   },
 };
 const key = Buffer.alloc(32, 7);
+const pendingCreator = {
+  name: "Maya",
+  alias: "pending-maya",
+  officialLink: "https://isoffy.com/products?dt_id=test-only",
+  enabled: true,
+};
+describe("deferred Collabs report identity", () => {
+  it("creates an enabled link before a report exists without inventing an identity", () => {
+    const db = testDb();
+    const creator = saveCreator(db, pendingCreator, "owner", "https://isoffy.com");
+    expect(creator).toMatchObject({ ...pendingCreator, creatorKey: null });
+    expect(listCreators(db)).toEqual([creator]);
+  });
+  it.each([null, "", "   "])("allows multiple unbound records for input %s", (creatorKey) => {
+    const db = testDb();
+    saveCreator(db, { ...pendingCreator, creatorKey }, "owner", "https://isoffy.com");
+    saveCreator(
+      db,
+      { ...pendingCreator, alias: "another-pending", creatorKey },
+      "owner",
+      "https://isoffy.com",
+    );
+    expect(listCreators(db).map((c) => c.creatorKey)).toEqual([null, null]);
+  });
+  it("binds a source once, records the binding and preserves alias and identity thereafter", () => {
+    const db = testDb();
+    const creator = saveCreator(db, pendingCreator, "owner", "https://isoffy.com");
+    const bound = saveCreator(
+      db,
+      { ...creator, creatorKey: " Maya " },
+      "owner",
+      "https://isoffy.com",
+    );
+    expect(bound).toMatchObject({ id: creator.id, alias: creator.alias, creatorKey: "Maya" });
+    expect(db.select().from(kolAudit).all()).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({ action: "collabs.creator.bind", entity: creator.id }),
+      ]),
+    );
+    for (const creatorKey of [null, "", "Other"])
+      expect(() =>
+        saveCreator(db, { ...bound, creatorKey }, "owner", "https://isoffy.com"),
+      ).toThrow("creator_identity_immutable");
+    expect(() =>
+      saveCreator(db, { ...bound, alias: "other-alias" }, "owner", "https://isoffy.com"),
+    ).toThrow("creator_identity_immutable");
+    saveCreator(db, { ...bound, name: "Updated display name" }, "owner", "https://isoffy.com");
+    expect(listCreators(db)).toHaveLength(1);
+    expect(listCreators(db)[0].creatorKey).toBe("Maya");
+  });
+  it("does not reassign a reserved report identity or alias", () => {
+    const db = testDb();
+    const first = saveCreator(
+      db,
+      { ...pendingCreator, creatorKey: "Maya" },
+      "owner",
+      "https://isoffy.com",
+    );
+    const second = saveCreator(
+      db,
+      { ...pendingCreator, alias: "another-pending" },
+      "owner",
+      "https://isoffy.com",
+    );
+    expect(() =>
+      saveCreator(db, { ...second, creatorKey: "Maya" }, "owner", "https://isoffy.com"),
+    ).toThrow(/UNIQUE/);
+    expect(() => saveCreator(db, pendingCreator, "owner", "https://isoffy.com")).toThrow(/UNIQUE/);
+    expect(listCreators(db)).toEqual(expect.arrayContaining([first, second]));
+  });
+  it("does not infer report identity from an unbound name and keeps official amounts intact", async () => {
+    const db = testDb();
+    const creator = saveCreator(db, pendingCreator, "owner", "https://isoffy.com");
+    const batch = importReport(db, input, "owner", { key, confirmed: true });
+    const lookup = async () => ({
+      id: "gid://shopify/Order/1040",
+      name: "#1040",
+      currency: "USD",
+      total: 4131,
+      canceled: false,
+      refunded: false,
+      financialStatus: "PAID",
+    });
+    const pending = await reconcileReport(db, batch.id, "owner", lookup);
+    expect(pending.findings.map((f) => f.code)).toEqual(
+      expect.arrayContaining(["creator_identity_pending", "creator_unmapped"]),
+    );
+    // Shopify order verification remains independent of creator attribution.
+    expect(pending.verifiedOrders).toBe(1);
+    expect(reportDetail(db, batch.id).rows[0].commission).toBe(310);
+    saveCreator(db, { ...creator, creatorKey: "Maya" }, "owner", "https://isoffy.com");
+    expect((await reconcileReport(db, batch.id, "owner", lookup)).findings).toEqual([]);
+  });
+});
 describe("immutable Collabs report evidence", () => {
   it("requires source attestation and stores only normalized fields outside encrypted originals", () => {
     const db = testDb();
