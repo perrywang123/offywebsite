@@ -29,10 +29,17 @@ function redirectZhPrefix(request: NextRequest): NextResponse | null {
 
 export default function middleware(request: NextRequest) {
   const path = request.nextUrl.pathname;
-  if (path === "/admin" || path.startsWith("/admin/") || path.startsWith("/r/"))
+  if (
+    path.startsWith("/discount/") ||
+    path.startsWith("/__shopify/") ||
+    path === "/admin" ||
+    path.startsWith("/admin/") ||
+    path.startsWith("/r/")
+  )
     return NextResponse.next();
   // 先处理历史 `/zh` 前缀,再交给 next-intl(它会 rewrite `/products` → `/en/products`,
   // 并把 `/en/products` 307 收敛到 `/products`)。
+  request.headers.set("x-offy-request-path", request.nextUrl.pathname + request.nextUrl.search);
   return redirectZhPrefix(request) ?? intlMiddleware(request);
 }
 

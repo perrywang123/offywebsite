@@ -1,3 +1,4 @@
+import { collabsMode } from "../../collabs/mode";
 import { env, isShopifyConfigured, kolEnabled } from "../../../lib/env";
 import { publicPath } from "../../../i18n/routing";
 import { getLiveProductByCode } from "../../catalog/live";
@@ -114,7 +115,7 @@ export class ShopifyPaymentProvider implements PaymentProvider {
     // 落点页 `/checkout/return` 负责清空袋子(方案 P0-4 / §2 F)。
     const returnUrl = `${env.SITE_URL}${publicPath(input.locale, "/checkout/return")}`;
     let intent: ReturnType<typeof createIntent> = null;
-    if (kolEnabled() && input.referralTicket) {
+    if (kolEnabled() && !collabsMode() && input.referralTicket) {
       try {
         intent = createIntent(getKolDb(), input.referralTicket, env.KOL_SIGNING_SECRET!);
       } catch {
@@ -137,6 +138,7 @@ export class ShopifyPaymentProvider implements PaymentProvider {
           returnUrl,
           intent?.reference,
           input.diagnostics,
+          input.shopifyTracking,
         ));
     try {
       const cart = await createCart(lines);

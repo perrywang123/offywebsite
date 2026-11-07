@@ -1,3 +1,4 @@
+import { requireOffyAccounting } from "../collabs/mode";
 import { randomUUID } from "node:crypto";
 import { and, eq, lte } from "drizzle-orm";
 import type { Db } from "./db";
@@ -86,6 +87,7 @@ export async function bindExistingCode(
   actor: string,
   now = Date.now(),
 ) {
+  requireOffyAccounting();
   canIssue(db, kolId, now);
   const code = normalizeCode(input);
   const reserved = db.select().from(kolCodeJobs).where(eq(kolCodeJobs.candidate, code)).get();
@@ -103,6 +105,7 @@ export async function queueCode(
   actor: string,
   now = Date.now(),
 ) {
+  requireOffyAccounting();
   canIssue(db, kolId, now);
   if (!(await g.scopes()).includes("write_discounts")) throw new Error("write_discounts_required");
   const campaign = await g.campaign(campaignId);
@@ -136,6 +139,7 @@ export async function queueCode(
   return job;
 }
 export async function processCodeJob(db: Db, id: string, g: CodeGateway, now = Date.now()) {
+  requireOffyAccounting();
   const job = db.transaction((tx) => {
     const j = tx.select().from(kolCodeJobs).where(eq(kolCodeJobs.id, id)).get();
     if (!j || ["bound", "failed"].includes(j.status) || j.nextAt > now || j.leaseUntil > now)
@@ -217,6 +221,7 @@ export async function processCodeJob(db: Db, id: string, g: CodeGateway, now = D
   }
 }
 export function retryCode(db: Db, id: string, actor: string) {
+  requireOffyAccounting();
   const job = db.select().from(kolCodeJobs).where(eq(kolCodeJobs.id, id)).get();
   if (!job || job.status === "bound") throw new Error("job_not_retryable");
   // Ambiguous writes only reconcile; definite async failures can safely re-submit the same unique code.
@@ -232,10 +237,12 @@ export function retryCode(db: Db, id: string, actor: string) {
   audit(db, actor, "code.retry", id, { candidate: job.candidate });
 }
 export function endBinding(db: Db, id: string, actor: string) {
+  requireOffyAccounting();
   db.update(kolCodes).set({ status: "ended" }).where(eq(kolCodes.id, id)).run();
   audit(db, actor, "code.end_local", id, { remoteUnchanged: true });
 }
 export async function refreshCode(db: Db, id: string, g: CodeGateway, actor: string) {
+  requireOffyAccounting();
   const c = db.select().from(kolCodes).where(eq(kolCodes.id, id)).get();
   if (!c) throw new Error("code_not_found");
   const remote = await g.lookup(c.normalized);

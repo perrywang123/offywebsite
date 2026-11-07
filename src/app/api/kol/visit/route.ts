@@ -1,7 +1,10 @@
+import { collabsMode } from "@/server/collabs/mode";
 import { env, kolEnabled } from "@/lib/env";
 import { getKolDb } from "@/server/kol/database";
 import { confirmReferral } from "@/server/kol/core";
 export async function POST(request: Request) {
+  if (collabsMode())
+    return Response.json({ active: false }, { headers: { "Cache-Control": "no-store" } });
   if (!kolEnabled()) return new Response(null, { status: 404 });
   if (request.headers.get("origin") !== new URL(env.SITE_URL).origin)
     return new Response(null, { status: 403 });

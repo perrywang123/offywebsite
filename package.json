@@ -39,6 +39,7 @@
   },
   "dependencies": {
     "@formatjs/intl-localematcher": "^0.8.13",
+    "@shopify/hydrogen": "2026.10.2",
     "@stripe/stripe-js": "^9.13.0",
     "better-sqlite3": "^13.0.3",
     "drizzle-orm": "^0.45.2",

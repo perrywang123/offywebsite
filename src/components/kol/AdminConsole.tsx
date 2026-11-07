@@ -1,12 +1,13 @@
 "use client";
 import Link from "next/link";
+import { CollabsWorkspace } from "./CollabsWorkspace";
 import { useCallback, useEffect, useRef, useState, type FormEvent } from "react";
 import type { Snapshot } from "@/server/kol/snapshot";
 import type { Cooperation } from "@/server/kol/core";
 import type { Campaign } from "@/server/kol/codes";
 import { decimal } from "@/server/kol/money";
 import { CheckoutDiagnostics } from "./CheckoutDiagnostics";
-type View = "partners" | "codes" | "orders" | "settlements" | "checkouts";
+type View = "collabs" | "partners" | "codes" | "orders" | "settlements" | "checkouts";
 type ConfirmationAction = { kind: string; id: string; title: string };
 type Filters = {
   query: string;
@@ -16,9 +17,15 @@ type Filters = {
   from: string;
   to: string;
 };
-type Data = Snapshot & { admin: { email: string }; siteUrl: string; settlementsEnabled: boolean };
+type Data = Snapshot & {
+  admin: { email: string };
+  siteUrl: string;
+  settlementsEnabled: boolean;
+  accountingMode?: "offy" | "collabs";
+};
 type Partner = Snapshot["partners"][number];
 const nav = [
+  ["collabs", "00", "Collabs 核对"],
   ["partners", "01", "合作达人"],
   ["codes", "02", "优惠码管理"],
   ["orders", "03", "订单佣金"],
@@ -471,18 +478,28 @@ export function AdminConsole({ view }: { view: View }) {
         </Link>
         <p className="sidebar-label">品牌合作管理</p>
         <nav aria-label="后台导航">
-          {nav.map(([key, num, label]) => (
-            <Link key={key} href={`/admin/${key}`} aria-current={view === key ? "page" : undefined}>
-              <span>{num}</span>
-              {label}
-            </Link>
-          ))}
+          {nav
+            .filter(([key]) =>
+              data.accountingMode === "collabs"
+                ? ["collabs", "checkouts"].includes(key)
+                : key !== "collabs",
+            )
+            .map(([key, num, label]) => (
+              <Link
+                key={key}
+                href={`/admin/${key}`}
+                aria-current={view === key ? "page" : undefined}
+              >
+                <span>{num}</span>
+                {label}
+              </Link>
+            ))}
         </nav>
         <div className="sidebar-bottom">
           <p>
-            当次链接归因
+            {data.accountingMode === "collabs" ? "Collabs 官方计佣" : "当次链接归因"}
             <br />
-            Shopify 事实账本
+            {data.accountingMode === "collabs" ? "Offy 只读核对" : "Shopify 事实账本"}
           </p>
           <small>{data.admin.email}</small>
           <button onClick={() => void operate("logout", {}, "已退出")}>退出登录 ↗</button>
@@ -494,17 +511,23 @@ export function AdminConsole({ view }: { view: View }) {
             <p className="eyebrow">
               OFFY / COLLABORATIONS <span>{title[1]}</span>
             </p>
-            <h1>{title[2]}</h1>
+            <h1>
+              {data.accountingMode === "collabs" && view !== "checkouts"
+                ? "Collabs 核对"
+                : title[2]}
+            </h1>
             <p className="muted">
-              {view === "partners"
-                ? "一位达人，一份清晰可核对的合作。"
-                : view === "codes"
-                  ? "代码在这里绑定，粉丝权益由 Shopify 执行。"
-                  : view === "orders"
-                    ? "只有可核验的当次链接成交，才进入佣金账本。"
-                    : view === "checkouts"
-                      ? "从一次点击，到 Shopify 响应，每一步都有据可查。"
-                      : "先核对，再锁单；线下付款，账内留痕。"}
+              {data.accountingMode === "collabs" && view !== "checkouts"
+                ? "官方来源、报告快照和异常证据，在一处核对。"
+                : view === "partners"
+                  ? "一位达人，一份清晰可核对的合作。"
+                  : view === "codes"
+                    ? "代码在这里绑定，粉丝权益由 Shopify 执行。"
+                    : view === "orders"
+                      ? "只有可核验的当次链接成交，才进入佣金账本。"
+                      : view === "checkouts"
+                        ? "从一次点击，到 Shopify 响应，每一步都有据可查。"
+                        : "先核对，再锁单；线下付款，账内留痕。"}
             </p>
           </div>
           <div className="header-actions">
@@ -529,6 +552,12 @@ export function AdminConsole({ view }: { view: View }) {
             连接凭据（应用凭据或手动令牌），订单同步与优惠码功能暂不可用。本地合作记录和结账诊断可正常查看。
           </p>
         )}
+        {data.accountingMode === "collabs" && view !== "checkouts" && (
+          <CollabsWorkspace siteUrl={data.siteUrl} />
+        )}
+        {view === "collabs" && data.accountingMode !== "collabs" && (
+          <p className="message">尚未启用 Collabs 模式，原有合作记录继续保留。</p>
+        )}
         {view === "checkouts" && <CheckoutDiagnostics />}
         {error && !editor && !detail && !codeMode && !settleForm && !action && !showHealth && (
           <div className="message error" role="alert">
@@ -546,7 +575,7 @@ export function AdminConsole({ view }: { view: View }) {
             </button>
           </div>
         )}
-        {view !== "checkouts" && (
+        {view !== "checkouts" && view !== "collabs" && data.accountingMode !== "collabs" && (
           <div className={view === "orders" ? "toolbar orders-toolbar" : "toolbar"}>
             <div className="search">
               <label htmlFor="admin-search">搜索</label>
@@ -605,7 +634,7 @@ export function AdminConsole({ view }: { view: View }) {
             </div>
           </div>
         )}
-        {view === "partners" && (
+        {data.accountingMode !== "collabs" && view === "partners" && (
           <>
             <div className="section-line">
               <p>
@@ -716,7 +745,7 @@ export function AdminConsole({ view }: { view: View }) {
             </div>
           </>
         )}
-        {view === "codes" && (
+        {data.accountingMode !== "collabs" && view === "codes" && (
           <>
             <p className="inline-note">
               暂停合作或结束本地绑定，不会停用 Shopify
@@ -875,7 +904,7 @@ export function AdminConsole({ view }: { view: View }) {
             </section>
           </>
         )}
-        {view === "orders" && (
+        {data.accountingMode !== "collabs" && view === "orders" && (
           <>
             <div className="filter-panel-controls">
               <button
@@ -1065,7 +1094,7 @@ export function AdminConsole({ view }: { view: View }) {
             )}
           </>
         )}
-        {view === "settlements" && (
+        {data.accountingMode !== "collabs" && view === "settlements" && (
           <>
             {!data.settlementsEnabled && (
               <p className="inline-note">
@@ -1206,9 +1235,11 @@ export function AdminConsole({ view }: { view: View }) {
         <footer className="admin-footer">
           <span>OFFY / 合作账簿</span>
           <span>
-            {view === "checkouts"
-              ? "时间 Asia/Shanghai · 记录30天 · 原文7天"
-              : "时间 Asia/Shanghai · 金额按交易币种 · 付款后冻结30天"}
+            {data.accountingMode === "collabs" && view !== "checkouts"
+              ? "Collabs 原生计佣 · 报表快照不代表实时余额"
+              : view === "checkouts"
+                ? "时间 Asia/Shanghai · 记录30天 · 原文7天"
+                : "时间 Asia/Shanghai · 金额按交易币种 · 付款后冻结30天"}
           </span>
         </footer>
       </main>

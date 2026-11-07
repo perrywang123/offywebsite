@@ -28,6 +28,7 @@ function setup(kol = true) {
     "compose-config.py",
     "runtime-secrets.py",
     "build-limits.py",
+    "prebuilt-images.py",
     "buildkitd.toml",
     "backup-db.mjs",
     "check-ingress.sh",
@@ -101,6 +102,7 @@ if '--env-file' in a:
    if key=='KOL_WORKER_SECRET':c['services']['kol-worker']['environment'][key]=os.environ[key]
  with open(os.environ['KOL_OBSERVATIONS'],'a') as f:f.write(json.dumps({'args':a,'kol':c['services']['app']['environment']['KOL_ENABLED'],'adminKol':c['services']['admin']['environment']['KOL_ENABLED'],'settlements':c['services']['app']['environment']['KOL_SETTLEMENTS_ENABLED'],'file':path})+'\\n')
 if 'config' in a and '--format' in a:print(json.dumps(c))
+if a[:2]==['image','inspect']:print(json.dumps([{'Os':'linux','Architecture':'amd64','Config':{'Labels':{'org.opencontainers.image.revision':os.environ.get('PREBUILT_REVISION','abc')}}}]))
 if a[:2]==['buildx','version']:print('github.com/docker/buildx v0.38.0')
 if a[:2]==['compose','build'] and '--help' in a:print('--builder string')
 if 'build' in a and '--help' not in a:
@@ -814,3 +816,43 @@ describe("independent server admin deployment", () => {
     60_000,
   );
 });
+
+it.each([false, true])(
+  "preserves prebuilt mode across Git re-exec and rejects stale source=%s",
+  (stale) => {
+    const f = setup();
+    try {
+      mkdirSync(join(f.dir, ".git"));
+      writeFileSync(
+        join(f.dir, "bin/git"),
+        `#!/bin/sh
+if [ "$1" = rev-parse ]; then
+ if [ "$2" = --show-toplevel ]; then pwd; else echo abc; fi
+fi
+exit 0
+`,
+        { mode: 0o755 },
+      );
+      const result = spawnSync(
+        "bash",
+        [join(f.dir, "deploy/update.sh"), "--storefront-only", "--kol", "--prebuilt"],
+        { env: { ...f.env, PREBUILT_REVISION: stale ? "old" : "abc" }, encoding: "utf8" },
+      );
+      expect(f.calls().some(isImageBuild)).toBe(false);
+      expect(f.calls().flat()).not.toContain("create");
+      if (stale) {
+        expect(result.status).not.toBe(0);
+        expect(result.stderr).toContain("revision differs");
+        expect(f.calls().flat()).not.toContain("up");
+        expect(f.calls().flat()).not.toContain("run");
+      } else {
+        expect(result.status, result.stderr).toBe(0);
+        expect(f.calls().some((a) => a.includes("up") && a.at(-1) === "app")).toBe(true);
+        expect(f.calls().some((a) => a.includes("up") && a.at(-1) === "admin")).toBe(false);
+      }
+    } finally {
+      rmSync(f.dir, { recursive: true, force: true });
+    }
+  },
+  15000,
+);

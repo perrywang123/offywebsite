@@ -14,6 +14,7 @@ import Database from "better-sqlite3";
 import { drizzle } from "drizzle-orm/better-sqlite3";
 import { migrate } from "drizzle-orm/better-sqlite3/migrator";
 async function main() {
+  const collabs = process.env.OFFY_TEST_COLLABS === "true";
   const automaticAdmin = process.env.OFFY_TEST_ADMIN_AUTH === "automatic";
   let adminGrants = 0,
     adminRequests = 0,
@@ -368,7 +369,30 @@ async function main() {
       } else if (q.includes("OffyOrders"))
         data = { orders: { nodes: [...orders.keys()].map((id) => ({ id })), pageInfo } };
       else if (q.includes("OffyOrder(")) data = { order: orders.get(v.id) ?? null };
-      else if (q.includes("CartCreate")) {
+      else if (q.includes("CollabsOrderName"))
+        data = {
+          orders: {
+            nodes: [...orders.values()]
+              .filter((o) => v.query.includes(o.name))
+              .map((o) => ({
+                ...o,
+                currentTotalPriceSet: o.totalPriceSet,
+                totalRefundedSet: bag(o.refunds.length ? "30.00" : "0.00"),
+              })),
+          },
+        };
+      else if (q.includes("CollabsOrder(")) {
+        const o = orders.get(v.id);
+        data = {
+          order: o
+            ? {
+                ...o,
+                currentTotalPriceSet: o.totalPriceSet,
+                totalRefundedSet: bag(o.refunds.length ? "30.00" : "0.00"),
+              }
+            : null,
+        };
+      } else if (q.includes("CartCreate")) {
         if (checkoutMode === "http_error")
           return send(res, { errors: [{ message: "Isolated rate limit" }] }, 429);
         if (checkoutMode === "graphql_error")
@@ -540,6 +564,9 @@ async function main() {
         STRIPE_WEBHOOK_SECRET: "",
         PAYPAL_CLIENT_ID: "",
         PAYPAL_CLIENT_SECRET: "",
+        KOL_ACCOUNTING_MODE: collabs ? "collabs" : "offy",
+        SHOPIFY_ANALYTICS_SHOP_ID: "",
+        SHOPIFY_STOREFRONT_ID: "",
         KOL_ENABLED: "true",
         KOL_SETTLEMENTS_ENABLED: "true",
         KOL_INGRESS_SECRET: ingress,

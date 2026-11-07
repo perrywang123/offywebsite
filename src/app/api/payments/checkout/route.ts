@@ -1,3 +1,5 @@
+import { collabsMode } from "@/server/collabs/mode";
+import { getDiscount, trackingContext } from "@/server/collabs/storefront";
 import { NextResponse } from "next/server";
 import { z } from "zod";
 import { env } from "@/lib/env";
@@ -47,6 +49,12 @@ export async function POST(request: Request) {
   // geo 头是随请求进来的,直接用 request 既等价又不依赖请求作用域。
   const country = pickCountry(request.headers, env.SHOPIFY_MARKET_COUNTRY);
 
+  const shopifyTracking = collabsMode()
+    ? {
+        context: trackingContext(request, country, parsed.locale === "en" ? "en" : "zh"),
+        discountCode: getDiscount(request.headers),
+      }
+    : undefined;
   const provider = resolveProvider(parsed.provider);
   const items = parsed.items.map((i) => ({ code: i.code, quantity: clampQuantity(i.quantity) }));
   const recording =
@@ -62,6 +70,7 @@ export async function POST(request: Request) {
   try {
     result = await provider.createCheckout({
       diagnostics: recording?.observe,
+      shopifyTracking,
       items,
       locale: parsed.locale === "en" ? "en" : "zh",
       email: parsed.email,
@@ -80,10 +89,12 @@ export async function POST(request: Request) {
   recording?.finish(result);
 
   if (result.ok) {
-    return NextResponse.json(
+    const response = NextResponse.json(
       { provider: result.provider, redirect: result.redirect, attemptId: recording?.id },
       { headers: { "Cache-Control": "no-store" } },
     );
+    shopifyTracking?.context.applyResponseHeaders(response.headers);
+    return response;
   }
   // 4xx 必须带上「哪些商品、为什么」—— 客户端据此在原地指名商品并让顾客重试,
   // 而不是把裸错误码(invalid_items / checkout_failed)印到界面上(方案 P0-3)。

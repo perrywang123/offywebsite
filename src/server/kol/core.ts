@@ -1,3 +1,4 @@
+import { requireOffyAccounting } from "../collabs/mode";
 import { createHmac, randomUUID, timingSafeEqual } from "node:crypto";
 import { and, eq, desc, sql } from "drizzle-orm";
 import { z } from "zod";
@@ -102,6 +103,7 @@ export function currentTerms(db: Db, id: string) {
     .get();
 }
 export function createPartner(db: Db, input: Cooperation, actor: string, now = Date.now()) {
+  requireOffyAccounting();
   const data = cooperationSchema.parse(input),
     id = randomUUID();
   return db.transaction((tx) => {
@@ -150,6 +152,7 @@ export function updatePartner(
   actor: string,
   now = Date.now(),
 ) {
+  requireOffyAccounting();
   const data = cooperationSchema.parse(input);
   return db.transaction((tx) => {
     const old = tx.select().from(kolPartners).where(eq(kolPartners.id, id)).get();
@@ -182,6 +185,7 @@ export function activePartner(db: Db, id: string, now: number) {
     : null;
 }
 export function startReferral(db: Db, alias: string, now = Date.now()) {
+  requireOffyAccounting();
   const p = db.select().from(kolPartners).where(eq(kolPartners.alias, alias.toLowerCase())).get();
   if (!p) return null;
   const active = activePartner(db, p.id, now);
@@ -197,6 +201,7 @@ export function startReferral(db: Db, alias: string, now = Date.now()) {
   return { id, target: JSON.parse(active.terms.data).target as string };
 }
 export function confirmReferral(db: Db, id: string, now = Date.now()): boolean {
+  requireOffyAccounting();
   return db.transaction((tx) => {
     const r = tx.select().from(kolReferrals).where(eq(kolReferrals.id, id)).get();
     if (!r || now - r.lastActiveAt > SESSION_MS || !activePartner(tx, r.kolId, now)) return false;
@@ -221,6 +226,7 @@ export function secureEqual(a: string, b: string) {
   return aa.length === bb.length && timingSafeEqual(aa, bb);
 }
 export function createIntent(db: Db, referralId: string, secret: string, now = Date.now()) {
+  requireOffyAccounting();
   const r = db.select().from(kolReferrals).where(eq(kolReferrals.id, referralId)).get();
   if (!r || r.landedAt === null || now - r.lastActiveAt > SESSION_MS) return null;
   const active = activePartner(db, r.kolId, now);

@@ -1,5 +1,7 @@
 # Offy KOL 合作后台完整方案 · V2.1
 
+> 2026-11-07 更新：已按用户确认加入 Collabs 主计佣模式，详见 [Collabs 运行说明](collabs-operations.md)。本文件下文的当次 session 归因、Offy 生成优惠码与本地月结属于兼容保留的 `offy` 模式；`collabs` 模式禁用这些写入，改为官方门户、报告导入和只读核对。本次生产发布与官方设置的完成状态以发布验收记录为准。
+
 状态：**用户已批准并完成首版实现；默认关闭，未部署生产**。实施范围/差异见 [验收记录](kol-platform-validation.md)，操作与限制见 [运行手册](kol-platform-operations.md)。更新日期：2026-10-31。配套 [交互原型](design/kol-admin/index.html)、[方案复核记录](kol-admin-review.md)。本版保留自定义佣金、当次session及独立端口，并按用户确认同时支持「绑定Shopify已有码」和「Offy生成新码并同步」。优惠规则仍由Shopify维护。
 
 当前项目已有 Next.js 15、Shopify Storefront/Hosted Checkout、SQLite/Drizzle、Docker 部署配置；已新增KOL专项管理员、访问链路、Shopify财务核对及人工结算。HTML原型仍为演示，正式实现见运行手册；不将原型数据当成真实账目。

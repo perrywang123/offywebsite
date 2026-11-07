@@ -1,3 +1,4 @@
+import { requireOffyAccounting } from "../collabs/mode";
 import { randomUUID } from "node:crypto";
 import { and, eq, inArray, lte, sql } from "drizzle-orm";
 import { z } from "zod";
@@ -144,6 +145,7 @@ export function calculateOrder(raw: unknown) {
   };
 }
 export function applyOrder(db: Db, raw: unknown, secret: string, now = Date.now()) {
+  requireOffyAccounting();
   // Keep only accounting evidence; never persist addresses, email or complete webhook bodies.
   const basic = z
     .object({
@@ -302,6 +304,7 @@ export function createSettlement(
   actor: string,
   now = Date.now(),
 ) {
+  requireOffyAccounting();
   if (!/^\d{4}-(?:0[1-9]|1[0-2])$/.test(month)) throw new Error("invalid_month");
   const [year, monthNumber] = month.split("-").map(Number);
   const monthEnd = Date.UTC(year, monthNumber, 1) - 8 * 3600000;
@@ -385,6 +388,7 @@ export async function lockSettlement(
   reconcile: () => Promise<unknown>,
   now = Date.now(),
 ) {
+  requireOffyAccounting();
   const before = checkedBatch(db, id);
   if (before.status !== "draft") throw new Error("invalid_settlement_state");
   await reconcile();
@@ -409,6 +413,7 @@ export async function paySettlement(
   reconcile: () => Promise<unknown>,
   now = Date.now(),
 ) {
+  requireOffyAccounting();
   if (!ref.trim() || ref.length > 500 || note.length > 2000)
     throw new Error("payment_reference_required");
   const before = checkedBatch(db, id);
@@ -446,6 +451,7 @@ export function cancelSettlement(
   actor: string,
   now = Date.now(),
 ) {
+  requireOffyAccounting();
   if (!reason.trim()) throw new Error("reason_required");
   db.transaction((tx) => {
     const b = checkedBatch(tx, id);
@@ -465,6 +471,7 @@ export function correctPayment(
   reason: string,
   actor: string,
 ) {
+  requireOffyAccounting();
   if (!reason.trim() || !reference.trim() || reference.length > 500 || reason.length > 2000)
     throw new Error("reason_required");
   db.transaction((tx) => {

@@ -1426,3 +1426,255 @@ pre {
     font-size: 12px;
   }
 }
+
+/* Collabs evidence workspace: source provenance before financial figures. */
+.collabs-workspace {
+  display: grid;
+  gap: 24px;
+  min-width: 0;
+}
+.collabs-policy {
+  display: flex;
+  justify-content: space-between;
+  gap: 32px;
+  padding: 28px;
+  background: #fff;
+  border: 1px solid #d6d1cd;
+  border-radius: 12px;
+}
+.collabs-policy h2 {
+  font-size: clamp(24px, 2.5vw, 32px);
+  margin: 8px 0 12px;
+}
+.collabs-policy p {
+  max-width: 760px;
+  line-height: 1.7;
+}
+.collabs-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 12px;
+}
+.collabs-policy > .collabs-actions {
+  flex-direction: column;
+  align-items: flex-start;
+  justify-content: center;
+  flex: 0 0 175px;
+}
+.collabs-workspace a.button {
+  padding: 12px 18px;
+  background: #1d1915;
+  color: white;
+  border-radius: 7px;
+  text-decoration: none;
+  min-height: 44px;
+}
+.collabs-workspace h2,
+.collabs-workspace h3,
+.collabs-workspace h4 {
+  font-weight: 650;
+}
+.collabs-section-head {
+  display: flex;
+  gap: 24px;
+  align-items: center;
+  justify-content: space-between;
+}
+.collabs-section-head h2 {
+  font-size: 21px;
+}
+.collabs-section-head p {
+  margin: 8px 0;
+  line-height: 1.6;
+}
+.collabs-section-head > button {
+  flex-shrink: 0;
+}
+.collabs-empty {
+  padding: 36px 24px;
+  text-align: center;
+  background: #fff;
+  border: 1px dashed #bdb6b1;
+  border-radius: 10px;
+}
+.collabs-empty h3 {
+  margin-bottom: 10px;
+}
+.collabs-empty p {
+  max-width: 660px;
+  margin: auto;
+  line-height: 1.7;
+}
+.collabs-report-list {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 285px), 1fr));
+  gap: 16px;
+}
+.collabs-workspace .collabs-report-card,
+.collabs-creator-card {
+  padding: 20px;
+  display: grid;
+  gap: 10px;
+  text-align: left;
+  background: white;
+  border: 1px solid #d6d1cd;
+  border-radius: 10px;
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+.collabs-workspace .collabs-report-card[aria-pressed="true"] {
+  border: 2px solid #1d1915;
+  padding: 19px;
+}
+.collabs-report-card strong {
+  font-size: 18px;
+}
+.collabs-report-card small,
+.collabs-creator-card p {
+  color: #67625e;
+  font-weight: 400;
+}
+.collabs-form,
+.collabs-detail {
+  display: grid;
+  gap: 20px;
+  padding: 24px;
+  background: #fff;
+  border: 1px solid #d6d1cd;
+  border-radius: 12px;
+  min-width: 0;
+}
+.collabs-form-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 20px;
+}
+.collabs-form label,
+.collabs-findings label {
+  display: grid;
+  gap: 8px;
+  font-size: 14px;
+  font-weight: 600;
+  min-width: 0;
+}
+.collabs-form small {
+  font-weight: 400;
+  color: #67625e;
+}
+.collabs-form input:not([type="checkbox"]),
+.collabs-form select,
+.collabs-findings input {
+  width: 100%;
+  min-width: 0;
+}
+.collabs-form label.collabs-checkbox {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  font-weight: 400;
+  line-height: 1.7;
+}
+.collabs-checkbox input {
+  width: 20px;
+  height: 20px;
+  flex-shrink: 0;
+  margin-top: 2px;
+}
+.collabs-form input[type="file"] {
+  padding: 10px;
+  background: #f5f3f0;
+}
+.collabs-form input[readonly] {
+  background: #f5f3f0;
+}
+.collabs-form > button {
+  justify-self: start;
+}
+.collabs-digest {
+  display: block;
+  font-size: 11px;
+  overflow-wrap: anywhere;
+  color: #67625e;
+}
+.collabs-totals {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(230px, 1fr));
+  gap: 16px;
+}
+.collabs-totals > div {
+  padding: 18px;
+  background: #f5f3f0;
+  border-radius: 8px;
+}
+.collabs-totals p {
+  display: flex;
+  gap: 16px;
+  justify-content: space-between;
+  margin-top: 12px;
+  font-size: 14px;
+}
+.collabs-findings {
+  display: grid;
+  gap: 16px;
+}
+.collabs-findings article {
+  padding: 18px;
+  background: #f9f6f0;
+  border-left: 3px solid #8b6545;
+  display: grid;
+  gap: 12px;
+}
+.collabs-findings form {
+  display: flex;
+  align-items: flex-end;
+  gap: 12px;
+}
+.collabs-findings label {
+  flex: 1;
+}
+.collabs-findings button {
+  flex-shrink: 0;
+}
+.collabs-detail .table-scroll {
+  max-height: 530px;
+}
+.collabs-detail td small {
+  display: block;
+  color: #67625e;
+  margin-top: 8px;
+  overflow-wrap: anywhere;
+}
+@media (max-width: 760px) {
+  .collabs-policy {
+    flex-direction: column;
+    padding: 20px;
+    gap: 16px;
+  }
+  .collabs-policy > .collabs-actions {
+    flex-direction: row;
+    flex-basis: auto;
+  }
+  .collabs-form-grid {
+    grid-template-columns: 1fr;
+  }
+  .collabs-section-head {
+    align-items: flex-start;
+    flex-direction: column;
+    gap: 12px;
+  }
+  .collabs-form,
+  .collabs-detail {
+    padding: 18px;
+  }
+  .collabs-findings form {
+    flex-direction: column;
+    align-items: stretch;
+  }
+}
+
+.collabs-workspace .collabs-report-card {
+  justify-content: stretch;
+  justify-items: start;
+  align-items: start;
+}

@@ -1,3 +1,7 @@
+import { headers } from "next/headers";
+import { pickCountry } from "@/lib/geo";
+import { ShopifyTrackingScripts, ShopifyPageTracking } from "@/components/collabs/ShopifyTracking";
+import { collabsMode } from "@/server/collabs/mode";
 import { notFound } from "next/navigation";
 import type { Metadata, Viewport } from "next";
 import { hasLocale, NextIntlClientProvider } from "next-intl";
@@ -77,15 +81,28 @@ export default async function LocaleLayout({
   // 避免每个组件各自发起请求;Shopify 不可达时 getLiveSeriesList 内部
 
   const series = await getLiveSeriesList().catch(() => []);
+  const tracking = collabsMode() && env.SHOPIFY_ANALYTICS_SHOP_ID && env.SHOPIFY_STORE_DOMAIN;
+  const country = tracking ? pickCountry(await headers(), env.SHOPIFY_MARKET_COUNTRY) : "US";
 
   return (
     <html lang={locale} suppressHydrationWarning>
+      <head>
+        {tracking && (
+          <ShopifyTrackingScripts
+            shopId={env.SHOPIFY_ANALYTICS_SHOP_ID!}
+            storefrontId={env.SHOPIFY_STOREFRONT_ID ?? ""}
+            domain={env.SHOPIFY_STORE_DOMAIN!}
+            country={country}
+          />
+        )}
+      </head>
       <body className="bg-cream text-ink min-h-screen font-sans antialiased">
         <script
           dangerouslySetInnerHTML={{ __html: "document.documentElement.classList.add('js')" }}
         />
         {/* 第 2 批 SEO:Organization + WebSite 全站各一份(由根布局统一输出)。 */}
-        {kolEnabled() && <ReferralBridge />}
+        {kolEnabled() && !collabsMode() && <ReferralBridge />}
+        {tracking && <ShopifyPageTracking />}
         <SiteJsonLd siteUrl={env.SITE_URL} />
         <NextIntlClientProvider messages={messages}>
           <CartProvider>

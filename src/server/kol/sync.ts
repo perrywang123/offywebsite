@@ -1,3 +1,4 @@
+import { collabsMode } from "../collabs/mode";
 import { createHmac } from "node:crypto";
 import { and, eq, inArray, lte, lt } from "drizzle-orm";
 import { z } from "zod";
@@ -133,7 +134,7 @@ export async function runWorker(db: Db, now = Date.now()) {
   const shopify = shopifyAdminConfigured() ? "configured" : "not_configured";
   try {
     // Keep pending remote work and scan progress intact until credentials exist.
-    if (shopify === "configured") {
+    if (shopify === "configured" && !collabsMode()) {
       await drainInbox(db, (id) => reconcileOrder(db, id), now);
       const jobs = db
         .select()

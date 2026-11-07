@@ -57,6 +57,13 @@
       "when": 1793526739007,
       "tag": "0007_checkout_diagnostics",
       "breakpoints": true
+    },
+    {
+      "idx": 8,
+      "version": "6",
+      "when": 1794036589283,
+      "tag": "0008_collabs_evidence",
+      "breakpoints": true
     }
   ]
 }

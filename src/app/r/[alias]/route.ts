@@ -1,3 +1,6 @@
+import { collabsMode } from "@/server/collabs/mode";
+import { listCreators } from "@/server/collabs/service";
+import { officialLink } from "@/lib/collabs/links";
 import { NextResponse } from "next/server";
 import { env, kolEnabled } from "@/lib/env";
 import { getKolDb } from "@/server/kol/database";
@@ -24,7 +27,17 @@ export async function GET(request: Request, { params }: { params: Promise<{ alia
   )
     return new Response(null, { status: 204, headers });
   try {
-    const r = startReferral(getKolDb(), alias);
+    if (collabsMode()) {
+      const creator = listCreators(getKolDb()).find((c) => c.alias === alias && c.enabled);
+      if (creator) {
+        const url = new URL(officialLink(creator.officialLink, env.SITE_URL));
+        for (const [key, value] of new URL(request.url).searchParams)
+          if ((key.startsWith("utm_") || key === "dt_id") && !url.searchParams.has(key))
+            url.searchParams.set(key, value);
+        return NextResponse.redirect(url, { status: 303, headers });
+      }
+    }
+    const r = collabsMode() ? null : startReferral(getKolDb(), alias);
     if (r) {
       const url = new URL(r.target, env.SITE_URL);
       url.searchParams.set("offy_visit", r.id);

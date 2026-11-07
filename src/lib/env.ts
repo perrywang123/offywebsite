@@ -20,6 +20,18 @@ const envSchema = z.object({
       .regex(/^scrypt:[a-f0-9]{32}:[a-f0-9]{128}$/)
       .optional(),
   ),
+  KOL_ACCOUNTING_MODE: z.enum(["offy", "collabs"]).default("offy"),
+  SHOPIFY_ANALYTICS_SHOP_ID: z.preprocess(
+    (v) => (v === "" ? undefined : v),
+    z
+      .string()
+      .regex(/^(?:gid:\/\/shopify\/Shop\/)?\d+$/)
+      .optional(),
+  ),
+  SHOPIFY_STOREFRONT_ID: z.preprocess(
+    (v) => (v === "" ? undefined : v),
+    z.string().regex(/^\d+$/).optional(),
+  ),
   KOL_ENABLED: z.enum(["true", "false"]).default("false"),
   KOL_SETTLEMENTS_ENABLED: z.enum(["true", "false"]).default("false"),
   KOL_INGRESS_SECRET: z.preprocess(

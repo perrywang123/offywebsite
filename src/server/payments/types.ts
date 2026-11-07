@@ -17,6 +17,11 @@ export interface ShippingInfo {
 }
 
 export interface CreateCheckoutInput {
+  /** Per-request Shopify consent/cookie context; never accepted from client JSON. */
+  shopifyTracking?: {
+    context: import("@shopify/hydrogen").ShopifyRequestContext;
+    discountCode?: string;
+  };
   /** Server-only diagnostic observer; must never influence commercial decisions. */
   diagnostics?: import("@/lib/checkout-diagnostics").CheckoutObserver;
   /** Opaque tab-local referral ticket; never accepts a KOL ID or client rate. */

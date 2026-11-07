@@ -4,16 +4,17 @@ set -euo pipefail
 umask 077
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 cd "$ROOT"
-SKIP_PULL=0; EXPLICIT_KOL=0; CHECK_ONLY=0; ADMIN_ONLY=0; STOREFRONT_ONLY=0; ENV_FILE=""
+SKIP_PULL=0; EXPLICIT_KOL=0; CHECK_ONLY=0; ADMIN_ONLY=0; STOREFRONT_ONLY=0; PREBUILT=0; ENV_FILE=""
 while [ "$#" -gt 0 ]; do
  case "$1" in
   --admin-only) ADMIN_ONLY=1; EXPLICIT_KOL=1; shift ;;
   --storefront-only) STOREFRONT_ONLY=1; shift ;;
   --skip-pull) SKIP_PULL=1; shift ;;
+  --prebuilt) PREBUILT=1; shift ;;
   --kol) EXPLICIT_KOL=1; shift ;;
   --check) CHECK_ONLY=1; shift ;;
   --env-file) ENV_FILE="${2:?Missing runtime env file}"; shift 2 ;;
-  --help|-h) printf 'Usage: bash deploy/update.sh [--kol] [--admin-only | --storefront-only] [--skip-pull] [--check] [--env-file FILE]\n--kol/admin-only enable KOL for this invocation; private config is not modified.\n--storefront-only builds/replaces app only, preserving admin/worker/proxy.\nRuntime file: explicit --env-file, otherwise .env, otherwise .env.production.\n'; exit 0 ;;
+  --help|-h) printf 'Usage: bash deploy/update.sh [--kol] [--admin-only | --storefront-only] [--skip-pull] [--prebuilt] [--check] [--env-file FILE]\n--kol/admin-only enable KOL for this invocation; private config is not modified.\n--storefront-only builds/replaces app only, preserving admin/worker/proxy.\n--prebuilt requires already-loaded Linux images labeled with the pulled Git revision; no server build.\nRuntime file: explicit --env-file, otherwise .env, otherwise .env.production.\n'; exit 0 ;;
   *) printf 'Unknown deployment option: %s\n' "$1" >&2; exit 1 ;;
  esac
 done
@@ -74,7 +75,7 @@ KOL="$(value kol)"
 NGINX_TARGET="$(value nginx_config)"
 if [ "$KOL" = true ] && [ "$STOREFRONT_ONLY" = 0 ] && [ -n "$NGINX_TARGET" ]; then command -v nginx >/dev/null || die 'Nginx is required for the explicitly selected config'; fi
 if [ "$CHECK_ONLY" = 1 ]; then
- python3 "$ROOT/deploy/build-limits.py" "$OFFY_CONFIG_JSON" --output "$OFFY_BUILDER_JSON" --check
+ if [ "$PREBUILT" = 0 ]; then python3 "$ROOT/deploy/build-limits.py" "$OFFY_CONFIG_JSON" --output "$OFFY_BUILDER_JSON" --check; fi
  say 'Preflight passed; no git pull, builder creation/start, build, backup, service update or Nginx change performed'
  exit 0
 fi
@@ -95,6 +96,7 @@ if [ "$SKIP_PULL" = 0 ]; then
   rm -f "$OFFY_CONFIG_JSON" "$OFFY_SECRETS_JSON" "$OFFY_BUILDER_JSON"
   MODE=(); [ "$ADMIN_ONLY" = 0 ] || MODE=(--admin-only)
   [ "$STOREFRONT_ONLY" = 0 ] || MODE=(--storefront-only)
+  [ "$PREBUILT" = 0 ] || MODE+=(--prebuilt)
   # Reload new code while retaining the same lock and release scope.
   OFFY_DEPLOY_LOCK_HELD=1 exec bash "$ROOT/deploy/update.sh" --skip-pull ${VALIDATE[@]+"${VALIDATE[@]}"} ${MODE[@]+"${MODE[@]}"} --env-file "$ENV_FILE"
  elif [ "$ADMIN_ONLY" = 1 ] || [ "$STOREFRONT_ONLY" = 1 ]; then
@@ -119,6 +121,10 @@ elif [ "$STOREFRONT_ONLY" = 1 ]; then
 fi
 TARGET=app; [ "$ADMIN_ONLY" = 0 ] || TARGET=admin
 BUILD=("$TARGET"); if [ "$KOL" = true ] && [ "$ADMIN_ONLY" = 0 ] && [ "$STOREFRONT_ONLY" = 0 ]; then BUILD=(app admin); fi
+if [ "$PREBUILT" = 1 ]; then
+ python3 "$ROOT/deploy/prebuilt-images.py" "$OFFY_CONFIG_JSON" "$OFFY_BUILD_REVISION" "${BUILD[@]}"
+ say "Using verified prebuilt images; production compilation skipped"
+else
 python3 "$ROOT/deploy/build-limits.py" "$OFFY_CONFIG_JSON" --output "$OFFY_BUILDER_JSON"
 OFFY_BUILD_BUILDER="$(python3 -c 'import json,sys; print(json.load(open(sys.argv[1]))["name"])' "$OFFY_BUILDER_JSON")"
 say "Building Linux Docker image(s): ${BUILD[*]}"
@@ -137,6 +143,7 @@ set -e
 printf '\nBuild finished at %s docker_exit=%s log_exit=%s\n' "$(date -u +%Y-%m-%dT%H:%M:%SZ)" "${OFFY_BUILD_CODES[0]}" "${OFFY_BUILD_CODES[1]}" | tee -a "$OFFY_BUILD_LOG"
 [ "${OFFY_BUILD_CODES[0]}" = 0 ] || die "Docker build failed or canceled (exit=${OFFY_BUILD_CODES[0]}); see $OFFY_BUILD_LOG"
 [ "${OFFY_BUILD_CODES[1]}" = 0 ] || die "build log output failed; see $OFFY_BUILD_LOG"
+fi
 say 'Backing up the shared persistent SQLite database before service replacement'
 "${COMPOSE[@]}" --profile kol run --rm --no-deps --entrypoint node "$TARGET" --input-type=module < "$ROOT/deploy/backup-db.mjs"
 wait_health(){

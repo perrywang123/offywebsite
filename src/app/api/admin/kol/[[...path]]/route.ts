@@ -1,3 +1,5 @@
+import { collabsGet, collabsPost } from "@/server/collabs/admin";
+import { collabsMode } from "@/server/collabs/mode";
 import { NextResponse } from "next/server";
 import { z } from "zod";
 import { eq } from "drizzle-orm";
@@ -72,12 +74,14 @@ export async function GET(request: Request, context: Context) {
     if (path[0] === "checkouts") return diagnosticAdminGet(request, path);
     const db = getKolDb(),
       admin = requireAdmin(db, request.headers);
+    if (path[0] === "collabs") return collabsGet(db, path);
     if (path[0] === "state")
       return json({
         ...snapshot(db),
         admin,
         siteUrl: env.SITE_URL,
-        settlementsEnabled: env.KOL_SETTLEMENTS_ENABLED === "true",
+        accountingMode: env.KOL_ACCOUNTING_MODE,
+        settlementsEnabled: !collabsMode() && env.KOL_SETTLEMENTS_ENABLED === "true",
       });
     if (path[0] === "connection")
       return json({ scopes: await codeGateway.scopes(), campaigns: await campaigns() });
@@ -140,6 +144,8 @@ export async function POST(request: Request, context: Context) {
       });
       return response;
     }
+    if (path[0] === "collabs") return collabsPost(db, path, admin.id, request);
+    if (collabsMode() && path[0] !== "sync") throw new AccessError("collabs_managed", 409);
     if (path[0] === "partners") {
       const input = cooperationSchema.parse(await request.json());
       if (path[1]) {

@@ -123,3 +123,49 @@ describe("Shopify checkout evidence", () => {
     ).resolves.toHaveProperty("checkoutUrl");
   });
 });
+
+it("carries Collabs discount and Shopify tracking context into the same country cart", async () => {
+  const { trackingContext } = await import("@/server/collabs/storefront");
+  const context = trackingContext(
+    new Request("https://isoffy.com/api/payments/checkout", {
+      method: "POST",
+      headers: {
+        cookie: "_shopify_essential=essential; offy_admin_session=private; _shopify_y=visitor",
+      },
+    }),
+    "GB",
+    "en",
+  );
+  const transport = vi.fn<typeof fetch>(async () =>
+    Response.json({
+      data: {
+        cartCreate: {
+          cart: {
+            id: "cart",
+            checkoutUrl: "https://shop.test/checkouts/real",
+            discountCodes: [{ code: "MAYA", applicable: true }],
+          },
+          userErrors: [],
+        },
+      },
+    }),
+  );
+  await cartCreate(
+    [{ merchandiseId: "v", quantity: 1 }],
+    transport,
+    "en",
+    "GB",
+    undefined,
+    undefined,
+    undefined,
+    { context, discountCode: "MAYA" },
+  );
+  const init = transport.mock.calls[0][1] as RequestInit;
+  const headers = new Headers(init.headers);
+  expect(headers.get("cookie")).toContain("_shopify_y=visitor");
+  expect(headers.get("cookie")).not.toContain("offy_admin");
+  const body = JSON.parse(String(init.body));
+  expect(body.query).toContain("buyerIdentity: { countryCode: GB }");
+  expect(body.variables.discountCodes).toEqual(["MAYA"]);
+  expect(body.query).toContain("discountCodes: $discountCodes");
+});

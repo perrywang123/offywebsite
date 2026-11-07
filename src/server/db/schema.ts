@@ -299,3 +299,70 @@ export const kolRuntime = sqliteTable("kol_runtime", {
   value: text("value").notNull(),
   updatedAt: integer("updated_at").notNull(),
 });
+
+// Imported Collabs evidence is independent of Offy's historical payable ledger.
+export const collabsCreators = sqliteTable("collabs_creators", {
+  id: text("id").primaryKey(),
+  alias: text("alias").notNull().unique(),
+  name: text("name").notNull(),
+  creatorKey: text("creator_key").notNull().unique(),
+  officialLink: text("official_link").notNull(),
+  enabled: integer("enabled", { mode: "boolean" }).notNull(),
+  createdAt: integer("created_at").notNull(),
+  updatedAt: integer("updated_at").notNull(),
+});
+export const collabsReports = sqliteTable("collabs_reports", {
+  id: text("id").primaryKey(),
+  digest: text("digest").notNull().unique(),
+  fileSha: text("file_sha").notNull(),
+  filename: text("filename").notNull(),
+  kind: text("kind").notNull(),
+  granularity: text("granularity").notNull(),
+  salesBasis: text("sales_basis").notNull(),
+  periodFrom: text("period_from").notNull(),
+  periodTo: text("period_to").notNull(),
+  mappingJson: text("mapping_json").notNull(),
+  totalsJson: text("totals_json").notNull(),
+  warningsJson: text("warnings_json").notNull(),
+  originalEncrypted: text("original_encrypted").notNull(),
+  rowCount: integer("row_count").notNull(),
+  status: text("status").notNull(),
+  supersedes: text("supersedes"),
+  actor: text("actor").notNull(),
+  createdAt: integer("created_at").notNull(),
+});
+export const collabsReportRows = sqliteTable(
+  "collabs_report_rows",
+  {
+    id: integer("id").primaryKey({ autoIncrement: true }),
+    reportId: text("report_id")
+      .notNull()
+      .references(() => collabsReports.id),
+    rowNumber: integer("row_number").notNull(),
+    dataJson: text("data_json").notNull(),
+  },
+  (t) => [index("collabs_rows_report_idx").on(t.reportId, t.rowNumber)],
+);
+export const collabsChecks = sqliteTable(
+  "collabs_checks",
+  {
+    id: text("id").primaryKey(),
+    reportId: text("report_id")
+      .notNull()
+      .references(() => collabsReports.id),
+    actor: text("actor").notNull(),
+    checkedAt: integer("checked_at").notNull(),
+    dataJson: text("data_json").notNull(),
+  },
+  (t) => [index("collabs_checks_report_idx").on(t.reportId, t.checkedAt)],
+);
+export const collabsReviews = sqliteTable("collabs_reviews", {
+  id: text("id").primaryKey(),
+  checkId: text("check_id")
+    .notNull()
+    .references(() => collabsChecks.id),
+  findingKey: text("finding_key").notNull(),
+  actor: text("actor").notNull(),
+  reason: text("reason").notNull(),
+  createdAt: integer("created_at").notNull(),
+});

@@ -45,6 +45,11 @@ def validate(c, explicit=False):
     need(any(v.get("target") == "/data" and v.get("type") == "volume" for v in app.get("volumes", [])), "app.volumes /data")
     ports = [p for p in app.get("ports", []) if p.get("target") == 3000]
     need(len(ports) == 1 and ports[0].get("host_ip") == "127.0.0.1" and str(ports[0].get("published")) == "3000", "app.ports loopback 3000")
+    mode = env.get("KOL_ACCOUNTING_MODE", "offy")
+    need(mode in ("offy", "collabs"), "KOL_ACCOUNTING_MODE")
+    if mode == "collabs":
+        need(env.get("KOL_SETTLEMENTS_ENABLED", "false") != "true", "Collabs manages payments; KOL_SETTLEMENTS_ENABLED must be false")
+        need(bool(re.fullmatch(r"(?:gid://shopify/Shop/)?[0-9]+", env.get("SHOPIFY_ANALYTICS_SHOP_ID", ""))), "SHOPIFY_ANALYTICS_SHOP_ID for Collabs tracking")
     need(env.get("KOL_ENABLED", "false") in ("true", "false"), "KOL_ENABLED")
     need(env.get("KOL_SETTLEMENTS_ENABLED", "false") in ("true", "false"), "KOL_SETTLEMENTS_ENABLED")
     key = env.get("CHECKOUT_DIAGNOSTICS_KEY", "")
@@ -75,7 +80,7 @@ def validate(c, explicit=False):
     client_id = admin_env.get("SHOPIFY_ADMIN_CLIENT_ID", "") or ""
     client_secret = admin_env.get("SHOPIFY_ADMIN_CLIENT_SECRET", "") or ""
     need(bool(client_id.strip()) == bool(client_secret.strip()), "SHOPIFY_ADMIN_CLIENT_ID and SHOPIFY_ADMIN_CLIENT_SECRET must be supplied together")
-    for key in ("NODE_ENV", "DATABASE_PROVIDER", "DATABASE_URL", "SITE_URL", "SHOPIFY_STORE_DOMAIN", "SHOPIFY_STOREFRONT_TOKEN", "SHOPIFY_ADMIN_TOKEN", "SHOPIFY_API_VERSION", "KOL_ENABLED", "KOL_SETTLEMENTS_ENABLED", "ADMIN_ORIGIN", "KOL_INGRESS_SECRET", "KOL_SIGNING_SECRET", "KOL_WORKER_SECRET", "SHOPIFY_WEBHOOK_SECRET", "KOL_ADMIN_BOOTSTRAP_HASH", "CHECKOUT_DIAGNOSTICS_KEY"):
+    for key in ("NODE_ENV", "DATABASE_PROVIDER", "DATABASE_URL", "SITE_URL", "SHOPIFY_STORE_DOMAIN", "SHOPIFY_STOREFRONT_TOKEN", "SHOPIFY_ADMIN_TOKEN", "SHOPIFY_API_VERSION", "KOL_ACCOUNTING_MODE", "SHOPIFY_ANALYTICS_SHOP_ID", "SHOPIFY_STOREFRONT_ID", "KOL_ENABLED", "KOL_SETTLEMENTS_ENABLED", "ADMIN_ORIGIN", "KOL_INGRESS_SECRET", "KOL_SIGNING_SECRET", "KOL_WORKER_SECRET", "SHOPIFY_WEBHOOK_SECRET", "KOL_ADMIN_BOOTSTRAP_HASH", "CHECKOUT_DIAGNOSTICS_KEY"):
         need(admin_env.get(key) == env.get(key), "admin must match app: " + key)
     app_data = [v for v in app.get("volumes", []) if v.get("target") == "/data"]
     admin_data = [v for v in admin.get("volumes", []) if v.get("target") == "/data"]

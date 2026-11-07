@@ -1,3 +1,4 @@
+import type { ShopifyRequestContext } from "@shopify/hydrogen";
 import { env, shopifyOrigin } from "../../../lib/env";
 import { observeCheckout, type CheckoutObserver } from "@/lib/checkout-diagnostics";
 
@@ -35,18 +36,23 @@ async function storefrontFetch<T>(
   variables: Record<string, unknown>,
   fetchImpl: typeof fetch = fetch,
   observer?: CheckoutObserver,
+  context?: ShopifyRequestContext,
 ): Promise<T> {
   const startedAt = Date.now();
   let res: Response;
+  const headers = new Headers({
+    "Content-Type": "application/json",
+    "X-Shopify-Storefront-Access-Token": env.SHOPIFY_STOREFRONT_TOKEN ?? "",
+  });
+  context?.applyStorefrontRequestHeaders(headers);
+  if (context && env.SHOPIFY_STOREFRONT_ID)
+    headers.set("Shopify-Storefront-Id", env.SHOPIFY_STOREFRONT_ID);
   try {
     res = await fetchImpl(storefrontEndpoint(), {
       method: "POST",
       cache: "no-store",
       signal: AbortSignal.timeout(10000),
-      headers: {
-        "Content-Type": "application/json",
-        "X-Shopify-Storefront-Access-Token": env.SHOPIFY_STOREFRONT_TOKEN ?? "",
-      },
+      headers,
       body: JSON.stringify({ query, variables }),
     });
   } catch (error) {
@@ -62,6 +68,7 @@ async function storefrontFetch<T>(
     });
     throw error;
   }
+  context?.captureSubrequestHeaders(res.headers);
   const raw = await res.text().catch(() => "");
   let json: GraphQLResponse<T> | null;
   try {
@@ -117,10 +124,11 @@ function languageCode(language: CartLanguage): string {
 /** 导出仅为单测断言:国家必须是访客国家,且同时进 @inContext 与 buyerIdentity。 */
 export function cartMutation(country: string, language: CartLanguage): string {
   return `
-mutation CartCreate($lines: [CartLineInput!]!, $attributes: [AttributeInput!]) @inContext(country: ${country}, language: ${languageCode(language)}) {
-  cartCreate(input: { lines: $lines, buyerIdentity: { countryCode: ${country} }, attributes: $attributes }) {
+mutation CartCreate($lines: [CartLineInput!]!, $attributes: [AttributeInput!], $discountCodes: [String!]) @inContext(country: ${country}, language: ${languageCode(language)}) {
+  cartCreate(input: { lines: $lines, buyerIdentity: { countryCode: ${country} }, attributes: $attributes, discountCodes: $discountCodes }) {
     cart {
       id checkoutUrl totalQuantity
+      discountCodes { code applicable }
       buyerIdentity { countryCode }
       cost { subtotalAmount { amount currencyCode } totalAmount { amount currencyCode } }
       lines(first: 250) {
@@ -164,6 +172,7 @@ export async function cartCreate(
   returnUrl?: string,
   referralReference?: string,
   observer?: CheckoutObserver,
+  collabs?: { context: ShopifyRequestContext; discountCode?: string },
 ): Promise<ShopifyCart> {
   const attributes = returnUrl ? [{ key: "return_url", value: returnUrl }] : [];
   if (referralReference) attributes.push({ key: "offy_ref", value: referralReference });
@@ -176,6 +185,7 @@ export async function cartCreate(
       country: normalized,
       language: languageCode(language),
       lines,
+      discountCodes: collabs?.discountCode ? [collabs.discountCode] : [],
       attributes: attributes.map((a) =>
         a.key === "offy_ref" ? { key: a.key, value: "[redacted]" } : a,
       ),
@@ -183,9 +193,10 @@ export async function cartCreate(
   });
   const data = await storefrontFetch<CartCreateData>(
     cartMutation(normalized, language),
-    { lines, attributes },
+    { lines, attributes, discountCodes: collabs?.discountCode ? [collabs.discountCode] : [] },
     fetchImpl,
     observer,
+    collabs?.context,
   );
   const { cart, userErrors } = data.cartCreate;
   if (userErrors && userErrors.length > 0) {
