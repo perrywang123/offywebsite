@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Prepare and verify an isolated, CPU-capped Docker image builder."""
+"""Prepare and verify an isolated CPU- and memory-capped Docker image builder."""
 import argparse
 from decimal import Decimal
 import hashlib
@@ -42,22 +42,43 @@ def cpu_budget(config):
     return format(cpus.normalize(), "f"), int(cpus * 100000)
 
 
-def declared_builder(raw, name, quota):
+def memory_budget(config):
+    value = str(config.get("x-offy-deploy", {}).get("build_memory_mb", "1536")).strip()
+    need(re.fullmatch(r"[1-9]\d{2,4}", value) is not None, "DEPLOY_BUILD_MEMORY_MB must be an integer from 512 to 16384 MiB")
+    mib = int(value)
+    need(512 <= mib <= 16384, "DEPLOY_BUILD_MEMORY_MB must be between 512 and 16384 MiB")
+    return mib, mib * 1048576
+
+
+def require_headroom(memory, meminfo=None):
+    path = Path("/proc/meminfo")
+    if meminfo is None:
+        if not path.exists():
+            return
+        meminfo = path.read_text()
+    match = re.search(r"^MemAvailable:\s+(\d+)\s+kB\s*$", meminfo, re.M)
+    need(match is not None, "cannot determine available Linux host memory")
+    available = int(match.group(1)) * 1024
+    need(available >= memory + 512 * 1048576, "insufficient host memory: need builder budget plus 512 MiB available reserve; no build started")
+
+
+def declared_builder(raw, name, quota, memory):
     need(re.search(r"^Driver:\s+docker-container\s*$", raw, re.M), "dedicated builder driver differs; existing builder/cache preserved")
     names = re.findall(r"^Name:\s+(\S+)\s*$", raw, re.M)
     need(names == [name, name + "0"], "dedicated builder must have exactly its expected local node")
     line = re.search(r"^Driver Options:\s*(.*)$", raw, re.M)
     opts = dict(re.findall(r'([\w.-]+)="([^"]*)"', line.group(1) if line else ""))
-    for key, expected in (("cpu-period", "100000"), ("cpu-quota", str(quota)), ("default-load", "true")):
+    for key, expected in (("cpu-period", "100000"), ("cpu-quota", str(quota)), ("default-load", "true"), ("memory", str(memory)), ("memory-swap", str(memory))):
         need(opts.get(key) == expected, "dedicated builder " + key + " differs; no unrestricted fallback")
 
 
-def actual_builder(container, quota):
+def actual_builder(container, quota, memory):
     data = json.loads(docker("inspect", container))
     need(isinstance(data, list) and len(data) == 1, "builder container unavailable")
     need(data[0].get("State", {}).get("Running") is True, "builder container is not running")
     host = {key.lower(): value for key, value in data[0].get("HostConfig", {}).items()}
     need(host.get("cpuperiod") == 100000 and host.get("cpuquota") == quota, "actual builder container CPU quota/period differs; build refused")
+    need(host.get("memory") == memory and host.get("memoryswap") == memory, "actual builder container memory/swap limit differs; build refused")
     content = docker("exec", container, "cat", "/etc/buildkit/buildkitd.toml")
     section = re.search(r"^\s*\[worker\.oci\][ \t]*\n(.*?)(?=^\s*\[|\Z)", content, re.M | re.S)
     need(section and re.search(r"^\s*max-parallelism\s*=\s*1\s*(?:#.*)?$", section.group(1), re.M), "actual BuildKit OCI parallelism must be one")
@@ -71,34 +92,38 @@ def main():
     parser.add_argument("--check", action="store_true")
     args = parser.parse_args()
     try:
-        cpus, quota = cpu_budget(json.loads(args.config.read_text()))
+        config = json.loads(args.config.read_text())
+        cpus, quota = cpu_budget(config)
+        memory_mb, memory = memory_budget(config)
+        require_headroom(memory)
         version = re.search(r"\bv(\d+)\.(\d+)\.(\d+)", docker("buildx", "version"))
         need(version and tuple(map(int, version.groups())) >= (0, 14, 0), "Docker Buildx >= 0.14.0 is required for automatic local image loading")
         need("--builder" in docker("compose", "build", "--help"), "Docker Compose build must support --builder")
         info = {key.lower(): value for key, value in json.loads(docker("info", "--format", "{{json .}}")).items()}
         need(info.get("cpucfsquota") is True and info.get("cpucfsperiod") is True, "Docker engine/kernel does not report CPU CFS quota and period support")
+        need(info.get("memorylimit") is True and info.get("swaplimit") is True, "Docker engine/kernel does not report memory and swap limit support")
         root = args.root.resolve()
         config_file = root / "deploy/buildkitd.toml"
         context = docker("context", "show").strip()
-        identity = json.dumps([str(root), context, os.environ.get("DOCKER_HOST", ""), quota, hashlib.sha256(config_file.read_bytes()).hexdigest()])
+        identity = json.dumps([str(root), context, os.environ.get("DOCKER_HOST", ""), quota, memory, hashlib.sha256(config_file.read_bytes()).hexdigest()])
         name = "offy-build-" + hashlib.sha256(identity.encode()).hexdigest()[:16]
         container = "buildx_buildkit_" + name + "0"
         current = docker("buildx", "inspect", name, allow_missing=True)
         if current is not None:
-            declared_builder(current, name, quota)
+            declared_builder(current, name, quota, memory)
         if not args.check:
             if current is None:
                 print("Preparing dedicated BuildKit builder; first use may download the official BuildKit image.", flush=True)
-                docker("buildx", "create", "--name", name, "--driver", "docker-container", "--driver-opt", "cpu-period=100000", "--driver-opt", "cpu-quota=" + str(quota), "--driver-opt", "default-load=true", "--buildkitd-config", str(config_file))
+                docker("buildx", "create", "--name", name, "--driver", "docker-container", "--driver-opt", "cpu-period=100000", "--driver-opt", "cpu-quota=" + str(quota), "--driver-opt", "memory=" + str(memory), "--driver-opt", "memory-swap=" + str(memory), "--driver-opt", "default-load=true", "--buildkitd-config", str(config_file))
             raw = docker("buildx", "inspect", "--bootstrap", name, timeout=300)
-            declared_builder(raw, name, quota)
-            actual_builder(container, quota)
-        result = {"name": name, "container": container, "cpus": cpus, "period": 100000, "quota": quota}
+            declared_builder(raw, name, quota, memory)
+            actual_builder(container, quota, memory)
+        result = {"name": name, "container": container, "cpus": cpus, "period": 100000, "quota": quota, "memory_mb": memory_mb, "memory_bytes": memory}
         fd = os.open(args.output, os.O_WRONLY | os.O_CREAT | os.O_TRUNC, 0o600)
         with os.fdopen(fd, "w") as stream:
             os.fchmod(stream.fileno(), 0o600)
             json.dump(result, stream)
-        print("Build CPU " + ("preflight passed" if args.check else "isolation verified") + ": " + cpus + " CPU shared by all build tasks; builder=" + name + (" (check only; no builder changes)" if args.check else ""))
+        print("Build CPU " + ("preflight passed" if args.check else "isolation verified") + ": " + cpus + " CPU, " + str(memory_mb) + " MiB memory, no builder swap, shared by all build tasks; builder=" + name + (" (check only; no builder changes)" if args.check else ""))
         return 0
     except BuildLimitError as error:
         print(str(error), file=sys.stderr)

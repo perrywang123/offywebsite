@@ -20,6 +20,7 @@ services:
       # 密钥类走下面的environment，
       # 不进构建参数(构建参数会留在镜像 history 里)。
       args:
+        OFFY_BUILD_REVISION: "${OFFY_BUILD_REVISION:-unknown}"
         SITE_URL: "${SITE_URL:-http://localhost:3000}"
         NEXT_PUBLIC_SITE_NAME: "${NEXT_PUBLIC_SITE_NAME:-Offy}"
         NEXT_PUBLIC_SITE_URL: "${NEXT_PUBLIC_SITE_URL:-https://offy.example.com}"
@@ -110,6 +111,7 @@ volumes:
 # Select an ACTIVE site config explicitly before allowing the deploy script to replace it.
 x-offy-deploy:
   build_cpus: "${DEPLOY_BUILD_CPUS:-1}"
+  build_memory_mb: "${DEPLOY_BUILD_MEMORY_MB:-1536}"
   nginx_config: "${DEPLOY_NGINX_CONFIG:-}"
   site_tls_certificate: "${DEPLOY_SITE_TLS_CERTIFICATE:-}"
   site_tls_key: "${DEPLOY_SITE_TLS_KEY:-}"

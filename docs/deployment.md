@@ -191,7 +191,11 @@ tail -f /root/offywebsite/.deploy-logs/latest-build.log
 
 分阶段检查旨在减少并发资源竞争并改善诊断，不保证解决原来的长耗时或取消。若再次在类型检查等待，结合这次日志、cgroup内存和系统进程/内核记录定位，不直接跳过类型检查。验证证据见 [串行构建验收](serial-build-validation.md)。
 
-### CPU预算边界
+### 构建资源预算与旧服务检查
+
+2026-11-07 排查发现服务器遗留 `offy-website.service` 会先运行宿主机 `npm run build`，失败后自动重试，绕过 Docker 构建配额。发布脚本现在在只读检查与正式发布入口同时拦截 `offy.service`、`offy-website.service` 的运行中、启动中和启用自启状态；报出具体服务名，不自动停止服务。确认线上由 Docker 提供后，管理员可以停用遗留服务。失败且已禁用的历史单元不阻塞发布。
+
+构建器默认硬限制 **1536 MiB 内存**，memory-plus-swap 与内存上限相等，不允许构建器额外使用 Swap。Linux 启动构建前要求 `MemAvailable` 至少达到构建额度加 512 MiB；不足则停止。超出构建器预算可以导致构建失败，不会通过解除限制或重启主站来继续。内存预算不是构建成功保证，也不能约束 Docker daemon 镜像导入、其他程序或未来流量峰值。
 
 现有发布命令默认使用项目专属的 `docker-container` BuildKit 构建器。主站与后台的所有构建步骤合计使用 **1 CPU 的计算额度**，不是每个服务各1 CPU；OCI构建并行度为1。额度通过构建器容器的 CFS `cpu-period=100000` / `cpu-quota=100000` 实施，不在业务服务上添加 `cpus`，也不把相对权重 `cpu-shares` 当作硬上限。两核服务器上，它限制构建器的长期平均CPU预算约为总量一半，不绑定某个固定核心；系统总占用仍包含线上服务、Docker daemon镜像加载和其他进程。
 
@@ -199,16 +203,19 @@ tail -f /root/offywebsite/.deploy-logs/latest-build.log
 
 ```dotenv
 DEPLOY_BUILD_CPUS=1
+DEPLOY_BUILD_MEMORY_MB=1536
 # 更低额度示例：DEPLOY_BUILD_CPUS=0.5
 ```
 
-允许0.1–64、最多两位小数；这是发布工具设置，不进入应用或客户端。builder名称包含项目路径、Docker context、额度和构建器配置的摘要；同一设置下重复发布复用原缓存，不修改用户的全局默认 builder。新额度/配置会创建对应新builder，不删除旧缓存或其他项目资源。首次部署需要下载官方 `moby/buildkit` 镜像并建立独立缓存，构建可能更慢；稳定后可复用该缓存。
+CPU允许0.1–64、最多两位小数，内存允许512–16384 MiB整数；这些是发布工具设置，不进入应用或客户端。builder名称包含项目路径、Docker context、CPU/内存额度和构建器配置的摘要；同一设置下重复发布复用原缓存，不修改用户的全局默认 builder。新额度/配置会创建对应新builder，不删除旧缓存或其他项目资源。首次部署需要下载官方 `moby/buildkit` 镜像并建立独立缓存，构建可能更慢；稳定后可复用该缓存。
 
-`--check` 只读检查插件、内核配额支持和已有builder声明，不创建/启动builder。正式发布在构建前引导专属builder，核对 driver、声明与实际容器的CPU配额、单任务并行配置；不支持或漂移就停止，绝不回退到无限制构建。`default-load=true` 将构建结果载入本机镜像仓库，继续使用原来的备份/启动流程。
+`--check` 只读检查旧服务、可用内存、插件、内核配额支持和已有builder声明，不创建/启动builder。正式发布在构建前引导专属builder，核对 driver、声明与实际容器的CPU/内存/Swap配额、单任务并行配置；不支持或漂移就停止，绝不回退到无限制构建。`default-load=true` 将构建结果载入本机镜像仓库，继续使用原来的备份/启动流程。
 
 日志会打印实际builder名称。可用 `docker ps --filter name=buildx_buildkit_offy-build --format '{{.Names}}'` 找到本项目构建器，再用 `docker stats --no-stream 构建器容器名` 观察使用率。Docker按单核100%计数，1 CPU预算持续负载约显示100%，不是整台两核服务器的100%。CFS允许短时突发，平均额度与瞬时采样可能不同。
 
-限制作用于更新后由脚本新启动的Docker构建，不会追溯限制已运行的旧任务、宿主机直接执行的 `pnpm build` 或其他构建器。它不设内存上限，也不保证依赖追踪故障自行消失。独立后台发布仍只构建/替换admin和worker，主站端口、运行资源与原有持久卷保持原样。
+限制作用于更新后由脚本新启动的Docker构建，不会追溯限制已运行的旧任务、宿主机直接执行的 `pnpm build` 或其他构建器，也不保证依赖追踪故障自行消失。独立后台发布仍只构建/替换admin和worker，主站端口、运行资源与原有持久卷保持原样。
+
+服务器 Git 部署在拉取并重载后，将当前 commit 写入镜像 OCI 标签 `org.opencontainers.image.revision`。可用 `git rev-parse HEAD` 与 `docker image inspect offy-admin:local --format '{{index .Config.Labels "org.opencontainers.image.revision"}}'` 对照，再核对运行中 admin 的镜像 ID。仅拉取 Git 不代表运行镜像已经更新。无 Git 的准备源码包标签为 `unknown`。
 
 隔离Linux计算探针、双服务镜像加载与自动化检查结果见 [验证记录](docker-build-cpu-validation.md)。
 

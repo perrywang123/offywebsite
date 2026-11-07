@@ -104,9 +104,9 @@ if 'config' in a and '--format' in a:print(json.dumps(c))
 if a[:2]==['buildx','version']:print('github.com/docker/buildx v0.38.0')
 if a[:2]==['compose','build'] and '--help' in a:print('--builder string')
 if 'build' in a and '--help' not in a:
- print('fixture build diagnostics; progress='+os.environ.get('BUILDKIT_PROGRESS',''),flush=True)
+ print('fixture build diagnostics; progress='+os.environ.get('BUILDKIT_PROGRESS','')+'; revision='+os.environ.get('OFFY_BUILD_REVISION',''),flush=True)
  if os.environ.get('FAIL_IMAGE_BUILD'):print('fixture compiler failure',file=sys.stderr);sys.exit(23)
-if a and a[0]=='info' and '--format' in a:print(json.dumps({'CpuCfsQuota':True,'CpuCfsPeriod':True}))
+if a and a[0]=='info' and '--format' in a:print(json.dumps({'CpuCfsQuota':True,'CpuCfsPeriod':True,'MemoryLimit':True,'SwapLimit':True}))
 if a[:2]==['context','show']:print('isolated-test')
 state=Path(os.environ['CONFIG']).with_name('build-builder.json')
 if a[:2]==['buildx','create']:
@@ -125,7 +125,7 @@ if 'ps' in a and '-q' in a:
   if service in ('app','admin','kol-worker') and not (os.environ.get('NO_ADMIN') and service in ('admin','kol-worker')):print('test-'+service)
 if a and a[0]=='inspect':
  if '--format' in a:print('true')
- elif any(v.startswith('buildx_buildkit_') for v in a):print(json.dumps([{'State':{'Running':True},'HostConfig':{'CpuPeriod':100000,'CpuQuota':200000 if os.environ.get('FAIL_BUILD_QUOTA') else 100000}}]))
+ elif any(v.startswith('buildx_buildkit_') for v in a):print(json.dumps([{'State':{'Running':True},'HostConfig':{'CpuPeriod':100000,'CpuQuota':200000 if os.environ.get('FAIL_BUILD_QUOTA') else 100000,'Memory':1536*1048576,'MemorySwap':1536*1048576}}]))
  else:
   containers=[]
   for cid in a[1:]:
@@ -177,6 +177,41 @@ if a and a[0]=='inspect':
 }
 const isImageBuild = (args: string[]) => args.includes("build") && !args.includes("--help");
 describe("unified server deployment", () => {
+  it.each(["offy.service", "offy-website.service"])(
+    "blocks competing legacy unit %s before even check-only can pass",
+    (unit) => {
+      for (const state of ["active", "activating", "reloading", "deactivating", "enabled"]) {
+        const f = setup();
+        try {
+          writeFileSync(
+            join(f.dir, "bin/systemctl"),
+            `#!/bin/sh\ncase "$*" in *${unit}*) echo ${state === "enabled" ? "inactive" : state}; echo ${state === "enabled" ? "enabled" : "disabled"};; esac\n`,
+            { mode: 0o755 },
+          );
+          const r = f.run(["--check", "--kol"]);
+          expect(r.status, state).not.toBe(0);
+          expect(r.stderr).toContain(unit);
+          expect(f.calls().some(isImageBuild)).toBe(false);
+          expect(f.calls().flat()).not.toContain("up");
+          expect(f.calls().flat()).not.toContain("create");
+        } finally {
+          rmSync(f.dir, { recursive: true });
+        }
+      }
+    },
+  );
+
+  it("allows a failed disabled legacy unit without stopping or enabling anything", () => {
+    const f = setup();
+    try {
+      writeFileSync(join(f.dir, "bin/systemctl"), "#!/bin/sh\necho failed\necho disabled\n", {
+        mode: 0o755,
+      });
+      expect(f.run(["--check", "--kol"]).status).toBe(0);
+    } finally {
+      rmSync(f.dir, { recursive: true });
+    }
+  });
   it("retains a private plain-progress failure log and stops before backup/replacement", () => {
     const f = setup();
     try {
@@ -739,6 +774,7 @@ describe("independent server admin deployment", () => {
         });
         expect(result.status, result.stdout + result.stderr).toBe(0);
         expect(result.stdout).toContain("UPDATED_DEPLOYMENT_CODE");
+        expect(result.stdout).toContain("revision=" + git(writer, ["rev-parse", "HEAD"]));
         expect(readFileSync(runtimePath, "utf8")).toBe("KOL_ENABLED=false\n");
         expect(
           f

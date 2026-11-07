@@ -54,6 +54,8 @@ RUN mkdir -p /migrate-deps \
   && cp -rL node_modules/drizzle-orm /migrate-deps/drizzle-orm
 
 FROM node:22-slim AS runner
+ARG OFFY_BUILD_REVISION=unknown
+LABEL org.opencontainers.image.revision=$OFFY_BUILD_REVISION
 WORKDIR /app
 ENV NODE_ENV=production
 

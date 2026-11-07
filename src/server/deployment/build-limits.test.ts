@@ -28,7 +28,7 @@ a=sys.argv[1:];root=Path(os.environ['BUILD_FIXTURE']);state=root/'builder.json'
 with (root/'calls').open('a') as f:f.write(json.dumps(a)+'\\n')
 if a[:2]==['buildx','version']:print('github.com/docker/buildx v'+('0.13.0' if os.environ.get('OLD_BUILDX') else '0.38.0'))
 elif a[:2]==['context','show']:print('isolated-test')
-elif a and a[0]=='info':print(json.dumps({'CpuCfsPeriod':True,'CpuCfsQuota':not bool(os.environ.get('NO_QUOTA'))}))
+elif a and a[0]=='info':print(json.dumps({'CpuCfsPeriod':True,'CpuCfsQuota':not bool(os.environ.get('NO_QUOTA')),'MemoryLimit':not bool(os.environ.get('NO_MEMORY')),'SwapLimit':True}))
 elif a[:2]==['compose','build'] and '--help' in a:print('build options '+('' if os.environ.get('OLD_COMPOSE') else '--builder string'))
 elif a[:2]==['buildx','create']:
  name=a[a.index('--name')+1];opts=[a[i+1] for i,v in enumerate(a) if v=='--driver-opt']
@@ -39,7 +39,8 @@ elif a[:2]==['buildx','inspect']:
  print('Name: '+s['name']+'\\nDriver: '+driver+'\\nNodes:\\nName: '+s['name']+'0\\nDriver Options: '+' '.join(k+'="'+v+'"' for k,v in s['opts'].items())+'\\nFile#buildkitd.toml:\\n'+''.join('> '+line+'\\n' for line in Path(s['config']).read_text().splitlines()))
 elif a and a[0]=='inspect':
  s=json.loads(state.read_text());q=int(s['opts']['cpu-quota'])+(1 if os.environ.get('DRIFT_QUOTA') else 0)
- print(json.dumps([{'State':{'Running':True},'HostConfig':{'CpuPeriod':100000,'CpuQuota':q}}]))
+ m=int(s['opts'].get('memory',0));swap=int(s['opts'].get('memory-swap',0))
+ print(json.dumps([{'State':{'Running':True},'HostConfig':{'CpuPeriod':100000,'CpuQuota':q,'Memory':m+(1 if os.environ.get('DRIFT_MEMORY') else 0),'MemorySwap':swap+(1 if os.environ.get('DRIFT_SWAP') else 0)}}]))
 elif a and a[0]=='exec':
  s=json.loads(state.read_text());print('[worker.oci]\\nmax-parallelism = 2' if os.environ.get('DRIFT_PARALLELISM') else Path(s['config']).read_text())
 else:sys.exit('unexpected isolated Docker invocation')
@@ -113,6 +114,9 @@ describe("isolated build CPU budget", () => {
       expect(create).toContain("cpu-quota=100000");
       expect(create).toContain("cpu-period=100000");
       expect(create).toContain("default-load=true");
+      expect(create).toContain(`memory=${1536 * 1048576}`);
+      expect(create).toContain(`memory-swap=${1536 * 1048576}`);
+      expect(f.result()).toMatchObject({ memory_mb: 1536, memory_bytes: 1536 * 1048576 });
       expect(create).not.toContain("--use");
       const first = f.result();
       expect(f.run().status).toBe(0);
@@ -153,26 +157,64 @@ describe("isolated build CPU budget", () => {
       rmSync(f.dir, { recursive: true });
     }
   });
-  it("fails closed for unsupported capabilities and actual builder drift", () => {
-    for (const flag of [
-      "OLD_BUILDX",
-      "OLD_COMPOSE",
-      "NO_QUOTA",
-      "DRIFT_DRIVER",
-      "DRIFT_QUOTA",
-      "DRIFT_PARALLELISM",
-    ]) {
-      const f = fixture();
-      try {
-        if (flag.startsWith("DRIFT")) expect(f.run().status).toBe(0);
-        const r = f.run(false, { [flag]: "1" });
-        expect(r.status, flag).not.toBe(0);
-        expect(r.stderr).toContain("Build CPU");
-        expect(f.calls().flat()).not.toContain("rm");
-        expect(f.calls().flat()).not.toContain("use");
-      } finally {
-        rmSync(f.dir, { recursive: true });
-      }
+  it.each([
+    "OLD_BUILDX",
+    "OLD_COMPOSE",
+    "NO_QUOTA",
+    "NO_MEMORY",
+    "DRIFT_DRIVER",
+    "DRIFT_QUOTA",
+    "DRIFT_MEMORY",
+    "DRIFT_SWAP",
+    "DRIFT_PARALLELISM",
+  ])("fails closed for unsupported capabilities and actual builder drift: %s", (flag) => {
+    const f = fixture();
+    try {
+      if (flag.startsWith("DRIFT")) expect(f.run().status).toBe(0);
+      const r = f.run(false, { [flag]: "1" });
+      expect(r.status, flag).not.toBe(0);
+      expect(r.stderr).toContain("Build CPU");
+      expect(f.calls().flat()).not.toContain("rm");
+      expect(f.calls().flat()).not.toContain("use");
+    } finally {
+      rmSync(f.dir, { recursive: true });
     }
+  });
+});
+
+describe("build memory safety", () => {
+  it("validates memory overrides before preparing any builder", () => {
+    const f = fixture();
+    try {
+      for (const value of ["0", "511", "16385", "1.5", "NaN", "1536; bad"]) {
+        writeFileSync(
+          join(f.dir, "config.json"),
+          JSON.stringify({ "x-offy-deploy": { build_memory_mb: value } }),
+        );
+        expect(f.run().status, value).not.toBe(0);
+      }
+      expect(existsSync(join(f.dir, "builder.json"))).toBe(false);
+      writeFileSync(
+        join(f.dir, "config.json"),
+        JSON.stringify({ "x-offy-deploy": { build_memory_mb: "1024" } }),
+      );
+      expect(f.run(true).status).toBe(0);
+      expect(f.result().memory_bytes).toBe(1024 * 1048576);
+    } finally {
+      rmSync(f.dir, { recursive: true });
+    }
+  });
+
+  it("refuses insufficient Linux available memory and accepts the reserve boundary", () => {
+    const source = resolve("deploy/build-limits.py");
+    const r = spawnSync(
+      "python3",
+      [
+        "-c",
+        `import runpy\nm=runpy.run_path(${JSON.stringify(source)})\nf=m['require_headroom']\nf(1536*1048576, 'MemAvailable: 2097152 kB\\n')\ntry:\n f(1536*1048576, 'MemAvailable: 2097151 kB\\n')\nexcept m['BuildLimitError']:\n pass\nelse:\n raise AssertionError('insufficient headroom accepted')\n`,
+      ],
+      { encoding: "utf8" },
+    );
+    expect(r.status, r.stderr).toBe(0);
   });
 });

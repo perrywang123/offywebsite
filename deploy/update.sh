@@ -20,6 +20,18 @@ done
 say(){ printf '\n==> %s\n' "$*"; }
 die(){ printf 'Deployment failed: %s\n' "$*" >&2; exit 1; }
 [ "$ADMIN_ONLY" = 0 ] || [ "$STOREFRONT_ONLY" = 0 ] || die '--admin-only and --storefront-only are mutually exclusive'
+if command -v systemctl >/dev/null; then
+ for legacy_unit in offy.service offy-website.service; do
+  legacy_state="$(systemctl show "$legacy_unit" -p ActiveState -p UnitFileState --value 2>/dev/null || true)"
+  if printf '%s\n' "$legacy_state" | grep -Eq '^(active|activating|reloading|deactivating|enabled|enabled-runtime|linked|linked-runtime)$'; then
+   die "legacy systemd $legacy_unit can compete with Docker; inspect and disable the legacy service before deployment"
+  fi
+ done
+fi
+export OFFY_BUILD_REVISION=unknown
+if [ -e .git ] && command -v git >/dev/null; then
+ OFFY_BUILD_REVISION="$(git rev-parse --verify HEAD)" || die 'cannot identify Git source revision'
+fi
 for bin in docker python3 curl tee; do command -v "$bin" >/dev/null || die "$bin is required"; done
 if [ -z "$ENV_FILE" ]; then
  if [ -e "$ROOT/.env" ] || [ -L "$ROOT/.env" ]; then ENV_FILE="$ROOT/.env"
@@ -73,7 +85,6 @@ else
  exec 9> "$ROOT/.deploy.lock"
 fi
 flock -n 9 || die 'another deployment holds this project lock'
-if command -v systemctl >/dev/null && systemctl is-active --quiet offy 2>/dev/null; then die 'legacy systemd offy still owns the app port; migrate it to Docker first'; fi
 if [ "$SKIP_PULL" = 0 ]; then
  if [ -e .git ]; then
   command -v git >/dev/null || die 'git is required for server updates'
@@ -111,6 +122,7 @@ BUILD=("$TARGET"); if [ "$KOL" = true ] && [ "$ADMIN_ONLY" = 0 ] && [ "$STOREFRO
 python3 "$ROOT/deploy/build-limits.py" "$OFFY_CONFIG_JSON" --output "$OFFY_BUILDER_JSON"
 OFFY_BUILD_BUILDER="$(python3 -c 'import json,sys; print(json.load(open(sys.argv[1]))["name"])' "$OFFY_BUILDER_JSON")"
 say "Building Linux Docker image(s): ${BUILD[*]}"
+say "Release source revision: $OFFY_BUILD_REVISION"
 OFFY_LOG_DIR="$ROOT/.deploy-logs"
 mkdir -p "$OFFY_LOG_DIR"
 chmod 700 "$OFFY_LOG_DIR"
