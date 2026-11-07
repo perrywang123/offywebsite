@@ -24,7 +24,9 @@ const schema = z.object({
   }),
 });
 /** Only read order facts. No tags, notes, refunds, discount writes, or payout mutation. */
-export async function lookupOrder(row: ReportRow): Promise<OrderEvidence | null> {
+export async function lookupOrder(
+  row: Pick<ReportRow, "orderId" | "orderName">,
+): Promise<OrderEvidence | null> {
   let raw: unknown;
   if (row.orderId) {
     if (!/^gid:\/\/shopify\/Order\/\d+$/.test(row.orderId)) throw new Error("invalid_order_id");
@@ -58,6 +60,10 @@ export async function lookupOrder(row: ReportRow): Promise<OrderEvidence | null>
     total: minor(money.amount, money.currencyCode),
     canceled: !!o.cancelledAt,
     refunded: minor(refund.amount, refund.currencyCode) > 0,
+    refundedTotal:
+      refund.currencyCode === money.currencyCode
+        ? minor(refund.amount, refund.currencyCode)
+        : undefined,
     financialStatus: o.displayFinancialStatus ?? "UNKNOWN",
   };
 }

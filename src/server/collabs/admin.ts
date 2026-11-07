@@ -17,15 +17,24 @@ import {
 } from "./service";
 import { lookupOrder } from "./shopify";
 import { collabsMode } from "./mode";
+import { linkMetrics } from "./links";
+import { attributionState, bindFlowCreator } from "./events";
 const headers = { "Cache-Control": "no-store, private", "X-Robots-Tag": "noindex, nofollow" };
-export function collabsGet(db: Db, path: string[]) {
+export function collabsGet(db: Db, path: string[], request?: Request) {
   if (path[1] === "reports" && path[2])
     return Response.json(reportDetail(db, path[2]), { headers });
+  if (path[1] === "links")
+    return Response.json(
+      linkMetrics(db, Number(request ? (new URL(request.url).searchParams.get("days") ?? 30) : 30)),
+      { headers },
+    );
   return Response.json(
     {
       mode: env.KOL_ACCOUNTING_MODE,
       creators: listCreators(db),
       reports: listReports(db),
+      linkMetrics: linkMetrics(db),
+      attribution: attributionState(db),
       officialAdmin: `https://admin.shopify.com/store/${env.SHOPIFY_STORE_DOMAIN?.split(".")[0]}/apps/collabs`,
       creatorPortal: "https://collabs.shopify.com/",
       policy: {
@@ -60,6 +69,12 @@ export async function collabsPost(db: Db, path: string[], actor: string, request
       sourceLink,
       resolvedLink: input.officialLink,
     });
+  } else if (path[1] === "bind-flow") {
+    const input = z
+      .object({ nativeId: z.string().regex(/^\d+$/).max(20), creatorId: z.string().uuid() })
+      .parse(raw);
+    bindFlowCreator(db, input.nativeId, input.creatorId, actor);
+    result = { ok: true };
   } else if (path[1] === "preview") result = previewReport(reportSchema.parse(raw));
   else if (path[1] === "import") {
     const input = z

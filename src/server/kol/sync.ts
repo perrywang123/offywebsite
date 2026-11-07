@@ -1,4 +1,6 @@
 import { collabsMode } from "../collabs/mode";
+import { refreshAttributions } from "../collabs/events";
+import { lookupOrder } from "../collabs/shopify";
 import { createHmac } from "node:crypto";
 import { and, eq, inArray, lte, lt } from "drizzle-orm";
 import { z } from "zod";
@@ -133,6 +135,8 @@ export async function runWorker(db: Db, now = Date.now()) {
   if (!claimed) return { busy: true };
   const shopify = shopifyAdminConfigured() ? "configured" : "not_configured";
   try {
+    if (shopify === "configured" && collabsMode())
+      await refreshAttributions(db, (id) => lookupOrder({ orderId: id, orderName: null }), now);
     // Keep pending remote work and scan progress intact until credentials exist.
     if (shopify === "configured" && !collabsMode()) {
       await drainInbox(db, (id) => reconcileOrder(db, id), now);

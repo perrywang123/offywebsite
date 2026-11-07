@@ -1,7 +1,9 @@
 import { collabsMode } from "@/server/collabs/mode";
 import { listCreators } from "@/server/collabs/service";
 import { officialLink } from "@/lib/collabs/links";
-import { NextResponse } from "next/server";
+import { after, NextResponse } from "next/server";
+import { recordLinkOpen } from "@/server/collabs/links";
+import { getLinkObservationDb } from "@/server/collabs/link-db";
 import { env, kolEnabled } from "@/lib/env";
 import { getKolDb } from "@/server/kol/database";
 import { startReferral } from "@/server/kol/core";
@@ -34,7 +36,21 @@ export async function GET(request: Request, { params }: { params: Promise<{ alia
         for (const [key, value] of new URL(request.url).searchParams)
           if ((key.startsWith("utm_") || key === "dt_id") && !url.searchParams.has(key))
             url.searchParams.set(key, value);
-        return NextResponse.redirect(url, { status: 303, headers });
+        const response = NextResponse.redirect(url, { status: 303, headers });
+        const openedAt = Date.now();
+        // Observation must never delay or replace the buyer's existing redirect.
+        try {
+          after(() => {
+            try {
+              recordLinkOpen(getLinkObservationDb(), creator.id, openedAt);
+            } catch {
+              console.warn("collabs_link_observation_failed");
+            }
+          });
+        } catch {
+          /* A missing after context cannot block navigation. */
+        }
+        return response;
       }
     }
     const r = collabsMode() ? null : startReferral(getKolDb(), alias);

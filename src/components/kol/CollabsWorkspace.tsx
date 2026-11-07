@@ -1,5 +1,9 @@
 "use client";
 import { COLLABS_CONTACT_EMAIL } from "@/lib/collabs/content";
+import { CollabsLinkMetrics } from "./CollabsLinkMetrics";
+import { CollabsAttribution } from "./CollabsAttribution";
+import type { attributionState } from "@/server/collabs/events";
+import type { linkMetrics } from "@/server/collabs/links";
 import { useCallback, useEffect, useState, type FormEvent } from "react";
 import { parseCsv, reportFields, type ReportInput, type ReportField } from "@/lib/collabs/reports";
 import { decimal } from "@/server/kol/money";
@@ -12,6 +16,8 @@ type State = {
   reports: Batch[];
   officialAdmin: string;
   creatorPortal: string;
+  linkMetrics?: ReturnType<typeof linkMetrics>;
+  attribution?: ReturnType<typeof attributionState>;
 };
 const fields: Record<ReportField, string> = {
   creator: "创作者标识",
@@ -42,6 +48,8 @@ const errors: Record<string, string> = {
   report_overlap_confirmation_required:
     "已有报告覆盖该时间段。请选择被替代报告，或明确保留两个快照",
   creator_identity_immutable: "已建档的别名和来源标识不能转给他人",
+  flow_identity_immutable: "已关联的官方创作者编号不能转给其他合作记录",
+  flow_identity_missing: "尚未收到此官方创作者编号，请重新读取后再试",
   already_reserved: "别名或来源标识已被占用",
   invalid_superseded_report: "被替代报告必须是同类型、时间有重叠的有效报告",
   invalid_official_link: "请粘贴本店 Offy 或本店 myshopify.com 的 Collabs 官方链接",
@@ -123,8 +131,8 @@ export function CollabsWorkspace({ siteUrl }: { siteUrl: string }) {
             合作联系邮箱：<a href={`mailto:${COLLABS_CONTACT_EMAIL}`}>{COLLABS_CONTACT_EMAIL}</a>
           </p>
           <p className="muted">
-            Offy 不生成应付佣金，不登记第二次付款。KOL
-            在官方门户查看自己的转化与佣金；此处展示管理员导入的报告快照及核对证据。
+            Offy 不生成应付佣金，不登记第二次付款。KOL 在官方门户查看自己的转化与佣金；此处分别展示
+            Offy 访问观察、官方归属事件和报告核对证据。
           </p>
         </div>
         <div className="collabs-actions">
@@ -157,6 +165,31 @@ export function CollabsWorkspace({ siteUrl }: { siteUrl: string }) {
       {!state && !error && <p role="status">正在读取报告和合作记录…</p>}
       {state && (
         <>
+          <div className="collabs-section-head">
+            <p className="muted">手动重新读取已接收的数据，不会重新计佣或触发付款。</p>
+            <button disabled={busy} onClick={() => void run(load)}>
+              刷新数据
+            </button>
+          </div>
+          {state.linkMetrics && (
+            <CollabsLinkMetrics
+              initial={state.linkMetrics}
+              load={(days) => api(`/links?days=${days}`)}
+            />
+          )}
+          {state.attribution && (
+            <CollabsAttribution
+              data={state.attribution}
+              links={state.creators}
+              busy={busy}
+              bind={async (nativeId, creatorId) => {
+                await run(async () => {
+                  await api("/bind-flow", { nativeId, creatorId });
+                  await load();
+                });
+              }}
+            />
+          )}
           <div className="collabs-section-head">
             <div>
               <h2>报告与账单核对</h2>

@@ -27,6 +27,24 @@ The system SHALL accept authenticated, idempotent official Collabs attribution e
 - **WHEN** the same official event is delivered repeatedly
 - **THEN** it is not double counted, absent commission remains not provided and unresolved identity is visible for review
 
+### Requirement: Cumulative snapshots retain their real meaning
+
+The system SHALL retain only the verified Flow trigger fields. Official cumulative visits and order counts SHALL be labeled as event-time snapshots, not continuously refreshed or period-filtered totals. Cumulative cents fields without a supplied currency SHALL remain raw fields and SHALL NOT be formatted as a guessed currency, a per-order commission or a payout.
+
+#### Scenario: Official cumulative commission arrives without currency
+
+- **WHEN** the event contains commissionCumulativeCents but no currency
+- **THEN** the workspace preserves its raw value, identifies the missing currency and directs financial reconciliation to official reports
+
+### Requirement: Non-persistent integration validation
+
+The authenticated receiver SHALL support an explicitly requested validation-only mode with the same input contract and body size limits. This mode SHALL NOT open or mutate the database and SHALL identify the response as validation only.
+
+#### Scenario: An administrator tests Flow's rendered request
+
+- **WHEN** an authorized valid request uses validate=1
+- **THEN** the receiver confirms validation without creating attribution, creator or visit observations
+
 ### Requirement: Separate evidence and settlement boundaries
 
 The system SHALL separate official attribution events, Shopify order facts, Offy link observations and imported report snapshots. It SHALL NOT infer creator payouts from paid orders, recompute authoritative commission, sum overlapping sources or change native Collabs payments. Historical backfill and unsupported financial fields SHALL remain explicitly limited to available official evidence.

@@ -1,6 +1,6 @@
 # Boundary and user experience
 
-这是待确认设计，不是当前实现说明。
+用户已确认本设计。实现及正式启用状态分别记录于 tasks 与发布验收记录。
 
 管理工作台分为三块，沿用当前视觉和侧栏：
 
@@ -15,6 +15,8 @@
 第一版不提供假UV。若后续需要匿名去重访客，单独定义同意、标识与统计窗口，再实施。
 
 # Official event integration gate
+
+实际契约已于2026-11-08在本店 Flow 编辑器核实。店内已有 Flow 和原有活跃弃单流程，没有出现新的权限授权页，无需重复安装；既有流程不改。触发器提供 `communityMemberId`、`order`、累计 `salesNumber` / `linkVisitsCumulative` / `salesCumulativeCents` / `commissionCumulativeCents` 及创作者姓名/用户名。累计金额无明确币种，作为原始快照存储和展示，不当作本笔金额或出款。原触发器没有事件时间或唯一事件 ID；另存 Flow 发送时间、服务器接收时间和订单创建时间，以店铺、官方编号和订单去重。详见 `docs/collabs-observation.md` 与最小 Liquid 模板。
 
 安装/权限在实际授权页确认后才提交。先读取官方 Order Attributed 的变量及类型，确定订单、创作者、时间、原生金额等实际可用字段；没有字段就不写适配假设。使用专用的服务器生成入站凭据并安全配置到 Flow secrets，拒绝未授权请求，实施重试幂等与输入边界校验；不使用浏览器Cookie抓取内部Collabs接口。
 

@@ -226,6 +226,7 @@ export type OrderEvidence = {
   merchandiseNet?: number | null;
   canceled: boolean;
   refunded: boolean;
+  refundedTotal?: number;
   financialStatus: string;
 };
 export type Finding = { key: string; row: number | null; code: string; detail: string };

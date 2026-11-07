@@ -1,6 +1,6 @@
 // Isolated HTTP workflow only. This script refuses any destination outside the local simulator.
 import assert from "node:assert/strict";
-import { randomUUID } from "node:crypto";
+import { randomUUID, createHmac } from "node:crypto";
 const site = "http://127.0.0.1:3901",
   admin = "http://127.0.0.1:3902",
   mock = "http://127.0.0.1:3903";
@@ -92,6 +92,53 @@ await fetch(checkoutData.redirect.url, {
   redirect: "manual",
 });
 const order = (await (await fetch(mock + "/test/state")).json()).orders.at(-1);
+// Synthetic Flow events stay in the isolated simulator database only.
+const flowCredential = createHmac("sha256", "integration-signing-only-0000000000000000")
+  .update("offy:collabs:flow-attributed:v1")
+  .digest("hex");
+const event = {
+  version: 1,
+  shop: "offy-integration.myshopify.com",
+  sentAt: String(Math.floor(Date.now() / 1000)),
+  communityMemberId: 123,
+  firstName: "Maya",
+  lastName: null,
+  primaryUsername: "isolated-only",
+  salesNumber: 1,
+  linkVisitsCumulative: 3,
+  salesCumulativeCents: 9000,
+  commissionCumulativeCents: 900,
+  orderId: order.id,
+  orderName: order.name,
+  orderCreatedAt: new Date().toISOString(),
+};
+const push = () =>
+  fetch(site + "/api/collabs/attributed", {
+    method: "POST",
+    headers: { authorization: `Bearer ${flowCredential}`, "content-type": "application/json" },
+    body: JSON.stringify(event),
+  });
+const accepted = await push();
+assert.equal(accepted.status, 200, await accepted.clone().text());
+assert.equal((await accepted.json()).duplicate, false);
+checks++;
+assert.equal((await (await push()).json()).duplicate, true);
+checks++;
+await fetch("http://127.0.0.1:3900/api/kol/worker", {
+  method: "POST",
+  headers: { authorization: "Bearer integration-worker-only-00000000000000000" },
+});
+const automaticallyReceived = (await call("collabs")).attribution;
+assert.equal(automaticallyReceived.events.length, 1);
+assert.equal(automaticallyReceived.creators[0].creatorId, null);
+assert.equal(automaticallyReceived.events[0].order.financialStatus, "PAID");
+const indexed = (await call("collabs")).creators.find((c) => c.alias === "qa-collabs");
+await call("collabs/bind-flow", { nativeId: "123", creatorId: indexed.id });
+assert.equal((await call("collabs")).attribution.creators[0].creatorId, indexed.id);
+const metrics = await call("collabs/links?days=7");
+assert.equal(metrics.links.find((l) => l.id === indexed.id).total, 1);
+assert.equal(metrics.links.find((l) => l.id === indexed.id).periodTotal, 1);
+assert.ok(metrics.links.find((l) => l.id === indexed.id).firstAt);
 const report = {
   filename: "isolated-collabs-report.csv",
   csv: `Creator,Order,Currency,Sales,Commission\nMaya,${order.name},USD,90.00,9.00`,

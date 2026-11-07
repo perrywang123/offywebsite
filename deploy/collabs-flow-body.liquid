@@ -1,0 +1,16 @@
+{
+  "version": 1,
+  "shop": "ujc6x6-41.myshopify.com",
+  "sentAt": "{{ 'now' | date: '%s' }}",
+  "communityMemberId": {{ communityMemberId | json }},
+  "firstName": {{ firstName | json }},
+  "lastName": {{ lastName | json }},
+  "primaryUsername": {{ primaryUsername | json }},
+  "salesNumber": {{ salesNumber | json }},
+  "linkVisitsCumulative": {{ linkVisitsCumulative | json }},
+  "salesCumulativeCents": {{ salesCumulativeCents | json }},
+  "commissionCumulativeCents": {{ commissionCumulativeCents | json }},
+  "orderId": {{ order.id | json }},
+  "orderName": {{ order.name | json }},
+  "orderCreatedAt": {{ order.createdAt | json }}
+}

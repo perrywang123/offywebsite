@@ -1,4 +1,4 @@
-import { index, integer, sqliteTable, text } from "drizzle-orm/sqlite-core";
+import { index, integer, primaryKey, sqliteTable, text } from "drizzle-orm/sqlite-core";
 
 /**
  * Newsletter subscribers — brand marketing capture.
@@ -311,6 +311,55 @@ export const collabsCreators = sqliteTable("collabs_creators", {
   createdAt: integer("created_at").notNull(),
   updatedAt: integer("updated_at").notNull(),
 });
+/** Offy request aggregates only: no visitor cookie, IP or raw user agent. */
+export const collabsLinkDaily = sqliteTable(
+  "collabs_link_daily",
+  {
+    creatorId: text("creator_id")
+      .notNull()
+      .references(() => collabsCreators.id),
+    day: text("day").notNull(),
+    opens: integer("opens").notNull(),
+    firstAt: integer("first_at").notNull(),
+    lastAt: integer("last_at").notNull(),
+  },
+  (t) => [primaryKey({ columns: [t.creatorId, t.day] })],
+);
+/** Native Flow identity is independent of aliases and CSV creator labels. */
+export const collabsFlowCreators = sqliteTable("collabs_flow_creators", {
+  nativeId: text("native_id").primaryKey(),
+  creatorId: text("creator_id")
+    .unique()
+    .references(() => collabsCreators.id),
+  snapshotJson: text("snapshot_json").notNull(),
+  flowSentAt: integer("flow_sent_at").notNull(),
+  firstReceivedAt: integer("first_received_at").notNull(),
+  lastReceivedAt: integer("last_received_at").notNull(),
+});
+export const collabsAttributions = sqliteTable(
+  "collabs_attributions",
+  {
+    id: text("id").primaryKey(),
+    nativeId: text("native_id")
+      .notNull()
+      .references(() => collabsFlowCreators.nativeId),
+    orderId: text("order_id").notNull(),
+    orderName: text("order_name").notNull(),
+    orderCreatedAt: text("order_created_at").notNull(),
+    flowSentAt: integer("flow_sent_at").notNull(),
+    receivedAt: integer("received_at").notNull(),
+    orderJson: text("order_json"),
+    checkedAt: integer("checked_at"),
+    nextAt: integer("next_at").notNull(),
+    leaseUntil: integer("lease_until").notNull().default(0),
+    attempts: integer("attempts").notNull().default(0),
+    error: text("error"),
+  },
+  (t) => [
+    index("collabs_attributions_due_idx").on(t.nextAt, t.leaseUntil),
+    index("collabs_attributions_received_idx").on(t.receivedAt),
+  ],
+);
 export const collabsReports = sqliteTable("collabs_reports", {
   id: text("id").primaryKey(),
   digest: text("digest").notNull().unique(),
