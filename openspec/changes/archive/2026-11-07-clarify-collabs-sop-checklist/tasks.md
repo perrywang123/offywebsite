@@ -1,0 +1,4 @@
+- [x] Update the source SOPs and validate the documentation-only change.
+- [x] Update both existing Feishu documents and add an unchecked reusable administrator checklist.
+- [x] Verify saved wording, headings, checklist behavior and screenshots; preserve document sharing settings.
+- [x] Check links/formatting and prepare the completed documentation and evidence for archival and Git delivery.

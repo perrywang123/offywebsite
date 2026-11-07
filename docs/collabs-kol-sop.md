@@ -24,7 +24,7 @@ Check that activation is complete before your campaign starts. Offy staff will n
 
 ## 3. Use the exact link and code approved for your partnership
 
-Copy your current affiliate link and creator code from the active Offy partnership, or use the equivalent Offy short link that the brand has checked with you. Your code, commission rate and audience offer may be different from another creator's.
+Copy your current affiliate link and creator code from the active Offy partnership, or use the Offy short link supplied and checked by the brand. Collabs provides the official affiliate link and code; the brand creates any `isoffy.com/r/your-alias` short link in its separate Offy administrator system. Typing a new path into Collabs or changing an existing address does not create an Offy page or activate a short link. Your code, commission rate and audience offer may be different from another creator's.
 
 Before posting, open the final link and confirm it leads to the intended Offy page. Keep the full address and its tracking parameters intact, including `dt_id` when present. Do not replace it with a normal homepage link, invent a `#name` link, or remove everything after `?`. Use the code exactly as supplied.
 
@@ -67,4 +67,4 @@ If your code stops working or a partnership is paused, contact Offy before publi
 
 ## Before your first campaign
 
-Confirm these five items with Offy: **accepted partnership, correct rate and offer, activated payouts, approved working link/code, and a successful jointly checked pilot**. Offy will coordinate the first conversion check with you. This guide does not require you to make a purchase yourself or give anyone access to your account.
+Before public launch, confirm these four items with Offy: **accepted partnership, correct rate and offer, activated payouts, and the exact approved working link/code**. Offy coordinates any approved small pilot and checks the first real conversion with you before expanding promotion. A working page or unpaid checkout is not proof of an attributed sale or commission. You are not required to buy a product yourself or give anyone access to your account. Offy's administrator keeps a separate per-creator launch checklist; your confirmation should reflect what you can actually see in your own account.
