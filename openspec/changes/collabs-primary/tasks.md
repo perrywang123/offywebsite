@@ -18,6 +18,7 @@
 
 - [x] Run complete tests, typecheck, lint, formatting, production build and isolated browser interactions.
 - [x] Obtain required action-time Collabs application authorization/terms approval; retain invite-only/Open Access disabled and 30-day holding without sending invitations or creating real transactions.
+- [x] Independently read the verified business contact and native automatic-payments page, including 30-day holding and the next-Shopify-bill notice; retain screenshots without treating zero balances as payout verification.
 - [ ] Confirm real export headers, report granularity and available tracking/attribution behavior; do not invent missing fields.
 - [x] Push reviewed implementation to Git before server pulls; build compatible Linux images with resource protection.
 - [x] Back up DB, deploy admin and storefront separately, verify public/private boundary, ordinary shopping, discount handling and tracking on deployed code.

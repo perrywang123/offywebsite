@@ -32,7 +32,8 @@ GitHub 原 CI 使用 Node20，真实日志显示 jsdom30/undici8 在初始化时
 - [x] 原主站 Storefront token 可只读查询 Shopify URL redirects，无需更换主站凭据。
 - [x] 实际 Affiliates域名下拉仅有本店 myshopify.com；未修改主站 DNS、主域名或结账设置。后台支持安全解析该店官方链接后生成保留 dt_id 的 Offy 链接。
 - [x] 用户手动清理Shopify站点数据、重新登录并打开Settings → Email后，已只读核对：Collabs联系人为yifangu3@gmail.com，旁边明确显示绿色Verified；通知接收邮箱同为yifangu3@gmail.com。保留[邮箱验证截图](design/kol-admin/collabs-release-2026-11-07/collabs-email-verified.png)。没有刷新页面、修改字段或重发验证邮件；旧邮箱的验证邮件不作为验收依据。
-- [ ] 确认实际自动付款状态、邀请计划与真实官方报告可导出字段。无真实创作者合作时不将空表或样例标作真实转化验收。
+- [x] 用户手动打开原生Payments页后，只读核对当前为automatic/holding视图；页面明确显示30-day holding period，期满后加入next Shopify bill。Holding period、In dispute、Waiting for creator、Scheduled、Paid、Canceled均为$0.00，页面显示No new payments。保留[自动付款页面截图](design/kol-admin/collabs-release-2026-11-07/collabs-payments-automatic.png)。此证据确认当前界面提供的自动付款流程与30天冻结期，不代表已发生扣费或创作者到账；没有修改字段、提交付款或刷新页面。
+- [ ] 按首位真实KOL合作条件建立邀请计划，并核对真实官方报告可导出字段、归因与到账。无真实创作者合作时不将空表或样例标作真实转化验收。
 
 Collabs内嵌页此前持续空白，由用户手动清理Shopify站点数据并重新登录后恢复；外层导航曾与内嵌内容不同步，最终以用户手动打开的应用内部Email页面为准。遵照用户要求，不持续刷新或反复导航。本轮没有为此旋转线上凭据、变更店铺权限或改动订单。
 
@@ -50,4 +51,4 @@ Collabs内嵌页此前持续空白，由用户手动清理Shopify站点数据并
 
 主站五张新闻图均读取内置assets/news素材并已完整加载；线上侧栏切换到结账诊断再返回，不出现重新连接占位。合作联系邮箱显示yifangu3@gmail.com，管理员登录身份保持独立。
 
-部署后的[后台画面](design/kol-admin/collabs-release-2026-11-07/production-admin.png)与[未付款的Shopify结账画面](design/kol-admin/collabs-release-2026-11-07/production-checkout-unpaid.png)为本次证据。没有用模拟报告冒充真实Collabs转化或付款。当前剩余外部验收是官方页面的自动付款状态，以及首次真实合作后的报告字段、归因和到账；不能由普通cart成功推断这些也已验证。
+部署后的[后台画面](design/kol-admin/collabs-release-2026-11-07/production-admin.png)与[未付款的Shopify结账画面](design/kol-admin/collabs-release-2026-11-07/production-checkout-unpaid.png)为本次证据。没有用模拟报告冒充真实Collabs转化或付款。联系人Verified、自动付款页面与30天冻结期均已实际读取；当前剩余外部验收是首次真实合作后的报告字段、归因和到账，不能由普通cart成功或空付款页面推断这些也已验证。
