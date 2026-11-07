@@ -1,0 +1,5 @@
+- [x] Install project rules and domain review context.
+- [x] Install isolated local AST dependencies and record reproducible versions.
+- [x] Validate rule loading, triggers, regex execution and AST grammar availability.
+- [x] Execute the four review layers against the committed Collabs change range and apply Critic filtering.
+- [x] Verify documentation/configuration and run required checks; include the completed tooling and evidence in the Git delivery.

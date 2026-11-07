@@ -1,0 +1,87 @@
+rules:
+  - id: offy-shopify-authority
+    name: Shopify 商品与结账权威
+    severity: CRITICAL
+    domain: commerce
+    trigger:
+      pathPattern:
+        - src/server/catalog/live.ts
+        - src/server/payments/shopify/provider.ts
+        - src/app/api/payments/checkout/route.ts
+    prompt: |
+      检查本 hunk 是否把本地品牌素材、旧商品快照、固定价格或缓存错误当作可购买商品事实，或在 Shopify 商品读取失败时仍创建 checkout。仅凭审计日志、品牌图片、保留的路由映射不判违规；需指出可实际到达的错误数据或结账路径。
+  - id: offy-report-money
+    name: 报告金额、币种与缺失值
+    severity: CRITICAL
+    domain: money
+    trigger:
+      pathPattern:
+        - src/lib/collabs/reports.ts
+        - src/server/collabs/service.ts
+    prompt: |
+      检查本 hunk 是否把未提供的金额转换为零、忽略币种混加、使用不安全或不精确的最小单位转换，或从订单付款状态推断 Collabs 佣金已出款。显式验证后的整数金额、按币种聚合和标注未核实不违规。
+  - id: offy-collabs-no-second-payable
+    name: Collabs 不生成第二套应付
+    severity: CRITICAL
+    domain: collabs
+    trigger:
+      pathPattern:
+        - src/server/kol/core.ts
+        - src/server/kol/ledger.ts
+        - src/server/kol/codes.ts
+        - src/server/collabs/admin.ts
+    prompt: |
+      检查本 hunk 中 Collabs 模式下是否仍可创建本地佣金、结算应付、执行手动付款或实际发码；只读历史、报告导入、链接映射和带拒绝分支的旧模式能力不违规。不要把管理员导入的官方报告称为 API 自动同步。
+  - id: offy-private-admin-boundary
+    name: 管理接口访问及错误边界
+    severity: CRITICAL
+    domain: access
+    trigger:
+      pathPattern:
+        - src/app/api/admin/kol/**/route.ts
+        - src/server/collabs/admin.ts
+    prompt: |
+      检查本 hunk 是否绕过私有入口、登录、CSRF/来源校验，或异步异常逃出已声明的 API 错误边界并泄露内部细节。结合调用者确认防护；内部 helper 不要求重复认证，不能只因没在 helper 中登录就报错。
+  - id: offy-safe-official-links
+    name: 官方链接与跟踪隔离
+    severity: CRITICAL
+    domain: tracking
+    trigger:
+      pathPattern:
+        - src/lib/collabs/links.ts
+        - src/server/collabs/storefront.ts
+    prompt: |
+      检查本 hunk 是否允许任意外部重定向、协议相对目标、管理入口，丢失官方链接签名/归因参数，或让跟踪超时/错误中断正常购物。必须指出可接受的恶意输入或实际错误分支，不根据想象中的第三方行为定罪。
+  - id: offy-isolated-prebuilt-release
+    name: 后台独立预构建发布
+    severity: CRITICAL
+    domain: deployment
+    trigger:
+      pathPattern:
+        - deploy/update-admin.sh
+        - deploy/prebuilt-images.py
+        - .github/workflows/release-image.yml
+    prompt: |
+      检查本 hunk 是否让后台独立更新同时停止/重建主站、在预构建模式偷偷生产编译、跳过源 revision/架构检查或泄露生产凭据。允许构建工作流离线生成两个镜像；生成不等于同时发布。
+  - id: offy-no-inline-live-credentials
+    name: 禁止真实令牌字面量
+    severity: CRITICAL
+    domain: access
+    trigger:
+      pathPattern:
+        - src/**
+        - deploy/**
+        - .github/workflows/**
+    regex: "(?:shpat_|shpca_|shpss_)[A-Fa-f0-9]{24,}"
+    issueMessageTemplate: 疑似 Shopify 真实令牌字面量；核对后移至服务器私密配置，勿把令牌复制到报告。
+  - id: offy-structured-secret-check
+    name: 服务端凭据结构检查
+    severity: CRITICAL
+    domain: access
+    trigger:
+      pathPattern:
+        - src/server/**
+        - src/app/api/**
+    ast:
+      builtin: hardcoded_credential
+      languages: [typescript, javascript]

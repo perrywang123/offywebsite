@@ -21,7 +21,10 @@
 - [x] Independently read the verified business contact and native automatic-payments page, including 30-day holding and the next-Shopify-bill notice; retain screenshots without treating zero balances as payout verification.
 - [x] Reproduce the asynchronous Collabs API error-boundary failure, add failing route-level regressions, fix and rerun negative-input and isolated browser validation.
 - [x] Remove misleading legacy scan controls from Collabs connection information and test that reconnect only performs the read-only connection check.
-- [ ] Publish the revalidation fixes as an admin-only prebuilt image update and verify the storefront container stays unchanged.
+- [x] Publish the revalidation fixes as an admin-only prebuilt image update and verify the storefront container stays unchanged.
+- [x] Complete the owner-requested basic logic/boundary review with the installed project SmartCR rules; record the reproducible dot-path target flaw without changing the core redirect flow before owner confirmation.
+- [x] Create and visually verify separate administrator and creator SOPs in the signed-in Feishu account.
+- [ ] Obtain owner confirmation before correcting the dot-path normalization flaw in promotion target validation; add regressions and verify any approved implementation before rollout.
 - [ ] Confirm real export headers, report granularity and available tracking/attribution behavior; do not invent missing fields.
 - [x] Push reviewed implementation to Git before server pulls; build compatible Linux images with resource protection.
 - [x] Back up DB, deploy admin and storefront separately, verify public/private boundary, ordinary shopping, discount handling and tracking on deployed code.
