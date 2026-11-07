@@ -12,6 +12,6 @@
 ## 3. Verification and release
 
 - [x] Run deployment tests, full tests, typecheck and lint (100 files / 687 tests; production image build remains part of server verification below).
-- [ ] Archive specifications and push reviewed changes to Git.
-- [ ] Pull on server, deploy only admin/worker with verified limits, and verify revision and management availability.
-- [ ] Verify original storefront container ID/start time and public health remain unchanged.
+- [x] Archive specifications and push reviewed changes to Git.
+- [x] Pull on server, deploy only admin/worker with verified limits, and verify revision and management availability.
+- [x] Verify original storefront container ID/start time and public health remain unchanged.

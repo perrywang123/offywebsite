@@ -4,6 +4,8 @@
 
 ## 已实现
 
+- 2026-11-07 后台资源保护与生产独立发布已验收：构建默认1 CPU / 1536 MiB，检查额外可用内存和旧systemd服务，镜像标记Git revision；最新后台功能及worker已单独发布，主站容器和代理保持原样。实际运行版本和边界见 [发布验收](safe-admin-release-validation.md)。
+
 - 英文单语、默认语言无前缀。中文保留代码，`/zh/*` 308 去前缀；`/en/*` 307 去前缀。
 - 品牌首页：五屏 Hero → NEWS → New Looks/区域限定/商品名册 → 包挂预告 → 联名 → 订阅 → 未来 IP。
 - NEWS 的五张宣传图使用 `lib/content.ts` 登记的本地品牌素材；仅用 Shopify 核验绑定商品的市场可售状态，不以商品首图覆盖宣传构图。2026-11-02 从 `808d9b8` 之前的映射恢复；商品详情、价格、库存和结账继续使用 Shopify。见 [恢复验收](news-editorial-restoration-validation.md)。
