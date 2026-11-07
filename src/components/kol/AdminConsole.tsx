@@ -539,7 +539,8 @@ export function AdminConsole({ view }: { view: View }) {
                 void loadConnection();
               }}
             >
-              连接与同步 <span aria-hidden>↗</span>
+              {data.accountingMode === "collabs" ? "连接状态" : "连接与同步"}{" "}
+              <span aria-hidden>↗</span>
             </button>
             <button className="mobile-logout" onClick={() => void operate("logout", {}, "已退出")}>
               退出登录
@@ -548,8 +549,10 @@ export function AdminConsole({ view }: { view: View }) {
         </header>
         {data.health.shopifyAdminConfigured === false && (
           <p className="message" role="status">
-            未配置 Shopify Admin
-            连接凭据（应用凭据或手动令牌），订单同步与优惠码功能暂不可用。本地合作记录和结账诊断可正常查看。
+            未配置 Shopify Admin{" "}
+            {data.accountingMode === "collabs"
+              ? "连接凭据（应用凭据或手动令牌），Shopify 订单只读核对暂不可用。报告快照和结账诊断可正常查看。"
+              : "连接凭据（应用凭据或手动令牌），订单同步与优惠码功能暂不可用。本地合作记录和结账诊断可正常查看。"}
           </p>
         )}
         {data.accountingMode === "collabs" && view !== "checkouts" && (
@@ -1596,7 +1599,11 @@ export function AdminConsole({ view }: { view: View }) {
         </Dialog>
       )}
       {showHealth && (
-        <Dialog error={error} title="连接与同步" onClose={() => setShowHealth(false)}>
+        <Dialog
+          error={error}
+          title={data.accountingMode === "collabs" ? "连接状态" : "连接与同步"}
+          onClose={() => setShowHealth(false)}
+        >
           <div className="dialog-content">
             <h3>Shopify Admin</h3>
             {connection ? (
@@ -1612,33 +1619,45 @@ export function AdminConsole({ view }: { view: View }) {
                   <span className="error">{errorLabel(data.health.worker.error)}</span>
                 )}
               </dd>
-              <dt>最近完整增量扫描</dt>
-              <dd>{date(data.health.lastFullScan)}</dd>
-              <dt>收件箱</dt>
-              <dd>
-                {data.health.inbox.map((i) => `${i.status}: ${i.count}`).join(" / ") || "暂无事件"}
-              </dd>
-              <dt>归因采集告警</dt>
-              <dd>
-                {data.health.attributionError
-                  ? JSON.stringify(data.health.attributionError)
-                  : "暂无记录"}
-              </dd>
+              {data.accountingMode !== "collabs" && (
+                <>
+                  <dt>最近完整增量扫描</dt>
+                  <dd>{date(data.health.lastFullScan)}</dd>
+                  <dt>收件箱</dt>
+                  <dd>
+                    {data.health.inbox.map((i) => `${i.status}: ${i.count}`).join(" / ") ||
+                      "暂无事件"}
+                  </dd>
+                  <dt>归因采集告警</dt>
+                  <dd>
+                    {data.health.attributionError
+                      ? JSON.stringify(data.health.attributionError)
+                      : "暂无记录"}
+                  </dd>
+                </>
+              )}
             </dl>
-            {data.health.failures.map((f) => (
-              <p className="error small" key={f.id}>
-                {f.error} · 重试 {f.attempts} 次
-              </p>
-            ))}
+            {data.accountingMode !== "collabs" &&
+              data.health.failures.map((f) => (
+                <p className="error small" key={f.id}>
+                  {f.error} · 重试 {f.attempts} 次
+                </p>
+              ))}
             <p className="inline-note">
-              后台与独立站共用服务器数据库。订单与优惠由Shopify维护；事件入队后由持久化worker处理，漏事件由分页核对补齐。此处不修改店铺权限。
+              {data.accountingMode === "collabs"
+                ? "此处仅检查 Shopify 只读连接。Collabs 报告需要人工导入，不通过旧订单扫描自动同步；佣金和付款在 Collabs 管理。此处不修改店铺权限。"
+                : "后台与独立站共用服务器数据库。订单与优惠由Shopify维护；事件入队后由持久化worker处理，漏事件由分页核对补齐。此处不修改店铺权限。"}
             </p>
             <button
               className="primary"
               disabled={busy}
-              onClick={() => void operate("sync", {}, "已执行同步核对")}
+              onClick={() =>
+                void (data.accountingMode === "collabs"
+                  ? loadConnection()
+                  : operate("sync", {}, "已执行同步核对"))
+              }
             >
-              执行一轮同步
+              {data.accountingMode === "collabs" ? "重新检查连接" : "执行一轮同步"}
             </button>
             <h3>最近审计</h3>
             <div className="audit-list">

@@ -144,7 +144,7 @@ export async function POST(request: Request, context: Context) {
       });
       return response;
     }
-    if (path[0] === "collabs") return collabsPost(db, path, admin.id, request);
+    if (path[0] === "collabs") return await collabsPost(db, path, admin.id, request);
     if (collabsMode() && path[0] !== "sync") throw new AccessError("collabs_managed", 409);
     if (path[0] === "partners") {
       const input = cooperationSchema.parse(await request.json());

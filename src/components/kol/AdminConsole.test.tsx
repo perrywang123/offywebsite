@@ -23,6 +23,34 @@ const emptyState = {
   siteUrl: "https://offy.test",
   settlementsEnabled: false,
 };
+it("checks connectivity without offering a legacy accounting scan in Collabs mode", async () => {
+  const fetcher = vi
+    .fn()
+    .mockImplementation(async (url: string) =>
+      Response.json(
+        url.endsWith("/connection")
+          ? { scopes: ["read_orders"], campaigns: { nodes: [], truncated: false } }
+          : url.endsWith("/collabs")
+            ? { creators: [], reports: [], officialAdmin: "https://admin.shopify.com/" }
+            : { ...emptyState, accountingMode: "collabs" },
+      ),
+    );
+  vi.stubGlobal("fetch", fetcher);
+  render(<AdminConsole view="collabs" />);
+  fireEvent.click(await screen.findByRole("button", { name: "连接状态" }));
+  const dialog = screen.getByRole("dialog", { name: "连接状态" });
+  expect(within(dialog).getByText(/Collabs 报告需要人工导入/)).toBeInTheDocument();
+  expect(within(dialog).queryByText("最近完整增量扫描")).not.toBeInTheDocument();
+  expect(within(dialog).queryByRole("button", { name: "执行一轮同步" })).not.toBeInTheDocument();
+  await within(dialog).findByText(/已连接/);
+  fireEvent.click(within(dialog).getByRole("button", { name: "重新检查连接" }));
+  await waitFor(() => {
+    expect(fetcher.mock.calls.filter(([url]) => String(url).endsWith("/connection"))).toHaveLength(
+      2,
+    );
+  });
+  expect(fetcher.mock.calls.some(([url]) => String(url).endsWith("/sync"))).toBe(false);
+});
 it("labels order filters, explains inverted dates and clears only the current section", async () => {
   vi.stubGlobal(
     "fetch",
