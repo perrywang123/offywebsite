@@ -1,0 +1,63 @@
+name: Build release image
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: release-image-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  image:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - name: Checkout selected source
+        uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v4
+
+      - name: Build Linux amd64 image without production credentials
+        uses: docker/build-push-action@v7
+        with:
+          context: .
+          platforms: linux/amd64
+          tags: |
+            offy-app:local
+            offy-admin:local
+          build-args: |
+            OFFY_BUILD_REVISION=${{ github.sha }}
+            SITE_URL=https://isoffy.com
+            NEXT_PUBLIC_SITE_URL=https://isoffy.com
+          outputs: type=docker,dest=${{ runner.temp }}/offy-image.tar
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+      - name: Verify native database binding and migrations
+        run: |
+          docker load --input "$RUNNER_TEMP/offy-image.tar"
+          test "$(docker image inspect offy-admin:local --format '{{ index .Config.Labels "org.opencontainers.image.revision" }}')" = "$GITHUB_SHA"
+          docker run --rm --entrypoint sh -e DATABASE_URL=/tmp/offy-image-smoke.db offy-admin:local -c 'node db/migrate.mjs'
+
+      - name: Package image and checksum
+        run: |
+          cd "$RUNNER_TEMP"
+          gzip -1 offy-image.tar
+          sha256sum offy-image.tar.gz > SHA256SUMS
+          printf '%s\n' "$GITHUB_SHA" > REVISION
+
+      - name: Upload image artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: offy-linux-amd64-${{ github.sha }}
+          path: |
+            ${{ runner.temp }}/offy-image.tar.gz
+            ${{ runner.temp }}/SHA256SUMS
+            ${{ runner.temp }}/REVISION
+          if-no-files-found: error
+          compression-level: 0
+          retention-days: 3

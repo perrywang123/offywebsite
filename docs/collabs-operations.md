@@ -50,6 +50,10 @@ bash deploy/update-storefront.sh --kol --prebuilt
 
 `--prebuilt` 不编译，仍执行配置校验、备份、迁移和健康检查。缺少镜像或 revision/platform 不匹配会在替换容器前失败。常规不带此参数的脚本仍支持原来的受限构建。两个脚本都通过 Git 更新源码；镜像必须由受信的同一提交构建，不能随意重打标签绕过校验。
 
+仓库 Actions 的 **Build release image** 支持手动选择分支构建 Linux amd64 镜像；不包含生产凭据，不自动部署服务器。构建内验证原生 SQLite 及迁移，成功后保留3天的镜像、SHA256SUMS和REVISION工件。下载并解压工件，将这三个文件传到服务器的私密临时目录。在该目录执行 `sha256sum -c SHA256SUMS`、`docker load --input offy-image.tar.gz`；确认服务器 Git HEAD 与 REVISION 一致，再执行上面的两个 `--prebuilt` 命令。若分支又有新提交，应重新构建对应工件，不能把旧镜像标签冒充新代码。
+
+该流程采用 [Docker 官方镜像工件方案](https://docs.docker.com/build/ci/github-actions/share-image-jobs/)。私有仓库工件按 GitHub 仓库权限下载；无需把个人 GitHub API 凭据复制到生产服务器。
+
 ## 官方参考
 
 - [Collabs 自定义独立站](https://help.shopify.com/en/manual/promoting-marketing/collabs/merchants/custom-storefronts)
