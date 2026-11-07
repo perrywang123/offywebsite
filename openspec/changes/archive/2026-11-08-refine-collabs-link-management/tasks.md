@@ -4,4 +4,4 @@
 - [x] Reject duplicate official tracking identities transactionally, including changed targets and disabled reservations; preserve and disclose legacy duplicate records.
 - [x] Document the dt_id / PV / anonymous UV proposal as pending, not implemented.
 - [x] Run full tests, typecheck, lint, build and isolated responsive browser verification.
-- [ ] Archive, push Git, build a CI image and deploy only admin; verify storefront container and Nginx remain unchanged.
+- [x] Push Git, build a CI image and deploy only admin; verify storefront container and Nginx remain unchanged; archive the completed specification.

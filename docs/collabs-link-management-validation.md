@@ -10,4 +10,10 @@
 
 只读检查真实店铺入口：myshopify.com/OFFYTESTPERRY返回301到同一Shopify域名的products?dt_id=3689395，没有进入Offy。官方链接追踪标识不是由Offy每次邀请时生成。按dt_id的Offy落地PV与匿名浏览器UV在[方案](collabs-traffic-proposal.md)中明确标为待确认，不能声称已采集访客数。
 
-发布方式为CI预构建Linux镜像、仅更新admin及worker；生产服务器不执行编译。最终部署和线上复验结果在发布完成后补充。
+代码提交`f0d4290ce4b3c07537f7e47145de0e37f9f72d1f`已推送，[完整CI](https://github.com/perrywang123/offywebsite/actions/runs/42412843310)和[Linux镜像构建](https://github.com/perrywang123/offywebsite/actions/runs/42412862118)均成功。394624888字节镜像工件经GitHub摘要、来源revision及内部SHA256SUMS校验后下载到服务器；运行`bash deploy/update-admin.sh --prebuilt --skip-pull`成功，仅更新admin及worker，生产服务器没有编译。回滚标签为`offy-admin:rollback-bindings-20261108`。
+
+上线前后逐项比较：独立站容器ID、镜像ID、启动时间、端口及Nginx配置摘要完全相同。主站仍运行此前已验证的`0c23bab`镜像，后台与worker运行新提交。独立站首页、公开健康检查、主站本地健康检查及后台健康检查均为200，数据库integrity为ok，外键检查无错误；服务器可用内存约1853MiB。
+
+生产后台已实际显示三条既有测试别名共用dt_id的提示。提交明确命名的重复绑定校验表单后看到具体拒绝原因，输入保留；随后取消并刷新还原界面。只读数据库复核确认校验别名不存在，合作记录仍为3条，没有改绑、停用或删除原记录。用户已有的1次短链打开保留，线上每日明细实际显示前六日0、当天1。没有为了测试制造新的浏览、订单、退款或佣金。
+
+隔离测试进程已停止，当前任务生成的隔离数据库及过程日志已清理。后续文档和OpenSpec归档提交不改变运行逻辑，无须再次构建或重启服务。
