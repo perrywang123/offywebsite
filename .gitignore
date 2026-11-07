@@ -71,5 +71,6 @@ tmp/
 /.offy-deploy-root
 /.deploy-backups/
 /.deploy-logs/
+/.deploy-artifacts/
 /.offy-runtime-secrets.json
 /.offy-runtime-*.local

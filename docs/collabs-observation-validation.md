@@ -17,7 +17,23 @@
 
 ## 生产验证
 
-发布前主站和后台健康，Nginx与数据基线已捕获。服务器不执行编译，计划使用相同Git提交的CI Linux镜像，先后台迁移与worker，再单独更新主站。正式部署、Flow凭据授权和只校验请求的实际结果将在完成后补充，不能仅凭本地验证认定已启用。
+代码提交 `0c23babd8d8f0c3628a85dffaeb5fd788d7fa01c` 已推送。GitHub [完整CI](https://github.com/perrywang123/offywebsite/actions/runs/42407252789) 和 [Linux镜像构建](https://github.com/perrywang123/offywebsite/actions/runs/42407259009) 均成功。镜像工件394636241字节，按来源revision、GitHub摘要及SHA256SUMS校验后直接下载到服务器，服务器没有执行编译。
+
+正式环境先执行后台独立发布，再执行主站独立发布，均使用 `--prebuilt`。两个步骤分别备份了SQLite；回滚镜像保留为 `offy-app:rollback-observation-20261108` 和 `offy-admin:rollback-observation-20261108`。后台更新时主站容器ID、镜像和启动时间不变；主站更新时后台与worker容器ID和启动时间不变。两步均通过配置、共享卷、健康和入口边界检查，端口不变，Nginx所有配置文件摘要不变。三个运行容器的OCI revision均为上述代码提交。
+
+线上接收端通过了认证只校验请求（200、`validationOnly:true`）与未认证请求（404）。数据库只读复查：官方归属与Flow创作者均为0，模拟请求没有入库。
+
+正式后台新增一条明确命名的临时验证链接，只对该链接执行HEAD、已知机器人、预取和一次普通GET。前三者204，普通GET303，目的地址和真实dt_id保留，未增加访客Cookie。请求不跟随目的地，不执行Shopify浏览脚本或购买。独立站后台统计精确显示1次打开，首笔/最近时间和UTC日趋势均可见。随后按临时UUID、别名和名称校验，仅清理该条记录、计数和两条创建审计；原有三条合作记录未修改，正式页面已刷新确认不再显示验证记录。清理后新统计表为空，数据库integrity为ok。
+
+用户在实际授权时明确允许保存专用凭据及启用该流程。Secret `offy_collabs_events_v1` 已保存到Shopify Flow，界面只显示脱敏值，关联工作流数为1；未交出内部签名主密钥或Shopify Admin令牌。正式流程 `OFFY · Collabs attribution observation` 已开启，列表显示“活跃”，唯一动作POST正式URL `https://isoffy.com/api/collabs/attributed`，不含 `validate=1`；4XX为Fail，5XX/429为Retry。既有 `Recover abandoned checkout` 仍活跃，上次更新仍为9月4日。
+
+Flow测试工具实际生成并正确渲染了最小模板。它明确提示不能安全模拟HTTP动作，在该动作处停止，**没有实际从Flow外发HTTP**。随后仅将同一份真实渲染的测试负载用于生产HTTPS只校验接口，返回200及`validationOnly:true`；官方事件及原生创作者表仍为0。样例引用既有订单号不代表真实归属，不曾通过正式入库模式提交，也未回放历史#1134。Flow工具内的3个生成样例不属于生产订单或Offy统计；可见界面未提供删除入口，未使用私有接口清理它们。相关本地负载、临时凭据和隔离数据库已清理。
+
+启用后概要显示“工作流运行将显示在此处”，目前未有真实运行。因此配置、契约、独立接收器及订单核对已验证，**真实归属事件从Flow外发到Offy的送达，仍需首个启用后的真实事件确认**；不为补这项证据制造购买、退款或伪造归属。上线后的正常观察不回补历史数据。
+
+管理员[飞书SOP](https://my.feishu.cn/wiki/F1omweS8siJKxFks3GrcXl20nBe)已补充新看数入口、来源及累计值边界、同一官方链接对应多个别名的限制，以及发布签核清单中的Flow核对条件；重新加载已确认主要修订保存到云端。KOL仍使用官方门户，操作方式未变。
+
+收尾仅更新文档、归档规范和Git/Docker忽略规则：服务器下载的 `.deploy-artifacts/` 不再进入Git或未来手工构建的上下文，现有镜像归档保留。此类非运行逻辑修订无需再次构建或重启；运行镜像revision仍为上述已验证代码提交。
 
 ## 证据边界
 

@@ -1,0 +1,3 @@
+- [x] Confirm `.deploy-artifacts/probe.zip` is not ignored before the change.
+- [x] Add Git and Docker context exclusions for the deployment artifact directory.
+- [x] Verify ignore matching, formatting and OpenSpec; archive for Git delivery without rebuilding or restarting services.

@@ -26,6 +26,7 @@ resources
 .offy-deploy-root
 .deploy-backups
 .deploy-logs
+.deploy-artifacts
 *.db-*
 *.sqlite*
 
