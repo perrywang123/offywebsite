@@ -24,4 +24,6 @@ Preserve the black/white ledger, 44px controls, persistent navigation and labell
 
 Build revision-labelled Linux amd64 images outside production. The manually dispatched GitHub Actions workflow exports a Docker image artifact, verifies native SQLite migrations, and includes its checksum/source revision; it receives no production credentials and does not automatically deploy. Server releases require matching Git HEAD and prebuilt image labels.
 
+Nginx may present an internal container URL to Next.js. Shopify request context and discount redirects use the configured public SITE_URL origin, never a client-supplied forwarded host. Tracking transport errors return a non-cacheable 503 independently of commerce.
+
 Additive schema first via admin migration; deploy admin/worker then storefront with the same source revision and explicit cutover. Keep loopback ports 3000/3001 and existing HTTPS ingress. Do not build both images concurrently on the 2-core production server. Record image IDs, Git revisions, health and Nginx hashes before/after. A previous image is not a complete business rollback once Collabs obligations exist; keep external accounting ownership and stop rollout before changing it back. Application grants/terms require explicit action-time confirmation. Real checkout payments, creator invitations and refunds require separate concrete authorization.

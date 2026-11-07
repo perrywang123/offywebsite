@@ -178,7 +178,9 @@ if a and a[0]=='inspect':
   };
 }
 const isImageBuild = (args: string[]) => args.includes("build") && !args.includes("--help");
-describe("unified server deployment", () => {
+// These are multi-process CLI integration tests, not five-second latency assertions.
+// Keep a bounded budget consistent with the Git re-exec cases below.
+describe("unified server deployment", { timeout: 15_000 }, () => {
   it.each(["offy.service", "offy-website.service"])(
     "blocks competing legacy unit %s before even check-only can pass",
     (unit) => {
@@ -420,7 +422,7 @@ describe("unified server deployment", () => {
   });
 });
 
-describe("independent server storefront deployment", () => {
+describe("independent server storefront deployment", { timeout: 15_000 }, () => {
   it.each(["admin-token", ""])(
     "applies manual Admin token %j without replacing the storefront",
     (token) => {
@@ -620,7 +622,7 @@ describe("independent server storefront deployment", () => {
   });
 });
 
-describe("private environment installation", () => {
+describe("private environment installation", { timeout: 15_000 }, () => {
   it("keeps the old file on invalid configuration and atomically installs a valid candidate", () => {
     const f = setup();
     try {
@@ -652,7 +654,7 @@ describe("private environment installation", () => {
   });
 });
 
-describe("independent server admin deployment", () => {
+describe("independent server admin deployment", { timeout: 15_000 }, () => {
   it("explicit admin mode does not enable a disabled storefront or bypass its configuration check", () => {
     const f = setup(false);
     try {

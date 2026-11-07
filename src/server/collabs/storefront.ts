@@ -34,7 +34,19 @@ export function trackingContext(request: Request, country: string, locale: strin
       .filter((c) => /^\s*(?:_shopify_|_tracking_consent|localization|cart)/.test(c))
       .join(";"),
   );
-  const safe = { url: request.url, method: request.method, signal: request.signal, headers };
+  const incoming = new URL(request.url),
+    canonical = new URL(env.SITE_URL);
+  // Next.js may expose an internal container URL behind Nginx. Never send that
+  // origin to Shopify or trust a caller-supplied forwarded host.
+  canonical.pathname = incoming.pathname;
+  canonical.search = incoming.search;
+  canonical.hash = "";
+  const safe = {
+    url: canonical.toString(),
+    method: request.method,
+    signal: request.signal,
+    headers,
+  };
   return createShopifyRequestContext({
     request: safe,
     i18n: { country: country as I18nConfig["country"], language: locale === "zh" ? "ZH_CN" : "EN" },
@@ -87,15 +99,27 @@ export async function trackingProxy(request: Request) {
       name.startsWith("x-shopify-access-token")
     )
       headers.delete(name);
-  const safe = new Request(request, { headers }),
-    { client, context } = storefrontClient(safe);
-  return (
-    (await handleShopifyRoutes({
-      request: safe,
-      requestContext: context,
-      storefrontClient: client,
-    })) ?? new Response("Not found", { status: 404 })
-  );
+  try {
+    const safe = new Request(request, { headers }),
+      { client, context } = storefrontClient(safe);
+    return (
+      (await handleShopifyRoutes({
+        request: safe,
+        requestContext: context,
+        storefrontClient: client,
+      })) ?? new Response("Not found", { status: 404 })
+    );
+  } catch {
+    // Analytics/consent transport failures stay outside commerce and do not
+    // expose upstream details or generate unhandled application exceptions.
+    return Response.json(
+      { error: "tracking_unavailable" },
+      {
+        status: 503,
+        headers: { "Cache-Control": "no-store" },
+      },
+    );
+  }
 }
 export function discountRedirect(request: Request, code: string) {
   if (!collabsMode()) return new Response("Not found", { status: 404 });
@@ -104,7 +128,7 @@ export function discountRedirect(request: Request, code: string) {
     const source = new URL(request.url),
       target = new URL(
         safeStorefrontTarget(source.searchParams.get("redirect") || "/"),
-        source.origin,
+        env.SITE_URL,
       );
     for (const [key, value] of source.searchParams)
       if (key !== "redirect" && !target.searchParams.has(key)) target.searchParams.set(key, value);
@@ -114,7 +138,7 @@ export function discountRedirect(request: Request, code: string) {
     });
     response.cookies.set(DISCOUNT_COOKIE, code, {
       httpOnly: true,
-      secure: source.protocol === "https:",
+      secure: target.protocol === "https:",
       sameSite: "lax",
       path: "/",
     });
