@@ -21,7 +21,7 @@ jobs:
       - name: Setup Node
         uses: actions/setup-node@v4
         with:
-          node-version: 20
+          node-version: 22
           cache: pnpm
 
       - name: Install dependencies
@@ -34,7 +34,8 @@ jobs:
         run: pnpm typecheck
 
       - name: Test
-        run: pnpm test
+        # Keep subprocess-heavy deployment fixtures within the runner's CPU budget.
+        run: pnpm test --maxWorkers=1
 
       - name: Build
         run: pnpm build
