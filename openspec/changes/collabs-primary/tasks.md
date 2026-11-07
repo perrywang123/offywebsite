@@ -1,6 +1,7 @@
 ## 1. Baseline and contract
 
-- [ ] Confirm the current Shopify SDK contract, store identity, Collabs install permissions and export schemas.
+- [x] Confirm the current Shopify SDK contract, store identity and Collabs install permissions.
+- [ ] Inspect actual export schemas when the first official report is available; do not treat simulator columns as Shopify's schema.
 - [x] Validate proposal/spec deltas before implementation.
 - [x] Record additive migration, accounting cutover and release/rollback plan.
 
@@ -15,10 +16,10 @@
 
 ## 3. Validation and rollout
 
-- [ ] Run complete tests, typecheck, lint, formatting, production build and isolated browser interactions.
-- [ ] Obtain required action-time Collabs application authorization/terms approval; configure invite-only and 30-day holding without sending invitations or creating real transactions.
+- [x] Run complete tests, typecheck, lint, formatting, production build and isolated browser interactions.
+- [x] Obtain required action-time Collabs application authorization/terms approval; retain invite-only/Open Access disabled and 30-day holding without sending invitations or creating real transactions.
 - [ ] Confirm real export headers, report granularity and available tracking/attribution behavior; do not invent missing fields.
-- [ ] Push reviewed implementation to Git before server pulls; build compatible Linux images with resource protection.
-- [ ] Back up DB, deploy admin and storefront separately, verify public/private boundary, ordinary shopping, discount handling and tracking on deployed code.
-- [ ] Investigate any failed check, fix, retest and redeploy as necessary; remove isolated process data and document residual external gates honestly.
+- [x] Push reviewed implementation to Git before server pulls; build compatible Linux images with resource protection.
+- [x] Back up DB, deploy admin and storefront separately, verify public/private boundary, ordinary shopping, discount handling and tracking on deployed code.
+- [x] Investigate failed checks, fix and retest; clear the owned unpaid live cart and its diagnostic, preserve real records, and document residual external gates honestly.
 - [ ] Archive the completed change only after required implementation and verification are actually complete.

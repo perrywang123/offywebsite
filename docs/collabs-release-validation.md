@@ -18,9 +18,9 @@
 - [x] 本地模拟进程已停止，临时数据库及过程文件目录已清理。未向真实 Shopify 创建测试优惠码、测试订单、退款或付款。
 - [x] 最终业务及部署单测：107个测试文件、760项通过。新增追踪超时隔离、公网origin和代理后折扣HTTPS跳转回归。多进程CLI测试曾因默认5秒总时限偶发超时，相关部署测试组统一采用15秒预算；业务断言及禁止生产编译等保护不变。
 - [x] 本地生产浏览器加载官方analytics/privacy脚本，无浏览器错误；追踪代理真实读取Shopify店铺成功。网络超时返回独立503，不抛未处理异常。临时浏览器页与本地生产进程已关闭。
-- [ ] 最终 Linux 镜像验证。
+- [x] 最终Linux amd64镜像在GitHub构建并验证原生SQLite及迁移；生产app/admin/worker的OCI revision均为5dcb670590c29fc880e7cb0ccac76396fc504aa5。
 
-GitHub 原 CI 使用 Node20，真实日志显示 jsdom30/undici8 在初始化时出现 `webidl.util.markAsUncloneable is not a function`，导致组件测试 worker 未启动。这不是支付链路报错；现将 CI 与 Docker 对齐为 Node22，并串行运行含进程调用的测试，保留全部断言。提交31b3f20的远端CI与Linux镜像工作流已全部成功；新增公网origin/超时保护的最终源提交结果随发布补记。
+GitHub 原 CI 使用 Node20，真实日志显示 jsdom30/undici8 在初始化时出现 `webidl.util.markAsUncloneable is not a function`，导致组件测试 worker 未启动。这不是支付链路报错；现将 CI 与 Docker 对齐为 Node22，并串行运行含进程调用的测试，保留全部断言。最终提交5dcb670的[质量CI](https://github.com/perrywang123/offywebsite/actions/runs/42357461756)和[Linux镜像工作流](https://github.com/perrywang123/offywebsite/actions/runs/42357478383)均已成功。
 
 测试使用项目隔离模拟器，商品、订单、退款、报告均为明确的测试数据，模拟报告不等同于实际 Collabs CSV格式。导入依照实际字段映射，暂不假设官方拥有订单级数据或完整付款 API。
 
@@ -34,12 +34,20 @@ GitHub 原 CI 使用 Node20，真实日志显示 jsdom30/undici8 在初始化时
 - [x] 用户保存邮箱修正后已复核：Collabs联系人和通知邮箱均为yifangu3@gmail.com。用户随后确认已完成正确邮箱的验证；本次单次重新打开后应用内嵌页空白，未独立读取到Verified标记。遵照用户要求不持续刷新、不重复发送验证邮件；旧邮箱的验证邮件不作为验收依据。
 - [ ] 确认实际自动付款状态、邀请计划与真实官方报告可导出字段。无真实创作者合作时不将空表或样例标作真实转化验收。
 
+用户随后也确认Collabs内嵌页持续空白，要求清理本机Shopify Cookie后重新登录。浏览器工具的URL安全策略不允许访问Chrome内部设置页，也禁止通过其他通道绕过；已改为请用户手动清理相关站点数据，之后继续正常登录核验。本轮没有为此旋转线上凭据、变更店铺权限或改动订单。
+
 ## 生产发布与回归
 
 发布前基线：isoffy.com返回200；app/admin健康，worker运行；旧offy-website.service为disabled；Nginx配置hash为c621ec067afbdb95d9518901fab5c09a2acf283be5623869c5334dd270fc267e；可用内存约1.8GiB。Shop ID通过已有Admin权限只读核验，未扩权。
 
-- [ ] 源提交同步Git，Linux amd64镜像标记同一revision。
-- [ ] 数据库与诊断/报告加密密钥完成一致备份，旧镜像保留回滚。
-- [ ] 先后台/worker，再独立站分别发布；无生产编译，Nginx/端口不变。
-- [ ] 部署后检查公共商店、私有后台边界、普通购物、折扣路由、追踪Cookie与结账诊断。
-- [ ] 确认服务器无测试报告、测试合作或本地重复付款数据，线上服务健康。
+- [x] 源提交先同步Git，服务器fast-forward到5dcb670；镜像Linux amd64、revision及GitHub工件/镜像双重SHA256全部匹配。
+- [x] 两次发布前均一致备份SQLite及诊断/报告加密密钥，备份完整性检查通过。旧镜像保留pre-collabs-20261107标签，原私密配置另存服务器备份目录。
+- [x] 先后台/worker，再独立站分别通过`--prebuilt`发布，无生产编译。后台阶段逐项比对原主站容器ID、image和启动时间均未变。主站阶段不替换后台/worker，Nginx文件hash与端口保持原样。
+- [x] 线上16项访问/认证检查：公共主站200、公共管理入口/API404、worker GET405且未授权POST404、私有登录、Cookie安全属性、唯一管理员、Collabs模式、本地财务写入拦截、CSRF及退出登录。另验证折扣303公网HTTPS跳转、Secure/HttpOnly会话Cookie、拒绝不安全落地和官方unstable追踪代理只读查询。
+- [x] 实际商品WILD SWEETIE在主站及购物袋均为USD45.90；另外通过真实生产API创建一份无邮箱cart并在浏览器打开Shopify结账，默认美国、单件USD45.90、没有Sold out。未填写个人/支付信息，没有付款或订单。诊断记录保存country、商品、请求、Shopify响应和redirect_ready完整阶段。
+- [x] 测试完清空该唯一Shopify cart；以返回的专属attemptId及原始checkoutUrl双重核对后，仅删除其诊断与级联事件。购物袋恢复为空，测试会话退出。原103条诊断、133条Shopify订单映射及1条既有合作记录保留；本地账本/月结仍为0，Collabs所有表无测试行，SQLite integrity_check为ok。
+- [x] app/admin均healthy，worker运行且fresh heartbeat通过；旧宿主机build服务仍disabled。现场采样app CPU0%、admin1.06%、worker0%，没有生产构建。
+
+主站五张新闻图均读取内置assets/news素材并已完整加载；线上侧栏切换到结账诊断再返回，不出现重新连接占位。合作联系邮箱显示yifangu3@gmail.com，管理员登录身份保持独立。
+
+部署后的[后台画面](design/kol-admin/collabs-release-2026-11-07/production-admin.png)与[未付款的Shopify结账画面](design/kol-admin/collabs-release-2026-11-07/production-checkout-unpaid.png)为本次证据。没有用模拟报告冒充真实Collabs转化或付款。当前剩余外部验收是官方页面的联系人/自动付款状态，以及首次真实合作后的报告字段、归因和到账；不能由普通cart成功推断这些也已验证。
