@@ -55,9 +55,9 @@ python3 deploy/configure-meta-catalog.py --check
 python3 deploy/configure-meta-catalog.py
 ```
 
-运行中的应用需要重新读取环境变量才能生效。仅配置变化且应用代码没有变化时，可先记录/备份运行镜像和数据库，确认 `offy-app:local` / `offy-admin:local` 与当前运行镜像一致，然后使用 `docker compose -f docker-compose.prod.yml --profile kol up -d --no-build --no-deps app` 和相同命令的 `admin` 范围分别重载。不要重打旧镜像 revision 冒充新代码，也不要执行整套构建。新应用代码发布仍遵循前述 revision 校验的发布流程。
+运行中的应用需要重新读取环境变量才能生效。仅配置变化且应用代码没有变化时，维护人员应先记录/备份运行镜像和数据库，保留运行中的 KOL 开关及服务器自动准备的内部认证值，检查解析后的环境与现有容器相比只有 `META_CATALOG_IDS` 改变，再逐个重载同一镜像。不要直接执行缺少运行期认证准备的裸 Compose 命令，不要重打旧镜像 revision 冒充新代码，也不要执行整套构建。新应用代码发布仍遵循前述 revision 校验的独立发布流程。
 
-**投放边界：**美国为优先市场。COLD KITTEN（`cold-kitten`）与 LEMON FIZZ（`lemon-fizz`）在美国 Storefront 可见，但不在当前 Meta 目录；它们未加入映射、未新发布到 Meta。未经所有者另行确认，不新增目录、添加商品或更改商品销售范围。当前目录默认新加坡价格和 Shopify 域名链接仍需单独处理，不能把映射上线等同于四国动态商品广告全部就绪。投放普通图片/视频广告时可直接使用对应的 `https://isoffy.com/products/...` 作为网站落地页，商品价格和可售范围仍由 Shopify 决定。
+**投放边界：**美国为优先市场。COLD KITTEN（`cold-kitten`）与 LEMON FIZZ（`lemon-fizz`）在美国 Storefront 可见，但不在当前 Meta 目录；它们未加入映射、未新发布到 Meta。未经所有者另行确认，不新增目录、添加商品或更改商品销售范围。Meta默认地区已改为美国、语言保持英语；现有商品源已保存并应用 `link` 域名替换规则，Meta提示等待下一次完整同步，实际商品字段仍需复查。基础新加坡价格和四国地区覆盖尚未完成验收，不能把映射上线等同于四国动态商品广告全部就绪。投放普通图片/视频广告时可直接使用对应的 `https://isoffy.com/products/...` 作为网站落地页，商品价格和可售范围仍由 Shopify 决定。详细边界及证据见 [现有目录上线验收](meta-catalog-activation-validation.md)。
 
 事件金额来自实时 Shopify 当前市场数据。目录 ID 不根据商品名、SKU 或内部 code 猜测。需要在 Meta Commerce Manager 对照商品的实际 retailer/content ID，配置 `META_CATALOG_IDS` 为“Offy 当前商品 code → 该商品实际 Meta 目录 ID”的 JSON。示例结构：
 
