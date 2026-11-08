@@ -14,7 +14,9 @@
 
 ## 对外邮箱与 SOP
 
-当前合作联系人为 `contact@whimcoreofficial.com`。生产管理员登录及测试创作者身份不变。已保存 Collabs 的公共联系邮箱并发送验证邮件，用户已确认完成邮箱验证；嵌入页空白时不反复刷新，也不将空白页视为已读取 Verified 状态。
+当前合作联系人为 `contact@whimcoreofficial.com`。生产管理员登录及测试创作者身份不变。已保存 Collabs 的公共联系邮箱并发送验证邮件，用户已完成验证。2026-11-08 用户手动打开 Settings → Email 后，已只读核对新公共邮箱旁明确显示绿色 **Verified**，见[验证截图](design/collabs-landing-20261108/collabs-public-contact-verified.png)；没有刷新、重发验证邮件或改动设置。
+
+该页下方的内部 Collabs notifications 仍列出 `yifangu3@gmail.com`，Marketing 和 Notifications 均勾选。此项是系统通知接收设置，与向创作者展示的公共 Point of contact 分开；本次仅记录，不修改通知偏好或员工账号。
 
 两份飞书 SOP 已更新邮箱、保留原有链接和检查清单，并向管理员解释新 PV/UV 口径：
 
