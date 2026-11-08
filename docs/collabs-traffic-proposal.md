@@ -1,6 +1,6 @@
 # KOL 落地访问与去重访客
 
-日期：2026-11-08。状态：负责人已批准本方案，代码与隔离测试按下述口径实现；本轮生产部署及邮箱验证结果以验收记录为准。短链请求、落地PV/UV与Flow官方快照分开呈现。
+日期：2026-11-08。状态：负责人已批准，代码、隔离测试及生产分步部署已完成；详见[验收记录](collabs-landing-validation.md)。短链请求、落地PV/UV与Flow官方快照分开呈现。
 
 ## 链接身份与实际入口
 
@@ -8,7 +8,7 @@
 
 本次只读核对发现：内部测试的 `/r/perry-test`、`/r/peiyu`、`/r/perry6` 都指向 `dt_id=3689395`，这只是测试数据。新增合作应限制重复绑定；旧重复记录保留并提示，管理员核对后再整理，不能自动转给其他人。
 
-只读 HEAD 实测 `https://ujc6x6-41.myshopify.com/OFFYTESTPERRY` 返回 301，目的地是 `https://ujc6x6-41.myshopify.com/products?dt_id=3689395`。整个过程没有经过 Offy；Offy 无法观测发生在 Shopify 域名里的浏览。此入口不应被假记为一次 Offy 打开。与之不同，`https://isoffy.com/products?dt_id=3689395` 确实进入 Offy，但目前没有把这类直达访问写入自己的统计库。
+只读 HEAD 实测 `https://ujc6x6-41.myshopify.com/OFFYTESTPERRY` 返回 301，目的地是 `https://ujc6x6-41.myshopify.com/products?dt_id=3689395`。整个过程没有经过 Offy；Offy 无法观测发生在 Shopify 域名里的浏览。此入口不应被假记为一次 Offy 打开。与之不同，`https://isoffy.com/products?dt_id=3689395` 确实进入 Offy；本次已为这类直达访问加入许可后采集，不要求先经过 Offy 短链。
 
 ## 两项新增指标
 
