@@ -1,6 +1,6 @@
 # Offy 路线图与状态
 
-> 2026-11-08：Meta 专项漏斗（PageView、ViewContent、AddToCart、InitiateCheckout）、关键事件 CAPI 队列及只读广告诊断已实现，默认关闭；这不替代通用 BI。生产令牌/目录配置、Meta 实收与 Shopify Purchase 跨域归因仍是上线验收项。见 [方案](meta-technical-plan.md)、[SOP](meta-ads-sop.md)。
+> 2026-11-09：Meta 专项漏斗（PageView、ViewContent、AddToCart、InitiateCheckout）、关键事件 CAPI 队列及只读广告诊断已实现并在生产启用；这不替代通用 BI。生产令牌、独立 worker 和购买前事件实收已核验；目录映射、平台最终去重及 Shopify Purchase 跨域广告归因仍待验收。见 [方案](meta-technical-plan.md)、[生产记录](meta-production-validation.md)、[SOP](meta-ads-sop.md)。
 
 > 2026-11-08：增加 [短链打开观察及 Flow 官方归属同步](collabs-observation.md)；与导入财务报告分开，不新增本地计佣或付款。启用及生产验收状态另见发布记录。
 

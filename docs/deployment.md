@@ -130,7 +130,17 @@ bash deploy/update-storefront.sh --kol
 
 检查命令为 `bash deploy/update-storefront.sh --kol --check`；正式执行前的运行中后台检查与真实发布仍须另行通过。支持 `--env-file FILE`、`--skip-pull`，默认必须在原Git checkout。直接使用共享入口时等价为 `bash deploy/update.sh --storefront-only --kol`，不能同时指定 `--admin-only`。
 
-这只隔离发布范围，仍会编译共享的整个Next.js应用，不能保证单次构建不再长耗时，也不会防止网页终端连接中断；长任务宜运行在tmux内。预构建镜像流程尚未实现。
+## 预构建镜像
+
+默认命令只隔离发布范围，仍会编译共享的整个Next.js应用，不能保证单次构建不再长耗时，也不会防止网页终端连接中断；长任务宜运行在tmux内。现已支持 `--prebuilt`：在其他机器先构建与服务器架构一致的 Linux 镜像，设置 `org.opencontainers.image.revision` 为该次 Git 完整提交号，导入服务器后使用原来的独立发布脚本。脚本会校验架构和 Git revision，再备份数据库及替换指定服务；服务器不运行项目编译。主站使用 `offy-app:local`，后台使用 `offy-admin:local`，必须与服务器本次拉取的 Git HEAD 一致，不能只改旧镜像标签冒充新版本。
+
+```bash
+# 已在原服务器项目中拉到对应提交，并导入/核验预构建镜像后，依次执行：
+bash deploy/update-storefront.sh --kol --prebuilt
+bash deploy/update-admin.sh --prebuilt
+```
+
+构建机传 `--build-arg OFFY_BUILD_REVISION=<完整提交号>`，Apple Silicon 构建到当前 x86_64 服务器时必须显式指定 `--platform linux/amd64`。构建上下文只用该提交的源码，不包含私密 `.env`；CAPI、Shopify Admin 等私密令牌只在服务器运行时注入。预构建减少服务器编译负载，但镜像加载、数据库备份与服务短暂重启仍会消耗资源，不能据此宣称零停机。Meta 相关配置及独立 worker 见 [投放与看数 SOP](meta-ads-sop.md)。
 
 ## 日常只更新后台
 

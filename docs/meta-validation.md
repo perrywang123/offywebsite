@@ -25,6 +25,8 @@
 
 ## 尚需生产配置后核验
 
+后续进展：2026-11-08 至 11-09 已单独完成生产配置与发布，并验证 Meta Browser 实收和关键事件 CAPI 接收；见 [生产验收记录](meta-production-validation.md)。以下段落保留本次隔离验收时的范围，不代表当前生产仍未启用。
+
 本轮没有部署生产、注入真实 Meta 令牌、发布广告或改变 Shopify 支付配置。代码默认关闭追踪。真实 Meta Test Events 接收、目录匹配、平台去重，以及 Shopify 官方 Purchase 和真实广告互动的归因，需要管理员按 [投放与看数 SOP](meta-ads-sop.md) 的清单继续验收。
 
 本地协议成功、CAPI 接收回执和 Meta 广告归因是不同证据。此版本保留 Shopify 官方 Purchase 责任，不另外发送 Purchase，也不根据浏览器回跳认定付款或生成 KOL 应付佣金。

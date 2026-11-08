@@ -1,6 +1,6 @@
 # Offy Meta 投放、数据查看与排障 SOP
 
-适用对象：Offy 品牌管理员及广告运营。2026-11-08。当前代码提供独立站 Pixel 和购买前关键事件 CAPI；是否已在服务器开启，以运行配置及实际接收证据为准。本轮未发布广告、未下真实订单、未部署生产。
+适用对象：Offy 品牌管理员及广告运营。更新于 2026-11-09。生产已启用独立站 Pixel、购买前关键事件 CAPI 及独立 worker，并验证真实加购 / 结账准备的接收回执；没有发布广告或下真实订单。证据和未完成的真实购买归因、目录验收见 [生产记录](meta-production-validation.md)。
 
 ## 一、先明确三个看数入口
 
@@ -26,17 +26,17 @@ python3 deploy/configure-meta.py --env-file .env
 
 生产还需要原有 SHOPIFY_ANALYTICS_SHOP_ID、SHOPIFY_STORE_DOMAIN 等隐私运行时配置。缺少隐私许可接口时追踪保持关闭，不跳过许可。META_TRACKING_ENABLED、META_CAPI_ENABLED 默认 false。Meta 令牌注入一次后保留在私密 .env；后续拉 Git 不需要重复输入，除非过期/撤销/轮换。
 
-逐个发布，前一项完成并健康后再执行下一项：
+生产服务器资源有限，优先使用构建机产出的预构建镜像，完成架构、Git revision 和校验和核对；具体见 [预构建发布](deployment.md#预构建镜像)。逐个发布，前一项完成并健康后再执行下一项：
 
 ```bash
-bash deploy/update-storefront.sh --kol
-bash deploy/update-admin.sh
+bash deploy/update-storefront.sh --kol --prebuilt
+bash deploy/update-admin.sh --prebuilt
 python3 deploy/meta-worker.py check
 python3 deploy/meta-worker.py start
 python3 deploy/meta-worker.py status
 ```
 
-前两条沿用现有独立 Git/Docker 更新脚本。新 worker 启动命令只复用当前健康主站的已构建镜像，不编译、不重启 app/admin、不修改 Nginx。worker 0.25 CPU、96 MiB，每10秒处理一次小批量；内部认证自动读取正在运行的主站配置，不要求手工复制私密文件。当前 KOL 环境可以复用既有私密 KOL_WORKER_SECRET；没有 KOL 的新环境需单独配置至少32字符的 META_WORKER_SECRET。
+前两条沿用现有独立 Git/Docker 更新脚本，`--prebuilt` 不在服务器编译；所需镜像必须事先加载并与拉取的源码 revision 一致，否则会拒绝发布。明确在服务器编译时才去掉该参数，构建资源检查仍适用。新 worker 启动命令只复用当前健康主站的已构建镜像，不编译、不重启 app/admin、不修改 Nginx。worker 0.25 CPU、96 MiB，每10秒处理一次小批量；内部认证自动读取正在运行的主站配置，不要求手工复制私密文件。当前 KOL 环境可以复用既有私密 KOL_WORKER_SECRET；没有 KOL 的新环境需单独配置至少32字符的 META_WORKER_SECRET。
 
 每次以后更新主站后，再执行一次 `python3 deploy/meta-worker.py start`，确保 worker 使用本次 app 镜像。只更新后台时无需重启主站或 worker。模板已禁止公网直接调用 worker；真实 Nginx 不会由本次代码修改自动重载。即使尚未应用模板，worker 接口仍校验内部凭据。
 
@@ -65,7 +65,7 @@ META_CATALOG_IDS='{"商品实际code":"Meta目录实际retailer-id"}'
 - [ ] 验证完清空 META_CAPI_TEST_EVENT_CODE，分别让服务读取正式配置，再检查生产事件。关闭本地模拟参数；生产拒绝 META_TEST_ORIGIN。
 - [ ] 明确预算上限、日期、收货市场、素材、落地页及负责人，再人工确认发布本次广告；不批量提交无关草稿。
 
-只有全部对应项通过，才称为“完整投放归因验收通过”。官方界面可能延迟处理；不要连续刷新，也不要为验证重复付款。
+只有全部对应项通过，才称为“完整投放归因验收通过”。本次生产传输验证已完成，不代表清单里的真实购买归因和目录匹配全部通过。官方界面可能延迟处理；不要连续刷新，也不要为验证重复付款。线上有真实访问时，不应为一个连接测试给全站设置测试码；可发送单独、明确标记的 TestEvent，不改变正式客户事件模式。
 
 ## 五、创建面向独立站购买的广告
 
@@ -84,6 +84,8 @@ Ads Manager 先统一日期、账户时区、币种及归因窗口，再选择�
 CPA = 广告花费 ÷ 广告归因购买次数；ROAS = 广告归因购买金额 ÷ 广告花费。例如同币种花费100、购买金额300，ROAS为3；不等于净利润。Shopify全店收入包含自然流量、其他渠道与不同时间口径，不能要求与Meta归因收入逐项相等。
 
 Offy 后台按事件及状态筛选，展开来源与发送明细：浏览器“已调用 Pixel”仍需 Meta 侧确认；CAPI“已接收”仍需平台归因确认；“结账诊断编号”可在结账诊断列表搜索同一编号，查看服务器创建购物车及 Shopify 响应。这里不展示原始 fbc/fbp、访问标识或令牌，不重算 KOL 佣金。
+
+生产已观察到：Offy 的结账准备和 Shopify 官方托管结账都可能发送 InitiateCheckout，使用不同事件编号。当前不保证这两个集成之间去重；不要将事件总数视为独立结账用户或订单数。正式投放以经过单独核验的官方 Purchase 为购买优化依据；如需精确的结账漏斗，另行统一事件责任，不直接关闭官方购买上报。
 
 ## 七、排障与回退
 
