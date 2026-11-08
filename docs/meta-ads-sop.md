@@ -2,6 +2,8 @@
 
 适用对象：Offy 品牌管理员及广告运营。更新于 2026-11-09。生产已启用独立站 Pixel、购买前关键事件 CAPI 及独立 worker，并验证真实加购 / 结账准备的接收回执；没有发布广告或下真实订单。证据和未完成的真实购买归因、目录验收见 [生产记录](meta-production-validation.md)。
 
+管理员图文版已保存至[飞书 SOP：Shopify、Meta 与 Offy 的投放和看数](https://my.feishu.cn/wiki/L0Ptw9zhHiVj7akJcG3cRwFenLy)，含8张实际平台截图、创建网站广告的操作顺序、购买指标选择、CPA / ROAS 例子及投放检查清单。重新打开后已逐节验证8张不同图片均可加载；没有改变文档分享权限。涉及广告账号的完整运营截图只保存在该飞书文档及本地验收附件，不随 Git 提交。
+
 ## 一、先明确三个看数入口
 
 | 入口                                                                                                                                       | 主要用途                                                                                                              | 不能据此认定                         |
@@ -42,6 +44,10 @@ python3 deploy/meta-worker.py status
 
 ## 三、目录 ID 配置
 
+2026-11-09 只读核对：现有目录 `1430885911973275` 已有41个商品，并关联正确数据集。DOTTY DARLING 的实际单件 Content ID 为 `53547250549025`，父组 ID 为 `10557524934945`；Offy 页面为 `/products/black-pearl`。目录默认价格为 SGD55.90，Product Link 指向 `ujc6x6-41.myshopify.com/products/black-pearl`；Shopify 设置显示新加坡市场。目标为 Offy 网站及其他国家时，还需核对目录市场/币种和最终落地地址，不能只补商品 ID。是否存在其他国家的价格覆盖尚未核验，不将默认 SGD 价格直接判为所有国家配置错误。同步来源为 Shopify，应先设计可持续的链接/市场同步方案，避免 Meta 手改后被同步覆盖。
+
+当前 Offy 的映射仍为0项，没有在本次文档任务中写入生产。目录 Events 显示0%匹配，Products → Actions 的1项提示为商品未匹配广告事件；这与 Events Manager 是否收到普通事件是两项检查。上述真实 ID 只是已核对的商品样例，不能据此认定全部投放商品、变体及国家映射已完成。
+
 事件金额来自实时 Shopify 当前市场数据。目录 ID 不根据商品名、SKU 或内部 code 猜测。需要在 Meta Commerce Manager 对照商品的实际 retailer/content ID，配置 `META_CATALOG_IDS` 为“Offy 当前商品 code → 该商品实际 Meta 目录 ID”的 JSON。示例结构：
 
 ```dotenv
@@ -78,6 +84,8 @@ META_CATALOG_IDS='{"商品实际code":"Meta目录实际retailer-id"}'
 ## 六、日常看数与解释
 
 Events Manager 选正确数据集、包含今天的日期。Overview 看事件数量和来源，Diagnostics 查问题，具体事件查看平台提供的匹配质量/去重信息。CAPI 的接收回执表示请求已被接受，不保证每次都成功匹配广告，也不保证测试 UI 立即刷新。[官方 Pixel 与 CAPI 配合说明](https://www.facebookblueprint.com/student/activity/291700-connect-your-website-data-for-better-ad-performance)
+
+后续只读观察：总览在 `2026-11-08` 日期筛选下已出现官方 Purchase，状态 Active、Browser / Server，匹配质量8.0/10，处理前 Total events 为2；Diagnostics 显示暂无活动错误。这里的2条不能直接当作2笔订单，8.0/10也不是转化率。仍需用具体订单号核对金额、币种及最终去重，并另行验证真实广告点击到购买的归因；不能继续将“尚未做付款验收”解释成官方完全没有上报购买。
 
 Ads Manager 先统一日期、账户时区、币种及归因窗口，再选择列：Amount spent、Website purchases、Cost per purchase、Website purchases conversion value、Website purchase ROAS，同时结合 Link clicks、Landing page views、CTR、CPC 分析漏斗。原有 Instagram 推广“Results”可能是主页访问，应读清单位。
 
