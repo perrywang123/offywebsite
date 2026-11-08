@@ -1,6 +1,6 @@
 # 行为与故障分析 · 待实施方案
 
-状态：规划，2026-10-31重新校准。**当前没有AnalyticsProvider、/api/events、analytics_event表或analytics:report脚本。KOL专项已实现最小访问与Shopify核对，不等同全站分析。** 本轮未实现，也未安装分析服务。
+状态：通用分析仍为规划，2026-11-08校准。**当前没有AnalyticsProvider、/api/events、analytics_event表或analytics:report脚本。KOL专项已实现最小访问与Shopify核对，不等同全站分析。** Meta 专项已实现可选 Pixel 漏斗、关键事件 CAPI 和后台诊断，默认关闭、尚未生产启用，见 [Meta 技术方案](meta-technical-plan.md)；这不代表本通用分析方案已整体落地。
 
 ## 目标与事实边界
 

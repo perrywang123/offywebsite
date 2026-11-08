@@ -16,6 +16,7 @@ import { env } from "@/lib/env";
 import { pickCountry } from "@/lib/geo";
 import { formatPrice } from "@/lib/pricing";
 import { AddToCartButton } from "@/components/cart/AddToCartButton";
+import { MetaProductView } from "@/components/marketing/MetaTracking";
 import { ProductGallery } from "@/components/product/ProductGallery";
 import { StickyBuyBar } from "@/components/product/StickyBuyBar";
 import { Reveal } from "@/components/Reveal";
@@ -123,6 +124,14 @@ export default async function ProductDetailPage({
     <>
       <JsonLd data={productJsonLd({ product, locale, siteUrl: env.SITE_URL })} />
       <JsonLd data={breadcrumbLd} />
+      <MetaProductView
+        product={{
+          code: product.code,
+          quantity: 1,
+          priceCents: product.priceCents,
+          currency: product.currency,
+        }}
+      />
       {/* 版心改 `.container-site`(16px / 8%),不再自带 `px-6`:两套边距会让
           PDP 的 logo 与标题左边缘对不齐(方案 #22)。纵向 py-12 → 窄屏 24px,
           md 起恢复 48px(≥1024px 与改动前一致)。 */}

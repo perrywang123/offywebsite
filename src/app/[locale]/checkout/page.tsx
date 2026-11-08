@@ -1,4 +1,5 @@
 "use client";
+import { metaAllowed, metaCartData, observeMeta } from "@/components/marketing/runtime";
 
 /**
  * ⚠️ 备用结算页 —— **正常购买路径不再经过这里**。
@@ -143,6 +144,7 @@ export default function CheckoutPage() {
         body: JSON.stringify({
           provider,
           referralTicket: referralTicket(),
+          ...(provider === "shopify" && metaAllowed() ? { metaTracking: true } : {}),
           items: items.map((x) => ({ code: x.line.code, quantity: x.line.quantity })),
           locale,
           email,
@@ -152,6 +154,17 @@ export default function CheckoutPage() {
       const data = await res.json();
       const target = checkoutRedirectUrl(data?.redirect);
       if (res.ok && target) {
+        if (provider === "shopify") {
+          try {
+            observeMeta(
+              "InitiateCheckout",
+              metaCartData(items.map((x) => ({ code: x.line.code, quantity: x.line.quantity }))),
+              data?.metaReceipt,
+            );
+          } catch {
+            /* optional observation */
+          }
+        }
         navigating = true;
         window.location.assign(target);
       } else {

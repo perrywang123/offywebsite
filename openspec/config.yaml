@@ -10,7 +10,8 @@ context: |
   2026-10-31-shopify-authoritative-catalog and docs/shopify-authority-validation.md.
   Main purchase UI uses Shopify hosted checkout; retained Stripe/PayPal paths are USD-only.
   Shopify orders are not synchronized into the local DB. Local DB stores newsletter and legacy payments.
-  Admin, analytics, Shopify webhooks and PostgreSQL are not implemented.
+  Admin, opt-in KOL/Collabs, signed Shopify webhook reconciliation and checkout diagnostics are implemented.
+  Optional Meta funnel/outbox diagnostics are implemented separately from general BI. PostgreSQL is not implemented.
   Read AGENTS.md, DESIGN.md, docs/current-state.md and docs/roadmap.md before related work.
   Conventional Commits. Server configuration via src/lib/env.ts. Do not expose credentials.
 

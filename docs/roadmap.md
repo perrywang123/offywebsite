@@ -1,5 +1,7 @@
 # Offy 路线图与状态
 
+> 2026-11-08：Meta 专项漏斗（PageView、ViewContent、AddToCart、InitiateCheckout）、关键事件 CAPI 队列及只读广告诊断已实现，默认关闭；这不替代通用 BI。生产令牌/目录配置、Meta 实收与 Shopify Purchase 跨域归因仍是上线验收项。见 [方案](meta-technical-plan.md)、[SOP](meta-ads-sop.md)。
+
 > 2026-11-08：增加 [短链打开观察及 Flow 官方归属同步](collabs-observation.md)；与导入财务报告分开，不新增本地计佣或付款。启用及生产验收状态另见发布记录。
 
 > 2026-11-07 更新：已按用户确认加入 Collabs 主计佣模式，详见 [Collabs 运行说明](collabs-operations.md)。本文件下文的当次 session 归因、Offy 生成优惠码与本地月结属于兼容保留的 `offy` 模式；`collabs` 模式禁用这些写入，改为官方门户、报告导入和只读核对。本次生产发布与官方设置的完成状态以发布验收记录为准。

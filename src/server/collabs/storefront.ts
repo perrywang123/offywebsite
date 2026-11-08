@@ -9,6 +9,7 @@ import { env, isShopifyConfigured } from "@/lib/env";
 import { safeStorefrontTarget } from "@/lib/collabs/links";
 import { pickCountry } from "@/lib/geo";
 import { collabsMode } from "./mode";
+import { metaConfig } from "../meta/config";
 export const DISCOUNT_COOKIE = "offy_collabs_discount";
 export function getDiscount(headers: Headers) {
   const value = headers
@@ -81,7 +82,11 @@ export function isTrackingPath(path: string) {
   );
 }
 export async function trackingProxy(request: Request) {
-  if (!collabsMode() || !isShopifyConfigured() || !isTrackingPath(new URL(request.url).pathname))
+  if (
+    (!collabsMode() && !metaConfig().enabled) ||
+    !isShopifyConfigured() ||
+    !isTrackingPath(new URL(request.url).pathname)
+  )
     return new Response("Not found", { status: 404 });
   if (!["GET", "POST", "HEAD", "OPTIONS"].includes(request.method))
     return new Response(null, { status: 405 });

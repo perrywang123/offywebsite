@@ -1,5 +1,7 @@
 # 当前实现与验证基线
 
+> 2026-11-08：新增可选 [Meta 站内漏斗与关键事件 CAPI](meta-technical-plan.md)，后台 `/admin/meta` 只读诊断；默认关闭。独立 worker、配置/分步发布和投放看数见 [SOP](meta-ads-sop.md)。本轮为代码及隔离验收，不代表生产已启用，也不代表 Shopify Purchase 或真实广告归因已通过。
+
 > 2026-11-08：已实现并分步部署[dt_id落地PV与匿名浏览器UV](collabs-traffic-proposal.md)，与短链请求、官方Visits和财务报告分开。KOL对外合作邮箱改为contact@whimcoreofficial.com；管理员登录不变。生产发布与原生邮箱验证边界见[本轮验收记录](collabs-landing-validation.md)。
 
 > 2026-11-08：增加 [短链打开观察及 Flow 官方归属同步](collabs-observation.md)；与导入财务报告分开，不新增本地计佣或付款。启用及生产验收状态另见发布记录。

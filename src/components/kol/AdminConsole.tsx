@@ -6,8 +6,9 @@ import type { Snapshot } from "@/server/kol/snapshot";
 import type { Cooperation } from "@/server/kol/core";
 import type { Campaign } from "@/server/kol/codes";
 import { decimal } from "@/server/kol/money";
+import { MetaDiagnostics } from "./MetaDiagnostics";
 import { CheckoutDiagnostics } from "./CheckoutDiagnostics";
-type View = "collabs" | "partners" | "codes" | "orders" | "settlements" | "checkouts";
+type View = "collabs" | "partners" | "codes" | "orders" | "settlements" | "checkouts" | "meta";
 type ConfirmationAction = { kind: string; id: string; title: string };
 type Filters = {
   query: string;
@@ -31,6 +32,7 @@ const nav = [
   ["orders", "03", "订单佣金"],
   ["settlements", "04", "月度结算"],
   ["checkouts", "05", "结账诊断"],
+  ["meta", "06", "广告诊断"],
 ] as const;
 const labels: Record<string, string> = {
   active: "合作中",
@@ -481,7 +483,7 @@ export function AdminConsole({ view }: { view: View }) {
           {nav
             .filter(([key]) =>
               data.accountingMode === "collabs"
-                ? ["collabs", "checkouts"].includes(key)
+                ? ["collabs", "checkouts", "meta"].includes(key)
                 : key !== "collabs",
             )
             .map(([key, num, label]) => (
@@ -512,12 +514,12 @@ export function AdminConsole({ view }: { view: View }) {
               OFFY / COLLABORATIONS <span>{title[1]}</span>
             </p>
             <h1>
-              {data.accountingMode === "collabs" && view !== "checkouts"
+              {data.accountingMode === "collabs" && view !== "checkouts" && view !== "meta"
                 ? "Collabs 核对"
                 : title[2]}
             </h1>
             <p className="muted">
-              {data.accountingMode === "collabs" && view !== "checkouts"
+              {data.accountingMode === "collabs" && view !== "checkouts" && view !== "meta"
                 ? "官方来源、报告快照和异常证据，在一处核对。"
                 : view === "partners"
                   ? "一位达人，一份清晰可核对的合作。"
@@ -525,9 +527,11 @@ export function AdminConsole({ view }: { view: View }) {
                     ? "代码在这里绑定，粉丝权益由 Shopify 执行。"
                     : view === "orders"
                       ? "只有可核验的当次链接成交，才进入佣金账本。"
-                      : view === "checkouts"
-                        ? "从一次点击，到 Shopify 响应，每一步都有据可查。"
-                        : "先核对，再锁单；线下付款，账内留痕。"}
+                      : view === "meta"
+                        ? "查看站内漏斗、CAPI 接收状态与广告来源。"
+                        : view === "checkouts"
+                          ? "从一次点击，到 Shopify 响应，每一步都有据可查。"
+                          : "先核对，再锁单；线下付款，账内留痕。"}
             </p>
           </div>
           <div className="header-actions">
@@ -555,13 +559,14 @@ export function AdminConsole({ view }: { view: View }) {
               : "连接凭据（应用凭据或手动令牌），订单同步与优惠码功能暂不可用。本地合作记录和结账诊断可正常查看。"}
           </p>
         )}
-        {data.accountingMode === "collabs" && view !== "checkouts" && (
+        {data.accountingMode === "collabs" && view !== "checkouts" && view !== "meta" && (
           <CollabsWorkspace siteUrl={data.siteUrl} />
         )}
         {view === "collabs" && data.accountingMode !== "collabs" && (
           <p className="message">尚未启用 Collabs 模式，原有合作记录继续保留。</p>
         )}
         {view === "checkouts" && <CheckoutDiagnostics />}
+        {view === "meta" && <MetaDiagnostics />}
         {error && !editor && !detail && !codeMode && !settleForm && !action && !showHealth && (
           <div className="message error" role="alert">
             {error}
@@ -578,65 +583,70 @@ export function AdminConsole({ view }: { view: View }) {
             </button>
           </div>
         )}
-        {view !== "checkouts" && view !== "collabs" && data.accountingMode !== "collabs" && (
-          <div className={view === "orders" ? "toolbar orders-toolbar" : "toolbar"}>
-            <div className="search">
-              <label htmlFor="admin-search">搜索</label>
-              <input
-                id="admin-search"
-                placeholder={
-                  view === "orders"
-                    ? "搜索订单号"
-                    : view === "codes"
-                      ? "搜索达人 / 优惠码"
-                      : view === "settlements"
-                        ? "搜索达人 / 月份 / 批次"
-                        : "搜索姓名 / 别名 / 邮箱"
-                }
-                value={query}
-                onChange={(e) => setFilter("query", e.target.value)}
-              />
-            </div>
-            <div className="toolbar-actions">
-              {hasFilters && view !== "orders" && <button onClick={clearFilters}>清空筛选</button>}
-              <button
-                className="refresh-button"
-                disabled={busy || refreshing}
-                onClick={() => void refresh()}
-              >
-                {refreshing ? "更新中…" : "刷新数据"}
-              </button>
-              {view === "partners" && (
+        {view !== "checkouts" &&
+          view !== "meta" &&
+          view !== "collabs" &&
+          data.accountingMode !== "collabs" && (
+            <div className={view === "orders" ? "toolbar orders-toolbar" : "toolbar"}>
+              <div className="search">
+                <label htmlFor="admin-search">搜索</label>
+                <input
+                  id="admin-search"
+                  placeholder={
+                    view === "orders"
+                      ? "搜索订单号"
+                      : view === "codes"
+                        ? "搜索达人 / 优惠码"
+                        : view === "settlements"
+                          ? "搜索达人 / 月份 / 批次"
+                          : "搜索姓名 / 别名 / 邮箱"
+                  }
+                  value={query}
+                  onChange={(e) => setFilter("query", e.target.value)}
+                />
+              </div>
+              <div className="toolbar-actions">
+                {hasFilters && view !== "orders" && (
+                  <button onClick={clearFilters}>清空筛选</button>
+                )}
                 <button
-                  className="primary"
-                  onClick={() => {
-                    setError("");
-                    setEditor("new");
-                  }}
+                  className="refresh-button"
+                  disabled={busy || refreshing}
+                  onClick={() => void refresh()}
                 >
-                  ＋ 新增合作
+                  {refreshing ? "更新中…" : "刷新数据"}
                 </button>
-              )}
-              {view === "codes" && (
-                <>
-                  <button onClick={() => openCode("bind")}>绑定已有码</button>
-                  <button className="primary" onClick={() => openCode("generate")}>
-                    生成新码并同步
+                {view === "partners" && (
+                  <button
+                    className="primary"
+                    onClick={() => {
+                      setError("");
+                      setEditor("new");
+                    }}
+                  >
+                    ＋ 新增合作
                   </button>
-                </>
-              )}
-              {view === "settlements" && (
-                <button
-                  className="primary"
-                  disabled={!data.settlementsEnabled}
-                  onClick={openSettlement}
-                >
-                  ＋ 创建月结草稿
-                </button>
-              )}
+                )}
+                {view === "codes" && (
+                  <>
+                    <button onClick={() => openCode("bind")}>绑定已有码</button>
+                    <button className="primary" onClick={() => openCode("generate")}>
+                      生成新码并同步
+                    </button>
+                  </>
+                )}
+                {view === "settlements" && (
+                  <button
+                    className="primary"
+                    disabled={!data.settlementsEnabled}
+                    onClick={openSettlement}
+                  >
+                    ＋ 创建月结草稿
+                  </button>
+                )}
+              </div>
             </div>
-          </div>
-        )}
+          )}
         {data.accountingMode !== "collabs" && view === "partners" && (
           <>
             <div className="section-line">
@@ -1238,11 +1248,13 @@ export function AdminConsole({ view }: { view: View }) {
         <footer className="admin-footer">
           <span>OFFY / 合作账簿</span>
           <span>
-            {data.accountingMode === "collabs" && view !== "checkouts"
+            {data.accountingMode === "collabs" && view !== "checkouts" && view !== "meta"
               ? "Collabs 原生计佣 · 报表快照不代表实时余额"
               : view === "checkouts"
                 ? "时间 Asia/Shanghai · 记录30天 · 原文7天"
-                : "时间 Asia/Shanghai · 金额按交易币种 · 付款后冻结30天"}
+                : view === "meta"
+                  ? "时间 Asia/Shanghai · 营销观察最多30天 · 广告归因以 Meta 为准"
+                  : "时间 Asia/Shanghai · 金额按交易币种 · 付款后冻结30天"}
           </span>
         </footer>
       </main>

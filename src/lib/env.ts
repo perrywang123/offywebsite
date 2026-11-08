@@ -6,6 +6,15 @@ import { z } from "zod";
  * populated for client bundles.
  */
 const envSchema = z.object({
+  META_TRACKING_ENABLED: z.enum(["true", "false"]).default("false"),
+  META_PIXEL_ID: z.string().default(""),
+  META_CAPI_ENABLED: z.enum(["true", "false"]).default("false"),
+  META_CAPI_ACCESS_TOKEN: z.string().optional(),
+  META_GRAPH_API_VERSION: z.string().default("v26.0"),
+  META_CAPI_TEST_EVENT_CODE: z.string().optional(),
+  META_CATALOG_IDS: z.string().default("{}"),
+  META_WORKER_SECRET: z.string().optional(),
+  META_TEST_ORIGIN: z.string().url().optional(),
   CHECKOUT_DIAGNOSTICS_KEY: z.preprocess(
     (v) => (v === "" ? undefined : v),
     z
@@ -93,7 +102,8 @@ export const env = envSchema
       value.NODE_ENV === "production" &&
       (value.OFFY_INTEGRATION_TEST === "true" ||
         value.NEXT_PUBLIC_OFFY_INTEGRATION_TEST === "true" ||
-        value.SHOPIFY_TEST_ORIGIN)
+        value.SHOPIFY_TEST_ORIGIN ||
+        value.META_TEST_ORIGIN)
     )
       ctx.addIssue({ code: "custom", message: "Integration transport is forbidden in production" });
     if (

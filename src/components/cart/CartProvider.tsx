@@ -10,6 +10,7 @@ import {
 } from "react";
 import { z } from "zod";
 import { addLine, cartCount, removeLine, setQuantity, type CartState } from "@/lib/cart";
+import { registerMetaProducts, observeMeta, metaCartData } from "@/components/marketing/runtime";
 const STORAGE_KEY = "offy.cart.v1";
 export interface CartCatalogEntry {
   code: string;
@@ -133,6 +134,18 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
       const next = linesRef.current.filter((l) => !missing.has(l.code));
       if (next.some((l) => !map[l.code])) throw new Error("unverified_lines");
       updateLines(next);
+      try {
+        registerMetaProducts(
+          Object.values(map).map((p) => ({
+            code: p.code,
+            quantity: 1,
+            priceCents: p.priceCents,
+            currency: p.currency,
+          })),
+        );
+      } catch {
+        /* optional observation only */
+      }
       setCatalog(map);
       setStatus("ready");
       return true;
@@ -183,11 +196,29 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
       mounted,
       refresh,
       add: (code, qty = 1) => {
-        updateLines(addLine(linesRef.current, code, qty));
+        const before = linesRef.current.find((i) => i.code === code)?.quantity ?? 0;
+        const next = addLine(linesRef.current, code, qty);
+        updateLines(next);
+        try {
+          const delta = (next.find((i) => i.code === code)?.quantity ?? 0) - before;
+          if (delta > 0) observeMeta("AddToCart", metaCartData([{ code, quantity: delta }]));
+        } catch {
+          /* marketing cannot block a successful cart update */
+        }
         open();
       },
       remove: (code) => updateLines(removeLine(linesRef.current, code)),
-      setQty: (code, qty) => updateLines(setQuantity(linesRef.current, code, qty)),
+      setQty: (code, qty) => {
+        const before = linesRef.current.find((i) => i.code === code)?.quantity ?? 0;
+        const next = setQuantity(linesRef.current, code, qty);
+        updateLines(next);
+        try {
+          const delta = (next.find((i) => i.code === code)?.quantity ?? 0) - before;
+          if (delta > 0) observeMeta("AddToCart", metaCartData([{ code, quantity: delta }]));
+        } catch {
+          /* optional observation only */
+        }
+      },
       open,
       close,
       clear: () => {

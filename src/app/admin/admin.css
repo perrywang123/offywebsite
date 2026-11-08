@@ -1854,3 +1854,67 @@ pre {
   justify-items: start;
   align-items: start;
 }
+/* Advertising evidence uses the existing console type/spacing system. */
+.meta-records {
+  display: grid;
+  gap: 16px;
+  margin: 24px 0;
+}
+.toolbar.meta-filters {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 16px;
+  max-width: 640px;
+  align-items: end;
+}
+.meta-filters label {
+  display: grid;
+  gap: 8px;
+  min-width: 0;
+}
+.meta-filters select {
+  width: 100%;
+}
+@media (max-width: 600px) {
+  .toolbar.meta-filters {
+    grid-template-columns: 1fr;
+  }
+}
+.meta-record {
+  background: white;
+  border: 1px solid #e3e3e3;
+  border-radius: 12px;
+  padding: 24px;
+  min-width: 0;
+}
+.meta-record summary {
+  cursor: pointer;
+  padding: 12px 0;
+}
+.meta-record .section-line {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+.meta-record dl {
+  display: grid;
+  grid-template-columns: minmax(100px, 140px) minmax(0, 1fr);
+  gap: 12px 16px;
+}
+.meta-record dd {
+  margin: 0;
+  overflow-wrap: anywhere;
+}
+@media (max-width: 600px) {
+  .meta-record {
+    padding: 16px;
+  }
+  .meta-record dl {
+    grid-template-columns: 1fr;
+    gap: 6px;
+  }
+  .meta-record dd {
+    margin-bottom: 10px;
+  }
+}

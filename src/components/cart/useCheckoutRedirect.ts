@@ -4,6 +4,7 @@ import { referralTicket } from "@/components/kol/ReferralBridge";
 import { checkoutRedirectUrl } from "@/lib/checkout-redirect";
 import { useLocale } from "next-intl";
 import { beginCheckoutAttempt, reportCheckoutObservation } from "./checkout-diagnostics-client";
+import { metaAllowed, observeMeta, metaCartData } from "@/components/marketing/runtime";
 export interface CheckoutItemInput {
   code: string;
   quantity: number;
@@ -52,12 +53,18 @@ export function useCheckoutRedirect(verify?: () => Promise<boolean>): CheckoutRe
             locale,
             referralTicket: referralTicket(),
             diagnosticReceipt: receipt,
+            ...(metaAllowed() ? { metaTracking: true } : {}),
           }),
         });
         const data = await res.json().catch(() => null);
         if (res.ok) {
           const target = checkoutRedirectUrl(data?.redirect);
           if (target) {
+            try {
+              observeMeta("InitiateCheckout", metaCartData(items), data?.metaReceipt);
+            } catch {
+              /* redirect always wins */
+            }
             reportCheckoutObservation(receipt, "redirect_requested");
             window.location.assign(target);
             return;

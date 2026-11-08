@@ -26,3 +26,9 @@
 主规范在 `openspec/specs/`。未确认行为在 `openspec/changes/`；历史归档在 `openspec/changes/archive/`。遇到数量/价格/市场差异，以当前 Shopify 查询为事实，不从旧文档恢复商业数据。
 
 本轮文档和预览的校验范围见 [documentation-validation](documentation-validation.md)。
+
+## Meta 广告追踪
+
+- [两步技术方案](meta-technical-plan.md)
+- [投放、数据查看与发布 SOP](meta-ads-sop.md)
+- [本轮验证与边界](meta-validation.md)

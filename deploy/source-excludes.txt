@@ -21,6 +21,8 @@
 /.deploy-logs/
 /.offy-runtime-secrets.json
 /.offy-runtime-*.local
+/.meta-env-*.local
+*.meta-backup.local
 *.db
 *.db-*
 *.sqlite

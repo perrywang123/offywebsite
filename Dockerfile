@@ -79,6 +79,7 @@ COPY --from=builder --chown=nextjs:nodejs /app/scripts/kol-admin-bootstrap.mjs .
 COPY --from=builder --chown=nextjs:nodejs /app/config/admin-account.json ./config/admin-account.json
 COPY --from=builder --chown=nextjs:nodejs /app/scripts/lib/kol-admin-policy.mjs ./scripts/lib/kol-admin-policy.mjs
 COPY --from=builder --chown=nextjs:nodejs /app/scripts/kol-worker.mjs ./scripts/kol-worker.mjs
+COPY --from=builder --chown=nextjs:nodejs /app/scripts/meta-worker.mjs ./scripts/meta-worker.mjs
 COPY --from=builder --chown=nextjs:nodejs /app/scripts/kol-deployment-check.mjs ./scripts/kol-deployment-check.mjs
 
 USER nextjs

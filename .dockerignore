@@ -9,6 +9,8 @@ node_modules
 .env*
 .offy-runtime-secrets.json
 .offy-runtime-*.local
+.meta-env-*.local
+*.meta-backup.local
 !.env.example
 !.env.production.example
 data

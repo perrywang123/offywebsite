@@ -8,6 +8,8 @@
     customerPrivacy: {
       consentStatus: "loaded",
       analyticsProcessingAllowed: () => allowed,
+      marketingAllowed: () => allowed,
+      saleOfDataAllowed: () => allowed,
     },
   };
   document.dispatchEvent(new Event("shopifyCustomerPrivacyApiLoaded"));

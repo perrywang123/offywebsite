@@ -36,6 +36,14 @@ services:
       DATABASE_PROVIDER: sqlite
       DATABASE_URL: "${DATABASE_URL:-/data/offy.db}"
       CHECKOUT_DIAGNOSTICS_KEY: "${CHECKOUT_DIAGNOSTICS_KEY:-}"
+      META_TRACKING_ENABLED: "${META_TRACKING_ENABLED:-false}"
+      META_PIXEL_ID: "${META_PIXEL_ID:-}"
+      META_CAPI_ENABLED: "${META_CAPI_ENABLED:-false}"
+      META_CAPI_ACCESS_TOKEN: "${META_CAPI_ACCESS_TOKEN:-}"
+      META_GRAPH_API_VERSION: "${META_GRAPH_API_VERSION:-v26.0}"
+      META_CAPI_TEST_EVENT_CODE: "${META_CAPI_TEST_EVENT_CODE:-}"
+      META_CATALOG_IDS: "${META_CATALOG_IDS:-}"
+      META_WORKER_SECRET: "${META_WORKER_SECRET:-}"
       NEXT_PUBLIC_SITE_NAME: "${NEXT_PUBLIC_SITE_NAME:-Offy}"
       NEXT_PUBLIC_SITE_URL: "${NEXT_PUBLIC_SITE_URL:-https://offy.example.com}"
       # 服务端真正读的是 SITE_URL(robots / sitemap / metadataBase,以及
@@ -93,6 +101,22 @@ services:
       SHOPIFY_ADMIN_CLIENT_SECRET: "${SHOPIFY_ADMIN_CLIENT_SECRET:-}"
     ports:
       - "127.0.0.1:3001:3000"
+
+  meta-worker:
+    profiles: [meta]
+    image: offy-app:local
+    pull_policy: never
+    restart: always
+    entrypoint: ["node", "scripts/meta-worker.mjs"]
+    cpus: 0.25
+    mem_limit: 96m
+    environment:
+      META_WORKER_URL: http://app:3000/api/meta/worker
+      META_WORKER_SECRET: "${META_WORKER_SECRET:-}"
+      KOL_WORKER_SECRET: "${KOL_WORKER_SECRET:-}"
+    depends_on:
+      app:
+        condition: service_healthy
 
   kol-worker:
     profiles: [kol]

@@ -18,6 +18,8 @@ const old = {
   SHOPIFY_STORE_DOMAIN: env.SHOPIFY_STORE_DOMAIN,
   SHOPIFY_STOREFRONT_TOKEN: env.SHOPIFY_STOREFRONT_TOKEN,
   SITE_URL: env.SITE_URL,
+  META_TRACKING_ENABLED: env.META_TRACKING_ENABLED,
+  META_PIXEL_ID: env.META_PIXEL_ID,
 };
 afterEach(() => {
   Object.assign(env, old);
@@ -27,6 +29,24 @@ beforeEach(() => {
   env.SITE_URL = "https://isoffy.com";
 });
 describe("Collabs storefront integration", () => {
+  it("supports the privacy transport for Meta without enabling Collabs discount routes", async () => {
+    env.KOL_ACCOUNTING_MODE = "offy";
+    env.META_TRACKING_ENABLED = "true";
+    env.META_PIXEL_ID = "1120625754196383";
+    env.SHOPIFY_STORE_DOMAIN = "test.myshopify.com";
+    env.SHOPIFY_STOREFRONT_TOKEN = "test";
+    routes.mockResolvedValueOnce(new Response("{}", { status: 200 }));
+    expect(
+      (
+        await trackingProxy(
+          new Request("https://isoffy.com/__shopify/collect", { method: "POST", body: "{}" }),
+        )
+      ).status,
+    ).toBe(200);
+    expect(discountRedirect(new Request("https://isoffy.com/discount/TEST"), "TEST").status).toBe(
+      404,
+    );
+  });
   it("uses the configured public origin behind the production reverse proxy", () => {
     env.SITE_URL = "https://isoffy.com";
     const ctx = trackingContext(

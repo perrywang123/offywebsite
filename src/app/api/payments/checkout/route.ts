@@ -7,6 +7,8 @@ import { pickCountry } from "@/lib/geo";
 import { clampQuantity } from "@/lib/pricing";
 import { resolveProvider } from "@/server/payments/registry";
 import { startCheckoutRecording } from "@/server/checkout-diagnostics/runtime";
+import { checkoutMetaReceipt } from "@/server/meta/runtime";
+import { metaConfig } from "@/server/meta/config";
 
 export const dynamic = "force-dynamic";
 
@@ -23,6 +25,7 @@ const shippingSchema = z.object({
 
 const bodySchema = z.object({
   diagnosticReceipt: z.string().max(100).optional(),
+  metaTracking: z.literal(true).optional(),
   referralTicket: z.string().uuid().optional(),
   provider: z.enum(["stripe", "paypal", "shopify"]).optional(),
   items: z
@@ -49,12 +52,13 @@ export async function POST(request: Request) {
   // geo 头是随请求进来的,直接用 request 既等价又不依赖请求作用域。
   const country = pickCountry(request.headers, env.SHOPIFY_MARKET_COUNTRY);
 
-  const shopifyTracking = collabsMode()
-    ? {
-        context: trackingContext(request, country, parsed.locale === "en" ? "en" : "zh"),
-        discountCode: getDiscount(request.headers),
-      }
-    : undefined;
+  const shopifyTracking =
+    collabsMode() || metaConfig().enabled
+      ? {
+          context: trackingContext(request, country, parsed.locale === "en" ? "en" : "zh"),
+          discountCode: collabsMode() ? getDiscount(request.headers) : undefined,
+        }
+      : undefined;
   const provider = resolveProvider(parsed.provider);
   const items = parsed.items.map((i) => ({ code: i.code, quantity: clampQuantity(i.quantity) }));
   const recording =
@@ -90,7 +94,14 @@ export async function POST(request: Request) {
 
   if (result.ok) {
     const response = NextResponse.json(
-      { provider: result.provider, redirect: result.redirect, attemptId: recording?.id },
+      {
+        provider: result.provider,
+        redirect: result.redirect,
+        attemptId: recording?.id,
+        ...(parsed.metaTracking && provider.name === "shopify"
+          ? { metaReceipt: checkoutMetaReceipt(recording?.id) }
+          : {}),
+      },
       { headers: { "Cache-Control": "no-store" } },
     );
     shopifyTracking?.context.applyResponseHeaders(response.headers);

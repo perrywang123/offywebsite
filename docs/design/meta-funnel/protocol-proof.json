@@ -1,0 +1,25 @@
+{
+  "simulatorOnly": true,
+  "realOrdersCreated": 0,
+  "realMetaRequests": 0,
+  "checks": [
+    {
+      "name": "AddToCart",
+      "eventId": "22cf5c8f-1f8c-4d1f-9fbf-1290cb9c42aa",
+      "browserServerIdMatch": true,
+      "status": "sent",
+      "value": 100,
+      "currency": "USD",
+      "checkoutLinked": false
+    },
+    {
+      "name": "InitiateCheckout",
+      "eventId": "36259101-34e9-4ce3-b7c9-c22b031bd96d",
+      "browserServerIdMatch": true,
+      "status": "sent",
+      "value": 300,
+      "currency": "USD",
+      "checkoutLinked": true
+    }
+  ]
+}

@@ -1,5 +1,36 @@
 import { index, integer, primaryKey, sqliteTable, text } from "drizzle-orm/sqlite-core";
 
+/** Marketing observations, never orders or proof of Meta attribution. */
+export const metaEvents = sqliteTable(
+  "meta_events",
+  {
+    id: text("id").primaryKey(),
+    visitorHash: text("visitor_hash").notNull(),
+    name: text("name").notNull(),
+    createdAt: integer("created_at").notNull(),
+    pagePath: text("page_path").notNull(),
+    sourceJson: text("source_json").notNull(),
+    dataJson: text("data_json").notNull(),
+    attemptId: text("attempt_id"),
+    hasFbc: integer("has_fbc", { mode: "boolean" }).notNull(),
+    hasFbp: integer("has_fbp", { mode: "boolean" }).notNull(),
+    pixelAttempted: integer("pixel_attempted", { mode: "boolean" }).notNull(),
+    status: text("status").notNull(),
+    payload: text("payload"),
+    attempts: integer("attempts").notNull().default(0),
+    dueAt: integer("due_at").notNull(),
+    leaseUntil: integer("lease_until").notNull().default(0),
+    leaseToken: text("lease_token"),
+    lastError: text("last_error"),
+    sentAt: integer("sent_at"),
+  },
+  (t) => [
+    index("meta_due_idx").on(t.status, t.dueAt),
+    index("meta_visitor_idx").on(t.visitorHash),
+    index("meta_created_idx").on(t.createdAt),
+  ],
+);
+
 /**
  * Newsletter subscribers — brand marketing capture.
  */

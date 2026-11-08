@@ -16,6 +16,9 @@ import { CartDrawer } from "@/components/cart/CartDrawer";
 import { Header } from "@/components/layout/Header";
 import { Footer } from "@/components/layout/Footer";
 import { SiteJsonLd } from "@/components/seo/SiteJsonLd";
+import { MetaTracking } from "@/components/marketing/MetaTracking";
+import { metaConfig } from "@/server/meta/config";
+import { metaTestOrigin } from "@/server/meta/runtime";
 import "../globals.css";
 
 export const dynamic = "force-dynamic";
@@ -82,7 +85,9 @@ export default async function LocaleLayout({
   // 避免每个组件各自发起请求;Shopify 不可达时 getLiveSeriesList 内部
 
   const series = await getLiveSeriesList().catch(() => []);
-  const tracking = collabsMode() && env.SHOPIFY_ANALYTICS_SHOP_ID && env.SHOPIFY_STORE_DOMAIN;
+  const meta = metaConfig();
+  const tracking =
+    (collabsMode() || meta.enabled) && env.SHOPIFY_ANALYTICS_SHOP_ID && env.SHOPIFY_STORE_DOMAIN;
   const country = tracking ? pickCountry(await headers(), env.SHOPIFY_MARKET_COUNTRY) : "US";
 
   return (
@@ -104,6 +109,16 @@ export default async function LocaleLayout({
         {/* 第 2 批 SEO:Organization + WebSite 全站各一份(由根布局统一输出)。 */}
         {kolEnabled() && !collabsMode() && <ReferralBridge />}
         {tracking && <ShopifyPageTracking />}
+        {meta.enabled && (
+          <MetaTracking
+            config={{
+              enabled: true,
+              pixelId: meta.pixelId,
+              catalogIds: meta.catalogIds,
+              ...(metaTestOrigin() ? { pixelScript: `${metaTestOrigin()}/pixel.js` } : {}),
+            }}
+          />
+        )}
         {kolEnabled() && collabsMode() && <CollabsLandingTracking />}
         <SiteJsonLd siteUrl={env.SITE_URL} />
         <NextIntlClientProvider messages={messages}>

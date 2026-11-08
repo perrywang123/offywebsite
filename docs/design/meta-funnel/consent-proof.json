@@ -1,0 +1,15 @@
+{
+  "simulatorOnly": true,
+  "before": {
+    "pixel": 12,
+    "capi": 6
+  },
+  "after": {
+    "pixel": 12,
+    "capi": 6
+  },
+  "noMarketingEventsAfterDenial": true,
+  "metaScriptPresent": false,
+  "shoppingUnaffected": true,
+  "deniedConsentCheckoutReached": true
+}

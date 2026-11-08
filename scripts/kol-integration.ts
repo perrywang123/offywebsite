@@ -15,6 +15,9 @@ import { drizzle } from "drizzle-orm/better-sqlite3";
 import { migrate } from "drizzle-orm/better-sqlite3/migrator";
 async function main() {
   const collabs = process.env.OFFY_TEST_COLLABS === "true";
+  const meta = process.env.OFFY_TEST_META === "true";
+  const metaReceived: unknown[] = [],
+    pixelReceived: unknown[] = [];
   const automaticAdmin = process.env.OFFY_TEST_ADMIN_AUTH === "automatic";
   let adminGrants = 0,
     adminRequests = 0,
@@ -23,10 +26,10 @@ async function main() {
   if (!directory.startsWith(join(tmpdir(), "offy-kol-integration-")))
     throw new Error("Only isolated integration directories may be reused");
   const dbPath = join(directory, "test.db");
-  const appPort = 3900,
-    publicPort = 3901,
-    adminPort = 3902,
-    mockPort = 3903;
+  const appPort = meta ? 4510 : 3900,
+    publicPort = appPort + 1,
+    adminPort = appPort + 2,
+    mockPort = appPort + 3;
   const site = `http://127.0.0.1:${publicPort}`,
     admin = `http://127.0.0.1:${adminPort}`,
     mock = `http://127.0.0.1:${mockPort}`;
@@ -168,6 +171,31 @@ async function main() {
   const mockServer = createServer(async (req, res) => {
     try {
       const url = new URL(req.url ?? "/", mock);
+      if (meta && url.pathname === "/pixel.js") {
+        res.writeHead(200, {
+          "Content-Type": "application/javascript",
+          "Cache-Control": "no-store",
+        });
+        res.end(
+          `(() => { const q = window.fbq; const record = (...args) => { if (args[0] === 'trackSingle') fetch('${mock}/test/meta-pixel', { method: 'POST', body: JSON.stringify(args), keepalive: true }); }; q.callMethod = record; for (const args of q.queue || []) record(...args); q.queue = []; document.cookie = '_fbp=fb.1.1794100000000.98765; Path=/'; })();`,
+        );
+        return;
+      }
+      if (meta && url.pathname === "/test/meta-pixel") {
+        pixelReceived.push(JSON.parse(await body(req)));
+        res.writeHead(200, { "Access-Control-Allow-Origin": site });
+        res.end("ok");
+        return;
+      }
+      if (meta && /^\/v\d+\.0\/1120625754196383\/events$/.test(url.pathname)) {
+        const data = JSON.parse(await body(req));
+        if (req.headers.authorization !== "Bearer local-meta-test-only")
+          return send(res, { error: "unauthorized" }, 401);
+        metaReceived.push(...data.data);
+        return send(res, { events_received: 1 });
+      }
+      if (meta && url.pathname === "/test/meta-state")
+        return send(res, { metaReceived, pixelReceived });
       if (url.pathname === "/test/admin-auth") {
         if (req.method === "POST")
           rejectNextAdmin = Boolean(JSON.parse(await body(req)).rejectNext);
@@ -493,7 +521,7 @@ async function main() {
         return;
       }
       const path = new URL(req.url ?? "/", site).pathname;
-      if (!isAdmin && collabs && path === "/__test/landing-consent.js") {
+      if (!isAdmin && (collabs || meta) && path === "/__test/landing-consent.js") {
         res.writeHead(200, {
           "Content-Type": "application/javascript",
           "Cache-Control": "no-store",
@@ -531,7 +559,7 @@ async function main() {
         (up) => {
           if (
             !isAdmin &&
-            collabs &&
+            (collabs || meta) &&
             String(up.headers["content-type"] ?? "").includes("text/html")
           ) {
             // A local consent shim exercises the real observer without contacting Shopify.
@@ -602,6 +630,17 @@ async function main() {
         KOL_ACCOUNTING_MODE: collabs ? "collabs" : "offy",
         SHOPIFY_ANALYTICS_SHOP_ID: "",
         SHOPIFY_STOREFRONT_ID: "",
+        META_TRACKING_ENABLED: meta ? "true" : "false",
+        META_PIXEL_ID: meta ? "1120625754196383" : "",
+        META_CAPI_ENABLED: meta ? "true" : "false",
+        META_CAPI_ACCESS_TOKEN: meta ? "local-meta-test-only" : "",
+        META_CAPI_TEST_EVENT_CODE: "",
+        META_WORKER_SECRET: worker,
+        META_GRAPH_API_VERSION: "v26.0",
+        META_CATALOG_IDS: meta
+          ? JSON.stringify({ "integration-sample": "local-verified-retailer-id" })
+          : "{}",
+        META_TEST_ORIGIN: meta ? mock : undefined,
         KOL_ENABLED: "true",
         KOL_SETTLEMENTS_ENABLED: "true",
         KOL_INGRESS_SECRET: ingress,
@@ -652,7 +691,7 @@ async function main() {
     throw new Error(`Integration app unavailable. Inspect ${join(directory, "next.log")}`);
   }
   lifecycle.timer = setInterval(() => {
-    void fetch(`http://localhost:${appPort}/api/kol/worker`, {
+    void fetch(`http://localhost:${appPort}/api/${meta ? "meta" : "kol"}/worker`, {
       method: "POST",
       headers: { authorization: `Bearer ${worker}` },
     }).catch(() => {});

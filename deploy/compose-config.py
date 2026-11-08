@@ -163,6 +163,7 @@ server {{
     if ($host != {host}) {{ return 444; }}
     location ~* "^/(?:[a-z]{{2}}(?:-[a-z]{{2}})?/)?(?:admin|api/admin)(?:/|$)" {{ return 404; }}
     location = /api/kol/worker {{ return 404; }}
+    location = /api/meta/worker {{ return 404; }}
     location / {{
 {common}
         proxy_set_header X-Offy-Admin-Ingress "";
