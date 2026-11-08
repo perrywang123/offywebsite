@@ -18,6 +18,7 @@ import {
 import { lookupOrder } from "./shopify";
 import { collabsMode } from "./mode";
 import { linkMetrics } from "./links";
+import { landingMetrics } from "./landing";
 import { attributionState, bindFlowCreator } from "./events";
 const headers = { "Cache-Control": "no-store, private", "X-Robots-Tag": "noindex, nofollow" };
 export function collabsGet(db: Db, path: string[], request?: Request) {
@@ -28,12 +29,21 @@ export function collabsGet(db: Db, path: string[], request?: Request) {
       linkMetrics(db, Number(request ? (new URL(request.url).searchParams.get("days") ?? 30) : 30)),
       { headers },
     );
+  if (path[1] === "traffic")
+    return Response.json(
+      landingMetrics(
+        db,
+        Number(request ? (new URL(request.url).searchParams.get("days") ?? 30) : 30),
+      ),
+      { headers },
+    );
   return Response.json(
     {
       mode: env.KOL_ACCOUNTING_MODE,
       creators: listCreators(db),
       reports: listReports(db),
       linkMetrics: linkMetrics(db),
+      landingMetrics: landingMetrics(db),
       attribution: attributionState(db),
       officialAdmin: `https://admin.shopify.com/store/${env.SHOPIFY_STORE_DOMAIN?.split(".")[0]}/apps/collabs`,
       creatorPortal: "https://collabs.shopify.com/",

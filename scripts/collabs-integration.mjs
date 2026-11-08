@@ -149,6 +149,53 @@ const metrics = await call("collabs/links?days=7");
 assert.equal(metrics.links.find((l) => l.id === indexed.id).total, 1);
 assert.equal(metrics.links.find((l) => l.id === indexed.id).periodTotal, 1);
 assert.ok(metrics.links.find((l) => l.id === indexed.id).firstAt);
+// First-party landing observations remain separate from short-link requests and official events.
+const landingView = {
+  version: 1,
+  dtId: "isolated-test-only",
+  eventId: randomUUID(),
+  path: "/products",
+  analyticsAllowed: true,
+};
+const observe = (body, visitorCookie = "") =>
+  fetch(site + "/api/collabs/landing", {
+    method: "POST",
+    headers: { origin: site, "content-type": "application/json", cookie: visitorCookie },
+    body: JSON.stringify(body),
+  });
+const landingFirst = await observe(landingView);
+assert.equal(landingFirst.status, 200);
+checks++;
+const landingCookie = landingFirst.headers.get("set-cookie").split(";")[0];
+assert.equal((await (await observe(landingView, landingCookie)).json()).duplicate, true);
+checks++;
+assert.equal((await observe({ ...landingView, eventId: randomUUID() }, landingCookie)).status, 200);
+checks++;
+const traffic = (await call("collabs/traffic?days=7")).groups.find(
+  (g) => g.dtId === landingView.dtId,
+);
+assert.equal(traffic.periodPv, 2);
+assert.equal(traffic.periodUv, 1);
+assert.equal(
+  (await observe({ ...landingView, dtId: "unknown", eventId: randomUUID() })).status,
+  204,
+);
+checks++;
+assert.equal(
+  (
+    await fetch(site + "/api/collabs/landing", {
+      method: "DELETE",
+      headers: { origin: site, cookie: landingCookie },
+    })
+  ).status,
+  204,
+);
+checks++;
+const optedOut = (await call("collabs/traffic?days=7")).groups.find(
+  (g) => g.dtId === landingView.dtId,
+);
+assert.equal(optedOut.periodPv, 2);
+assert.equal(optedOut.periodUv, 0);
 const report = {
   filename: "isolated-collabs-report.csv",
   csv: `Creator,Order,Currency,Sales,Commission\nMaya,${order.name},USD,90.00,9.00`,

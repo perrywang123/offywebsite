@@ -24,6 +24,10 @@ it("explains official evidence, fresh empty state, and directs creators to the o
     "https://collabs.shopify.com/",
   );
   expect(screen.getByText(/Offy 不生成应付佣金/)).toBeInTheDocument();
+  expect(screen.getByRole("link", { name: "contact@whimcoreofficial.com" })).toHaveAttribute(
+    "href",
+    "mailto:contact@whimcoreofficial.com",
+  );
   expect(screen.getByRole("button", { name: "导入报告" })).toBeEnabled();
 });
 it("reports load failure without showing zero earnings", async () => {

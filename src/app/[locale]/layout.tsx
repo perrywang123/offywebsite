@@ -1,6 +1,7 @@
 import { headers } from "next/headers";
 import { pickCountry } from "@/lib/geo";
 import { ShopifyTrackingScripts, ShopifyPageTracking } from "@/components/collabs/ShopifyTracking";
+import { CollabsLandingTracking } from "@/components/collabs/LandingTracking";
 import { collabsMode } from "@/server/collabs/mode";
 import { notFound } from "next/navigation";
 import type { Metadata, Viewport } from "next";
@@ -103,6 +104,7 @@ export default async function LocaleLayout({
         {/* 第 2 批 SEO:Organization + WebSite 全站各一份(由根布局统一输出)。 */}
         {kolEnabled() && !collabsMode() && <ReferralBridge />}
         {tracking && <ShopifyPageTracking />}
+        {kolEnabled() && collabsMode() && <CollabsLandingTracking />}
         <SiteJsonLd siteUrl={env.SITE_URL} />
         <NextIntlClientProvider messages={messages}>
           <CartProvider>

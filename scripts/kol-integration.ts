@@ -6,7 +6,7 @@ import {
   type ServerResponse,
 } from "node:http";
 import { spawn } from "node:child_process";
-import { mkdtempSync, createWriteStream } from "node:fs";
+import { mkdtempSync, createWriteStream, readFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { randomUUID, createHmac, scryptSync } from "node:crypto";
@@ -493,6 +493,14 @@ async function main() {
         return;
       }
       const path = new URL(req.url ?? "/", site).pathname;
+      if (!isAdmin && collabs && path === "/__test/landing-consent.js") {
+        res.writeHead(200, {
+          "Content-Type": "application/javascript",
+          "Cache-Control": "no-store",
+        });
+        res.end(readFileSync("scripts/fixtures/landing-consent.js"));
+        return;
+      }
       let normalized: string;
       try {
         normalized = decodeURIComponent(path).replace(/\/+/g, "/");
@@ -516,10 +524,37 @@ async function main() {
         "x-real-ip": "127.0.0.1",
         "x-forwarded-proto": "http",
         "x-country-code": "US",
+        "accept-encoding": "identity",
       };
       const forwarded = httpRequest(
         { hostname: "localhost", port: appPort, path: req.url, method: req.method, headers },
         (up) => {
+          if (
+            !isAdmin &&
+            collabs &&
+            String(up.headers["content-type"] ?? "").includes("text/html")
+          ) {
+            // A local consent shim exercises the real observer without contacting Shopify.
+            let html = "";
+            up.setEncoding("utf8");
+            up.on("data", (chunk) => {
+              html += chunk;
+            });
+            up.on("end", () => {
+              const outgoing = { ...up.headers };
+              delete outgoing["content-length"];
+              delete outgoing["content-encoding"];
+              delete outgoing["transfer-encoding"];
+              res.writeHead(up.statusCode ?? 502, outgoing);
+              res.end(
+                html.replace(
+                  "</head>",
+                  '<script src="/__test/landing-consent.js"></script></head>',
+                ),
+              );
+            });
+            return;
+          }
           res.writeHead(up.statusCode ?? 502, up.headers);
           up.pipe(res);
         },

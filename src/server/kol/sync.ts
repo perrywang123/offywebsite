@@ -1,5 +1,6 @@
 import { collabsMode } from "../collabs/mode";
 import { refreshAttributions } from "../collabs/events";
+import { pruneLandingData } from "../collabs/landing";
 import { lookupOrder } from "../collabs/shopify";
 import { createHmac } from "node:crypto";
 import { and, eq, inArray, lte, lt } from "drizzle-orm";
@@ -135,6 +136,15 @@ export async function runWorker(db: Db, now = Date.now()) {
   if (!claimed) return { busy: true };
   const shopify = shopifyAdminConfigured() ? "configured" : "not_configured";
   try {
+    // Anonymous retention is independent of Shopify credentials and financial reconciliation.
+    try {
+      if ((runtime(db, "landingPrunedAt") ?? 0) < now - 3600000) {
+        pruneLandingData(db, now);
+        setRuntime(db, "landingPrunedAt", now, now);
+      }
+    } catch {
+      console.warn("collabs_landing_retention_failed");
+    }
     if (shopify === "configured" && collabsMode())
       await refreshAttributions(db, (id) => lookupOrder({ orderId: id, orderName: null }), now);
     // Keep pending remote work and scan progress intact until credentials exist.

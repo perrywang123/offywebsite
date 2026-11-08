@@ -325,6 +325,42 @@ export const collabsLinkDaily = sqliteTable(
   },
   (t) => [primaryKey({ columns: [t.creatorId, t.day] })],
 );
+/** Anonymous aggregate landing views; separate from redirect requests and commission. */
+export const collabsLandingDaily = sqliteTable(
+  "collabs_landing_daily",
+  {
+    dtId: text("dt_id").notNull(),
+    day: text("day").notNull(),
+    pv: integer("pv").notNull(),
+    firstAt: integer("first_at").notNull(),
+    lastAt: integer("last_at").notNull(),
+  },
+  (t) => [primaryKey({ columns: [t.dtId, t.day] })],
+);
+/** Purpose-hashed browser membership only; deleted after 90 UTC days or withdrawal. */
+export const collabsLandingVisitors = sqliteTable(
+  "collabs_landing_visitors",
+  {
+    dtId: text("dt_id").notNull(),
+    day: text("day").notNull(),
+    visitorHash: text("visitor_hash").notNull(),
+    lastAt: integer("last_at").notNull(),
+  },
+  (t) => [
+    primaryKey({ columns: [t.dtId, t.day, t.visitorHash] }),
+    index("collabs_landing_visitors_day").on(t.day),
+    index("collabs_landing_visitors_hash").on(t.visitorHash),
+  ],
+);
+/** Random per-view receipt, without a browser ID, prevents transport/effect double counting. */
+export const collabsLandingReceipts = sqliteTable(
+  "collabs_landing_receipts",
+  {
+    id: text("id").primaryKey(),
+    receivedAt: integer("received_at").notNull(),
+  },
+  (t) => [index("collabs_landing_receipts_time").on(t.receivedAt)],
+);
 /** Native Flow identity is independent of aliases and CSV creator labels. */
 export const collabsFlowCreators = sqliteTable("collabs_flow_creators", {
   nativeId: text("native_id").primaryKey(),

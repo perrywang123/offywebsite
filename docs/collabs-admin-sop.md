@@ -8,7 +8,7 @@
 
 **在 Shopify Collabs 建立合作、分配计划、生成官方推广链接和优惠码、查看归因及佣金并自动付款；在 Offy 后台保存链接索引、查看短链打开、接收官方归属事件、导入财务报告、核对 Shopify 订单和排查结账异常。** Offy 后台不是另一套计佣或打款平台，里面的报告也不是实时 Collabs 余额。新增观察与 Flow 的配置及启用边界详见[运行说明](collabs-observation.md)。
 
-品牌合作联系人统一为 **yifangu3@gmail.com**，已在 Collabs 验证。Offy 管理员登录邮箱与合作邮箱是两种身份，不要把管理员密码交给 KOL。KOL 只使用自己的 [Collabs 官方门户](https://collabs.shopify.com/)。
+品牌合作联系人统一为 **contact@whimcoreofficial.com**，已在 Collabs 验证。Offy 管理员登录邮箱与合作邮箱是两种身份，不要把管理员密码交给 KOL。KOL 只使用自己的 [Collabs 官方门户](https://collabs.shopify.com/)。
 
 常用入口：
 
@@ -26,7 +26,7 @@
 
 ## 第二步：发送邀请，让 KOL 完成自己的账号与收款设置
 
-进入 **Recruiting → Invite creators**，输入双方已确认的 KOL 邮箱，选择正确的计划，检查专属代码和邮件预览，再发送。邀请前检查联系人仍为 yifangu3@gmail.com、计划和费率无误。当前官方支持品牌直接邀请，邀请有效期30天；不要让新 KOL 从公开自由注册入口反复尝试。[邀请操作](https://help.shopify.com/en/manual/promoting-marketing/collabs/merchants/recruiting-creators)、[创作者账号说明](https://help.shopify.com/en/manual/promoting-marketing/collabs/creators)
+进入 **Recruiting → Invite creators**，输入双方已确认的 KOL 邮箱，选择正确的计划，检查专属代码和邮件预览，再发送。邀请前检查联系人仍为 contact@whimcoreofficial.com、计划和费率无误。当前官方支持品牌直接邀请，邀请有效期30天；不要让新 KOL 从公开自由注册入口反复尝试。[邀请操作](https://help.shopify.com/en/manual/promoting-marketing/collabs/merchants/recruiting-creators)、[创作者账号说明](https://help.shopify.com/en/manual/promoting-marketing/collabs/creators)
 
 让 KOL 用收到邀请的同一身份接受合作，确认品牌为 is.offy，并检查佣金、粉丝权益和付款条款。KOL 应在其官方账号完成自动收款开通；品牌不代收银行卡、证件、验证码或账号密码。发送本文配套的 KOL SOP 即可，无需提供 Offy 管理员账号。
 
@@ -77,6 +77,8 @@
 多个 Offy 别名若共用同一条官方推广链接，打开请求仍分别统计，但 Collabs 归属只识别同一创作者，不能据此区分具体下单短链。官方编号关联合作索引并不证明订单点击了其中某一个别名。
 
 正式建档时，后台会阻止把其他记录已绑定的dt_id或优惠码再次分配给新记录；停用不会释放当前标识。历史内部测试重复记录只提示冲突，需管理员核对整理，不会自动删除、改绑或停用。每日明细的未采集请求数显示0，含义是没有已记录请求，不能据此认定采集前没有访客。
+
+在“推广落地浏览与访客”按dt_id查看7/30/90天的Offy落地PV与去重浏览器UV：同一浏览器看5次可记PV=5、UV=1，期间UV不是每日UV相加。只有允许分析后才采集，不是准确真人数，也不包含仅在Shopify域名浏览的用户。多个历史别名共用dt_id时共用一组数据；拒绝许可、无痕、跨设备或限制Cookie会影响识别。撤回许可会移除对应UV明细，PV匿名汇总保留；标识和去重明细最多保留90天，不用来重新计佣。
 
 在 Collabs 的 **Connections → 创作者** 查看其表现；从销售报告入口选择时间范围、计划等条件并导出。先记录筛选条件、导出时间和报告时区，再与 KOL 比较。Visits、订单、销售额、佣金和付款金额是不同指标，不要用点击数推算订单数，也不要用商品销量乘单价冒充官方销售额。[商家表现与报告](https://help.shopify.com/en/manual/promoting-marketing/collabs/merchants/managing-creators)
 
@@ -144,7 +146,7 @@
 - [ ] A1｜已核对 KOL 合作邮箱和账号身份；社媒账号/主页如有已核对，不把可选主页当成必填项。
 - [ ] A2｜双方已书面确认自定义佣金比例、适用商品/系列、粉丝优惠及合作起止日，并留存合作记录或合同。
 - [ ] A3｜视频/内容要求、发布时间、链接与代码的放置位置、必要的合作披露和后续联系负责人已确认。
-- [ ] A4｜品牌联系人为已验证的 yifangu3@gmail.com；首期采用邀请制，未误开启公开招募。
+- [ ] A4｜品牌联系人为已验证的 contact@whimcoreofficial.com；首期采用邀请制，未误开启公开招募。
 - [ ] A5｜Collabs 计划的佣金、优惠及适用条件与约定一致；落地页是已经存在的首页或商品页，不是临时拼出的短链路径。
 - [ ] A6｜发送邀请前已复核收件邮箱、计划、专属代码和邀请预览；品牌与 KOL 都清楚佣金由 Collabs 计佣并自动付款。
 
@@ -158,6 +160,7 @@
 - [ ] B6｜已走到未付款 Shopify 结账核对商品/规格/数量、国家、金额币种和优惠适用情况，无 Sold out 等阻断；验证未付款时明确标记“尚未验证转化”。
 - [ ] B7｜KOL 已收到并确认最终链接、代码、合作条款及 KOL SOP；负责人已检查发布内容与批准上线范围，并留下批准记录。
 - [ ] B8｜如使用自动观察，已核对独立 Flow 流程处于启用状态，正式 URL 没有 `validate=1`；只校验测试没有写入生产转化，原有流程、计佣与付款设置保持原样。
+- [ ] B9｜官方dt_id未重复分配给其他KOL；如使用Offy落地PV/UV，已确认最终落在Offy、分析许可和Cookie可正常使用，知晓UV按浏览器去重、期间UV不能相加，不与官方佣金数据混算。
 
 ### C. 首单试点与放量前：真实数据证据
 

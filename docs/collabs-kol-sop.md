@@ -4,7 +4,7 @@ Offy Creator Guide · 更新于2026-11-07。适用于收到 Offy 品牌邀请的
 
 ## 中文速读
 
-用收到 Offy 邀请的同一邮箱进入 [Shopify Collabs 官方门户](https://collabs.shopify.com/)，接受合作并确认佣金与粉丝权益。开通你自己的官方自动收款，使用品牌确认的完整推广链接或专属代码发布内容，在 Collabs 查看自己的 Analytics 和 Payouts。合作联系邮箱为 **yifangu3@gmail.com**。
+用收到 Offy 邀请的同一邮箱进入 [Shopify Collabs 官方门户](https://collabs.shopify.com/)，接受合作并确认佣金与粉丝权益。开通你自己的官方自动收款，使用品牌确认的完整推广链接或专属代码发布内容，在 Collabs 查看自己的 Analytics 和 Payouts。合作联系邮箱为 **contact@whimcoreofficial.com**。
 
 当前采用 Collabs 原生计佣和自动付款。30天冻结期结束不等于当天到账；未开通收款、未达到平台出款门槛或尚待品牌账单处理时，付款仍需等待。不要向 Offy 提交银行卡、身份证件、账号密码或验证码，也不要索取品牌管理员账号。具体合作费率与适用商品，以你的邀请和生效合作计划为准。
 
@@ -12,7 +12,7 @@ Offy Creator Guide · 更新于2026-11-07。适用于收到 Offy 品牌邀请的
 
 Open the invitation you received from Offy and use the same email address to sign in to Shopify Collabs. Confirm that the brand is **is.offy** and review your commission rate, eligible products, audience offer and payment terms before accepting.
 
-Collabs currently supports direct brand invitations while general new creator signups are paused. If your invite is missing or expired, contact **yifangu3@gmail.com** so Offy can check it; do not repeatedly create accounts with different emails. [Official creator account guidance](https://help.shopify.com/en/manual/promoting-marketing/collabs/creators)
+Collabs currently supports direct brand invitations while general new creator signups are paused. If your invite is missing or expired, contact **contact@whimcoreofficial.com** so Offy can check it; do not repeatedly create accounts with different emails. [Official creator account guidance](https://help.shopify.com/en/manual/promoting-marketing/collabs/creators)
 
 You use your own creator account. You do not need access to Shopify merchant administration or the private Offy administrator system.
 
@@ -54,7 +54,7 @@ If Collabs shows **Waiting for creator**, finish your payout setup. If payment a
 
 ## 6. Report a link, order or commission problem
 
-Email **yifangu3@gmail.com** with a short description and only the information needed to investigate:
+Email **contact@whimcoreofficial.com** with a short description and only the information needed to investigate:
 
 - Your creator account email or identifier and the affected Offy partnership.
 - The link/code used, publication channel, approximate time and time zone.

@@ -26,7 +26,13 @@ import { createPartner } from "./core";
 import { snapshot } from "./snapshot";
 import { adminRequest } from "./shopify";
 import { addAdmin } from "./auth";
-import { kolCodeJobs, kolInbox, kolLoginLimits } from "../db/schema";
+import {
+  kolCodeJobs,
+  kolInbox,
+  kolLoginLimits,
+  collabsLandingVisitors,
+  collabsLandingReceipts,
+} from "../db/schema";
 import { GET, POST } from "@/app/api/admin/kol/[[...path]]/route";
 let db: ReturnType<typeof testDb>;
 beforeEach(() => {
@@ -41,6 +47,20 @@ afterEach(() => {
   vi.unstubAllGlobals();
 });
 describe("optional manually supplied Shopify Admin token", () => {
+  it("prunes expired anonymous landing identifiers without Shopify credentials or network access", async () => {
+    const now = Date.now();
+    db.insert(collabsLandingVisitors)
+      .values({ dtId: "expired-test", day: "2020-01-01", visitorHash: "expired-hash", lastAt: 0 })
+      .run();
+    db.insert(collabsLandingReceipts).values({ id: "expired-view", receivedAt: 0 }).run();
+    await expect(runWorker(db, now)).resolves.toMatchObject({
+      ok: true,
+      shopify: "not_configured",
+    });
+    expect(db.select().from(collabsLandingVisitors).all()).toEqual([]);
+    expect(db.select().from(collabsLandingReceipts).all()).toEqual([]);
+    expect(fetch).not.toHaveBeenCalled();
+  });
   it.each(["", "   "])(
     "pauses remote tasks and keeps local maintenance for token %j",
     async (token) => {

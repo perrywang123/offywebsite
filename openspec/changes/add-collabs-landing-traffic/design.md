@@ -1,0 +1,11 @@
+# Measurement and operational boundaries
+
+The collector accepts only version, official dt_id, a per-view random event ID, a public pathname and an analytics-permission declaration. Other URL parameters and personal fields are rejected. Server time defines the UTC day. Collection requires a currently enabled indexed dt_id; multiple historical aliases share one group rather than inventing separate creators.
+
+Shopify's analyticsProcessingAllowed and documented privacy-ready/consent events control the browser observer. Missing/failed consent APIs do not grant permission. No identifier is created before permission. React effect re-execution and transport retry reuse the view ID; a new document view or changed landing URL may create a new view. Public endpoints enforce canonical same-origin and body/rate limits; these are approximate observations, not fraud-proof financial attribution.
+
+A random browser ID plus issue time is signed for this specific purpose with the existing server-private signing secret, placed in an HttpOnly/Secure/SameSite=Lax first-party cookie and never returned in JSON. The database retains only a purpose-separated keyed hash for distinct-browser counting. Fixed expiry is not extended on each view. Unknown links and validation-only requests do not set cookies or write data. Withdrawal always clears the cookie; existing browser membership is removed best-effort, with failures bounded by the retention cleanup.
+
+PV aggregates are non-identifying and may remain available over time. Receipts and browser memberships are removed after 90 UTC days by the existing worker independently of Shopify Admin credentials. The workspace labels retained period UV as distinct browsers, explains consent/storage/cross-device limitations and exposes collection start. Daily display zeros do not fabricate pre-collection history.
+
+No local PV/UV alters official Visits, Order Attributed, discounts, checkout attributes, commission or payouts. Database/proxy failures cannot block navigation or checkout. The new public collector uses the existing bounded 50ms observation connection. Only real new events are collected after rollout; tests use isolated data or non-persistent validation.

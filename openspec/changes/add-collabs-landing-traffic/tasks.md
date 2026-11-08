@@ -1,0 +1,8 @@
+- [x] Confirm the approved measurement contract and existing Shopify privacy integration; save the public native Collabs contact and request mailbox verification.
+- [x] Validate OpenSpec and reproduce missing collector, distinct UV, retention and interface behavior with failing tests.
+- [x] Implement the additive schema, idempotent bounded collector, signed cookie, consent observer and periodic retention/withdrawal handling.
+- [x] Add protected per-dt_id PV/UV views with source, period and collection boundaries; retain short-link and official-finance views.
+- [ ] Update current KOL contacts and two live SOPs; verify native public contact status without changing login, billing or other store configuration.
+- [ ] Run full unit/type/lint/build checks plus isolated HTTP and responsive/browser interaction verification; remove task-generated test data.
+- [ ] Push Git, build a verified CI image, deploy admin/migrations then storefront separately; verify the deployed chain and production health.
+- [ ] Archive specifications and publish final verification evidence and remaining limits.

@@ -2,9 +2,11 @@
 import { COLLABS_CONTACT_EMAIL } from "@/lib/collabs/content";
 import { duplicateOfficialBindings } from "@/lib/collabs/bindings";
 import { CollabsLinkMetrics } from "./CollabsLinkMetrics";
+import { CollabsLandingMetrics } from "./CollabsLandingMetrics";
 import { CollabsAttribution } from "./CollabsAttribution";
 import type { attributionState } from "@/server/collabs/events";
 import type { linkMetrics } from "@/server/collabs/links";
+import type { landingMetrics } from "@/server/collabs/landing";
 import { useCallback, useEffect, useState, type FormEvent } from "react";
 import { parseCsv, reportFields, type ReportInput, type ReportField } from "@/lib/collabs/reports";
 import { decimal } from "@/server/kol/money";
@@ -18,6 +20,7 @@ type State = {
   officialAdmin: string;
   creatorPortal: string;
   linkMetrics?: ReturnType<typeof linkMetrics>;
+  landingMetrics?: ReturnType<typeof landingMetrics>;
   attribution?: ReturnType<typeof attributionState>;
 };
 const fields: Record<ReportField, string> = {
@@ -175,6 +178,12 @@ export function CollabsWorkspace({ siteUrl }: { siteUrl: string }) {
               刷新数据
             </button>
           </div>
+          {state.landingMetrics && (
+            <CollabsLandingMetrics
+              initial={state.landingMetrics}
+              load={(days) => api(`/traffic?days=${days}`)}
+            />
+          )}
           {state.linkMetrics && (
             <CollabsLinkMetrics
               initial={state.linkMetrics}
