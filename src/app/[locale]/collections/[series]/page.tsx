@@ -40,7 +40,7 @@ export async function generateMetadata({
       alternates: { canonical: publicPath(locale, `/collections/${slug}`) },
     };
   const series = result.data.find((s) => s.slug === slug);
-  const country = pickCountry(await headers(), env.SHOPIFY_MARKET_COUNTRY);
+  const country = pickCountry(await headers());
   const productsResult = series
     ? await catalogResult(getLiveProductsBySeries(series.slug, country))
     : null;
@@ -67,7 +67,7 @@ export default async function SeriesPage({
   const t = await getTranslations("catalog");
   const tCommon = await getTranslations("common");
   // 价格按访客所在国家的市场币种(读 headers() → 本页按请求渲染)。
-  const country = pickCountry(await headers(), env.SHOPIFY_MARKET_COUNTRY);
+  const country = pickCountry(await headers());
 
   // 实时拉取:系列名称/该系列下的商品清单均来自 Shopify 当前真实状态,
 

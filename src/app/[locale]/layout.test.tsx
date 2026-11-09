@@ -1,3 +1,10 @@
+vi.mock("next/headers", () => ({ headers: async () => new Headers() }));
+vi.mock("@/lib/geo", () => ({
+  countryDecision: () => ({ country: "US", source: "default", persisted: true }),
+}));
+vi.mock("@/server/shopify/localization", () => ({
+  getMarketCountries: async () => [{ code: "US", name: "United States", currency: "USD" }],
+}));
 import { renderToStaticMarkup } from "react-dom/server";
 
 // 布局会 import 全局 Tailwind CSS;测试不需要样式,且仓库的 PostCSS 配置是

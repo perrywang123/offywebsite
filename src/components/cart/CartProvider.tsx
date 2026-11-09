@@ -11,6 +11,8 @@ import {
 import { z } from "zod";
 import { addLine, cartCount, removeLine, setQuantity, type CartState } from "@/lib/cart";
 import { registerMetaProducts, observeMeta, metaCartData } from "@/components/marketing/runtime";
+import { useOptionalMarket } from "@/components/market/MarketProvider";
+import { MARKET_REVIEW_BAG } from "@/lib/market";
 const STORAGE_KEY = "offy.cart.v1";
 export interface CartCatalogEntry {
   code: string;
@@ -74,6 +76,8 @@ function savedLines(): CartState {
 }
 const CartContext = createContext<CartContextValue | null>(null);
 export function CartProvider({ children }: { children: React.ReactNode }) {
+  const market = useOptionalMarket();
+  const marketReady = market?.ready ?? true;
   const [lines, setLines] = useState<CartState>([]),
     linesRef = useRef<CartState>([]);
   const [catalog, setCatalog] = useState<Record<string, CartCatalogEntry>>({});
@@ -130,10 +134,10 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
           }),
       );
       if (!alive.current || request !== generation.current) return false;
-      // Apply only confirmed removals to current lines. Never restore an old snapshot after a user edit.
-      const next = linesRef.current.filter((l) => !missing.has(l.code));
-      if (next.some((l) => !map[l.code])) throw new Error("unverified_lines");
-      updateLines(next);
+      // A 404 can be destination-specific. Preserve identities until the shopper
+      // removes them, without keeping any previous market's product facts.
+      if (linesRef.current.some((l) => !map[l.code] && !missing.has(l.code)))
+        throw new Error("unverified_lines");
       try {
         registerMetaProducts(
           Object.values(map).map((p) => ({
@@ -156,14 +160,23 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
       }
       return false;
     }
-  }, [updateLines]);
+  }, []);
   useEffect(() => {
     alive.current = true;
     hydrated.current = true;
     updateLines(savedLines());
-    void refresh();
+    if (marketReady) void refresh();
+    try {
+      if (sessionStorage.getItem(MARKET_REVIEW_BAG) === "1") {
+        sessionStorage.removeItem(MARKET_REVIEW_BAG);
+        setMounted(true);
+        setOpen(true);
+      }
+    } catch {
+      /* A saved bag still works without sessionStorage. */
+    }
     const onVisible = () => {
-      if (document.visibilityState === "visible") void refresh();
+      if (marketReady && document.visibilityState === "visible") void refresh();
     };
     document.addEventListener("visibilitychange", onVisible);
     return () => {
@@ -174,13 +187,13 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
       document.removeEventListener("visibilitychange", onVisible);
       if (closeTimer.current) clearTimeout(closeTimer.current);
     };
-  }, [refresh, updateLines]);
+  }, [refresh, updateLines, marketReady]);
   const open = useCallback(() => {
     if (closeTimer.current) clearTimeout(closeTimer.current);
     setMounted(true);
     setOpen(true);
-    void refresh();
-  }, [refresh]);
+    if (marketReady) void refresh();
+  }, [refresh, marketReady]);
   const close = useCallback(() => {
     setOpen(false);
     closeTimer.current = setTimeout(() => setMounted(false), 360);

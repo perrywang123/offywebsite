@@ -124,7 +124,7 @@ describe("CartProvider 健壮性", () => {
     expect(screen.getByTestId("count").textContent).toBe("1");
   });
 
-  it("仍然会清理真正下架的商品(单品接口 404)", async () => {
+  it("a market-specific 404 preserves identity and quantity for shopper review", async () => {
     window.localStorage.setItem(STORAGE_KEY, JSON.stringify([{ code: "long-gone", quantity: 1 }]));
     mockRoutes({ catalog: "ok" });
     render(
@@ -134,6 +134,9 @@ describe("CartProvider 健壮性", () => {
     );
 
     await waitFor(() => expect(screen.getByTestId("loaded").textContent).toBe("true"));
-    await waitFor(() => expect(lines()).toEqual([]));
+    await waitFor(() => expect(lines()).toEqual([{ code: "long-gone", quantity: 1 }]));
+    expect(JSON.parse(window.localStorage.getItem(STORAGE_KEY) ?? "[]")).toEqual([
+      { code: "long-gone", quantity: 1 },
+    ]);
   });
 });

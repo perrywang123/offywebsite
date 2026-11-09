@@ -2,6 +2,7 @@
 import { useCallback, useRef, useState } from "react";
 import { referralTicket } from "@/components/kol/ReferralBridge";
 import { checkoutRedirectUrl } from "@/lib/checkout-redirect";
+import { useOptionalMarket } from "@/components/market/MarketProvider";
 import { useLocale } from "next-intl";
 import { beginCheckoutAttempt, reportCheckoutObservation } from "./checkout-diagnostics-client";
 import { metaAllowed, observeMeta, metaCartData } from "@/components/marketing/runtime";
@@ -14,6 +15,7 @@ export interface CheckoutBlockedItem {
   reason?: "unknown_items" | "unavailable_items";
 }
 export interface CheckoutRedirectState {
+  destinationChanged: boolean;
   pending: boolean;
   failed: boolean;
   blocked: CheckoutBlockedItem[] | null;
@@ -21,6 +23,8 @@ export interface CheckoutRedirectState {
 }
 /** Fresh client verification + server-authoritative checkout. Failure stays on the current page. */
 export function useCheckoutRedirect(verify?: () => Promise<boolean>): CheckoutRedirectState {
+  const market = useOptionalMarket();
+  const [destinationChanged, setDestinationChanged] = useState(false);
   const locale = useLocale(),
     inFlight = useRef(false);
   const [pending, setPending] = useState(false),
@@ -32,6 +36,7 @@ export function useCheckoutRedirect(verify?: () => Promise<boolean>): CheckoutRe
       inFlight.current = true;
       setPending(true);
       setFailed(false);
+      setDestinationChanged(false);
       setBlocked(null);
       let receipt: string | undefined,
         observedFailure = false;
@@ -49,6 +54,7 @@ export function useCheckoutRedirect(verify?: () => Promise<boolean>): CheckoutRe
           signal: AbortSignal.timeout(15000),
           body: JSON.stringify({
             provider: "shopify",
+            ...(market ? { expectedCountry: market.state.country } : {}),
             items,
             locale,
             referralTicket: referralTicket(),
@@ -69,6 +75,11 @@ export function useCheckoutRedirect(verify?: () => Promise<boolean>): CheckoutRe
             window.location.assign(target);
             return;
           }
+        } else if (res.status === 409 && data?.error === "destination_changed") {
+          setDestinationChanged(true);
+          inFlight.current = false;
+          setPending(false);
+          return;
         } else if (res.status >= 400 && res.status < 500) {
           setBlocked(
             Array.isArray(data?.items)
@@ -93,7 +104,7 @@ export function useCheckoutRedirect(verify?: () => Promise<boolean>): CheckoutRe
         setPending(false);
       }
     },
-    [locale, verify],
+    [locale, verify, market],
   );
-  return { pending, failed, blocked, startCheckout };
+  return { pending, failed, blocked, destinationChanged, startCheckout };
 }

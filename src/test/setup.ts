@@ -51,3 +51,6 @@ if (typeof window !== "undefined" && !window.localStorage) {
   Object.defineProperty(window, "localStorage", { value: storage, configurable: true });
   Object.defineProperty(globalThis, "localStorage", { value: storage, configurable: true });
 }
+
+// Legacy endpoint fixtures model a deliberately configured trusted ingress.
+process.env.GEO_TRUSTED_COUNTRY_HEADER ??= "x-country-code";

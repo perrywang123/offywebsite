@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { useLocale, useTranslations } from "next-intl";
 import { Link } from "@/i18n/navigation";
+import { CountryTrigger } from "@/components/market/CountrySelector";
 import type { Series } from "@/lib/catalog";
 
 /**
@@ -40,16 +41,18 @@ export function MobileNav({ series }: { series: Series[] }) {
         aria-controls="mobile-nav-drawer"
         aria-label="Menu"
         onClick={() => setOpen((v) => !v)}
-        className="flex h-11 w-11 items-center justify-center rounded-full transition-colors hover:bg-cream-deep"
+        className="hover:bg-cream-deep flex h-11 w-11 items-center justify-center rounded-full transition-colors"
       >
-        <span aria-hidden className="text-lg leading-none">{open ? "✕" : "☰"}</span>
+        <span aria-hidden className="text-lg leading-none">
+          {open ? "✕" : "☰"}
+        </span>
       </button>
 
       {open && (
         <div className="fixed inset-0 z-[60]">
           <div
             data-testid="mobile-nav-backdrop"
-            className="absolute inset-0 bg-ink/40 backdrop-blur-sm"
+            className="bg-ink/40 absolute inset-0 backdrop-blur-sm"
             onClick={close}
           />
           <aside
@@ -57,45 +60,64 @@ export function MobileNav({ series }: { series: Series[] }) {
             role="dialog"
             aria-modal="true"
             aria-label="Menu"
-            className="absolute right-0 top-0 flex h-full w-4/5 max-w-xs flex-col bg-cream shadow-2xl"
+            className="bg-cream absolute top-0 right-0 flex h-full w-4/5 max-w-xs flex-col shadow-2xl"
           >
-            <div className="flex items-center justify-between border-b border-cream-line px-6 py-4">
+            <div className="border-cream-line flex items-center justify-between border-b px-6 py-4">
               <span className="font-display text-lg font-semibold">{t("brandLatin")}</span>
               <button
                 type="button"
                 onClick={close}
                 aria-label="Close"
-                className="flex h-11 w-11 items-center justify-center rounded-full text-ink-muted hover:bg-cream-deep"
+                className="text-ink-muted hover:bg-cream-deep flex h-11 w-11 items-center justify-center rounded-full"
               >
                 ✕
               </button>
             </div>
-            <nav className="flex flex-col gap-1 px-6 py-6 text-sm font-medium uppercase tracking-[var(--tracking-14)]">
-              <Link href="/products" onClick={close} className="py-3 transition-opacity hover:opacity-60">
+            <nav className="flex flex-col gap-1 px-6 py-6 text-sm font-medium tracking-[var(--tracking-14)] uppercase">
+              <Link
+                href="/products"
+                onClick={close}
+                className="py-3 transition-opacity hover:opacity-60"
+              >
                 {t("nav.new")}
               </Link>
-              <Link href="/products" onClick={close} className="py-3 transition-opacity hover:opacity-60">
+              <Link
+                href="/products"
+                onClick={close}
+                className="py-3 transition-opacity hover:opacity-60"
+              >
                 {t("nav.shop")}
               </Link>
-              <div className="flex flex-col gap-1 border-l border-cream-line pl-4">
+              <div className="border-cream-line flex flex-col gap-1 border-l pl-4">
                 {series.map((s) => (
                   <Link
                     key={s.slug}
                     href={`/collections/${s.slug}`}
                     onClick={close}
-                    className="py-2 text-xs text-ink-soft transition-colors hover:text-brown-600"
+                    className="text-ink-soft hover:text-brown-600 py-2 text-xs transition-colors"
                   >
                     {locale === "zh" ? s.name.zh : s.name.en}
                   </Link>
                 ))}
               </div>
-              <Link href="/collections" onClick={close} className="py-3 transition-opacity hover:opacity-60">
+              <Link
+                href="/collections"
+                onClick={close}
+                className="py-3 transition-opacity hover:opacity-60"
+              >
                 {t("nav.series")}
               </Link>
-              <Link href="/about" onClick={close} className="py-3 transition-opacity hover:opacity-60">
+              <Link
+                href="/about"
+                onClick={close}
+                className="py-3 transition-opacity hover:opacity-60"
+              >
                 {t("nav.about")}
               </Link>
             </nav>
+            <div className="border-cream-line mt-auto border-t px-6 py-4">
+              <CountryTrigger variant="menu" onOpen={close} />
+            </div>
           </aside>
         </div>
       )}

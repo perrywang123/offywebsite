@@ -35,3 +35,5 @@ resources
 docs/design
 
 *.log
+
+.offy-geoip.local/

@@ -1,5 +1,5 @@
 import { headers } from "next/headers";
-import { pickCountry } from "@/lib/geo";
+import { countryDecision } from "@/lib/geo";
 import { ShopifyTrackingScripts, ShopifyPageTracking } from "@/components/collabs/ShopifyTracking";
 import { CollabsLandingTracking } from "@/components/collabs/LandingTracking";
 import { collabsMode } from "@/server/collabs/mode";
@@ -14,6 +14,8 @@ import { ReferralBridge } from "@/components/kol/ReferralBridge";
 import { CartProvider } from "@/components/cart/CartProvider";
 import { CartDrawer } from "@/components/cart/CartDrawer";
 import { Header } from "@/components/layout/Header";
+import { MarketProvider, MarketContent } from "@/components/market/MarketProvider";
+import { getMarketCountries } from "@/server/shopify/localization";
 import { Footer } from "@/components/layout/Footer";
 import { SiteJsonLd } from "@/components/seo/SiteJsonLd";
 import { MetaTracking } from "@/components/marketing/MetaTracking";
@@ -84,11 +86,15 @@ export default async function LocaleLayout({
   // 全站导航(Header/Footer/MobileNav)共用同一次实时系列拉取结果,
   // 避免每个组件各自发起请求;Shopify 不可达时 getLiveSeriesList 内部
 
-  const series = await getLiveSeriesList().catch(() => []);
+  const [series, countries] = await Promise.all([
+    getLiveSeriesList().catch(() => []),
+    getMarketCountries().catch(() => null),
+  ]);
   const meta = metaConfig();
   const tracking =
     (collabsMode() || meta.enabled) && env.SHOPIFY_ANALYTICS_SHOP_ID && env.SHOPIFY_STORE_DOMAIN;
-  const country = tracking ? pickCountry(await headers(), env.SHOPIFY_MARKET_COUNTRY) : "US";
+  const destination = countryDecision(await headers());
+  const country = destination.country;
 
   return (
     <html lang={locale} suppressHydrationWarning>
@@ -122,12 +128,23 @@ export default async function LocaleLayout({
         {kolEnabled() && collabsMode() && <CollabsLandingTracking />}
         <SiteJsonLd siteUrl={env.SITE_URL} />
         <NextIntlClientProvider messages={messages}>
-          <CartProvider>
-            <Header series={series} />
-            <main>{children}</main>
-            <Footer series={series} locale={locale} />
-            <CartDrawer />
-          </CartProvider>
+          <MarketProvider
+            initial={{
+              country,
+              source: destination.source,
+              persisted: destination.persisted,
+              countries,
+            }}
+          >
+            <CartProvider>
+              <Header series={series} />
+              <main>
+                <MarketContent>{children}</MarketContent>
+              </main>
+              <Footer series={series} locale={locale} />
+              <CartDrawer />
+            </CartProvider>
+          </MarketProvider>
         </NextIntlClientProvider>
       </body>
     </html>

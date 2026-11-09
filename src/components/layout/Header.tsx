@@ -5,6 +5,7 @@ import { useLocale, useTranslations } from "next-intl";
 import { Link } from "@/i18n/navigation";
 import type { Series } from "@/lib/catalog";
 import { CartButton } from "@/components/cart/CartButton";
+import { CountrySelector, CountryTrigger } from "@/components/market/CountrySelector";
 import { MobileNav } from "./MobileNav";
 
 const PROMO_ROTATE_MS = 4500;
@@ -96,7 +97,7 @@ export function Header({ series }: { series: Series[] }) {
           </Link>
 
           {/* 中/右导航 */}
-          <nav className="hidden items-center gap-8 text-xs font-medium tracking-[var(--tracking-14)] uppercase md:flex">
+          <nav className="hidden items-center gap-4 text-xs font-medium tracking-[var(--tracking-14)] uppercase md:flex xl:gap-8">
             <Link href="/products" className="transition-opacity hover:opacity-60">
               {t("nav.new")}
             </Link>
@@ -147,11 +148,13 @@ export function Header({ series }: { series: Series[] }) {
             {/* 语言切换按钮已摘除:站点当前对外英文单语(见 src/i18n/routing.ts)。
                 恢复多语言时,把 `import { LanguageSwitcher } from "./LanguageSwitcher";`
                 加回文件顶部,并在下面这个 div 里放回 <LanguageSwitcher />。 */}
+            <CountryTrigger />
             <CartButton />
             <MobileNav series={series} />
           </div>
         </div>
       </div>
+      <CountrySelector />
     </header>
   );
 }

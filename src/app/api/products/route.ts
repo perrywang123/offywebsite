@@ -1,5 +1,4 @@
 import { NextResponse } from "next/server";
-import { env } from "@/lib/env";
 import { pickCountry } from "@/lib/geo";
 import { getLiveProducts, getLiveSeriesList } from "@/server/catalog/live";
 
@@ -16,7 +15,7 @@ export const dynamic = "force-dynamic";
  */
 export async function GET(request: Request) {
   try {
-    const country = pickCountry(request.headers, env.SHOPIFY_MARKET_COUNTRY);
+    const country = pickCountry(request.headers);
     const [products, series] = await Promise.all([getLiveProducts(country), getLiveSeriesList()]);
     return NextResponse.json(
       {

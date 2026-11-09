@@ -1,0 +1,9 @@
+- [x] Validate specification and record failing resolution/API/cart/UI tests.
+- [x] Add versioned IANA country/timezone metadata and pure preference contracts.
+- [x] Implement trusted country resolution, browser bootstrap, same-origin preference API and Shopify localization.
+- [x] Implement approved responsive selector, explicit confirmation and bag review behavior.
+- [x] Preserve unavailable bag identities and guard stale-country checkout; extend diagnostic evidence.
+- [x] Add optional refreshable Country database and private updater configuration; verify enrollment status.
+- [x] Complete focused/full tests, type/lint/format/build and responsive browser checks.
+- [ ] Update current docs, archive specification, commit and push changes.
+- [ ] Build native Linux release, smoke-test and release storefront only; verify live UI, peer containers and configuration.

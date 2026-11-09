@@ -1,0 +1,23 @@
+# Optional companion. Start only with deploy/update-geoip.sh after GeoLite2 enrollment.
+services:
+  geoipupdate:
+    image: ghcr.io/maxmind/geoipupdate:v8.0.0@sha256:51e70dd6f16cd3e4d845ac02d09940b10772a75b9d741427d235a78570923c1d
+    restart: unless-stopped
+    cpus: 0.10
+    mem_limit: 96m
+    environment:
+      GEOIPUPDATE_ACCOUNT_ID_FILE: /run/secrets/geoip_account
+      GEOIPUPDATE_LICENSE_KEY_FILE: /run/secrets/geoip_license
+      GEOIPUPDATE_EDITION_IDS: GeoLite2-Country
+      GEOIPUPDATE_FREQUENCY: "24"
+      GEOIPUPDATE_DB_DIR: /usr/share/GeoIP
+    volumes:
+      - offy-data:/usr/share/GeoIP
+    secrets:
+      - geoip_account
+      - geoip_license
+secrets:
+  geoip_account:
+    file: ${OFFY_GEOIP_SECRET_DIR}/account
+  geoip_license:
+    file: ${OFFY_GEOIP_SECRET_DIR}/license

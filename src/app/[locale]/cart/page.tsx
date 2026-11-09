@@ -1,6 +1,8 @@
 "use client";
 
 import Image from "next/image";
+import { CountryTrigger } from "@/components/market/CountrySelector";
+import { UnavailableBagLine } from "@/components/cart/UnavailableBagLine";
 import { CommerceUnavailable } from "@/components/CommerceUnavailable";
 import { useLocale, useTranslations } from "next-intl";
 import { Link } from "@/i18n/navigation";
@@ -33,6 +35,7 @@ export default function CartPage() {
     })),
   );
 
+  const missing = lines.filter((line) => !catalog[line.code]);
   if (catalogStatus === "unavailable")
     return (
       <div className="container-site section-y">
@@ -53,7 +56,7 @@ export default function CartPage() {
     <div className="container-site section-y lg:py-12">
       <h1 className="font-display mb-8 text-4xl font-semibold">{t("title")}</h1>
 
-      {items.length === 0 ? (
+      {lines.length === 0 ? (
         <div className="py-16 text-center">
           <p className="text-ink-soft text-lg">{t("empty")}</p>
           <p className="text-ink-muted mt-2 text-sm">{t("emptyHint")}</p>
@@ -67,6 +70,13 @@ export default function CartPage() {
       ) : (
         <div className="grid gap-10 lg:grid-cols-[2fr_1fr]">
           <ul className="divide-sand divide-y">
+            {missing.map((line) => (
+              <UnavailableBagLine
+                key={line.code}
+                quantity={line.quantity}
+                onRemove={() => remove(line.code)}
+              />
+            ))}
             {items.map(({ line, product }) => (
               <li key={line.code} className="flex gap-4 py-6">
                 <div className="bg-cream-deep relative h-32 w-24 shrink-0 overflow-hidden rounded-lg">
@@ -126,10 +136,13 @@ export default function CartPage() {
           </ul>
 
           <aside className="bg-paper h-fit rounded-2xl p-6">
+            <CountryTrigger variant="bag" />
             <div className="mb-4 flex justify-between font-medium">
               <span>{t("subtotal")}</span>
               <span className="tabular-nums">
-                {subtotal.mixed ? "—" : formatPrice(subtotal.cents, subtotal.currency, locale)}
+                {subtotal.mixed || missing.length > 0
+                  ? "—"
+                  : formatPrice(subtotal.cents, subtotal.currency, locale)}
               </span>
             </div>
             {subtotal.mixed && <p className="text-ink-muted mb-4 text-xs">{t("mixedCurrency")}</p>}
@@ -139,6 +152,19 @@ export default function CartPage() {
               </p>
             )}
             {subtotal.mixed && <p className="text-ink-soft mb-3 text-sm">{t("mixedCurrency")}</p>}
+            {checkout.destinationChanged && (
+              <p role="alert" className="text-error mb-3 text-sm">
+                Your shipping destination changed in another tab. Refresh this page to review your
+                bag before checkout.{" "}
+                <button
+                  type="button"
+                  className="underline"
+                  onClick={() => window.location.reload()}
+                >
+                  Refresh page
+                </button>
+              </p>
+            )}
             {checkout.failed && (
               <p role="alert" className="text-error mb-3 text-xs">
                 {t("checkoutFallback")}
@@ -170,7 +196,10 @@ export default function CartPage() {
                 )
               }
               disabled={
-                checkout.pending || subtotal.mixed || items.some((x) => !x.product.available)
+                checkout.pending ||
+                missing.length > 0 ||
+                subtotal.mixed ||
+                items.some((x) => !x.product.available)
               }
               aria-busy={checkout.pending}
               className="bg-accent text-paper hover:bg-accent-deep flex h-12 w-full items-center justify-center rounded-full text-sm font-medium transition-colors disabled:opacity-70"

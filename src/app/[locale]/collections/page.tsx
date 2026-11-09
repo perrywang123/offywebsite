@@ -6,7 +6,6 @@ import { headers } from "next/headers";
 import { getTranslations } from "next-intl/server";
 import { Link } from "@/i18n/navigation";
 import { publicPath } from "@/i18n/routing";
-import { env } from "@/lib/env";
 import { pickCountry } from "@/lib/geo";
 import { getLiveProductsBySeries, getLiveSeriesList } from "@/server/catalog/live";
 import { Reveal } from "@/components/Reveal";
@@ -51,7 +50,7 @@ export async function generateMetadata({
   const { locale } = await params;
   const t = await getTranslations("catalog");
 
-  const country = pickCountry(await headers(), env.SHOPIFY_MARKET_COUNTRY);
+  const country = pickCountry(await headers());
   const result = await catalogResult(
     (async () => {
       const list = await getLiveSeriesList();
@@ -71,7 +70,7 @@ export default async function CollectionsPage({ params }: { params: Promise<{ lo
   const { locale } = await params;
   const t = await getTranslations("catalog");
   // 封面图取的是"该系列当前第一款商品",按访客市场查询才能与系列页 / 首页一致。
-  const country = pickCountry(await headers(), env.SHOPIFY_MARKET_COUNTRY);
+  const country = pickCountry(await headers());
 
   // 实时拉取:系列名称跟随 Shopify Collection 标题,张数来自该系列当前真实的商品清单。
   const result = await catalogResult(

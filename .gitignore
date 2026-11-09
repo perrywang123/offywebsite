@@ -76,3 +76,5 @@ tmp/
 /.offy-runtime-*.local
 *.meta-backup.local
 .meta-env-*.local
+
+.offy-geoip.local/

@@ -17,7 +17,7 @@ describe("diagnostics are independent of KOL and never block commerce", () => {
   });
   it("stores a direct anonymous checkout with country evidence and the final result", () => {
     const recording = startCheckoutRecording(
-      new Headers({ "cf-ipcountry": "HK" }),
+      new Headers({ "x-country-code": "HK" }),
       [{ code: "test", quantity: 1 }],
       "en",
     )!;

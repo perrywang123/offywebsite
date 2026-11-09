@@ -1,5 +1,4 @@
 import { countryDecision } from "@/lib/geo";
-import { env } from "@/lib/env";
 import { getDb } from "../db/client";
 import { claimAttempt, cleanupAttempts, finishAttempt, observeAttempt } from "./store";
 import type { CreateCheckoutResult, CheckoutItemInput } from "../payments/types";
@@ -28,7 +27,7 @@ export function startCheckoutRecording(
         items,
         locale,
         pagePath: "/api/payments/checkout",
-        country: countryDecision(headers, env.SHOPIFY_MARKET_COUNTRY),
+        country: countryDecision(headers),
       });
     const observe: CheckoutObserver = (observation) => {
       try {

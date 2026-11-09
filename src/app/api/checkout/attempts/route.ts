@@ -57,7 +57,7 @@ export async function POST(request: Request) {
     return Response.json(
       createAttempt(db, {
         ...input,
-        country: countryDecision(request.headers, env.SHOPIFY_MARKET_COUNTRY),
+        country: countryDecision(request.headers),
       }),
       { headers: cache },
     );

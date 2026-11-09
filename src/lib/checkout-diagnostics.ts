@@ -33,6 +33,8 @@ export interface DiagnosticSummary {
   countryEvidence: {
     country: string;
     source: string;
+    persisted?: boolean;
+    timeZone?: string;
     header?: string | null;
     candidates: { header: string; value: string }[];
     ipSource: string | null;

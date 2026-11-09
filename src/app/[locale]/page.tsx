@@ -9,7 +9,6 @@ import { headers } from "next/headers";
 import { getLiveNewLooksProducts, getLiveProducts } from "@/server/catalog/live";
 import { getRegionalProducts } from "@/server/catalog/regional";
 import { pickCountry } from "@/lib/geo";
-import { env } from "@/lib/env";
 import { Reveal } from "@/components/Reveal";
 
 export const dynamic = "force-dynamic";
@@ -20,7 +19,7 @@ import { ProductCard } from "@/components/product/ProductCard";
 import { NewsletterForm } from "@/components/newsletter-form";
 
 export async function generateMetadata(): Promise<import("next").Metadata> {
-  const country = pickCountry(await headers(), env.SHOPIFY_MARKET_COUNTRY);
+  const country = pickCountry(await headers());
   const result = await catalogResult(
     Promise.all([getLiveNewLooksProducts(country, 2), getLiveProducts(country)]),
   );
@@ -36,7 +35,7 @@ export default async function HomePage({ params }: { params: Promise<{ locale: s
   // 先确定访客国家,再按它查询:所有价格(含区域限定)都用同一个市场上下文,
 
   // 注意:读 headers() 会让本页转为按请求渲染(dynamic)——这是 route A 的必要代价。
-  const visitorCountry = pickCountry(await headers(), env.SHOPIFY_MARKET_COUNTRY);
+  const visitorCountry = pickCountry(await headers());
 
   const [looksResult, allResult] = await Promise.all([
     catalogResult(getLiveNewLooksProducts(visitorCountry, 2)),

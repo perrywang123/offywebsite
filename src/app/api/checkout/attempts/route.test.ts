@@ -11,7 +11,7 @@ function req(body: unknown, origin?: string) {
     headers: {
       "Content-Type": "application/json",
       ...(origin ? { origin } : {}),
-      "cf-ipcountry": "GB",
+      "x-country-code": "GB",
     },
     body: JSON.stringify(body),
   });

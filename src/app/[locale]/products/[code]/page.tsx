@@ -31,7 +31,7 @@ export async function generateMetadata({
   params: Promise<{ locale: string; code: string }>;
 }): Promise<import("next").Metadata> {
   const { locale, code } = await params;
-  const country = pickCountry(await headers(), env.SHOPIFY_MARKET_COUNTRY);
+  const country = pickCountry(await headers());
   const result = await catalogResult(getLiveProductByCode(code, country));
   if (result.status === "unavailable")
     return {
@@ -71,7 +71,7 @@ export default async function ProductDetailPage({
   // 实时拉取:标题/图片/价格/描述/库存/结算变体 ID 均为 Shopify 当前真实值,
 
   // 价格按访客所在国家的市场币种返回(读 headers() → 本页按请求渲染)。
-  const country = pickCountry(await headers(), env.SHOPIFY_MARKET_COUNTRY);
+  const country = pickCountry(await headers());
   const result = await catalogResult(getLiveProductByCode(code, country));
   if (result.status === "unavailable")
     return (

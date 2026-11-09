@@ -4,7 +4,6 @@ import type { Metadata } from "next";
 import { getTranslations } from "next-intl/server";
 import { headers } from "next/headers";
 import { publicPath } from "@/i18n/routing";
-import { env } from "@/lib/env";
 import { pickCountry } from "@/lib/geo";
 import { getLiveProducts, getLiveSeriesList } from "@/server/catalog/live";
 import { ProductGrid } from "@/components/product/ProductGrid";
@@ -33,7 +32,7 @@ export async function generateMetadata({
 }): Promise<Metadata> {
   const { locale } = await params;
   const t = await getTranslations("catalog");
-  const country = pickCountry(await headers(), env.SHOPIFY_MARKET_COUNTRY);
+  const country = pickCountry(await headers());
   const result = await catalogResult(resolveProducts(country));
   if (result.status === "unavailable")
     return {
@@ -55,7 +54,7 @@ export default async function ProductsPage({ params }: { params: Promise<{ local
   const { locale } = await params;
   const t = await getTranslations("catalog");
 
-  const country = pickCountry(await headers(), env.SHOPIFY_MARKET_COUNTRY);
+  const country = pickCountry(await headers());
   const result = await catalogResult(
     Promise.all([resolveProducts(country), getLiveSeriesList().catch(() => [])]),
   );

@@ -39,7 +39,14 @@ const reasonLabels: Record<string, string> = {
   unexpected_checkout_error: "服务端发生异常",
 };
 const sourceLabel = (s: string) =>
-  ({ header: "请求头判定", ip: "IP 地理推测", default: "默认国家" })[s] ?? s;
+  ({
+    header: "可信国家请求头",
+    ip: "IP 地理推测",
+    manual: "用户主动选择",
+    timezone: "浏览器地理时区",
+    language: "浏览器区域语言",
+    default: "默认美国",
+  })[s] ?? s;
 const object = (v: unknown): Record<string, unknown> =>
   v && typeof v === "object" && !Array.isArray(v) ? (v as Record<string, unknown>) : {};
 const array = (v: unknown) => (Array.isArray(v) ? v : []);
@@ -191,7 +198,7 @@ function AttemptDialog({
             <p>
               <small>Shopify 返回</small>
               <strong>{String(object(cart.buyerIdentity).countryCode ?? "尚未返回")}</strong>
-              <span>默认配置 {detail.countryEvidence.fallback}</span>
+              <span>无法识别时默认 {detail.countryEvidence.fallback}</span>
             </p>
           </div>
           <p className="muted small">请求头和 IP 是定位线索，未代表用户已确认收货国家。</p>

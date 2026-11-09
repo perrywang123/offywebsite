@@ -2,6 +2,8 @@
 
 import { useEffect, useRef } from "react";
 import Image from "next/image";
+import { CountryTrigger } from "@/components/market/CountrySelector";
+import { UnavailableBagLine } from "@/components/cart/UnavailableBagLine";
 import { CommerceUnavailable } from "@/components/CommerceUnavailable";
 import { useLocale, useTranslations } from "next-intl";
 import { Link } from "@/i18n/navigation";
@@ -85,6 +87,7 @@ export function CartDrawer() {
     })),
   );
 
+  const missing = lines.filter((line) => !catalog[line.code]);
   if (!mounted) return null;
 
   return (
@@ -130,7 +133,7 @@ export function CartDrawer() {
           <div className="text-ink-muted flex flex-1 items-center justify-center px-4 text-center text-sm lg:px-6">
             {t("loading")}
           </div>
-        ) : items.length === 0 ? (
+        ) : lines.length === 0 ? (
           <div className="flex flex-1 flex-col items-center justify-center gap-3 px-4 text-center lg:px-6">
             <p className="text-base font-medium">{t("empty")}</p>
             <p className="text-ink-muted text-sm">{t("emptyHint")}</p>
@@ -145,6 +148,13 @@ export function CartDrawer() {
         ) : (
           <>
             <ul className="divide-cream-line flex-1 divide-y overflow-y-auto overscroll-contain">
+              {missing.map((line) => (
+                <UnavailableBagLine
+                  key={line.code}
+                  quantity={line.quantity}
+                  onRemove={() => remove(line.code)}
+                />
+              ))}
               {items.map(({ line, product }) => (
                 <li key={line.code} className="flex gap-4 p-4">
                   <div className="rounded-soft bg-paper relative h-24 w-20 shrink-0 overflow-hidden">
@@ -200,10 +210,13 @@ export function CartDrawer() {
               ))}
             </ul>
             <footer className="border-cream-line bg-cream-deep safe-b border-t px-4 pt-4 lg:px-6 lg:pt-6 lg:pb-6">
+              <CountryTrigger variant="bag" onOpen={close} />
               <div className="mb-4 flex justify-between text-sm font-semibold">
                 <span>{t("subtotal")}</span>
                 <span className="tabular-nums">
-                  {subtotal.mixed ? "—" : formatPrice(subtotal.cents, subtotal.currency, locale)}
+                  {subtotal.mixed || missing.length > 0
+                    ? "—"
+                    : formatPrice(subtotal.cents, subtotal.currency, locale)}
                 </span>
               </div>
               <div className="mb-5 flex items-center gap-3">
@@ -233,6 +246,19 @@ export function CartDrawer() {
                 </p>
               )}
               {subtotal.mixed && <p className="text-ink-soft mb-3 text-sm">{t("mixedCurrency")}</p>}
+              {checkout.destinationChanged && (
+                <p role="alert" className="text-error mb-3 text-sm">
+                  Your shipping destination changed in another tab. Refresh this page to review your
+                  bag before checkout.{" "}
+                  <button
+                    type="button"
+                    className="underline"
+                    onClick={() => window.location.reload()}
+                  >
+                    Refresh page
+                  </button>
+                </p>
+              )}
               {checkout.failed && (
                 <p role="alert" className="text-error mb-3 text-xs">
                   {t("checkoutFallback")}
@@ -266,7 +292,10 @@ export function CartDrawer() {
                   )
                 }
                 disabled={
-                  checkout.pending || subtotal.mixed || items.some((x) => !x.product.available)
+                  checkout.pending ||
+                  missing.length > 0 ||
+                  subtotal.mixed ||
+                  items.some((x) => !x.product.available)
                 }
                 aria-busy={checkout.pending}
                 className="bg-accent text-cream hover:bg-accent-deep flex h-12 w-full items-center justify-center rounded-full text-sm font-medium transition-colors disabled:opacity-70"

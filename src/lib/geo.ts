@@ -1,36 +1,17 @@
-/**
- * 访客国家判定。
- *
- * 站点按访客国家决定两件事:展示哪些「区域限定」商品、以及用什么币种显示价格。
- * 国家来源分两层,顺序如下:
- *
- * 1) **前置层注入的国家头**(优先,想让 nginx/CDN 覆盖判定时用它):
- *      cf-ipcountry        Cloudflare(域名接入 CF 即自动带上)
- *      x-vercel-ip-country Vercel
- *      x-country-code      通用 CDN / nginx GeoIP2($geoip2_data_country_code)
- *      x-geo-country       Cloudflare Worker / 自建网关常用别名
- *      x-forwarded-country 兜底别名
- *
- * 2) **应用自己按客户端 IP 解析**(2026-10 新增):一个头都拿不到时,取
- *    `x-forwarded-for` 的第一个地址(否则 `x-real-ip`)交给 `geoip-lite`。
- *    数据打包在 npm 包里(约 115MB,随包发布),所以**不需要 MaxMind 账号、
- *    不需要给 nginx 装 GeoIP2 模块、也不需要 Cloudflare** —— 部署完就能用。
- *    私有/回环地址、畸形 IP、库异常一律静默跳过,继续往下走。
- *
- * 都拿不到时回落到 `SHOPIFY_MARKET_COUNTRY`(默认 US)—— 也就是"按美国市场展示",
- * 与本次改造前的行为一致,不会因为缺头而白屏。
- *
- * ⚠️ 这个模块现在依赖 `geoip-lite`(进程启动时同步读入 ~115MB 数据库,只应跑在
- * 服务端)。**不要从客户端组件(`"use client"`)里 import 它**,连 `flagEmoji` /
- * `regionBadgeLabel` 这种纯函数也不行 —— 那会把整个地理库拖进 client bundle。
- * 调用方全是服务端(页面 / route handler / server 目录)。
- * 打包侧还有两处必要配置(Turbopack 外部化 + standalone 带上数据文件),
- * 见 next.config.ts 里 `serverExternalPackages` / `outputFileTracingIncludes` 的注释。
- */
+/** Node-only destination resolution. See docs/market-localization.md for trust and precedence. */
+import { createCountryLookup } from "./geo-database";
+import { isIP } from "node:net";
+import { env } from "./env";
+import {
+  countryFromLanguage,
+  countryFromTimeZone,
+  normalizeMarketCountry,
+  parseMarketCookie,
+  type BrowserMarketHints,
+  type MarketPreference,
+} from "./market";
 
-import geoip from "geoip-lite";
-
-/** 依次尝试的请求头(小写)。 */
+const lookupCountry = createCountryLookup(env.GEOIP_COUNTRY_DATABASE ?? "");
 export const COUNTRY_HEADERS = [
   "cf-ipcountry",
   "x-vercel-ip-country",
@@ -38,98 +19,73 @@ export const COUNTRY_HEADERS = [
   "x-geo-country",
   "x-forwarded-country",
 ] as const;
-
-/**
- * 会被这些头拿来当"国家"用的非国家值,必须排除:
- * XX = Cloudflare 的未知占位,T1 = Tor 出口,A1/A2 = 匿名代理,O1 = 卫星,
- * EU/AP 等是洲际码而非国家码。
- */
 const NON_COUNTRY_CODES = new Set(["XX", "T1", "T2", "A1", "A2", "O1", "EU", "AP", "ZZ"]);
-
 export type HeaderLookup = Headers | Record<string, string | string[] | undefined>;
-
 function readHeader(headers: HeaderLookup, name: string): string | undefined {
-  if (typeof (headers as Headers).get === "function") {
+  if (typeof (headers as Headers).get === "function")
     return (headers as Headers).get(name) ?? undefined;
-  }
   const rec = headers as Record<string, string | string[] | undefined>;
   const raw = rec[name] ?? rec[name.toUpperCase()] ?? rec[name.replace(/-/g, "_").toUpperCase()];
   return Array.isArray(raw) ? raw[0] : raw;
 }
-
-/**
- * 归一化成可用的两字母国家码,拿不到(空 / 非两位字母 / 洲际码 / XX、T1 之类的
- * 哨兵值)返回 undefined。**所有来源都必须过这一关**,否则 UK 会原样透传给
- * Shopify Markets 并让它落回默认市场。
- */
-function asCountryCode(value: string | undefined): string | undefined {
-  const v = value?.trim().toUpperCase();
-  // 归一化(UK→GB 等):Shopify Markets 只认 ISO-3166 alpha-2,"UK" 这种
-  // 常见但非标准的写法会让 @inContext 落回默认市场,区域限定区块会整个消失。
-  if (v && /^[A-Z]{2}$/.test(v) && !NON_COUNTRY_CODES.has(v)) return normalizeCountryCode(v);
-  return undefined;
-}
-
-/**
- * 访客的客户端 IP。`x-forwarded-for` 是代理链("客户端, 中间代理, ..."),
- * nginx 的 `$proxy_add_x_forwarded_for` 也是把自己**追加**在后面,所以第一个
- * 才是访客;整串丢给地理库会解析失败。没有 XFF 时退到 `x-real-ip`。
- */
-function clientIp(headers: HeaderLookup): string | undefined {
-  const first = readHeader(headers, "x-forwarded-for")?.split(",")[0]?.trim();
-  if (first) return first;
-  return readHeader(headers, "x-real-ip")?.trim() || undefined;
-}
-
-/**
- * 用本地地理库把 IP 解析成国家码。私有段/回环/畸形 IP 与库内无记录时
- * geoip-lite 返回 null → undefined;库本身抛错(例如数据文件没打进镜像)
- * 也吞掉 —— 判不出国家只该回落默认市场,不该让整个请求 500。
- */
-function countryFromIp(ip: string | undefined): string | undefined {
-  if (!ip) return undefined;
-  try {
-    return asCountryCode(geoip.lookup(ip)?.country);
-  } catch {
+function publicIp(value?: string): string | undefined {
+  const ip = value?.trim().replace(/^::ffff:/i, "");
+  if (!ip || !isIP(ip)) return undefined;
+  if (/^(?:0\.|10\.|127\.|169\.254\.|192\.168\.|172\.(?:1[6-9]|2\d|3[01])\.)/.test(ip))
     return undefined;
-  }
+  if (/^(?:::|fc|fd|fe[89ab])/i.test(ip) || ip === "::1") return undefined;
+  return ip;
 }
-
-/** 选出可用的两字母国家码;拿不到就返回 `fallback`(大写归一)。 */
-export function pickCountry(headers: HeaderLookup, fallback = "US"): string {
-  return countryDecision(headers, fallback).country;
+export interface CountryDecision extends MarketPreference {
+  persisted: boolean;
+  candidates: { header: string; value: string }[];
+  fallback: string;
+  ipSource: string | null;
+  header: string | null;
 }
-
-/** Diagnostic evidence only; neither raw IP nor unrelated headers are retained. */
-export function countryDecision(headers: HeaderLookup, fallback = "US") {
+export function pickCountry(headers: HeaderLookup): string {
+  return countryDecision(headers).country;
+}
+export function countryDecision(
+  headers: HeaderLookup,
+  hints?: BrowserMarketHints,
+): CountryDecision {
   const candidates = COUNTRY_HEADERS.flatMap((header) => {
     const raw = readHeader(headers, header);
     return raw === undefined
       ? []
       : [{ header, value: /^[a-z0-9\s]{0,8}$/i.test(raw) ? raw.trim().toUpperCase() : "invalid" }];
   });
-  const base = {
-    candidates,
-    fallback: asCountryCode(fallback) ?? "US",
-    ipSource: null as string | null,
-  };
-  for (const name of COUNTRY_HEADERS) {
-    const code = asCountryCode(readHeader(headers, name));
-    if (code) return { ...base, country: code, source: "header", header: name };
+  const base = { candidates, fallback: "US", ipSource: null, header: null, persisted: false };
+  const saved = parseMarketCookie(readHeader(headers, "cookie"));
+  if (saved) return { ...base, ...saved, persisted: true };
+  const trusted = env.GEO_TRUSTED_COUNTRY_HEADER;
+  if (trusted && (COUNTRY_HEADERS as readonly string[]).includes(trusted)) {
+    const country = normalizeMarketCountry(readHeader(headers, trusted));
+    if (country) return { ...base, country, source: "header", header: trusted };
   }
-  // 没有国家头 → 自己按客户端 IP 解析(裸 nginx / 无 CDN 的部署靠这一步)。
-  const fromIp = countryFromIp(clientIp(headers));
-  if (fromIp)
-    return {
-      ...base,
-      country: fromIp,
-      source: "ip",
-      header: null,
-      ipSource: readHeader(headers, "x-forwarded-for")?.split(",")[0]?.trim()
-        ? "x-forwarded-for"
-        : "x-real-ip",
-    };
-  return { ...base, country: base.fallback, source: "default", header: null };
+  // The public Nginx ingress overwrites X-Real-IP. XFF is a compatibility path
+  // for trusted deployments that supply no X-Real-IP; never choose XFF over it.
+  const real = readHeader(headers, "x-real-ip");
+  const ipSource = real ? "x-real-ip" : "x-forwarded-for";
+  const ip = publicIp(real || readHeader(headers, "x-forwarded-for")?.split(",")[0]);
+  if (ip) {
+    try {
+      const country = lookupCountry(ip);
+      if (country) return { ...base, country, source: "ip", ipSource };
+    } catch {
+      /* Continue with weaker hints instead of failing commerce. */
+    }
+  }
+  const timeZone = hints?.timeZone;
+  const fromZone = countryFromTimeZone(timeZone);
+  if (fromZone) return { ...base, country: fromZone, source: "timezone", timeZone };
+  const languages = hints?.languages?.length
+    ? hints.languages
+    : (readHeader(headers, "accept-language") ?? []);
+  const fromLanguage = countryFromLanguage(languages);
+  if (fromLanguage) return { ...base, country: fromLanguage, source: "language" };
+  return { ...base, country: "US", source: "default" };
 }
 
 /** 探测区域限定用的国家列表:优先 SHOPIFY_REGIONS,否则用内置默认。 */

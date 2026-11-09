@@ -77,6 +77,18 @@ const envSchema = z.object({
   // 用于 Shopify Markets 多币种的 presentment 市场。默认 US → 美国用户看/付 USD，
   // 结算到账仍是店铺的 payout 币种（HKD）由收单方换汇。
   SHOPIFY_MARKET_COUNTRY: z.string().default("US"),
+  // Only a deliberately configured proxy header may outrank the real-client IP.
+  GEO_TRUSTED_COUNTRY_HEADER: z
+    .enum([
+      "",
+      "cf-ipcountry",
+      "x-vercel-ip-country",
+      "x-country-code",
+      "x-geo-country",
+      "x-forwarded-country",
+    ])
+    .default(""),
+  GEOIP_COUNTRY_DATABASE: z.string().default("/data/GeoLite2-Country.mmdb"),
   /**
    * 探测「区域限定」时要比对的国家列表(ISO-3166 alpha-2,逗号分隔)。
    * 留空用内置默认(公告栏主推的 6 个市场 + 常见海外市场)。

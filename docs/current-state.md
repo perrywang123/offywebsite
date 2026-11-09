@@ -71,3 +71,7 @@ KOL平台实施与隔离验收见 [记录](kol-platform-validation.md)；运行�
 构建流程已改为lint先行，随后Next.js编译和内置类型检查，避免两类检查并发；阶段进度/耗时与私密Docker构建日志已补齐。服务器日志位于 `.deploy-logs/`，不进入源码交付；仍需在tmux内启动长任务，不能凭本地测试认定服务器长等待根因已修复。见 [串行构建验收](serial-build-validation.md)。
 
 2026-11-05：Shopify Admin 连接支持后台专用应用凭据自动获取、内存缓存和到期续取，保留手动令牌模式。无凭据仍可登录、读取本地记录和结账诊断；远程同步暂停并保留队列。Client ID/Secret 仅传入 admin，不进入主站、worker 或构建；可单独更新后台。自动续取不扩大 Shopify 权限，当前已安装应用为 `read_orders,read_discounts`，追加优惠码写权限仍未获批。应用卸载、无效凭据和授权失败继续明确报错。见 [运行手册](kol-platform-operations.md#admin-令牌自动续取与手动兼容) 与 [自动认证验收](admin-token-auto-renewal-validation.md)；此前手动模式验收保留为历史记录。
+
+## 2026-11-09 国家选择与判定
+
+Ship to 与会话国家偏好实现及验收中；优先手动/已存会话、可信 IP、地理时区、区域语言，最后 US。实现说明、配置和待完成 MaxMind 注册见 [market-localization.md](market-localization.md)。MaxMind 自动更新未启用，不能作为已上线能力。

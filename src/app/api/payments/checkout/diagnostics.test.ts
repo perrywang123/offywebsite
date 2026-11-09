@@ -13,12 +13,13 @@ describe("checkout API diagnostic boundary", () => {
     state.db = testDb();
     state.createCheckout.mockReset();
   });
-  function request() {
+  function request(expectedCountry?: string) {
     return new Request("http://localhost/api/payments/checkout", {
       method: "POST",
       headers: { "Content-Type": "application/json", "x-country-code": "GB" },
       body: JSON.stringify({
         provider: "shopify",
+        expectedCountry,
         items: [{ code: "wild", quantity: 2 }],
         locale: "en",
         email: "private@example.com",
@@ -48,5 +49,28 @@ describe("checkout API diagnostic boundary", () => {
       status: "failed",
       error: "unexpected_checkout_error",
     });
+  });
+});
+
+it("rejects stale destination before creating a Shopify cart and records the conflict", async () => {
+  state.db = testDb();
+  state.createCheckout.mockReset();
+  const response = await POST(
+    new Request("http://localhost/api/payments/checkout", {
+      method: "POST",
+      headers: { "Content-Type": "application/json", "x-country-code": "GB" },
+      body: JSON.stringify({
+        provider: "shopify",
+        items: [{ code: "wild", quantity: 2 }],
+        locale: "en",
+        expectedCountry: "US",
+      }),
+    }),
+  );
+  expect(response.status).toBe(409);
+  expect(state.createCheckout).not.toHaveBeenCalled();
+  expect(listAttempts(state.db as ReturnType<typeof testDb>, {}).rows[0]).toMatchObject({
+    error: "destination_changed",
+    country: "GB",
   });
 });

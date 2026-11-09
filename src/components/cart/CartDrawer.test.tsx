@@ -180,7 +180,7 @@ describe("CartDrawer × live catalog (/api/products-backed)", () => {
     expect(screen.getByAltText("诺尔")).toHaveAttribute("src", "https://cdn.shopify.com/noir.jpg");
   });
 
-  it("hides a cart line whose code is not (yet / no longer) present in the live catalog", () => {
+  it("keeps unavailable identities visible and blocks a misleading subtotal or checkout", () => {
     mockUseCart.mockReturnValue(
       baseCart({
         lines: [{ code: "zombie-code", quantity: 1 }],
@@ -188,7 +188,10 @@ describe("CartDrawer × live catalog (/api/products-backed)", () => {
       }),
     );
     render(<CartDrawer />);
-    expect(screen.getByText("empty")).toBeInTheDocument();
+    expect(screen.queryByText("empty")).not.toBeInTheDocument();
+    expect(screen.getByText("Item unavailable for this destination")).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "checkout" })).toBeDisabled();
+    expect(screen.getByText("—")).toBeInTheDocument();
   });
 
   it("renders each line and the subtotal in the line's own market currency (GBP), not in USD", () => {

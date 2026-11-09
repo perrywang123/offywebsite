@@ -2,7 +2,7 @@ import { collabsMode } from "@/server/collabs/mode";
 import { getDiscount, trackingContext } from "@/server/collabs/storefront";
 import { NextResponse } from "next/server";
 import { z } from "zod";
-import { env } from "@/lib/env";
+import { normalizeMarketCountry } from "@/lib/market";
 import { pickCountry } from "@/lib/geo";
 import { clampQuantity } from "@/lib/pricing";
 import { resolveProvider } from "@/server/payments/registry";
@@ -24,6 +24,10 @@ const shippingSchema = z.object({
 });
 
 const bodySchema = z.object({
+  expectedCountry: z
+    .string()
+    .refine((c) => normalizeMarketCountry(c) === c)
+    .optional(),
   diagnosticReceipt: z.string().max(100).optional(),
   metaTracking: z.literal(true).optional(),
   referralTicket: z.string().uuid().optional(),
@@ -45,12 +49,8 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "invalid_request" }, { status: 400 });
   }
 
-  // 结算必须用**访客所在国家**的 Shopify Markets 上下文,否则站上显示 £37.90、
-  // 结账页却按默认市场(US)收 $49.90。国家取请求头(pickCountry 会自动排除
-  // XX/T1 之类的非国家值);拿不到就回落 SHOPIFY_MARKET_COUNTRY。
-  // 这里读 `request.headers`(而非 next/headers 的 headers()):前置层注入的
-  // geo 头是随请求进来的,直接用 request 既等价又不依赖请求作用域。
-  const country = pickCountry(request.headers, env.SHOPIFY_MARKET_COUNTRY);
+  // One saved destination drives catalogue, cart context and Shopify buyer identity.
+  const country = pickCountry(request.headers);
 
   const shopifyTracking =
     collabsMode() || metaConfig().enabled
@@ -70,6 +70,13 @@ export async function POST(request: Request) {
           parsed.diagnosticReceipt,
         )
       : undefined;
+  if (parsed.expectedCountry && parsed.expectedCountry !== country) {
+    recording?.finish({ ok: false, status: 409, error: "destination_changed" });
+    return NextResponse.json(
+      { error: "destination_changed", attemptId: recording?.id },
+      { status: 409, headers: { "Cache-Control": "no-store" } },
+    );
+  }
   let result;
   try {
     result = await provider.createCheckout({

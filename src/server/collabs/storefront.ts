@@ -54,11 +54,7 @@ export function trackingContext(request: Request, country: string, locale: strin
   });
 }
 export function storefrontClient(request: Request) {
-  const context = trackingContext(
-    request,
-    pickCountry(request.headers, env.SHOPIFY_MARKET_COUNTRY),
-    "en",
-  );
+  const context = trackingContext(request, pickCountry(request.headers), "en");
   const client = createStorefrontClient({
     type: "public",
     requestContext: context,
