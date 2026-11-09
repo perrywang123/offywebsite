@@ -200,15 +200,32 @@ export function CartDrawer() {
               ))}
             </ul>
             <footer className="border-cream-line bg-cream-deep safe-b border-t px-4 pt-4 lg:px-6 lg:pt-6 lg:pb-6">
-              <div className="mb-4 flex justify-between text-sm font-medium">
+              <div className="mb-4 flex justify-between text-sm font-semibold">
                 <span>{t("subtotal")}</span>
                 <span className="tabular-nums">
                   {subtotal.mixed ? "—" : formatPrice(subtotal.cents, subtotal.currency, locale)}
                 </span>
               </div>
-              <div className="text-ink-soft mb-4 space-y-1 text-xs leading-relaxed">
-                <p>{t("shippingWorldwide")}</p>
-                <p>{t("shippingUsException")}</p>
+              <div className="mb-5 flex items-center gap-3">
+                <svg
+                  aria-hidden="true"
+                  focusable="false"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="1.6"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  className="text-ink h-5 w-5 shrink-0"
+                >
+                  <path d="M3 4h2l2.4 11.4A2 2 0 0 0 9.4 17h8.7a2 2 0 0 0 2-1.6L22 7H6" />
+                  <circle cx="9" cy="21" r="1" />
+                  <circle cx="18" cy="21" r="1" />
+                </svg>
+                <div className="border-cream-line text-ink-soft min-w-0 space-y-1 border-l pl-3 text-xs leading-[1.6] text-balance">
+                  <p>{t("shippingWorldwide")}</p>
+                  <p>{t("shippingUsException")}</p>
+                </div>
               </div>
               {items.some((x) => !x.product.available) && (
                 <p role="status" className="text-ink-soft mb-3 text-sm">

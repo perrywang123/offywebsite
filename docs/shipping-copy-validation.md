@@ -5,7 +5,7 @@
 ## 已实现的范围
 
 1. Header 的运费轮播消息改为 `OFFY GOES GLOBAL · WORLDWIDE SHIPPING FROM $15 USD`；移除旧的固定运费国家列表和 MORE REGIONS COMING SOON。原赠品消息、轮播、颜色和响应式结构保持不变。
-2. 已验证且非空的购物袋侧栏在 Subtotal 下方、Checkout 上方展示 `Worldwide shipping: $15 USD per order.` 和 `US deliveries only: $20 USD for 3+ OFFYs.`。固定文案不随 IP、商品币种或数量切换，不向商品小计加入运费。
+2. 已验证且非空的购物袋侧栏在 Subtotal 下方、Checkout 上方展示 `Worldwide shipping: $15 USD per order.` 和 `For US orders of 3+ OFFYs, shipping is $20 USD.`。第二句按所有者后续消息修订；提示以线性购物车图标、竖分隔线及两段说明组合展示。固定文案不随 IP、商品币种或数量切换，不向商品小计加入运费。
 3. Shipping 新增默认折叠的 Q1 `How much does shipping cost?`，答案为以下三个独立段落：
 
    > We ship worldwide for $15 USD per order.
@@ -33,3 +33,11 @@
 此处记录代码与本地验收，不代表已部署生产。独立 `/cart` 页面未扩展。商品价格、库存、销售范围、实际 Shopify 运费配置、结账参数及支付逻辑未修改；`Worldwide` 不会自动开放新的配送国家。
 
 PDF 给出的收费口径为美国 1–2 个付费 OFFY 收 USD15、3 个及以上收 USD20，其他支持配送地区每单 USD15，赠品不计入门槛。本次只落实展示文案，未核验 Shopify 后台的实际运费档位、赠品排除或当地币种折算，因此不能凭此文案验收认定这些规则已配置。最终 FAQ 按所有者消息原样录入，不额外加回 PDF 中已删去的 paid-item/gift 句子。
+
+## 后续购物袋提示视觉调整
+
+所有者随后确认购物袋第二句改为 `For US orders of 3+ OFFYs, shipping is $20 USD.`，并提供图标、竖分隔线和分组文案的参考图。实现沿用现有颜色、字号与 Checkout，增加装饰性线性购物车图标和竖线，适当强化 Subtotal，并用短段落均衡换行避免孤立的 USD 后缀；不增加新的依赖或运费计算。
+
+已先观察新文案的 3 项失败，再实现并通过 25 项公告/购物袋相关测试；类型和针对性 lint 通过。浏览器检查 375×812、320×667、360×800、768×1024、1440×900、1920×1080，提示均无横向溢出，Checkout 保持 48px 高并处于视口内。375×667 下 4 行真实商品的列表可独立滚动，商品小计 USD240.70 未含运费；测试后移除本轮新增的 DOTTY DARLING、COLD KITTEN 和 WILD SWEETIE，保留用户原有 SWAN QUEEN 1 件及 USD99.00 小计，恢复原页面和视口。未进行结账、订单或生产上报操作。
+
+两轮视觉检查修正了窄屏断行，最终截图和几何检查保存在本机 `/Users/peiyuwang/.codex/artifacts/offy-bag-shipping-design-2026-11-09/`。本轮全量回归 130 个测试文件、862 项测试通过；生产构建通过全量 ESLint、Next.js 编译、内置类型检查、23 页生成和 standalone traces。最终 standalone 在本地 localhost:4314 启动后，再次核对桌面与手机展示、SWAN QUEEN 1 件和 USD99.00 小计，保存 `production-desktop.jpg`、`production-shipping-footer.jpg` 与 `production-mobile-375.jpg`，并恢复原视口。代码随本轮 Conventional Commit 同步 Git；未部署生产。

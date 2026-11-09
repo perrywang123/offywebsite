@@ -32,7 +32,7 @@
       "emptyHint": "Find an Offy that resonates with you",
       "subtotal": "Subtotal",
       "shippingWorldwide": "Worldwide shipping: $15 USD per order.",
-      "shippingUsException": "US deliveries only: $20 USD for 3+ OFFYs.",
+      "shippingUsException": "For US orders of 3+ OFFYs, shipping is $20 USD.",
       "mixedCurrency": "Subtotal excludes items priced in another currency — checkout will use the final Shopify amount.",
       "total": "Total",
       "quantity": "Quantity",

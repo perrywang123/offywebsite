@@ -1,0 +1,6 @@
+- [x] Read the owner's reference and existing design contract; define the small visual change.
+- [x] Validate OpenSpec, then update the exact-copy expectation and observe failure.
+- [x] Update the two dictionaries and refine only the drawer notice presentation.
+- [x] Verify focused/full tests, type/lint/format and production build.
+- [x] Inspect real rendered desktop, narrow/short mobile and long bag states plus the empty-state regression test; restore local shopping state and viewport.
+- [x] Record screenshot evidence, update current docs, archive the delta and synchronize Git as the final commit/push step.

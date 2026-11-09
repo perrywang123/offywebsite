@@ -24,6 +24,7 @@
 - Header 为 sticky 白底，顶部公告轮换；不是透明覆盖首屏。
 - Hero 五屏、整屏链接、自动轮换/手势/指示条；箭头和详情胶囊默认不渲染，无暂停按钮。
 - 页面进入动画的 transform 会影响 fixed 定位。PDP 手机购买条使用 sticky；预告 quick view Portal 到 body。
+- 购物袋运费提示采用小型线性购物车图标、浅灰竖分隔线与两段灰色说明组合；文字自然换行，与小计和 Checkout 保持明确间距。装饰图标不参与读屏，实际运费仍由 Shopify 结账确定。
 - `.hscroll` 用于分类和本商品缩略图；同系列换款入口在页尾网格。
 - “The Latest from OFFY” 使用运营选定的五张本地宣传图：主卡 `news-01.jpg`，副卡依次 `news-04.jpg`、`news-03.jpg`、`news-08.jpg`、`news-02.jpg`。这些是品牌构图素材，不用 Shopify 商品首图替换；绑定商品的可售状态、商品详情与购买事实仍由 Shopify 核验。
 

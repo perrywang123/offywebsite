@@ -56,7 +56,7 @@ describe("bag shipping notices", () => {
       showBag(qty, currency);
       const footer = screen.getByText("Subtotal").closest("footer")!;
       const worldwide = within(footer).getByText("Worldwide shipping: $15 USD per order.");
-      const us = within(footer).getByText("US deliveries only: $20 USD for 3+ OFFYs.");
+      const us = within(footer).getByText("For US orders of 3+ OFFYs, shipping is $20 USD.");
       const checkout = within(footer).getByRole("button", { name: "Checkout" });
       expect(within(footer).getByText(total)).toBeInTheDocument();
       expect(screen.getByText("Subtotal").compareDocumentPosition(worldwide)).toBe(
