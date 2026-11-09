@@ -206,6 +206,10 @@ export function CartDrawer() {
                   {subtotal.mixed ? "—" : formatPrice(subtotal.cents, subtotal.currency, locale)}
                 </span>
               </div>
+              <div className="text-ink-soft mb-4 space-y-1 text-xs leading-relaxed">
+                <p>{t("shippingWorldwide")}</p>
+                <p>{t("shippingUsException")}</p>
+              </div>
               {items.some((x) => !x.product.available) && (
                 <p role="status" className="text-ink-soft mb-3 text-sm">
                   Some items are sold out. Remove them to continue.

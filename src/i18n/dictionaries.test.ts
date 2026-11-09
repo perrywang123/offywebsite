@@ -20,4 +20,11 @@ describe("i18n dictionaries", () => {
     expect(flatten(zh).length).toBeGreaterThan(0);
     expect(flatten(en).length).toBeGreaterThan(0);
   });
+
+  it("replaces the old flat-rate country list while retaining the gift promotion", () => {
+    expect(en.common.promoMessages).toEqual([
+      "✦ Unlock Gifts: Free Stickers (1 OFFY) ✦ Big Tote (3 OFFY) ✦ Limited Edition (6 OFFY)",
+      "OFFY GOES GLOBAL · WORLDWIDE SHIPPING FROM $15 USD",
+    ]);
+  });
 });

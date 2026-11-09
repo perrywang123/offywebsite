@@ -31,6 +31,8 @@
       "empty": "购物袋还空着",
       "emptyHint": "去挑选一个与你共鸣的她吧",
       "subtotal": "小计",
+      "shippingWorldwide": "Worldwide shipping: $15 USD per order.",
+      "shippingUsException": "US deliveries only: $20 USD for 3+ OFFYs.",
       "mixedCurrency": "小计未包含以其它币种计价的商品,最终金额以 Shopify 结账页为准。",
       "total": "合计",
       "quantity": "数量",

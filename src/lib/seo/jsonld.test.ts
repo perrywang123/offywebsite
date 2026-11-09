@@ -212,13 +212,13 @@ describe("organizationJsonLd / websiteJsonLd", () => {
 describe("faqJsonLd", () => {
   const items = faqParts.flatMap((part) => part.items);
 
-  it("flattens all three parts into 10 Questions with their source wording", () => {
+  it("flattens all three parts into 11 Questions with their source wording", () => {
     const ld = faqJsonLd(faqParts);
     const questions = ld.mainEntity as Array<Record<string, unknown>>;
 
     expect(ld["@context"]).toBe("https://schema.org");
     expect(ld["@type"]).toBe("FAQPage");
-    expect(questions).toHaveLength(10);
+    expect(questions).toHaveLength(11);
     expect(questions.map((q) => q.name)).toEqual(items.map((item) => item.q));
     expect(questions.every((q) => q["@type"] === "Question")).toBe(true);
   });
@@ -239,7 +239,7 @@ describe("faqJsonLd", () => {
     });
 
     // Spot-check that the bold lead is present as plain text, not markup.
-    const first = questions[0].acceptedAnswer as Record<string, unknown>;
-    expect(first.text).toMatch(/^In-Stock Items: Our processing time is up to 72 hours/);
+    const dispatch = questions[1].acceptedAnswer as Record<string, unknown>;
+    expect(dispatch.text).toMatch(/^In-Stock Items: Our processing time is up to 72 hours/);
   });
 });

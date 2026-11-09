@@ -13,7 +13,8 @@
  * 机械清洗(不改写正文):删掉批注锚点残留的空括号(`locked()`→`locked`、
  * `cm()`→`cm`),并去掉行尾多余空格、折叠段内连续空白。
  *
- * 三个部分共 10 条。文案只有英文(与政策页同理:法务相邻内容不做机翻)。
+ * 2026-11-09 按所有者最终确认新增运费 Q1，其余审核稿正文保持原样。
+ * 三个部分共 11 条。文案只有英文(与政策页同理:法务相邻内容不做机翻)。
  * 展示页:`src/app/[locale]/faq/page.tsx`;页脚入口在「Policies & Contact」组。
  */
 
@@ -45,6 +46,18 @@ export const faqParts: FaqPart[] = [
   {
     title: "PART 1: 📦 Shipping & Delivery",
     items: [
+      {
+        q: "How much does shipping cost?",
+        a: [
+          [{ text: "We ship worldwide for $15 USD per order." }],
+          [
+            {
+              text: "For US deliveries only, shipping is $20 USD when you order 3 or more OFFYs.",
+            },
+          ],
+          [{ text: "Shipping is charged once per order." }],
+        ],
+      },
       {
         q: "How long will it take for my order to be dispatched?",
         a: [

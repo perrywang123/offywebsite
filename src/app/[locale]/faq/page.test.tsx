@@ -70,6 +70,23 @@ function detailsFor(question: string): HTMLDetailsElement {
 const answerLines = (blocks: FaqBlock[]) => blocks.map((b) => b.map((s) => s.text).join(""));
 
 describe("/faq 页面渲染", () => {
+  it("运费问题排在 Shipping 首位且默认折叠,原文保留三段", async () => {
+    const { container } = await renderFaq("en");
+    const details = detailsFor("How much does shipping cost?");
+    expect(container.querySelector("details")).toBe(details);
+    expect(details).not.toHaveAttribute("open");
+    expect(details.querySelector("summary")?.textContent).toContain("Q1:");
+    expect([...details.querySelectorAll("p")].map((p) => p.textContent)).toEqual([
+      "We ship worldwide for $15 USD per order.",
+      "For US deliveries only, shipping is $20 USD when you order 3 or more OFFYs.",
+      "Shipping is charged once per order.",
+    ]);
+    expect(
+      detailsFor("How long will it take for my order to be dispatched?").querySelector("summary")
+        ?.textContent,
+    ).toContain("Q2:");
+  });
+
   it("每个加粗片段都渲染成 <strong>,且没有多余/遗漏", async () => {
     const { container } = await renderFaq("en");
     const expected = allSegments.filter((s) => s.bold).length;
@@ -113,11 +130,11 @@ describe("/faq 页面渲染", () => {
     );
   });
 
-  it("换行:同一 Q 下的多段各自渲染成一个 <p>(Q2 共 7 段)", async () => {
+  it("换行:同一 Q 下的多段各自渲染成一个 <p>(Q3 共 7 段)", async () => {
     await renderFaq("en");
     const details = detailsFor("How long does shipping take to my destination?");
     const lines = [...details.querySelectorAll("p")].map((p) => p.textContent);
-    expect(lines).toEqual(answerLines(faqParts[0].items[1].a));
+    expect(lines).toEqual(answerLines(faqParts[0].items[2].a));
     expect(lines).toHaveLength(7);
     expect(lines[0]).toBe(
       "Estimated delivery windows below include our 72-hour processing, followed by the respective transit times by region:",
@@ -167,15 +184,15 @@ describe("/faq 页面渲染", () => {
   });
 
   it("问题编号按源文档显示,且每个部分内从 Q1 重新开始", async () => {
-    // 源文档里编号是每部分重置的(Part 1 有 Q1–Q5、Part 2 只有 Q1–Q2),
+    // 更新后 Part 1 有 Q1–Q6、Part 2 仍只有 Q1–Q2,
     // 所以正确性依赖"按部分内索引渲染"而不是全局序号。
     const { container } = await renderFaq("en");
     const marks = [...container.querySelectorAll("summary span span")].map((e) => e.textContent);
     expect(marks.filter((t) => t === "Q1:")).toHaveLength(3); // 三个部分各有一个 Q1
     expect(marks.filter((t) => t === "Q2:")).toHaveLength(3);
     expect(marks.filter((t) => t === "Q5:")).toHaveLength(1); // 只有 Part 1 有 Q5
-    // 全局序号会是 Q1…Q10 这种;按部分重置就不会有 Q6 以上的编号
-    expect(marks.some((t) => /^Q(6|7|8|9|10):$/.test(t ?? ""))).toBe(false);
+    expect(marks.filter((t) => t === "Q6:")).toHaveLength(1);
+    expect(marks.some((t) => /^Q(7|8|9|10|11):$/.test(t ?? ""))).toBe(false);
   });
 });
 
@@ -186,7 +203,7 @@ describe("/faq 页面渲染", () => {
  * `FaqBlock[]` 的行内片段,输出时必须拼平(不能把 `<strong>` 塞进答案)。
  */
 describe("/faq · JSON-LD(FAQPage)", () => {
-  it("输出 FAQPage:10 条 Question,顺序与页面数据一致", async () => {
+  it("输出 FAQPage:11 条 Question,顺序与页面数据一致", async () => {
     const { container } = await renderFaq("en");
     const script = container.querySelector('script[type="application/ld+json"]');
     expect(script).not.toBeNull();
@@ -196,7 +213,7 @@ describe("/faq · JSON-LD(FAQPage)", () => {
 
     expect(ld["@context"]).toBe("https://schema.org");
     expect(ld["@type"]).toBe("FAQPage");
-    expect(questions).toHaveLength(10);
+    expect(questions).toHaveLength(11);
     expect(questions.map((question) => question.name)).toEqual(items.map((item) => item.q));
   });
 
@@ -217,9 +234,13 @@ describe("/faq · JSON-LD(FAQPage)", () => {
       expect(answer.text).not.toContain("<");
     });
 
-    // 第一条的加粗导语以纯文本出现,且后面紧跟正文
-    const first = questions[0].acceptedAnswer as Record<string, unknown>;
-    expect(first.text).toMatch(/^In-Stock Items: Our processing time is up to 72 hours/);
+    const shipping = questions[0].acceptedAnswer as Record<string, unknown>;
+    expect(shipping.text).toBe(
+      "We ship worldwide for $15 USD per order.\nFor US deliveries only, shipping is $20 USD when you order 3 or more OFFYs.\nShipping is charged once per order.",
+    );
+    // 原发货问题顺延,加粗导语继续以纯文本出现。
+    const dispatch = questions[1].acceptedAnswer as Record<string, unknown>;
+    expect(dispatch.text).toMatch(/^In-Stock Items: Our processing time is up to 72 hours/);
   });
 
   it("全站 URL 用 SITE_URL 的绝对地址(答案里没有相对链接)", async () => {

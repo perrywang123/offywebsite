@@ -8,11 +8,21 @@ const lines = (blocks: FaqBlock[]): string[] => blocks.map((b) => b.map((s) => s
 const boldTexts = (block: FaqBlock): string[] =>
   block.filter((s) => s.bold).map((s) => s.text.trim());
 
-describe("FAQ 内容(来自 独立站Q&A_审核修订稿——final(2).docx)", () => {
-  it("三个部分、共 10 条问答", () => {
+describe("FAQ 内容(原审核稿与确认后的运费更新)", () => {
+  it("三个部分、共 11 条问答", () => {
     expect(faqParts).toHaveLength(3);
-    expect(faqParts.reduce((n, p) => n + p.items.length, 0)).toBe(10);
-    expect(faqParts.map((p) => p.items.length)).toEqual([5, 2, 3]);
+    expect(faqParts.reduce((n, p) => n + p.items.length, 0)).toBe(11);
+    expect(faqParts.map((p) => p.items.length)).toEqual([6, 2, 3]);
+  });
+
+  it("Shipping Q1 使用最终确认的三段原文,原发货问题顺延", () => {
+    expect(faqParts[0].items[0].q).toBe("How much does shipping cost?");
+    expect(lines(faqParts[0].items[0].a)).toEqual([
+      "We ship worldwide for $15 USD per order.",
+      "For US deliveries only, shipping is $20 USD when you order 3 or more OFFYs.",
+      "Shipping is charged once per order.",
+    ]);
+    expect(faqParts[0].items[1].q).toBe("How long will it take for my order to be dispatched?");
   });
 
   it("部分标题按源文档原样带编号(PART 3 是全角冒号,不要顺手修正)", () => {
@@ -63,7 +73,7 @@ describe("FAQ 内容(来自 独立站Q&A_审核修订稿——final(2).docx)", (
   });
 
   it("配送区域:Mainland China & Hong Kong + 新增 Oceania,旧的 Hong Kong, Macau & Taiwan 已删", () => {
-    const shipping = lines(faqParts[0].items[1].a);
+    const shipping = lines(faqParts[0].items[2].a);
     expect(shipping).toEqual([
       "Estimated delivery windows below include our 72-hour processing, followed by the respective transit times by region:",
       "Mainland China & Hong Kong: Transit takes approx. 3–7 business days (Total: approx. 6–10 business days)",
@@ -73,13 +83,14 @@ describe("FAQ 内容(来自 独立站Q&A_审核修订稿——final(2).docx)", (
       "Oceania (Australia, New Zealand): Transit takes approx. 8–18 business days (Total: approx. 11–21 business days)",
       "Please note: Transit times are estimates provided in good faith and are not guaranteed. Delivery to remote or outlying areas, or during peak shopping seasons (such as Black Friday and Christmas), may require additional time.",
     ]);
-    expect(lines(faqParts[0].items[1].a).join("\n")).not.toContain("Hong Kong, Macau & Taiwan");
+    expect(lines(faqParts[0].items[2].a).join("\n")).not.toContain("Hong Kong, Macau & Taiwan");
   });
 
   it("加粗落在源文档加粗的地方:每段的小标题 + 行内强调词", () => {
     // 每条问答的加粗片段(文档顺序),与 docx runs 的 bold 一一对应
     const perItem = faqParts.flatMap((p) => p.items).map((item) => item.a.flatMap(boldTexts));
     expect(perItem).toEqual([
+      [],
       ["In-Stock Items:", "72 hours", "Pre-Order Items:"],
       [
         "72-hour processing",
@@ -141,14 +152,14 @@ describe("FAQ 内容(来自 独立站Q&A_审核修订稿——final(2).docx)", (
   });
 
   it("加粗与正文同段混排(小标题加粗、冒号后的正文不加粗)", () => {
-    expect(faqParts[0].items[0].a[1]).toEqual([
+    expect(faqParts[0].items[1].a[1]).toEqual([
       { text: "Pre-Order Items:", bold: true },
       {
         text: " Pre-orders will be dispatched according to the estimated release date stated on the product page.",
       },
     ]);
     // 区域行:只有区域名加粗
-    expect(faqParts[0].items[1].a[1]).toEqual([
+    expect(faqParts[0].items[2].a[1]).toEqual([
       { text: "Mainland China & Hong Kong", bold: true },
       {
         text: ": Transit takes approx. 3–7 business days (Total: approx. 6–10 business days)",

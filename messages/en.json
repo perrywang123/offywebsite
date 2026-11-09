@@ -31,6 +31,8 @@
       "empty": "Your bag is empty",
       "emptyHint": "Find an Offy that resonates with you",
       "subtotal": "Subtotal",
+      "shippingWorldwide": "Worldwide shipping: $15 USD per order.",
+      "shippingUsException": "US deliveries only: $20 USD for 3+ OFFYs.",
       "mixedCurrency": "Subtotal excludes items priced in another currency — checkout will use the final Shopify amount.",
       "total": "Total",
       "quantity": "Quantity",
@@ -55,7 +57,7 @@
     "language": "Language",
     "promoMessages": [
       "✦ Unlock Gifts: Free Stickers (1 OFFY) ✦ Big Tote (3 OFFY) ✦ Limited Edition (6 OFFY)",
-      "$15 USD FLAT-RATE INTERNATIONAL SHIPPING · US · CA · UK · AU · NZ · SG · MY · TH · HK (MORE REGIONS COMING SOON)"
+      "OFFY GOES GLOBAL · WORLDWIDE SHIPPING FROM $15 USD"
     ]
   },
   "home": {
