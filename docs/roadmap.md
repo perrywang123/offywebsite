@@ -53,4 +53,4 @@ Shopify实时目录/多市场金额、merch、商品描述/多图、主要移动
 
 ## 2026-11-09 国家选择与判定
 
-Ship to 与会话国家偏好实现及验收中；优先手动/已存会话、可信 IP、地理时区、区域语言，最后 US。实现说明、配置和待完成 MaxMind 注册见 [market-localization.md](market-localization.md)。MaxMind 自动更新未启用，不能作为已上线能力。
+Ship to 与会话国家偏好已实现、测试并独立发布主站；优先手动/已存会话、可信 IP、地理时区、区域语言，最后 US。实现说明、配置和待完成 MaxMind 注册见 [market-localization.md](market-localization.md)。MaxMind 自动更新未启用，不能作为已上线能力。

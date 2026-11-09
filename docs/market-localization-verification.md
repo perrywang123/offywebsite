@@ -4,7 +4,7 @@
 
 ## 逻辑验证
 
-- 完整 `pnpm test --maxWorkers=1`：138 文件 / 870 测试通过；其后新增区域商品 not-found 边界独立测试 1 项通过。
+- 最终完整 `pnpm test --maxWorkers=2`：139 文件 / 871 测试全部通过。
 - 可信国家头、真实 IP/IPv6、Cookie 优先级、地理时区、区域语言、US 默认及损坏信号均覆盖。
 - 设置接口覆盖同源限制、Shopify 可选国家验证、自动 session/manual 90 天 Cookie，以及真实 Set-Cookie 线值的下一请求回读。真实浏览器发现的二次编码问题已修复并回归。
 - 购物袋保留身份/数量、缺失行无旧事实、完整小计/结账阻断、过期国家 409 诊断覆盖。
@@ -29,6 +29,14 @@
 
 ## 发布状态
 
-待 native Linux 镜像、独立主站部署与线上回归后补充；管理后台和现有 worker 不在发布范围。MaxMind 注册被服务端拒绝，账号验证及下载许可仍待完成，自动更新不得标记已启用。
+已于 2026-11-09 20:31（上海时间）完成主站独立发布。运行代码提交 `3ad93a2a1de068d1a48de71d430af9799eb2eb01`；[原生 Linux CI](https://github.com/perrywang123/offywebsite/actions/runs/42616683286) 完成镜像、数据库原生绑定及迁移校验。隔离候选容器通过真实 Shopify localization / 偏好 Cookie 下一请求回读 / 商品目录页面验证后替换 app；服务器未执行编译。
+
+线上 `https://isoffy.com/products` 正常，Ship to / 搜索 / 移动端面板可用。现有购物袋 DOTTY DARLING 数量 1、£33.90 保持完整；未在生产增加测试商品、调用结账创建接口或支付订单。线上检查只打开、搜索并取消选择，没有改变用户原有 GB 目的地。
+
+比较发布前后 Docker 容器 ID、启动时间、镜像、环境键值哈希、挂载及 `.env` 哈希：后台、KOL worker、Meta worker 完全未变；app 既有凭据和数据卷未变，仅增加可选 GEO 配置。Nginx 未更新。已保留旧主站镜像和一致性 SQLite 备份 `/data/deploy-backups/offy-2026-11-09T12-31-43-230Z-5b0adefe.db`。
+
+![线上手机国家选择器](design/market-localization/production-mobile.jpg)
+
+MaxMind 注册被服务端拒绝，账号验证及下载许可仍待完成，**自动更新未启用**；国家识别继续使用现有有效 IP 库和浏览器/US 兜底。私密凭据目录同时从 Git、Docker 和便携源码包中排除。
 
 仓库全量 Prettier 检查仍命中 67 处既有格式问题（主要历史 OpenSpec），本次改动文件单独检查通过；未批量改写历史规范。

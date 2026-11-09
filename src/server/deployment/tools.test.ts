@@ -190,6 +190,7 @@ describe("source deployment archive", () => {
         ".next-kol-integration",
         "resources",
         ".deploy-logs",
+        ".offy-geoip.local",
       ])
         mkdirSync(join(dir, folder), { recursive: true });
       for (const file of [
@@ -209,6 +210,7 @@ describe("source deployment archive", () => {
         ".next-kol-integration/private.txt",
         "resources/large.psd",
         ".deploy-logs/private-output",
+        ".offy-geoip.local/license",
       ])
         writeFileSync(
           join(dir, file),
@@ -238,6 +240,7 @@ describe("source deployment archive", () => {
       expect(list).not.toContain("large.psd");
       expect(list).not.toContain(".offy-runtime-");
       expect(list).not.toContain(".deploy-logs");
+      expect(list).not.toContain(".offy-geoip.local");
     } finally {
       rmSync(dir, { recursive: true });
     }
