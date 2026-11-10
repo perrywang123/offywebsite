@@ -72,6 +72,7 @@ describe("getLiveSeriesList", () => {
       { handle: "frontpage", title: "OFFY Princess Series", description: "x" },
       { handle: "outdoor-sporty系列", title: "OFFY Streetwear Series", description: "x" },
       { handle: "趣味生活系列", title: "OFFY Dress-up Series", description: "x" },
+      { handle: "home-featured", title: "Home Featured", description: "Homepage curation" },
     ]);
     const series = await getLiveSeriesList();
     const outdoor = series.find((s) => s.slug === "outdoor-sporty")!;
@@ -79,6 +80,7 @@ describe("getLiveSeriesList", () => {
     expect(outdoor.name.zh).toBe("OFFY Streetwear Series");
     const princess = series.find((s) => s.slug === "princess-lady")!;
     expect(princess.name.en).toBe("OFFY Princess Series");
+    expect(series.map((s) => s.slug)).toEqual(["princess-lady", "outdoor-sporty", "playful-life"]);
   });
 
   it("rejects unavailable data: falls back to the local static series list", async () => {
@@ -352,6 +354,22 @@ describe("getLiveNewLooksProducts", () => {
     variantId: `v-${handle}`,
     sku: null,
     createdAt,
+  });
+
+  it("excludes regional handles before taking the per-series limit so ordinary looks fill the row", async () => {
+    mockedCollectionProducts.mockImplementation(async (handle: string) =>
+      handle === "frontpage"
+        ? [
+            item("regional", "2026-10-10T00:00:00Z"),
+            item("ordinary-new", "2026-10-09T00:00:00Z"),
+            item("ordinary-old", "2026-10-08T00:00:00Z"),
+          ]
+        : [],
+    );
+    expect((await getLiveNewLooksProducts("GB", 2, ["regional"])).map((p) => p.code)).toEqual([
+      "ordinary-new",
+      "ordinary-old",
+    ]);
   });
 
   it("takes the newest N products per series by Shopify createdAt (not the collection's manual order), concatenated in series order", async () => {

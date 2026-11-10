@@ -3,11 +3,11 @@ import { catalogResult } from "@/server/catalog/result";
 import Image from "next/image";
 import { getTranslations } from "next-intl/server";
 import { Link } from "@/i18n/navigation";
-import { MERCH_SERIES_SLUG, teaserSeries, upcomingIps } from "@/lib/catalog";
+import { teaserSeries, upcomingIps } from "@/lib/catalog";
 import { heroSlides, newsFeature, newsItems } from "@/lib/content";
 import { headers } from "next/headers";
-import { getLiveNewLooksProducts, getLiveProducts } from "@/server/catalog/live";
-import { getRegionalProducts } from "@/server/catalog/regional";
+import { getLiveProducts, getLiveSeriesList } from "@/server/catalog/live";
+import { getHomeLooks } from "@/server/catalog/home";
 import { pickCountry } from "@/lib/geo";
 import { Reveal } from "@/components/Reveal";
 
@@ -15,13 +15,13 @@ export const dynamic = "force-dynamic";
 import { HeroCarousel } from "@/components/home/HeroCarousel";
 import { NewsGrid } from "@/components/home/NewsGrid";
 import { UpcomingCard } from "@/components/home/UpcomingCard";
-import { ProductCard } from "@/components/product/ProductCard";
+import { HomeLooks } from "@/components/home/HomeLooks";
 import { NewsletterForm } from "@/components/newsletter-form";
 
 export async function generateMetadata(): Promise<import("next").Metadata> {
   const country = pickCountry(await headers());
   const result = await catalogResult(
-    Promise.all([getLiveNewLooksProducts(country, 2), getLiveProducts(country)]),
+    Promise.all([getHomeLooks(country), getLiveProducts(country)]),
   );
   return result.status === "unavailable" ? { robots: { index: false, follow: true } } : {};
 }
@@ -37,23 +37,13 @@ export default async function HomePage({ params }: { params: Promise<{ locale: s
   // 注意:读 headers() 会让本页转为按请求渲染(dynamic)——这是 route A 的必要代价。
   const visitorCountry = pickCountry(await headers());
 
-  const [looksResult, allResult] = await Promise.all([
-    catalogResult(getLiveNewLooksProducts(visitorCountry, 2)),
+  const [looksResult, allResult, seriesResult] = await Promise.all([
+    catalogResult(getHomeLooks(visitorCountry)),
     catalogResult(getLiveProducts(visitorCountry)),
+    catalogResult(getLiveSeriesList()),
   ]);
   const unavailable = looksResult.status === "unavailable" || allResult.status === "unavailable";
-  const looks = looksResult.status === "ready" ? looksResult.data : [];
   const allProducts = allResult.status === "ready" ? allResult.data : [];
-  const roster = allProducts.filter((p) => p.series !== MERCH_SERIES_SLUG);
-  const regionals =
-    allResult.status === "ready"
-      ? (await getRegionalProducts(visitorCountry).catch(() => [])).flatMap((item) => {
-          const p = roster.find((p) => p.code === item.handle);
-          return p
-            ? [{ ...p, badge: item.countries?.length === 1 ? visitorCountry : undefined }]
-            : [];
-        })
-      : [];
   // Shopify verifies market availability; NEWS photography stays editorial brand content.
   const featureProduct = allProducts.find(
     (p) => p.code === newsFeature.productCode && p.isAvailable,
@@ -135,108 +125,25 @@ export default async function HomePage({ params }: { params: Promise<{ locale: s
           </section>
         )}
 
-        {/* ============ 按类别选购 + 最新曝光造型(设计稿:同一模块;
-          网站素材0926/3、按类别选购)。
-          诉求 5:满幅底图 category-bg.jpg 已删除 —— 实测该图 98.90% 的像素就是
-          `#f7f7f9`(四角一致、行/列中位数极差 = 0),唯一内容是顶部 y2.1–10.0%
-          处的 `is.offy` 幽灵字标,与底色对比度 1.154:1。当年写死的 `bg-[#f7f7f9]`
-          本来就是给 object-contain 的留白补的底色,与取色值**逐位相同**,故原样保留。 */}
-        {(looksResult.status === "ready" || allResult.status === "ready") && (
-          <section className="relative overflow-hidden bg-[#f7f7f9]">
-            <div className="container-site section-y relative">
-              <Reveal className="mb-12 text-center">
-                <h2 className="font-display text-[clamp(30px,2.6vw,60px)] font-semibold tracking-tight uppercase">
-                  {t("categoryTitle")}
-                </h2>
-              </Reveal>
-              {looksResult.status === "ready" && (
-                <>
-                  <Reveal className="mb-8 flex items-end justify-between">
-                    <h3 className="font-display text-2xl font-semibold tracking-tight md:text-3xl">
-                      {t("discoverTitle")}
-                    </h3>
-                    <Link href="/products" className="link-line tap-target text-sm lg:min-h-0">
-                      {t("castViewAll")}
-                    </Link>
-                  </Reveal>
-                  <div className="grid grid-cols-2 gap-x-4 gap-y-10 sm:gap-x-6 lg:grid-cols-3 lg:gap-x-8">
-                    {looks.map((p, i) => (
-                      <Reveal key={p.code} delay={Math.min(i, 5) * 60}>
-                        {/* 显示商品名而非 SKU:商家的真实 SKU 可能是任意字符串
-                    (如 NEON RUSH 的 SKU 是 "20"),直接展示会像乱码。 */}
-                        <ProductCard
-                          product={p}
-                          locale={locale}
-                          sizes="(max-width: 768px) 50vw, 33vw"
-                        />
-                      </Reveal>
-                    ))}
-                  </div>
-                </>
-              )}
-
-              {/* ============ 区域限定(设计稿:红底 US/UK ONLY 徽章)============
-              按访客国家展示;该国没有限定款时整块隐藏,不留空标题。 */}
-              {regionals.length > 0 && (
-                <>
-                  <p className="text-ink-soft mt-10 text-sm sm:mt-16">{t("regionalTitle")}</p>
-                  <div className="mt-6 grid grid-cols-2 gap-x-4 gap-y-10 sm:gap-x-6 lg:grid-cols-3 lg:gap-x-8">
-                    {regionals.map((p) => (
-                      <Reveal key={p.code}>
-                        <ProductCard
-                          product={p}
-                          locale={locale}
-                          sizes="(max-width: 768px) 50vw, 33vw"
-                        />
-                      </Reveal>
-                    ))}
-                  </div>
-                </>
-              )}
-
-              {/* ============ 产品汇总-选购同款造型(圆形名册,紧接本模块) ============ */}
-              {allResult.status === "ready" && (
-                <>
-                  <p className="text-ink-soft mt-10 text-sm sm:mt-16">{t("rosterTitle")}</p>
-                  <Reveal className="mt-6">
-                    {/* 圆圈原本是写死的 h-16 w-16(64px)。手机 375px 宽时 6 列 × 64px = 384px
-                已经超出容器,grid 的 gap 根本挤不出来 —— 圆圈直接贴在一起。改成按单元格
-                缩放 + max-w-16 封顶:窄屏自动缩小(间距才是真的),宽屏仍是原来的 64px。
-                窄屏(375px)6 列 → 4 列:每格 (343 − 3×12) / 4 = 76.75px,并给每个圆
-                补一个**常显**名称(原来只有 hover/`title`,触屏上等于没有名字)。 */}
-                    <div className="grid grid-cols-4 gap-3 sm:grid-cols-8 sm:gap-3 lg:grid-cols-12">
-                      {roster.map((p) => (
-                        <Link
-                          key={p.code}
-                          href={`/products/${p.code}`}
-                          title={locale === "zh" ? p.name.zh : p.name.en}
-                          className="group flex flex-col items-center gap-1.5"
-                        >
-                          <span className="border-sand bg-cream-deep group-hover:border-brown-600 relative block aspect-square w-full max-w-16 overflow-hidden rounded-full border transition-colors">
-                            {p.isUpcoming ? (
-                              <span className="text-ink-muted flex h-full w-full items-center justify-center text-xs font-semibold">
-                                ?
-                              </span>
-                            ) : p.images[0] ? (
-                              <Image
-                                src={p.images[0]}
-                                alt={p.name.en}
-                                fill
-                                sizes="64px"
-                                className="object-cover transition-transform duration-500 group-hover:scale-110"
-                              />
-                            ) : null}
-                          </span>
-                          <span className="text-ink-soft w-full truncate text-center text-[11px] leading-tight">
-                            {locale === "zh" ? p.name.zh : p.name.en}
-                          </span>
-                        </Link>
-                      ))}
-                    </div>
-                  </Reveal>
-                </>
-              )}
-            </div>
+        {looksResult.status === "ready" && (
+          <section id="looks" className="home-looks-section">
+            <HomeLooks
+              data={looksResult.data}
+              series={seriesResult.status === "ready" ? seriesResult.data : []}
+              locale={locale}
+              labels={{
+                eyebrow: t("editEyebrow"),
+                featured: t("featuredTitle"),
+                newest: t("discoverTitle"),
+                description: t("editDescription"),
+                viewAll: t("editViewAll"),
+                regional: t("regionalTitle"),
+                regionalDescription: t("regionalDescription"),
+                empty: t("editEmpty"),
+                series: t("editSeries"),
+                soldOut: t("editSoldOut"),
+              }}
+            />
           </section>
         )}
       </>

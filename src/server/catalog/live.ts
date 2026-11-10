@@ -86,11 +86,16 @@ export const getLiveProducts = cache(async (country: string): Promise<Product[]>
   return [...new Map(groups.flat().map((p) => [p.code, p])).values()];
 });
 export const getLiveNewLooksProducts = cache(
-  async (country: string, perSeries = 2): Promise<Product[]> => {
+  async (
+    country: string,
+    perSeries = 2,
+    excludedHandles: readonly string[] = [],
+  ): Promise<Product[]> => {
+    const excluded = new Set(excludedHandles);
     const groups = await Promise.all(
       slugs.map(async (slug) =>
         (await collectionItems(slug, country))
-          .filter((i) => i.available)
+          .filter((i) => i.available && !excluded.has(i.handle))
           .sort(
             (a, b) =>
               (b.createdAt ? Date.parse(b.createdAt) : 0) -

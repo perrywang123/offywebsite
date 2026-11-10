@@ -2,6 +2,7 @@
 import { env } from "../../lib/env";
 import { parseRegionList } from "../../lib/geo";
 import { listShopifyProducts, type ShopifyListItem } from "../shopify/catalog";
+import { CatalogUnavailableError } from "../shopify/storefront";
 
 export const DEFAULT_REGIONS = [
   "US",
@@ -80,7 +81,10 @@ export async function getVisibilityIndex(countries: string[]): Promise<Visibilit
   return { byHandle, probed };
 }
 
-export async function getRegionalProducts(country: string): Promise<RegionalItem[]> {
+export async function getRegionalProducts(
+  country: string,
+  options: { requireComplete?: boolean } = {},
+): Promise<RegionalItem[]> {
   const codes = regionCodes();
   const cc = country.trim().toUpperCase();
   if (!targetMarkets().includes(cc)) return [];
@@ -89,9 +93,15 @@ export async function getRegionalProducts(country: string): Promise<RegionalItem
 
   const [{ byHandle, probed }, mine] = await Promise.all([
     getVisibilityIndex(scope),
-    listShopifyProducts(fetch, cc).catch(() => [] as ShopifyListItem[]),
+    listShopifyProducts(fetch, cc).catch((error) => {
+      if (options.requireComplete) throw error;
+      return [] as ShopifyListItem[];
+    }),
   ]);
-  if (probed.length < 2 || probed.length !== scope.length || !scope.includes(cc)) return [];
+  if (probed.length < 2 || probed.length !== scope.length || !scope.includes(cc)) {
+    if (options.requireComplete) throw new CatalogUnavailableError();
+    return [];
+  }
 
   return mine
     .map((item) => {

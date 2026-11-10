@@ -1,0 +1,5 @@
+- [x] Validate requirements and add failing selection/boundary/page tests.
+- [x] Implement curated collection selection and live time-based fallback with regional separation.
+- [x] Implement bounded, accessible homepage cards and series navigation.
+- [x] Run full tests, type/lint/build and desktop/mobile browser checks.
+- [x] Document Shopify setup, verification and screenshots; archive the approved change for review without deploying.

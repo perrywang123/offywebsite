@@ -17,7 +17,7 @@
 - 2026-11-07 后台资源保护与生产独立发布已验收：构建默认1 CPU / 1536 MiB，检查额外可用内存和旧systemd服务，镜像标记Git revision；最新后台功能及worker已单独发布，主站容器和代理保持原样。实际运行版本和边界见 [发布验收](safe-admin-release-validation.md)。
 
 - 英文单语、默认语言无前缀。中文保留代码，`/zh/*` 308 去前缀；`/en/*` 307 去前缀。
-- 品牌首页：五屏 Hero → NEWS → New Looks/区域限定/商品名册 → 包挂预告 → 联名 → 订阅 → 未来 IP。
+- 品牌首页：五屏 Hero → NEWS → Featured Looks（精选缺失/失败时 New Looks）/独立区域限定/三系列入口 → 包挂预告 → 联名 → 订阅 → 未来 IP。新首页选品布局已本地验收，待用户截图确认后发布。
 - NEWS 的五张宣传图使用 `lib/content.ts` 登记的本地品牌素材；仅用 Shopify 核验绑定商品的市场可售状态，不以商品首图覆盖宣传构图。2026-11-02 从 `808d9b8` 之前的映射恢复；商品详情、价格、库存和结账继续使用 Shopify。见 [恢复验收](news-editorial-restoration-validation.md)。
 - 三大系列名称来自 Shopify；slug/Collection handle/系列图/tagline 的站点映射仍本地配置。
 - 实时商品清单、详情、市场金额/币种、SKU、多图、售罄列表状态；周边仅在 All Looks，排在公仔之后。
@@ -77,3 +77,5 @@ KOL平台实施与隔离验收见 [记录](kol-platform-validation.md)；运行�
 Ship to 与会话国家偏好已实现、测试并独立发布主站；优先手动/已存会话、可信 IP、地理时区、区域语言，最后 US。GeoLite Country 自动更新已于 2026-11-10 独立启用：首次下载通过，每 72 小时检查新版，限 CPU 0.1 / RAM 96 MiB，不重建或重启主站、后台或订单 worker。实现与操作见 [market-localization.md](market-localization.md)，生产证据见[验收记录](market-localization-verification.md)。
 
 2026-11-10：自动推荐改为固定 30 分钟有效，手动选择仍保留 90 天。旧版无时间戳自动 Cookie 失效，读取不续期；导航/返回前台同步过期上下文，购物袋国家冲突先阻断再刷新，保留商品及数量。全量 886 项测试、生产构建及浏览器验证通过，版本 `9618d5c` 已用 GitHub 预构建镜像独立发布主站，后台和各 worker 未被替换。见[有效期验收](market-preference-expiry-verification.md)。
+
+2026-11-11：首页选品优先使用 Shopify home-featured 手动集合，缺失/读取失败回退原每系列时间逻辑；限定商品在取名额前排除并独立展示。原三系列与支付链路保持独立。首页商品区收窄、方形 contain 图片、手机两列和三系列入口已完成，903 项测试及本地生产/隔离浏览器验证通过。尚未发布生产，也未创建 Shopify 集合。见[选品说明](homepage-merchandising.md)与[截图验收](homepage-merchandising-verification.md)。

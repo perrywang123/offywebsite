@@ -5,7 +5,7 @@ import type { ShopifyListItem } from "@/server/shopify/catalog";
 import en from "../../../messages/en.json";
 
 /**
- * 首页 · 名册(All Products)不含 merch 的回归测试。
+ * Homepage editorial bindings and merchandising isolation regression tests.
  *
  * 老板 2026-10 决策:贴纸 / 帆布包这类**不属于任何系列**的商品只在 All Looks
  * (/products)展示,并且排在最后;首页的「All Products 名册」用的是**同一个数据源**
@@ -126,6 +126,21 @@ vi.mock("@/server/catalog/live", () => ({
   ],
   toLiveProduct: (entry: ShopifyListItem, series: string, sortOrder: number) =>
     liveProduct(entry, series, sortOrder),
+  getLiveSeriesList: async () => [
+    { slug: "princess-lady", name: { en: "OFFY Princess Series", zh: "公主系列" } },
+    { slug: "outdoor-sporty", name: { en: "OFFY Streetwear Series", zh: "街头系列" } },
+    { slug: "playful-life", name: { en: "OFFY Dress-up Series", zh: "趣味生活系列" } },
+  ],
+}));
+
+vi.mock("@/server/catalog/home", () => ({
+  getHomeLooks: async () => ({
+    source: "newest",
+    products: [DOLL],
+    regionals: homeState.regionals
+      .filter((p) => p.handle === "noir")
+      .map((p) => liveProduct(p, "outdoor-sporty", 0)),
+  }),
 }));
 
 vi.mock("@/server/catalog/regional", () => ({
@@ -203,11 +218,21 @@ describe("首页 · 名册不含 merch", () => {
     expect(screen.queryByTitle("MYSTERY MUG")).toBeNull();
   });
 
-  it("公仔仍然一个不少地在名册里(过滤没有误伤)", async () => {
+  it("keeps verified doll recommendations and the three original series entry points", async () => {
     const { container } = await renderHome();
     const doll = container.querySelector(`a[href="/products/${DOLL.code}"]`);
     expect(doll).not.toBeNull();
-    expect(doll).toHaveAttribute("title", "SWAN QUEEN- LIMITED");
+    expect(doll).toHaveTextContent("SWAN QUEEN- LIMITED");
+    const navigation = screen.getByRole("navigation", { name: en.home.editSeries });
+    expect(
+      within(navigation)
+        .getAllByRole("link")
+        .map((link) => link.getAttribute("href")),
+    ).toEqual([
+      "/collections/princess-lady",
+      "/collections/outdoor-sporty",
+      "/collections/playful-life",
+    ]);
   });
 
   it("区域限定区块也不展示周边(即使某款周边只在单一市场上架)", async () => {

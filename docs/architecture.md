@@ -34,7 +34,7 @@ Next.js 15 App Router 单应用，服务端页面读 Shopify，客户端通过�
 
 真实系列映射：princess-lady→frontpage；outdoor-sporty→outdoor-sporty系列；playful-life→趣味生活系列。当前不会自动把任意新建 Collection 加进导航。商品使用 code=handle；SKU 是展示字段；首个 variant 是结算变体，多规格 UI 未实现。
 
-`getLiveProducts` 并发读取三系列和 merch；merch 在末尾。New Looks 每系列按 createdAt 降序取两款可售商品。首页名册排除 merch。详情按 handle 取最多 10 张图与段落描述，相关推荐按真实系列/merch 查询。
+`getLiveProducts` 并发读取三系列和 merch；merch 在末尾。首页 `getHomeLooks` 优先读取 `home-featured` 的当前市场集合顺序，取前六款可售、属于原三系列且非区域限定的商品；该集合缺失/读取失败时，New Looks 按原每系列 createdAt 降序各取两款，取数量前排除限定款。成功空集合保持空态，商业读取/必需区域判定失败保持不可用态。首页精选不成为第四个主系列，原圆形名册已由三个系列入口取代。详情按 handle 取最多 10 张图与段落描述，相关推荐按真实系列/merch 查询。配置见 [首页选品说明](homepage-merchandising.md)；此改造尚待截图确认，未发布。
 
 列表与Collections每页250并跟随游标，分页错误不发布部分名册；最多100页，重复游标拒绝。商品归属最多250个Collection，超过明确不可用；详情图片最多10张、variant首个。列表/详情/结算统一首variant的市场价格。
 

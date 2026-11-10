@@ -56,3 +56,5 @@ Shopify实时目录/多市场金额、merch、商品描述/多图、主要移动
 Ship to 与会话国家偏好已实现、测试并独立发布主站；优先手动/已存会话、可信 IP、地理时区、区域语言，最后 US。GeoLite Country 自动更新已于 2026-11-10 独立启用：首次下载通过，每 72 小时检查新版，限 CPU 0.1 / RAM 96 MiB，不重建或重启主站、后台或订单 worker。实现与操作见 [market-localization.md](market-localization.md)，生产证据见[验收记录](market-localization-verification.md)。
 
 2026-11-10：自动推荐固定 30 分钟有效期及过期重判已完成并独立发布主站；手动选择保持 90 天，无定时器强制打断浏览，购物袋增加市场一致性防护。见[有效期验收](market-preference-expiry-verification.md)。
+
+2026-11-11：首页 Shopify 精选集合、缺失/故障时实时日期回退、限定区去重和受限宽度的商品 UI 已完成本地验收。903 项测试及生产构建通过，等待用户确认截图；未修改 Shopify 运营配置、原三个系列或生产环境。见[首页选品验收](homepage-merchandising-verification.md)。

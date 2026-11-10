@@ -23,4 +23,5 @@ it("does not infer regional exclusivity from incomplete country probes", async (
       : [];
   });
   expect(await getRegionalProducts("US")).toEqual([]);
+  await expect(getRegionalProducts("US", { requireComplete: true })).rejects.toThrow();
 });
