@@ -24,7 +24,7 @@ Shopify 目录 @inContext、bag API 与 cart buyerIdentity.countryCode 使用同
 
 无 MaxMind 账号也可运行现有 geoip-lite 随包 IP 库。新增可选 Country MMDB 热读取器：每分钟最多检查一次文件变化，成功验证才换入；损坏更新保留最后有效读取器。该文件缺失不阻塞站点。
 
-免费 GeoLite2 下载要求账户及下载许可。当前注册被 MaxMind 拒绝，尚未获得凭据，**自动更新尚未在生产启用**。用户完成账户验证和密码设置后，在服务器运行：
+GeoLite 下载要求账户、接受使用协议及专用下载许可。账号注册、邮箱验证和 GeoLite 开通已完成；首次配置与以后更新启动命令为：
 
 ```bash
 cd /root/offywebsite
@@ -32,7 +32,11 @@ git pull --ff-only
 bash deploy/update-geoip.sh
 ```
 
-脚本交互读取 Account ID 与下载 License Key；Key 不回显。凭据只写服务器 `.offy-geoip.local/`，不入 Git、镜像或浏览器。独立官方 updater 每 24 小时检查 GeoLite2-Country，限 CPU 0.1 / RAM 96 MB，挂载既有数据卷，不构建或重启主站、后台及订单 worker。默认 App 路径 `/data/GeoLite2-Country.mmdb`。
+首次脚本交互读取 Account ID 与下载 License Key；Key 不回显，之后复用服务器现有凭据。凭据只保留在服务器 `.offy-geoip.local/`，不入 Git、镜像或客户端。独立官方 updater 启动时立即检查，之后每 72 小时检查 GeoLite2-Country，只有新版才下载；限 CPU 0.1 / RAM 96 MB，挂载既有数据卷，不构建或重启主站、后台及订单 worker。默认 App 路径 `/data/GeoLite2-Country.mmdb`。生产激活及验证结果见[验收记录](market-localization-verification.md)。
+
+GeoLite Country 通常在每周二、周五发布，[官方建议至少每周检查两次](https://maxmind.github.io/geoipupdate/doc/geoipupdate/)；72 小时检查约每周 2.3 次。用户访问仅查本地文件，不逐次请求 MaxMind、不上传访客 IP。新文件由应用热读取，已保存的访客国家不会因国家库更新自动改变。
+
+This product includes GeoLite data created by MaxMind, available from [https://www.maxmind.com](https://www.maxmind.com). 数据只用于国家推荐；不用于定位具体个人或住址，不对外提供数据库。按已接受的协议保持更新，新版本替换旧库，不另行归档旧国家库。
 
 检查状态：
 
