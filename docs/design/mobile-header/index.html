@@ -531,6 +531,24 @@
         margin-bottom: 6px;
         border-bottom: 0;
       }
+      .drawer-links > .shop-link {
+        border-bottom: 0;
+      }
+      .drawer-series-links {
+        padding: 4px 0 6px 12px;
+        margin: 0 0 14px;
+      }
+      .drawer-links .drawer-series-links .series-name {
+        border: 0;
+        color: #666;
+        font-weight: 400;
+        letter-spacing: 0.01em;
+      }
+      .drawer-series-links .series-name:hover {
+        color: #1d1915;
+        text-decoration: underline;
+        text-underline-offset: 4px;
+      }
       .drawer-links .series-name {
         font-size: 13px;
         min-height: 44px;
@@ -1051,8 +1069,8 @@
       <div class="drawer-content">
         <nav aria-label="Mobile navigation" class="drawer-links original-mobile-nav">
           <a href="?page=shop&amp;entry=new" data-page="shop" data-entry="new">NEW IN</a>
-          <a href="?page=shop" data-page="shop" data-entry="shop">SHOP</a>
-          <div style="border-left: 1px solid #e5e5e5; padding-left: 16px; margin: 0 0 12px">
+          <a class="shop-link" href="?page=shop" data-page="shop" data-entry="shop">SHOP</a>
+          <div class="drawer-series-links">
             <a class="series-name" href="?page=series" data-page="series">OFFY Princess Series</a>
             <a class="series-name" href="?page=series" data-page="series">OFFY Streetwear Series</a>
             <a class="series-name" href="?page=series" data-page="series">OFFY Dress-up Series</a>
