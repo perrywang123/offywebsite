@@ -27,15 +27,57 @@ beforeEach(() => {
   dependencies.lookup.mockReset().mockReturnValue(null);
 });
 describe("market preference endpoint", () => {
-  it("uses browser fallback once and writes a private session cookie", async () => {
+  it("uses browser fallback and writes a private automatic cookie valid for 30 minutes", async () => {
     const response = await POST(
       request({ mode: "resolve", timeZone: "Europe/London", languages: ["en-US"] }),
     );
-    expect(await response.json()).toMatchObject({ country: "GB", source: "timezone" });
+    expect(await response.json()).toMatchObject({
+      country: "GB",
+      source: "timezone",
+      resolvedAt: expect.any(Number),
+    });
     expect(response.headers.get("set-cookie")).toContain(MARKET_COOKIE);
     expect(response.headers.get("set-cookie")).toContain("HttpOnly");
-    expect(response.headers.get("set-cookie")).not.toContain("Max-Age");
+    expect(response.headers.get("set-cookie")).toContain("Max-Age=1800");
     expect(dependencies.countries).not.toHaveBeenCalled();
+  });
+  it("does not renew an unexpired automatic cookie on repeated resolution", async () => {
+    const resolvedAt = Date.now() - 600_000;
+    const cookie = `${MARKET_COOKIE}=${encodeURIComponent(JSON.stringify({ country: "GB", source: "ip", resolvedAt }))}`;
+    const response = await POST(
+      request({ mode: "resolve", timeZone: "Asia/Singapore" }, undefined, { cookie }),
+    );
+    expect(await response.json()).toMatchObject({
+      country: "GB",
+      source: "ip",
+      persisted: true,
+      resolvedAt,
+    });
+    expect(response.headers.get("set-cookie")).toBeNull();
+  });
+  it("ignores expired automatic cookies, resolves current IP, and persists the actual wire value", async () => {
+    dependencies.lookup.mockReturnValue({ country: "SG" });
+    const old = `${MARKET_COOKIE}=${encodeURIComponent(JSON.stringify({ country: "GB", source: "ip", resolvedAt: Date.now() - 1_800_000 }))}`;
+    const context = await GET(
+      new Request("https://isoffy.com/api/market?context=1", {
+        headers: { cookie: old, "x-real-ip": "8.8.8.8" },
+      }),
+    );
+    expect(await context.json()).toMatchObject({ country: "SG", source: "ip", persisted: false });
+    expect(context.headers.get("set-cookie")).toBeNull();
+    const response = await POST(
+      request({ mode: "resolve" }, undefined, { cookie: old, "x-real-ip": "8.8.8.8" }),
+    );
+    const cookie = response.headers.get("set-cookie")!.split(";", 1)[0];
+    const next = await GET(
+      new Request("https://isoffy.com/api/market?context=1", { headers: { cookie } }),
+    );
+    expect(await next.json()).toMatchObject({
+      country: "SG",
+      source: "ip",
+      persisted: true,
+      resolvedAt: expect.any(Number),
+    });
   });
   it("only accepts manual destinations enabled in Shopify, with an explicit saved preference", async () => {
     const ok = await POST(request({ mode: "select", country: "gb" }));

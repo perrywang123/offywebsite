@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { z } from "zod";
 import { env } from "@/lib/env";
 import { countryDecision } from "@/lib/geo";
-import { MARKET_COOKIE, normalizeMarketCountry } from "@/lib/market";
+import { AUTOMATIC_MARKET_TTL_SECONDS, MARKET_COOKIE, normalizeMarketCountry } from "@/lib/market";
 import { getMarketCountries } from "@/server/shopify/localization";
 
 export const dynamic = "force-dynamic";
@@ -50,6 +50,7 @@ export async function POST(request: Request) {
     preference = {
       country: decision.country,
       source: decision.source,
+      resolvedAt: decision.resolvedAt,
       ...(decision.timeZone ? { timeZone: decision.timeZone } : {}),
     };
   } else {
@@ -71,7 +72,7 @@ export async function POST(request: Request) {
     httpOnly: true,
     sameSite: "lax",
     secure: env.SITE_URL.startsWith("https:"),
-    ...(preference.source === "manual" ? { maxAge: 90 * 86400 } : {}),
+    maxAge: preference.source === "manual" ? 90 * 86400 : AUTOMATIC_MARKET_TTL_SECONDS,
   });
   return response;
 }

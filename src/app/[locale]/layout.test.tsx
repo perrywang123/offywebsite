@@ -29,6 +29,8 @@ vi.mock("next-intl/server", () => ({
 }));
 
 vi.mock("next/navigation", () => ({
+  usePathname: () => "/",
+  useSearchParams: () => new URLSearchParams(),
   notFound: () => {
     throw new Error("notFound()");
   },

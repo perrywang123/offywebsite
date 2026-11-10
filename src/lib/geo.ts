@@ -57,12 +57,14 @@ export function countryDecision(
       : [{ header, value: /^[a-z0-9\s]{0,8}$/i.test(raw) ? raw.trim().toUpperCase() : "invalid" }];
   });
   const base = { candidates, fallback: "US", ipSource: null, header: null, persisted: false };
-  const saved = parseMarketCookie(readHeader(headers, "cookie"));
+  const now = Date.now();
+  const saved = parseMarketCookie(readHeader(headers, "cookie"), now);
   if (saved) return { ...base, ...saved, persisted: true };
+  const fresh = { ...base, resolvedAt: now };
   const trusted = env.GEO_TRUSTED_COUNTRY_HEADER;
   if (trusted && (COUNTRY_HEADERS as readonly string[]).includes(trusted)) {
     const country = normalizeMarketCountry(readHeader(headers, trusted));
-    if (country) return { ...base, country, source: "header", header: trusted };
+    if (country) return { ...fresh, country, source: "header", header: trusted };
   }
   // The public Nginx ingress overwrites X-Real-IP. XFF is a compatibility path
   // for trusted deployments that supply no X-Real-IP; never choose XFF over it.
@@ -72,20 +74,20 @@ export function countryDecision(
   if (ip) {
     try {
       const country = lookupCountry(ip);
-      if (country) return { ...base, country, source: "ip", ipSource };
+      if (country) return { ...fresh, country, source: "ip", ipSource };
     } catch {
       /* Continue with weaker hints instead of failing commerce. */
     }
   }
   const timeZone = hints?.timeZone;
   const fromZone = countryFromTimeZone(timeZone);
-  if (fromZone) return { ...base, country: fromZone, source: "timezone", timeZone };
+  if (fromZone) return { ...fresh, country: fromZone, source: "timezone", timeZone };
   const languages = hints?.languages?.length
     ? hints.languages
     : (readHeader(headers, "accept-language") ?? []);
   const fromLanguage = countryFromLanguage(languages);
-  if (fromLanguage) return { ...base, country: fromLanguage, source: "language" };
-  return { ...base, country: "US", source: "default" };
+  if (fromLanguage) return { ...fresh, country: fromLanguage, source: "language" };
+  return { ...fresh, country: "US", source: "default" };
 }
 
 /** 探测区域限定用的国家列表:优先 SHOPIFY_REGIONS,否则用内置默认。 */

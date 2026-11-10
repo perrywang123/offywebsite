@@ -74,3 +74,23 @@ it("rejects stale destination before creating a Shopify cart and records the con
     country: "GB",
   });
 });
+
+it("requires review before checkout when an automatic preference expires into a different country", async () => {
+  state.db = testDb();
+  state.createCheckout.mockReset();
+  const cookie = `offy.market.v1=${encodeURIComponent(JSON.stringify({ country: "GB", source: "ip", resolvedAt: Date.now() - 1_800_000 }))}`;
+  const response = await POST(
+    new Request("http://localhost/api/payments/checkout", {
+      method: "POST",
+      headers: { "Content-Type": "application/json", "x-country-code": "US", cookie },
+      body: JSON.stringify({
+        provider: "shopify",
+        items: [{ code: "wild", quantity: 2 }],
+        locale: "en",
+        expectedCountry: "GB",
+      }),
+    }),
+  );
+  expect(response.status).toBe(409);
+  expect(state.createCheckout).not.toHaveBeenCalled();
+});

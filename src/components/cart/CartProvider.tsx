@@ -78,6 +78,8 @@ const CartContext = createContext<CartContextValue | null>(null);
 export function CartProvider({ children }: { children: React.ReactNode }) {
   const market = useOptionalMarket();
   const marketReady = market?.ready ?? true;
+  const expectedCountry = market?.state.country;
+  const reloadDestination = market?.reloadDestination;
   const [lines, setLines] = useState<CartState>([]),
     linesRef = useRef<CartState>([]);
   const [catalog, setCatalog] = useState<Record<string, CartCatalogEntry>>({});
@@ -106,9 +108,14 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
     const current = linesRef.current.map((l) => ({ ...l }));
     try {
       const res = await fetch("/api/products", {
+        headers: expectedCountry ? { "X-Offy-Expected-Country": expectedCountry } : undefined,
         cache: "no-store",
         signal: AbortSignal.timeout(10000),
       });
+      if (res.status === 409) {
+        reloadDestination?.(current.length > 0);
+        throw new Error("destination_changed");
+      }
       if (!res.ok) throw new Error("catalog_unavailable");
       const body = z.object({ products: z.array(itemSchema) }).parse(await res.json());
       const map: Record<string, CartCatalogEntry> = Object.fromEntries(
@@ -120,9 +127,14 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
           .filter((l) => !map[l.code])
           .map(async (line) => {
             const detail = await fetch(`/api/products/${encodeURIComponent(line.code)}`, {
+              headers: expectedCountry ? { "X-Offy-Expected-Country": expectedCountry } : undefined,
               cache: "no-store",
               signal: AbortSignal.timeout(10000),
             });
+            if (detail.status === 409) {
+              reloadDestination?.(current.length > 0);
+              throw new Error("destination_changed");
+            }
             if (detail.status === 404) {
               missing.add(line.code);
               return;
@@ -160,7 +172,7 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
       }
       return false;
     }
-  }, []);
+  }, [expectedCountry, reloadDestination]);
   useEffect(() => {
     alive.current = true;
     hydrated.current = true;

@@ -1,5 +1,14 @@
 "use client";
-import { createContext, useCallback, useContext, useEffect, useMemo, useState } from "react";
+import {
+  createContext,
+  useCallback,
+  useContext,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from "react";
+import { usePathname, useSearchParams } from "next/navigation";
 import { MARKET_REVIEW_BAG, type MarketState, type MarketCountry } from "@/lib/market";
 import { persistDestination } from "./client";
 
@@ -14,6 +23,7 @@ interface MarketContextValue {
   close: () => void;
   loadCountries: () => Promise<void>;
   save: (country: string, reviewBag: boolean) => Promise<void>;
+  reloadDestination: (reviewBag: boolean) => void;
 }
 const MarketContext = createContext<MarketContextValue | null>(null);
 const reloadPage = () => window.location.reload();
@@ -26,6 +36,12 @@ export function MarketProvider({
   initial: MarketState;
   reload?: () => void;
 }) {
+  const pathname = usePathname();
+  const search = useSearchParams()?.toString() ?? "";
+  const routeKey = `${pathname ?? ""}?${search}`;
+  const previousRoute = useRef(routeKey);
+  const reloading = useRef(false);
+  const interacting = useRef(false);
   const [state, setState] = useState(initial);
   const [resolving, setResolving] = useState(!initial.persisted);
   const [ready, setReady] = useState(
@@ -34,6 +50,21 @@ export function MarketProvider({
   const [open, setOpen] = useState(false),
     [saving, setSaving] = useState(false),
     [error, setError] = useState("");
+  const reloadDestination = useCallback(
+    (reviewBag: boolean) => {
+      if (interacting.current || reloading.current) return;
+      if (reviewBag) {
+        try {
+          sessionStorage.setItem(MARKET_REVIEW_BAG, "1");
+        } catch {
+          /* Bag identities remain persisted. */
+        }
+      }
+      reloading.current = true;
+      reload();
+    },
+    [reload],
+  );
   useEffect(() => {
     if (initial.persisted) return;
     let active = true;
@@ -68,18 +99,36 @@ export function MarketProvider({
     };
   }, [initial.country, initial.persisted, reload]);
   useEffect(() => {
-    const onVisible = () => {
-      if (document.visibilityState !== "visible") return;
+    const navigated = previousRoute.current !== routeKey;
+    previousRoute.current = routeKey;
+    if (resolving || saving || open || !state.persisted) return;
+    let active = true;
+    let checking = false;
+    const checkContext = () => {
+      if (checking || reloading.current) return;
+      checking = true;
       void fetch("/api/market?context=1", { cache: "no-store", signal: AbortSignal.timeout(3000) })
         .then((r) => (r.ok ? r.json() : null))
         .then((data) => {
-          if (data?.persisted && data.country !== state.country) reload();
+          if (active && data?.country && (!data.persisted || data.country !== state.country)) {
+            reloadDestination(false);
+          }
         })
-        .catch(() => {});
+        .catch(() => {})
+        .finally(() => {
+          checking = false;
+        });
+    };
+    const onVisible = () => {
+      if (document.visibilityState === "visible") checkContext();
     };
     document.addEventListener("visibilitychange", onVisible);
-    return () => document.removeEventListener("visibilitychange", onVisible);
-  }, [state.country, reload]);
+    if (navigated) checkContext();
+    return () => {
+      active = false;
+      document.removeEventListener("visibilitychange", onVisible);
+    };
+  }, [state.country, state.persisted, resolving, saving, open, routeKey, reloadDestination]);
   const loadCountries = useCallback(async () => {
     setError("");
     try {
@@ -96,11 +145,15 @@ export function MarketProvider({
     }
   }, []);
   const show = useCallback(() => {
+    interacting.current = true;
     setError("");
     setOpen(true);
   }, []);
   const close = useCallback(() => {
-    if (!saving) setOpen(false);
+    if (!saving) {
+      interacting.current = false;
+      setOpen(false);
+    }
   }, [saving]);
   const save = useCallback(
     async (country: string, reviewBag: boolean) => {
@@ -128,8 +181,32 @@ export function MarketProvider({
     [reload],
   );
   const value = useMemo(
-    () => ({ state, ready, resolving, open, saving, error, show, close, loadCountries, save }),
-    [state, ready, resolving, open, saving, error, show, close, loadCountries, save],
+    () => ({
+      state,
+      ready,
+      resolving,
+      open,
+      saving,
+      error,
+      show,
+      close,
+      loadCountries,
+      save,
+      reloadDestination,
+    }),
+    [
+      state,
+      ready,
+      resolving,
+      open,
+      saving,
+      error,
+      show,
+      close,
+      loadCountries,
+      save,
+      reloadDestination,
+    ],
   );
   return <MarketContext.Provider value={value}>{children}</MarketContext.Provider>;
 }

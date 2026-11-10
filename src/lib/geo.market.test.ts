@@ -14,7 +14,7 @@ describe("approved market precedence", () => {
   it("manual preference and an established automatic session survive IP changes", () => {
     deps.lookup.mockReturnValue({ country: "HK" });
     for (const source of ["manual", "timezone"] as const) {
-      const cookie = serializeMarketCookie({ country: "US", source });
+      const cookie = serializeMarketCookie({ country: "US", source, resolvedAt: Date.now() });
       expect(
         countryDecision(
           new Headers({ cookie: `${MARKET_COOKIE}=${cookie}`, "x-real-ip": "8.8.8.8" }),
@@ -23,6 +23,25 @@ describe("approved market precedence", () => {
       ).toMatchObject({ country: "US", source, persisted: true });
     }
     expect(deps.lookup).not.toHaveBeenCalled();
+  });
+  it("recomputes expired and timestamp-free automatic recommendations from current IP", () => {
+    deps.lookup.mockReturnValue({ country: "SG" });
+    const now = Date.now();
+    for (const resolvedAt of [undefined, now - 1_800_000]) {
+      const cookie = encodeURIComponent(
+        JSON.stringify({ country: "GB", source: "ip", resolvedAt }),
+      );
+      expect(
+        countryDecision(
+          new Headers({ cookie: `${MARKET_COOKIE}=${cookie}`, "x-real-ip": "8.8.8.8" }),
+        ),
+      ).toMatchObject({
+        country: "SG",
+        source: "ip",
+        persisted: false,
+        resolvedAt: expect.any(Number),
+      });
+    }
   });
   it("only the explicitly trusted country header can override real-client IP", () => {
     deps.lookup.mockReturnValue({ country: "SG" });

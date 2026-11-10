@@ -9,6 +9,12 @@ export async function GET(request: Request, { params }: { params: Promise<{ code
   // 价格按发起请求的访客所在国家对应的市场币种返回(与页面展示一致)。
   try {
     const country = pickCountry(request.headers);
+    const expected = request.headers.get("X-Offy-Expected-Country");
+    if (expected && expected !== country)
+      return NextResponse.json(
+        { error: "destination_changed" },
+        { status: 409, headers: { "Cache-Control": "no-store" } },
+      );
     // 实时解析:供商品详情页之外的客户端场景(购物车抽屉)按 code 实时校验/渲染。
     const product = await getLiveProductByCode(code, country);
     if (!product) {

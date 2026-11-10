@@ -31,15 +31,18 @@ describe("destination signals", () => {
       expect(normalizeMarketCountry(country)).toBeUndefined();
   });
   it("round-trips bounded destination preferences and ignores invalid cookie payloads", () => {
+    const resolvedAt = Date.now();
     const cookie = serializeMarketCookie({
       country: "GB",
       source: "timezone",
       timeZone: "Europe/London",
+      resolvedAt,
     });
     expect(parseMarketCookie(`other=value; ${MARKET_COOKIE}=${cookie}`)).toEqual({
       country: "GB",
       source: "timezone",
       timeZone: "Europe/London",
+      resolvedAt,
     });
     for (const value of [
       "%",
@@ -49,5 +52,23 @@ describe("destination signals", () => {
       "x".repeat(3000),
     ])
       expect(parseMarketCookie(`${MARKET_COOKIE}=${value}`)).toBeUndefined();
+  });
+  it("expires automatic recommendations exactly 30 minutes after generation without expiring manual choices", () => {
+    const now = Date.now();
+    const cookie = (source: string, resolvedAt?: unknown) =>
+      `${MARKET_COOKIE}=${encodeURIComponent(JSON.stringify({ country: "GB", source, resolvedAt }))}`;
+    for (const source of ["ip", "header", "timezone", "language", "default"]) {
+      expect(parseMarketCookie(cookie(source, now - 1_799_999), now)).toMatchObject({
+        country: "GB",
+        source,
+      });
+      for (const time of [now - 1_800_000, now - 86_400_000, now + 1, undefined, "today", -1])
+        expect(parseMarketCookie(cookie(source, time), now)).toBeUndefined();
+    }
+    expect(parseMarketCookie(cookie("manual"))).toMatchObject({ country: "GB", source: "manual" });
+    expect(parseMarketCookie(cookie("manual", now - 365 * 86_400_000))).toMatchObject({
+      country: "GB",
+      source: "manual",
+    });
   });
 });

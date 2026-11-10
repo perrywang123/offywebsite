@@ -3,12 +3,15 @@ import geography from "./data/market-geography.json";
 
 export const MARKET_COOKIE = "offy.market.v1";
 export const MARKET_REVIEW_BAG = "offy.market.review-bag.v1";
+export const AUTOMATIC_MARKET_TTL_SECONDS = 30 * 60;
 export type MarketSource = "manual" | "header" | "ip" | "timezone" | "language" | "default";
 export interface MarketPreference {
   country: string;
   source: MarketSource;
   timeZone?: string;
   language?: string;
+  /** Server generation time. Automatic preferences without one are stale. */
+  resolvedAt?: number;
 }
 export interface BrowserMarketHints {
   timeZone?: string;
@@ -67,7 +70,10 @@ export function countryFromLanguage(value: string | readonly string[]): string |
   }
   return undefined;
 }
-export function parseMarketCookie(cookie: string | null | undefined): MarketPreference | undefined {
+export function parseMarketCookie(
+  cookie: string | null | undefined,
+  now = Date.now(),
+): MarketPreference | undefined {
   const value = cookie
     ?.split(";")
     .map((c) => c.trim())
@@ -79,9 +85,18 @@ export function parseMarketCookie(cookie: string | null | undefined): MarketPref
     if (!p || typeof p !== "object") return undefined;
     const country = normalizeMarketCountry(p.country);
     if (!country || !p.source || !sources.has(p.source)) return undefined;
+    if (
+      p.source !== "manual" &&
+      (!Number.isSafeInteger(p.resolvedAt) ||
+        p.resolvedAt! <= 0 ||
+        p.resolvedAt! > now ||
+        now - p.resolvedAt! >= AUTOMATIC_MARKET_TTL_SECONDS * 1000)
+    )
+      return undefined;
     return {
       country,
       source: p.source,
+      ...(p.source !== "manual" ? { resolvedAt: p.resolvedAt } : {}),
       ...(typeof p.timeZone === "string" && countryFromTimeZone(p.timeZone)
         ? { timeZone: p.timeZone }
         : {}),

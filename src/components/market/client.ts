@@ -6,6 +6,7 @@ const preference = z.object({
   source: z.enum(["manual", "header", "ip", "timezone", "language", "default"]),
   persisted: z.literal(true),
   timeZone: z.string().max(100).optional(),
+  resolvedAt: z.number().int().positive().optional(),
 });
 export type DestinationChange =
   | { mode: "select"; country: string }

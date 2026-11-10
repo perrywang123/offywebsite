@@ -16,6 +16,12 @@ export const dynamic = "force-dynamic";
 export async function GET(request: Request) {
   try {
     const country = pickCountry(request.headers);
+    const expected = request.headers.get("X-Offy-Expected-Country");
+    if (expected && expected !== country)
+      return NextResponse.json(
+        { error: "destination_changed" },
+        { status: 409, headers: { "Cache-Control": "no-store" } },
+      );
     const [products, series] = await Promise.all([getLiveProducts(country), getLiveSeriesList()]);
     return NextResponse.json(
       {
