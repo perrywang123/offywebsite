@@ -6,7 +6,7 @@ import { getLiveNewLooksProducts, getLiveProductsBySeries } from "./live";
 import { getRegionalProducts } from "./regional";
 
 // Merchandising configuration only; never a primary product series.
-export const HOME_FEATURED_HANDLE = "home-featured";
+export const HOME_FEATURED_HANDLE = "featured";
 const seriesSlugs = seriesList.map((series) => series.slug);
 export interface HomeLooksData {
   source: "featured" | "newest";

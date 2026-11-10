@@ -35,7 +35,7 @@ beforeEach(() => {
 });
 
 describe("homepage curated looks", () => {
-  it("keeps merchant order, current-market facts and a six-product limit without changing series identity", async () => {
+  it("reads the configured FEATURED collection handle and keeps merchant order, market facts and six-product limit", async () => {
     vi.mocked(fetchShopifyCollectionProducts).mockResolvedValue(
       [8, 2, 6, 3, 1, 7, 0].map((i) => candidate(`p${i}`)),
     );
@@ -43,7 +43,7 @@ describe("homepage curated looks", () => {
     expect(result.source).toBe("featured");
     expect(result.products.map((p) => p.code)).toEqual(["p8", "p2", "p6", "p3", "p1", "p7"]);
     expect(result.products.every((p) => p.currency === "GBP" && p.priceCents === 3390)).toBe(true);
-    expect(fetchShopifyCollectionProducts).toHaveBeenCalledWith("home-featured", "GB");
+    expect(fetchShopifyCollectionProducts).toHaveBeenCalledWith("featured", "GB");
     expect(getLiveNewLooksProducts).not.toHaveBeenCalled();
     expect(getLiveProductsBySeries).toHaveBeenCalledTimes(3);
     expect(getRegionalProducts).toHaveBeenCalledWith("GB", { requireComplete: true });

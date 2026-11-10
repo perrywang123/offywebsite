@@ -14,25 +14,11 @@ vi.mock("@/i18n/navigation", () => ({
   ),
 }));
 const labels = {
-  eyebrow: "Find your OFFY",
-  featured: "Featured Looks",
-  newest: "New Looks",
-  description: "A little personality. A look for every mood.",
+  featured: "FEATURED",
   viewAll: "Shop all looks",
-  regional: "Regional Exclusives",
-  regionalDescription: "Available for your destination.",
+  regional: "REGIONAL EXCLUSIVE",
   empty: "More looks are on their way.",
-  series: "Explore the collections",
-  soldOut: "Sold out",
 };
-const series = [
-  {
-    slug: "princess-lady",
-    name: { en: "OFFY Princess Series", zh: "公主系列" },
-    heroImage: "",
-    tagline: { en: "", zh: "" },
-  },
-] as const;
 
 describe("homepage looks presentation", () => {
   it("keeps sold-out regional media unlinked and its text detail link accessible", () => {
@@ -48,7 +34,6 @@ describe("homepage looks presentation", () => {
             }),
           ],
         }}
-        series={[]}
         locale="en"
         labels={labels}
       />,
@@ -75,43 +60,42 @@ describe("homepage looks presentation", () => {
         testProduct("exclusive", { name: { en: "UK LOOK", zh: "UK LOOK" }, badge: "GB" }),
       ],
     };
-    render(<HomeLooks data={data} series={[...series]} locale="en" labels={labels} />);
-    expect(screen.getByRole("heading", { name: "Featured Looks" })).toBeVisible();
-    const main = screen.getByRole("region", { name: "Featured Looks" });
-    expect(within(main).getByText("£33.90")).toBeVisible();
-    expect(within(main).getByRole("link", { name: /LITTLE HEIRESS/ })).toHaveAttribute(
+    render(<HomeLooks data={data} locale="en" labels={labels} />);
+    expect(screen.getByRole("heading", { name: "FEATURED" })).toBeVisible();
+    const main = screen.getByRole("region", { name: "FEATURED" });
+    expect(within(main).getAllByText("£33.90")[1]).toBeVisible();
+    expect(within(main).getAllByRole("link", { name: /LITTLE HEIRESS/ })[0]).toHaveAttribute(
       "href",
       "/products/main",
     );
     expect(within(main).queryByText("UK LOOK")).toBeNull();
     expect(
-      within(screen.getByRole("region", { name: "Regional Exclusives" })).getByText("UK LOOK"),
+      within(screen.getByRole("region", { name: "REGIONAL EXCLUSIVE" })).getAllByText("UK LOOK")[1],
     ).toBeVisible();
-    expect(screen.getByRole("link", { name: /OFFY Princess Series/ })).toHaveAttribute(
-      "href",
-      "/collections/princess-lady",
-    );
+    const featuredHeading = screen.getByRole("heading", { name: "FEATURED", level: 3 });
+    const regionalHeading = screen.getByRole("heading", { name: "REGIONAL EXCLUSIVE", level: 3 });
+    expect(regionalHeading.className).toBe(featuredHeading.className);
+    expect(within(main).getByRole("img").parentElement).toHaveClass("aspect-[4/5]");
+    expect(screen.queryByRole("navigation", { name: "Explore the collections" })).toBeNull();
   });
 
-  it("labels live time-based fallback accurately and omits an empty regional section", () => {
+  it("keeps FEATURED as the display title for live fallback and omits an empty regional section", () => {
     render(
       <HomeLooks
         data={{ source: "newest", products: [testProduct()], regionals: [] }}
-        series={[]}
         locale="en"
         labels={labels}
       />,
     );
-    expect(screen.getByRole("heading", { name: "New Looks" })).toBeVisible();
-    expect(screen.queryByRole("heading", { name: "Featured Looks" })).toBeNull();
-    expect(screen.queryByRole("region", { name: "Regional Exclusives" })).toBeNull();
+    expect(screen.getByRole("heading", { name: "FEATURED", level: 3 })).toBeVisible();
+    expect(screen.queryByRole("heading", { name: "New Looks" })).toBeNull();
+    expect(screen.queryByRole("region", { name: "REGIONAL EXCLUSIVE" })).toBeNull();
   });
 
   it("keeps an explicit empty state and catalog navigation without fabricated cards", () => {
     render(
       <HomeLooks
         data={{ source: "featured", products: [], regionals: [] }}
-        series={[]}
         locale="en"
         labels={labels}
       />,

@@ -6,7 +6,7 @@ import { Link } from "@/i18n/navigation";
 import { teaserSeries, upcomingIps } from "@/lib/catalog";
 import { heroSlides, newsFeature, newsItems } from "@/lib/content";
 import { headers } from "next/headers";
-import { getLiveProducts, getLiveSeriesList } from "@/server/catalog/live";
+import { getLiveProducts } from "@/server/catalog/live";
 import { getHomeLooks } from "@/server/catalog/home";
 import { pickCountry } from "@/lib/geo";
 import { Reveal } from "@/components/Reveal";
@@ -15,7 +15,7 @@ export const dynamic = "force-dynamic";
 import { HeroCarousel } from "@/components/home/HeroCarousel";
 import { NewsGrid } from "@/components/home/NewsGrid";
 import { UpcomingCard } from "@/components/home/UpcomingCard";
-import { HomeLooks } from "@/components/home/HomeLooks";
+import { HomeLooks, HomeProductRoster } from "@/components/home/HomeLooks";
 import { NewsletterForm } from "@/components/newsletter-form";
 
 export async function generateMetadata(): Promise<import("next").Metadata> {
@@ -37,10 +37,9 @@ export default async function HomePage({ params }: { params: Promise<{ locale: s
   // 注意:读 headers() 会让本页转为按请求渲染(dynamic)——这是 route A 的必要代价。
   const visitorCountry = pickCountry(await headers());
 
-  const [looksResult, allResult, seriesResult] = await Promise.all([
+  const [looksResult, allResult] = await Promise.all([
     catalogResult(getHomeLooks(visitorCountry)),
     catalogResult(getLiveProducts(visitorCountry)),
-    catalogResult(getLiveSeriesList()),
   ]);
   const unavailable = looksResult.status === "unavailable" || allResult.status === "unavailable";
   const allProducts = allResult.status === "ready" ? allResult.data : [];
@@ -125,25 +124,34 @@ export default async function HomePage({ params }: { params: Promise<{ locale: s
           </section>
         )}
 
-        {looksResult.status === "ready" && (
-          <section id="looks" className="home-looks-section">
-            <HomeLooks
-              data={looksResult.data}
-              series={seriesResult.status === "ready" ? seriesResult.data : []}
-              locale={locale}
-              labels={{
-                eyebrow: t("editEyebrow"),
-                featured: t("featuredTitle"),
-                newest: t("discoverTitle"),
-                description: t("editDescription"),
-                viewAll: t("editViewAll"),
-                regional: t("regionalTitle"),
-                regionalDescription: t("regionalDescription"),
-                empty: t("editEmpty"),
-                series: t("editSeries"),
-                soldOut: t("editSoldOut"),
-              }}
-            />
+        {(looksResult.status === "ready" || allResult.status === "ready") && (
+          <section id="looks" className="home-looks-section relative overflow-hidden bg-[#f7f7f9]">
+            <div className="container-site section-y relative">
+              <Reveal className="mb-12 text-center">
+                <h2 className="font-display text-[clamp(30px,2.6vw,60px)] font-semibold tracking-tight uppercase">
+                  {t("categoryTitle")}
+                </h2>
+              </Reveal>
+              {looksResult.status === "ready" && (
+                <HomeLooks
+                  data={looksResult.data}
+                  locale={locale}
+                  labels={{
+                    featured: t("featuredTitle"),
+                    viewAll: t("castViewAll"),
+                    regional: t("regionalTitle"),
+                    empty: t("editEmpty"),
+                  }}
+                />
+              )}
+              {allResult.status === "ready" && (
+                <HomeProductRoster
+                  products={allProducts}
+                  locale={locale}
+                  title={t("rosterTitle")}
+                />
+              )}
+            </div>
           </section>
         )}
       </>

@@ -57,4 +57,4 @@ Ship to 与会话国家偏好已实现、测试并独立发布主站；优先手
 
 2026-11-10：自动推荐固定 30 分钟有效期及过期重判已完成并独立发布主站；手动选择保持 90 天，无定时器强制打断浏览，购物袋增加市场一致性防护。见[有效期验收](market-preference-expiry-verification.md)。
 
-2026-11-11：首页 Shopify 精选集合、缺失/故障时实时日期回退、限定区去重和受限宽度的商品 UI 已完成本地验收。903 项测试及生产构建通过，等待用户确认截图；未修改 Shopify 运营配置、原三个系列或生产环境。见[首页选品验收](homepage-merchandising-verification.md)。
+2026-11-11：首页读取用户配置的 FEATURED 集合（handle featured），保留日期回退及区域去重；按用户反馈恢复原 ProductCard 风格与 All Products 圆形名册，两个商品区标题统一 FEATURED / REGIONAL EXCLUSIVE 且同字号。待新截图确认后发布；未改 Shopify 运营配置、原三个系列或生产环境。见[首页选品验收](homepage-merchandising-verification.md)。

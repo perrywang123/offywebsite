@@ -1,38 +1,39 @@
-# 首页选品与界面验收（2026-11-11）
+# 首页精选与原风格恢复验收（2026-11-11）
 
-状态：实现与本地验收完成，等待用户截图确认；**未部署生产**，未配置 Shopify 首页精选集合。配置入口与规则见[选品说明](homepage-merchandising.md)。
+状态：用户否决了上一版扩大范围的视觉改版，本次恢复原风格并适配已创建的 FEATURED 集合；当前仍为本地截图确认阶段，**未部署生产**。配置规则见[选品说明](homepage-merchandising.md)。
 
-## 自动化与构建
+## 本次修正
 
-- Spec-first + TDD：先复现没有独立精选源、限定款未在限额前排除、区域读取失败被视为空的问题，再实现。新增组件先以缺失模块复现失败，再补齐渲染及边界。
-- 最终全量 Vitest：144 个文件、903 项通过。TypeScript、ESLint、Prettier、差异空白检查及 production standalone 构建通过；最终构建 56.5 秒。
-- 覆盖：手动集合顺序、六款上限、当前币种、重复身份、可售条件、周边和原系列归属、单/多国家限定、成功空集合、缺失/503/异常回退、原时间逻辑在取每系列两款前补位、数据源与区域判定失败。
-- 原三个系列仍由原映射提供；测试额外加入 home-featured 后，系列导航仍只返回三个原系列。详情主系列规则未改。首页 NEWS 的五张内置宣传图回归测试保持通过。
+- 恢复原 Shop by Category 标题、container-site / section-y、大图 4:5 ProductCard、红色区域角标及桌面三列/手机两列。撤回方形 contain、1280px 收窄、区域侧栏和替代名册的三系列链接条。
+- 主标题固定 FEATURED，限定区固定 REGIONAL EXCLUSIVE；共享同一标题 class、层级、字号和字重，均在各自网格上方。
+- 恢复 All Products 的当前国家非周边商品圆形缩略图，全量展示，不受六款精选限制。完整目录与推荐独立读取：推荐故障不隐藏有效名册，目录故障不伪造名册。
+- 只读核对 Shopify 集合名称 FEATURED、handle featured，代码由 home-featured 改为 featured。没有创建、修改或发布 Shopify 商品、集合、排序、市场或库存；原三系列和支付链路不变。
 
-## 动态验证环境与结果
+## 自动化证据
 
-两个隔离本地环境均关闭 Meta、CAPI 和 KOL 跟踪，没有启动订单/广告 worker。最终 standalone 直接读取真实 Shopify 数据，用本地只读入口设置 US/GB 目的地；测试入口不进入仓库或发布镜像。
+先写失败测试，复现固定标题/标题等大、原图片比例、完整名册及部分读取失败边界；另以真实 handle 断言复现仍读取 home-featured 的错误，再修改实现。
 
-精选分支使用单独本地 Storefront 适配器：从真实 Shopify 只读查询获取现有商品、价格、库存和图片，只在本机模拟 home-featured 的顺序及空/缺失/故障响应，不写 Shopify。适配器只接受查询，拒绝 mutation；其缓存仅用于这次本地测试，生产代码未引入持久商业缓存。
+相关 55 项测试通过；最终全量 Vitest **144 文件、903 项通过**。首次与构建并行的全量运行有三项原部署脚本测试超时，未改测试或放宽超时；构建结束后以四个 worker 重跑，全量通过（117.33 秒）。TypeScript、ESLint、生产 standalone 构建通过，Next 构建阶段 67.8 秒。当前主规范和差异格式同时验证。
 
-- 实际没有 home-featured 时，英国 New Looks 仍为每系列两款，共 6 款；SOLO - UK EXCLUSIVE DROP 仅在独立区域，价格 GBP、身份与主推荐无交集。US 回退同样不包含两个美国限定款。
-- 模拟精选将 cold-kitten 放在首候选后，主区跳过该美国限定款，依次展示 warm-biscuit、royal-grey、wild-sweetie、mint-breeze、coastal-star、country-getaway。限定区保留 lemon-fizz 与 cold-kitten；真实名称、图片和 USD 价格均来自同次只读数据。
-- 在浏览器分别模拟成功空集合、确认缺失、503 和国家判定不完整。空集合保留空态与目录入口；缺失/503 显示按时间选品的 New Looks；判定不完整时仅保留一个品牌化重试区，NEWS 独立有效内容仍展示。
-- 三个系列入口实际打开后，其 H1 分别为 OFFY PRINCESS SERIES、OFFY STREETWEAR SERIES、OFFY DRESS-UP SERIES，路由保持不变。推荐卡片经键盘进入 CARAMEL RÊVE 的原商品详情，未加购、未创建 Checkout 或支付订单。
-- 桌面 1440×900、手机 375×812、窄屏 320×640、平板 768×1024、宽屏 1920×1080 均无横向溢出；主区最大 1280px；桌面三列、窄屏两列。320px 主卡 136px；375px 主卡 163.5px；1920px 主卡约 410.7px，限定卡保持 240px，不随宽屏拉大。
-- 真实英国截图的 7 张商品图全部加载完成，单个语义 H1 保留。名称、金额、导航始终可读；焦点轮廓及键盘操作已检查；减少动态效果的 CSS 路径保留。浏览器开发验证曾出现扩展注入的 monica body 属性 hydration 警告，未通过修改全局扩展设置掩盖；生产构建和新模块正常运行。
-- 本地遗留的 LITTLE HEIRESS×2 测试购物袋已通过界面清理。真实服务器、商品/库存/价格/国家、订单、支付和管理后台未操作。隔离适配器和开发服务已关闭，仅保留本地 standalone 预览。
+保留原有选品测试：集合顺序/六款上限、重复/缺货/非原系列/merch 排除、限定名额前补位、成功空集合、缺失/GraphQL/超时日期回退、原系列/区域判定失败。NEWS 五张本地宣传图的回归测试保持通过。
 
-## 最终截图
+## 真实 Shopify 与浏览器
 
-尚未配置精选集合时的真实英国市场回退展示：
+本地 standalone 关闭 Meta、CAPI、KOL 跟踪和 Admin 凭据，不启动 worker。直接只读当前 Shopify 数据，无模拟商品或模拟精选集合。通过本地测试入口指定 US；这些入口不进入仓库或发布镜像。
 
-![真实回退桌面全模块](design/home-merchandising/fallback-section.jpg)
-![真实回退手机](design/home-merchandising/fallback-mobile.jpg)
+- 当前 FEATURED 读取成功。美国主区顺序为 PETITE BUNNY、BURGER DOLL、SLOWDAY、GURARDIAN ANGEL、DOTTY DARLING、WANDERER，与实际集合筛选顺序一致；金额及 USD 来自 Shopify。
+- 美国限定区仅 LEMON FIZZ / COLD KITTEN，与六款精选无重复。All Products 为该次实时返回的 33 款非周边公仔；名册包含精选和限定商品，是完整商品索引。
+- 桌面 1464px：两个标题均 30px、摄影比例 0.8（4:5），保持三列；375px 手机两个标题均 24px、两列每卡 163.5px；320px 无页面横向溢出、名册四列每格 63px。价格常显，链接回到原商品详情及目录。
+- 本机原始 Shopify PNG 下载曾超过 Next 的 7 秒上游期限。截图预览进程临时允许相同 CDN 原图 45 秒下载，用于排除本地慢网干扰；不替换图片、不变更产品数据/渲染样式，不修改源码、依赖、生产配置或发布镜像；图片加载后已撤销临时网络夹具并用原进程复核，最终保留的预览不带此夹具。全部 41 张模块图片（6 张精选、2 张限定、33 张缩略图）加载完整。未将预热或本机网速作为线上图片时延保证。
+- All Products 的 PETITE BUNNY 链接经键盘进入原商品详情，View All 实际进入 /products 的 All Looks。新开预览时也遇到 Shopify 只读请求超时，页面按规范保留品牌内容和一次重试提示；未用旧商品数据掩盖网络失败。
+- 未执行加购、结账、付款、管理后台操作或生产部署。
 
-精选集合接入后的本地顺序样例（只模拟集合，不是在 Shopify 创建的真实运营配置）：
+## 当前截图
 
-![精选样例桌面](design/home-merchandising/curated-section.jpg)
-![精选样例手机](design/home-merchandising/curated-mobile.jpg)
+此前 fallback / curated 截图属于被否决的方形版，留作历史，不作为当前样式依据。
 
-截图为本次商品取样，不把数量、价格或未来候选顺序固化为商业事实。用户确认样式后再单独安排主站发布。
+![恢复原风格的精选](design/home-merchandising/restored-featured-desktop.jpg)
+![限定区与全部商品缩略图](design/home-merchandising/restored-regional-roster-desktop.jpg)
+![手机端展示](design/home-merchandising/restored-mobile.jpg)
+
+用户确认新截图后，再单独安排主站发布。

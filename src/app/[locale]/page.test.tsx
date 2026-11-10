@@ -126,11 +126,6 @@ vi.mock("@/server/catalog/live", () => ({
   ],
   toLiveProduct: (entry: ShopifyListItem, series: string, sortOrder: number) =>
     liveProduct(entry, series, sortOrder),
-  getLiveSeriesList: async () => [
-    { slug: "princess-lady", name: { en: "OFFY Princess Series", zh: "公主系列" } },
-    { slug: "outdoor-sporty", name: { en: "OFFY Streetwear Series", zh: "街头系列" } },
-    { slug: "playful-life", name: { en: "OFFY Dress-up Series", zh: "趣味生活系列" } },
-  ],
 }));
 
 vi.mock("@/server/catalog/home", () => ({
@@ -218,21 +213,22 @@ describe("首页 · 名册不含 merch", () => {
     expect(screen.queryByTitle("MYSTERY MUG")).toBeNull();
   });
 
-  it("keeps verified doll recommendations and the three original series entry points", async () => {
-    const { container } = await renderHome();
-    const doll = container.querySelector(`a[href="/products/${DOLL.code}"]`);
-    expect(doll).not.toBeNull();
-    expect(doll).toHaveTextContent("SWAN QUEEN- LIMITED");
-    const navigation = screen.getByRole("navigation", { name: en.home.editSeries });
-    expect(
-      within(navigation)
-        .getAllByRole("link")
-        .map((link) => link.getAttribute("href")),
-    ).toEqual([
-      "/collections/princess-lady",
-      "/collections/outdoor-sporty",
-      "/collections/playful-life",
-    ]);
+  it("restores every verified non-merch thumbnail in All Products after FEATURED", async () => {
+    homeState.newsProducts = Array.from({ length: 8 }, (_, i) =>
+      liveProduct(item(`extra-${i}`, `Extra ${i}`), "princess-lady", i),
+    );
+    await renderHome();
+    const roster = screen.getByRole("region", { name: en.home.rosterTitle });
+    expect(within(roster).getAllByRole("link")).toHaveLength(10);
+    expect(within(roster).getByRole("link", { name: /Extra 7/ })).toHaveAttribute(
+      "href",
+      "/products/extra-7",
+    );
+    expect(within(roster).getAllByRole("img")[0].parentElement).toHaveClass("rounded-full");
+    expect(within(roster).queryByText("MYSTERY MUG")).toBeNull();
+    expect(screen.getByRole("heading", { name: en.home.featuredTitle, level: 3 })).toBeVisible();
+    expect(screen.getByRole("heading", { name: en.home.categoryTitle, level: 2 })).toBeVisible();
+    expect(screen.queryByRole("navigation", { name: en.home.editSeries })).toBeNull();
   });
 
   it("区域限定区块也不展示周边(即使某款周边只在单一市场上架)", async () => {

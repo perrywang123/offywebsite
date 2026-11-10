@@ -32,6 +32,7 @@ it("keeps independently verified NEWS and brand sections when recommendations fa
   const { container } = render(await Home({ params: Promise.resolve({ locale: "en" }) }));
   expect(screen.getByText("OFFY brand hero")).toBeInTheDocument();
   expect(screen.getByText("newsTitle")).toBeInTheDocument();
+  expect(screen.getByRole("region", { name: "rosterTitle" })).toBeInTheDocument();
   expect(container.querySelectorAll("[data-commerce-unavailable]")).toHaveLength(1);
 });
 it("replaces failed commerce with one panel and preserves editorial content", async () => {
@@ -52,6 +53,6 @@ it("keeps verified new looks but hides an unverified roster on a partial catalog
   });
   vi.mocked(getLiveProducts).mockRejectedValue(new Error("merch timeout"));
   render(await Home({ params: Promise.resolve({ locale: "en" }) }));
-  expect(screen.getByText("discoverTitle")).toBeInTheDocument();
+  expect(screen.getByText("featuredTitle")).toBeInTheDocument();
   expect(screen.queryByText("rosterTitle")).toBeNull();
 });
