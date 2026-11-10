@@ -53,4 +53,4 @@ Shopify实时目录/多市场金额、merch、商品描述/多图、主要移动
 
 ## 2026-11-09 国家选择与判定
 
-Ship to 与会话国家偏好已实现、测试并独立发布主站；优先手动/已存会话、可信 IP、地理时区、区域语言，最后 US。实现说明、配置和待完成 MaxMind 注册见 [market-localization.md](market-localization.md)。MaxMind 自动更新未启用，不能作为已上线能力。
+Ship to 与会话国家偏好已实现、测试并独立发布主站；优先手动/已存会话、可信 IP、地理时区、区域语言，最后 US。GeoLite Country 自动更新已于 2026-11-10 独立启用：首次下载通过，每 72 小时检查新版，限 CPU 0.1 / RAM 96 MiB，不重建或重启主站、后台或订单 worker。实现与操作见 [market-localization.md](market-localization.md)，生产证据见[验收记录](market-localization-verification.md)。
