@@ -3,7 +3,7 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
-    <title>OFFY — Mobile navigation concept</title>
+    <title>OFFY — Compact mobile toolbar concept</title>
     <style>
       :root {
         --ink: #1d1915;
@@ -79,6 +79,23 @@
         padding-top: env(safe-area-inset-top);
         border-bottom: 1px solid var(--line);
       }
+      .promo-bar {
+        background: #1d1915;
+        color: #fff;
+        min-height: 40px;
+        padding: 6px 16px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        text-align: center;
+        font-size: 11px;
+        line-height: 1.35;
+        letter-spacing: 0.1em;
+        text-transform: uppercase;
+      }
+      .bag-label {
+        display: none;
+      }
       .toolbar {
         height: 56px;
         padding: 0 12px 0 16px;
@@ -144,7 +161,7 @@
         box-shadow: 0 0 0 2px #fff;
       }
       .main-nav {
-        display: grid;
+        display: none;
         grid-template-columns: repeat(4, minmax(0, 1fr));
         height: 43px;
         padding: 0 12px;
@@ -460,7 +477,7 @@
         margin: 0 0 0 auto;
         right: 0;
         top: 0;
-        width: min(360px, 90vw);
+        width: min(320px, 80vw);
         height: 100dvh;
         display: flex;
         flex-direction: column;
@@ -682,7 +699,7 @@
           display: flex;
           position: absolute;
           left: 50%;
-          top: 14px;
+          top: calc(var(--promo-h, 40px) + 14px);
           transform: translateX(-50%);
           gap: 24px;
           width: auto;
@@ -700,6 +717,31 @@
         }
         .country-trigger {
           min-width: 90px;
+        }
+        .bag-label {
+          display: inline;
+        }
+        .bag-trigger {
+          height: 40px;
+          border: 1px solid #d9d5cf;
+          border-radius: 24px;
+          padding: 0 12px;
+          gap: 6px;
+          font-size: 12px;
+          letter-spacing: 0.06em;
+        }
+        .bag-trigger svg {
+          width: 15px;
+          height: 15px;
+        }
+        .bag-trigger .bag-count {
+          position: static;
+          min-width: 16px;
+          width: auto;
+          height: 16px;
+          padding: 0 4px;
+          box-shadow: none;
+          font-size: 11px;
         }
         .country-trigger:before {
           content: "Ship to";
@@ -790,6 +832,12 @@
           width: 360px;
         }
       }
+      @media (min-width: 768px) and (max-width: 1023px) {
+        .main-nav {
+          gap: 8px;
+          padding: 0;
+        }
+      }
       @media (prefers-reduced-motion: reduce) {
         html {
           scroll-behavior: auto;
@@ -819,6 +867,12 @@
       </defs>
     </svg>
     <header class="site-header">
+      <div class="promo-bar">
+        <span id="promo-text"
+          >✦ Unlock Gifts: Free Stickers (1 OFFY) ✦ Big Tote (3 OFFY) ✦ Limited Edition (6
+          OFFY)</span
+        >
+      </div>
       <div class="toolbar">
         <a class="logo" href="?page=home" data-page="home" aria-label="OFFY home"
           ><img src="/assets/brand/is-offy-logo.png" alt="is.offy"
@@ -834,13 +888,13 @@
           ><span class="chevron" aria-hidden="true">⌄</span>
         </button>
         <button
-          class="tool"
+          class="tool bag-trigger"
           type="button"
           data-open="bag-dialog"
           aria-label="Open bag, 0 items"
           aria-haspopup="dialog"
         >
-          <svg aria-hidden="true"><use href="#bag" /></svg
+          <svg aria-hidden="true"><use href="#bag" /></svg><span class="bag-label">BAG</span
           ><span class="bag-count" aria-hidden="true">0</span>
         </button>
         <button
@@ -995,33 +1049,26 @@
         </button>
       </div>
       <div class="drawer-content">
-        <p class="nav-label">EXPLORE OFFY</p>
-        <nav aria-label="Collections" class="drawer-links">
-          <a class="strong" href="?page=shop" data-page="shop"
-            >Shop all looks<span class="right-arrow" aria-hidden="true">↗</span></a
-          ><a class="series-name" href="?page=series" data-page="series"
-            >OFFY Princess Series<span class="right-arrow" aria-hidden="true">→</span></a
-          ><a class="series-name" href="?page=series" data-page="series"
-            >OFFY Streetwear Series<span class="right-arrow" aria-hidden="true">→</span></a
-          ><a class="series-name" href="?page=series" data-page="series"
-            >OFFY Dress-up Series<span class="right-arrow" aria-hidden="true">→</span></a
-          >
+        <nav aria-label="Mobile navigation" class="drawer-links original-mobile-nav">
+          <a href="?page=shop&amp;entry=new" data-page="shop" data-entry="new">NEW IN</a>
+          <a href="?page=shop" data-page="shop" data-entry="shop">SHOP</a>
+          <div style="border-left: 1px solid #e5e5e5; padding-left: 16px; margin: 0 0 12px">
+            <a class="series-name" href="?page=series" data-page="series">OFFY Princess Series</a>
+            <a class="series-name" href="?page=series" data-page="series">OFFY Streetwear Series</a>
+            <a class="series-name" href="?page=series" data-page="series">OFFY Dress-up Series</a>
+          </div>
+          <a href="?page=series" data-page="series">SERIES</a>
+          <a href="?page=about" data-page="about">ABOUT US</a>
         </nav>
-        <p class="nav-label">DISCOVER</p>
-        <nav aria-label="Discover" class="drawer-links">
-          <a href="?page=shop&amp;entry=new" data-page="shop" data-entry="new"
-            >New in<span class="right-arrow" aria-hidden="true">→</span></a
-          ><a href="?page=about" data-page="about"
-            >About OFFY<span class="right-arrow" aria-hidden="true">→</span></a
-          >
-        </nav>
-        <p class="nav-label">HERE TO HELP</p>
-        <nav aria-label="Help" class="drawer-links help">
+        <p class="nav-label">HELP &amp; SUPPORT</p>
+        <nav aria-label="Help & Support" class="drawer-links help">
           <a href="#shipping" data-help="Shipping & returns"
             >Shipping &amp; returns<span class="right-arrow" aria-hidden="true">→</span></a
-          ><a href="#faq" data-help="Frequently asked questions"
+          >
+          <a href="#faq" data-help="Frequently asked questions"
             >FAQ<span class="right-arrow" aria-hidden="true">→</span></a
-          ><a href="#contact" data-help="Contact OFFY"
+          >
+          <a href="#contact" data-help="Contact OFFY"
             >Contact us<span class="right-arrow" aria-hidden="true">→</span></a
           >
         </nav>
@@ -1032,7 +1079,6 @@
             ><svg aria-hidden="true"><use href="#globe" /></svg>United States · USD</span
           ><span aria-hidden="true">⌄</span>
         </button>
-        <p class="drawer-footer">Imagine with Love.<br />Create with Companion.</p>
       </div>
     </dialog>
     <dialog id="destination" class="dialog destination" aria-labelledby="destination-title">
@@ -1118,6 +1164,30 @@
       <button type="button" class="primary" data-close>Back to preview</button>
     </dialog>
     <script>
+      const promoMessages = [
+        "✦ Unlock Gifts: Free Stickers (1 OFFY) ✦ Big Tote (3 OFFY) ✦ Limited Edition (6 OFFY)",
+        "OFFY GOES GLOBAL · WORLDWIDE SHIPPING FROM $15 USD",
+      ];
+      let promoIndex = 0;
+      const header = document.querySelector(".site-header");
+      const promoBar = document.querySelector(".promo-bar");
+      function measureHeader() {
+        document.documentElement.style.setProperty(
+          "--header-h",
+          header.getBoundingClientRect().height + "px",
+        );
+        document.documentElement.style.setProperty(
+          "--promo-h",
+          promoBar.getBoundingClientRect().height + "px",
+        );
+      }
+      measureHeader();
+      const headerObserver = new ResizeObserver(measureHeader);
+      headerObserver.observe(header);
+      setInterval(() => {
+        promoIndex = (promoIndex + 1) % promoMessages.length;
+        document.getElementById("promo-text").textContent = promoMessages[promoIndex];
+      }, 4500);
       const params = new URLSearchParams(location.search);
       let currentView = params.get("page") || "product";
       let returnFocus = null;
