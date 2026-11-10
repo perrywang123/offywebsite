@@ -75,3 +75,5 @@ KOL平台实施与隔离验收见 [记录](kol-platform-validation.md)；运行�
 ## 2026-11-09 国家选择与判定
 
 Ship to 与会话国家偏好已实现、测试并独立发布主站；优先手动/已存会话、可信 IP、地理时区、区域语言，最后 US。GeoLite Country 自动更新已于 2026-11-10 独立启用：首次下载通过，每 72 小时检查新版，限 CPU 0.1 / RAM 96 MiB，不重建或重启主站、后台或订单 worker。实现与操作见 [market-localization.md](market-localization.md)，生产证据见[验收记录](market-localization-verification.md)。
+
+2026-11-10：自动推荐改为固定 30 分钟有效，手动选择仍保留 90 天。旧版无时间戳自动 Cookie 失效，读取不续期；导航/返回前台同步过期上下文，购物袋国家冲突先阻断再刷新，保留商品及数量。全量 886 项测试、生产构建及浏览器验证通过，版本 `9618d5c` 已用 GitHub 预构建镜像独立发布主站，后台和各 worker 未被替换。见[有效期验收](market-preference-expiry-verification.md)。

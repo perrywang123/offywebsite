@@ -5,7 +5,7 @@
 ## 顺序与稳定性
 
 1. 有效已保存偏好先使用。手动选择保存 90 天；自动判定固定 30 分钟有效，记录服务器生成时间 `resolvedAt`，Cookie Max-Age 为 1800 秒。均为 HttpOnly、SameSite=Lax 的同源 Cookie。读取和重复 resolve 不延长自动结果的有效期。
-2. 新会话使用明确配置并由可信入口覆盖的国家请求头；标准 Nginx 部署默认不信任客户端自报国家头。
+2. 无有效偏好时，使用明确配置并由可信入口覆盖的国家请求头；标准 Nginx 部署默认不信任客户端自报国家头。
 3. 使用 Nginx 覆盖的 X-Real-IP，兼容无该头时既有 XFF 路径，解析本机国家库。原始 IP 不写入新增判定记录。
 4. IP 无有效结果时，用浏览器 IANA 地理时区；再用有区域标识的浏览器语言。裸 en、zh 与 UTC 偏移不能推断国家。
 5. 无法识别时默认 US。
@@ -52,3 +52,5 @@ docker compose -f docker-compose.prod.yml -f deploy/docker-compose.geoip.yml ps 
 ## 边界
 
 IP、时区、语言均是推荐信号，VPN、旅行和跨境收货会造成偏差，用户确认最可靠。标准部署要求应用端口只监听 loopback，Nginx 覆盖真实 IP；接 CDN 时需要单独配置并验证可信代理，不能直接信任所有传入国家头。Cookie 被禁用时仍可浏览，但无法声称保存国家成功。
+
+自动推荐时效、浏览器及主站独立发布证据见[2026-11-10 有效期验收](market-preference-expiry-verification.md)。

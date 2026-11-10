@@ -22,4 +22,13 @@
 
 ## 发布
 
-本地验证完成；生产发布及部署后证据在发布完成后补充。发布采用 GitHub Actions 预构建镜像，仅更新 app；不在生产服务器编译，不更新后台、订单 worker、Meta worker、GeoLite updater 或 Nginx。
+2026-11-10 20:19（上海时间）已独立发布主站。代码与镜像版本 `9618d5ce6f7273cef393294cf45cded682013899`；[GitHub Actions 构建](https://github.com/perrywang123/offywebsite/actions/runs/42814098242)成功，Linux amd64 镜像校验和、版本标签与原生数据库检查通过。
+
+- 服务器只下载和导入镜像，未编译。临时候选容器限制 0.5 CPU / 768 MiB，生产数据卷只读、SQLite 使用临时路径，关闭 KOL/Meta；健康、真实 Shopify 页面、过期重判、手动保留和 409 防护通过后删除候选容器与私密临时配置。
+- 使用 `bash deploy/update-storefront.sh --kol --prebuilt`，先完成一致性 SQLite 备份，再只替换 app。原主站镜像保留回退标签，导入产物后恢复原后台镜像标签。
+- app healthy、restart=0，运行镜像版本匹配；公网首页 HTTP 200，健康接口正常。通过公网独立请求验证过期/旧自动 Cookie 不再复用，旧手动 GB Cookie 仍保留。
+- 公网独立 resolve 请求返回自动 Cookie Max-Age=1800；下一次携带该 Cookie 重复 resolve，生成时间不变、无 Set-Cookie，确认生产没有滑动续期。
+- Chrome 正常会话原来的旧 GB/ip 自动 Cookie 重新判为当前出口 SG，浏览器回读 `persisted=true, source=ip, resolvedAt=1794313227470`。用户既有 `black-pearl` 数量 1 保留，真实市场为 SGD 55.90。此结果表明当前 IP 归属新加坡，不代表用户物理位置。
+- 对比发布前后快照：后台、KOL worker、Meta worker、GeoLite updater 的容器 ID、启动时间、镜像、配置哈希、挂载和端口完全相同；主站环境、数据卷、端口及服务器 `.env` 校验和一致。未修改 Nginx、Shopify 配置、商品、库存、订单或付款；没有真实支付测试。
+
+浏览器证据保存于本地验收产物 `offy-market-expiry-bag-us-2026-11-10.png`（隔离环境）与 `offy-market-expiry-production-2026-11-10.png`（生产）。测试代理与本地服务已停止，临时测试入口未发布。
