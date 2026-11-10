@@ -1,0 +1,1246 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
+    <title>OFFY — Mobile navigation concept</title>
+    <style>
+      :root {
+        --ink: #1d1915;
+        --muted: #666;
+        --line: #e5e5e5;
+        --surface: #fff;
+        --canvas: #efefef;
+        --header-h: 100px;
+        color: var(--ink);
+        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Arial, sans-serif;
+        font-synthesis: none;
+      }
+      * {
+        box-sizing: border-box;
+      }
+      html {
+        scroll-behavior: smooth;
+        scroll-padding-top: calc(var(--header-h) + 16px);
+      }
+      body {
+        margin: 0;
+        background: var(--canvas);
+      }
+      button,
+      a {
+        -webkit-tap-highlight-color: transparent;
+      }
+      button,
+      input {
+        font: inherit;
+      }
+      button {
+        cursor: pointer;
+        color: inherit;
+      }
+      a {
+        color: inherit;
+        text-decoration: none;
+      }
+      button:disabled {
+        cursor: default;
+      }
+      button:focus-visible,
+      a:focus-visible,
+      input:focus-visible {
+        outline: 2px solid var(--ink);
+        outline-offset: 3px;
+      }
+      svg {
+        width: 22px;
+        height: 22px;
+        fill: none;
+        stroke: currentColor;
+        stroke-width: 1.45;
+        stroke-linecap: round;
+        stroke-linejoin: round;
+        flex-shrink: 0;
+      }
+      [hidden] {
+        display: none !important;
+      }
+      .icon-library {
+        position: absolute;
+        width: 0;
+        height: 0;
+        overflow: hidden;
+      }
+      .site-header {
+        position: sticky;
+        top: 0;
+        z-index: 20;
+        background: var(--surface);
+        padding-top: env(safe-area-inset-top);
+        border-bottom: 1px solid var(--line);
+      }
+      .toolbar {
+        height: 56px;
+        padding: 0 12px 0 16px;
+        display: flex;
+        align-items: center;
+        gap: 4px;
+      }
+      .logo {
+        display: flex;
+        align-items: center;
+        min-height: 44px;
+        margin-right: auto;
+      }
+      .logo img {
+        width: 88px;
+        height: auto;
+        display: block;
+      }
+      .tool {
+        border: 0;
+        background: none;
+        height: 44px;
+        min-width: 44px;
+        padding: 0;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        position: relative;
+      }
+      .country-trigger {
+        gap: 5px;
+        font-size: 12px;
+        font-weight: 500;
+        letter-spacing: 0.025em;
+        padding: 0 8px;
+        min-width: 78px;
+      }
+      .country-trigger svg {
+        width: 18px;
+        height: 18px;
+      }
+      .chevron {
+        font-size: 12px;
+        line-height: 1;
+        color: var(--muted);
+        transform: translateY(-2px);
+      }
+      .bag-count {
+        position: absolute;
+        right: 3px;
+        top: 3px;
+        display: flex;
+        width: 14px;
+        height: 14px;
+        align-items: center;
+        justify-content: center;
+        border-radius: 50%;
+        background: var(--ink);
+        color: #fff;
+        font-size: 9px;
+        font-weight: 600;
+        line-height: 1;
+        box-shadow: 0 0 0 2px #fff;
+      }
+      .main-nav {
+        display: grid;
+        grid-template-columns: repeat(4, minmax(0, 1fr));
+        height: 43px;
+        padding: 0 12px;
+        gap: 4px;
+      }
+      .main-nav a {
+        display: flex;
+        position: relative;
+        justify-content: center;
+        align-items: center;
+        height: 44px;
+        font-size: 11.5px;
+        line-height: 1;
+        font-weight: 500;
+        letter-spacing: 0.055em;
+        white-space: nowrap;
+      }
+      .main-nav a[aria-current="page"] {
+        font-weight: 700;
+      }
+      .main-nav a[aria-current="page"]:after {
+        content: "";
+        height: 2px;
+        background: var(--ink);
+        width: 22px;
+        position: absolute;
+        bottom: 0;
+        left: calc(50% - 11px);
+      }
+      .page-content {
+        max-width: 1380px;
+        margin: 0 auto;
+      }
+      .breadcrumb {
+        font-size: 10px;
+        color: #777;
+        letter-spacing: 0.04em;
+        padding: 18px 16px 14px;
+      }
+      .product-gallery {
+        margin: 0 16px;
+        position: relative;
+        background: #f7f7f9;
+        overflow: hidden;
+        aspect-ratio: 4/5;
+      }
+      .product-gallery img {
+        height: 100%;
+        width: 100%;
+        object-fit: cover;
+        display: block;
+      }
+      .gallery-counter {
+        position: absolute;
+        bottom: 12px;
+        right: 12px;
+        padding: 4px 9px;
+        border-radius: 20px;
+        background: rgba(255, 255, 255, 0.9);
+        font-size: 10px;
+        color: #666;
+      }
+      .product-copy {
+        padding: 24px 16px 36px;
+      }
+      .eyebrow {
+        font-size: 10px;
+        font-weight: 600;
+        letter-spacing: 0.14em;
+        text-transform: uppercase;
+        margin: 0 0 12px;
+        color: #666;
+      }
+      h1 {
+        font-size: 29px;
+        line-height: 1.06;
+        letter-spacing: -0.025em;
+        font-weight: 650;
+        margin: 0 0 13px;
+      }
+      .price {
+        font-size: 22px;
+        font-weight: 500;
+        letter-spacing: -0.02em;
+        margin: 0;
+      }
+      .product-description {
+        padding-top: 30px;
+        scroll-margin-top: 116px;
+      }
+      .product-description .lead {
+        font-weight: 600;
+        line-height: 1.7;
+        font-size: 15px;
+        margin: 0 0 12px;
+      }
+      .product-description .body-copy {
+        font-size: 14px;
+        line-height: 1.8;
+        margin: 0;
+        color: #555;
+      }
+      .shipping-note {
+        border-top: 1px solid #d8d8d8;
+        margin-top: 28px;
+        padding-top: 20px;
+        display: flex;
+        align-items: flex-start;
+        gap: 12px;
+      }
+      .shipping-note svg {
+        width: 20px;
+        height: 20px;
+        margin-top: 2px;
+      }
+      .shipping-note p {
+        font-size: 12px;
+        line-height: 1.8;
+        color: #666;
+        margin: 0;
+      }
+      .static-details {
+        padding: 0 16px 24px;
+      }
+      .static-details h2 {
+        font-size: 23px;
+        margin: 18px 0 14px;
+        letter-spacing: -0.025em;
+      }
+      .static-details p {
+        font-size: 13px;
+        color: #666;
+        line-height: 1.7;
+      }
+      .static-details details {
+        border-bottom: 1px solid #d8d8d8;
+      }
+      .static-details summary {
+        padding: 18px 0;
+        font-size: 13px;
+        cursor: pointer;
+      }
+      .design-note {
+        padding: 28px 16px 112px;
+        border-top: 1px solid #d9d9d9;
+        font-size: 10px;
+        line-height: 1.8;
+        color: #777;
+      }
+      .design-note strong {
+        display: block;
+        font-size: 10px;
+        letter-spacing: 0.08em;
+        font-weight: 600;
+      }
+      .buy-bar {
+        position: fixed;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        background: rgba(255, 255, 255, 0.98);
+        border-top: 1px solid var(--line);
+        padding: 12px 16px calc(12px + env(safe-area-inset-bottom));
+        display: flex;
+        gap: 18px;
+        align-items: center;
+        z-index: 15;
+      }
+      .buy-price {
+        font-size: 19px;
+        font-weight: 500;
+        min-width: 84px;
+      }
+      .primary {
+        background: var(--ink);
+        color: #fff;
+        border: 1px solid var(--ink);
+        height: 48px;
+        border-radius: 28px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 14px;
+        font-weight: 550;
+        padding: 0 24px;
+      }
+      .buy-bar .primary {
+        flex: 1;
+      }
+      .home-hero {
+        position: relative;
+        background: #eee;
+      }
+      .home-hero img {
+        display: block;
+        width: 100%;
+        height: auto;
+      }
+      .home-title {
+        padding: 28px 16px 34px;
+      }
+      .home-title h1 {
+        font-size: 31px;
+      }
+      .home-title p {
+        font-size: 13px;
+        line-height: 1.6;
+        color: #666;
+        margin: 12px 0 18px;
+      }
+      .line-link {
+        display: inline-flex;
+        align-items: center;
+        min-height: 44px;
+        font-size: 12px;
+        text-decoration: underline;
+        text-underline-offset: 5px;
+      }
+      .home-content {
+        padding: 4px 16px 40px;
+      }
+      .home-content h2 {
+        font-size: 21px;
+        margin: 14px 0 20px;
+        font-weight: 600;
+      }
+      .news-grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 12px;
+      }
+      .news-grid img {
+        display: block;
+        width: 100%;
+        aspect-ratio: 4/5;
+        object-fit: cover;
+      }
+      .news-grid p {
+        font-size: 10px;
+        letter-spacing: 0.04em;
+        text-transform: uppercase;
+        line-height: 1.5;
+      }
+      .collection-view {
+        padding: 32px 16px;
+      }
+      .collection-view h1 {
+        margin-bottom: 28px;
+      }
+      .collection-card {
+        display: block;
+        margin-bottom: 24px;
+      }
+      .collection-card img {
+        width: 100%;
+        display: block;
+      }
+      .collection-card p {
+        font-size: 12px;
+        font-weight: 600;
+        letter-spacing: 0.08em;
+      }
+      .about-view {
+        padding: 40px 16px;
+      }
+      .about-view h1 {
+        font-size: 37px;
+        max-width: 330px;
+        line-height: 1.1;
+      }
+      .about-view p {
+        font-size: 15px;
+        line-height: 1.8;
+        color: #666;
+      }
+      .shop-view {
+        padding: 30px 16px;
+      }
+      .shop-view h1 {
+        margin-bottom: 28px;
+      }
+      .sample-card {
+        display: block;
+        max-width: 300px;
+      }
+      .sample-card img {
+        width: 100%;
+        display: block;
+        aspect-ratio: 4/5;
+        object-fit: cover;
+      }
+      .sample-card h2 {
+        font-size: 13px;
+        font-weight: 500;
+      }
+      .sample-card p {
+        font-size: 13px;
+        color: #666;
+      }
+      .dialog {
+        border: 0;
+        padding: 0;
+        color: var(--ink);
+        background: #fff;
+        max-width: none;
+        max-height: none;
+      }
+      .dialog::backdrop {
+        background: rgba(29, 25, 21, 0.34);
+      }
+      .drawer {
+        position: fixed;
+        margin: 0 0 0 auto;
+        right: 0;
+        top: 0;
+        width: min(360px, 90vw);
+        height: 100dvh;
+        display: flex;
+        flex-direction: column;
+      }
+      .dialog:not([open]) {
+        display: none;
+      }
+      .drawer-top {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        height: 72px;
+        padding: 0 18px 0 24px;
+        border-bottom: 1px solid var(--line);
+        flex-shrink: 0;
+      }
+      .drawer-top img {
+        width: 86px;
+        height: auto;
+      }
+      .drawer-content {
+        padding: 26px 24px 12px;
+        overflow-y: auto;
+        flex: 1;
+      }
+      .nav-label {
+        font-size: 10px;
+        letter-spacing: 0.15em;
+        font-weight: 600;
+        color: #888;
+        margin: 0 0 12px;
+      }
+      .drawer-links {
+        display: flex;
+        flex-direction: column;
+        margin-bottom: 28px;
+      }
+      .drawer-links a {
+        min-height: 46px;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        font-size: 15px;
+        line-height: 1.35;
+        border-bottom: 1px solid #f0f0f0;
+      }
+      .drawer-links .strong {
+        font-size: 20px;
+        letter-spacing: -0.015em;
+        font-weight: 550;
+        margin-bottom: 6px;
+        border-bottom: 0;
+      }
+      .drawer-links .series-name {
+        font-size: 13px;
+        min-height: 44px;
+        color: #555;
+      }
+      .right-arrow {
+        color: #888;
+        font-weight: 400;
+        font-size: 17px;
+      }
+      .drawer-links.help a {
+        font-size: 13px;
+        min-height: 44px;
+      }
+      .drawer-bottom {
+        padding: 15px 24px 22px;
+        border-top: 1px solid var(--line);
+        flex-shrink: 0;
+      }
+      .drawer-country {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        width: 100%;
+        height: 44px;
+        padding: 0;
+        background: none;
+        border: 0;
+        font-size: 12px;
+        text-align: left;
+      }
+      .drawer-country span:first-child {
+        display: flex;
+        gap: 10px;
+        align-items: center;
+      }
+      .drawer-footer {
+        font-size: 10px;
+        letter-spacing: 0.04em;
+        line-height: 1.6;
+        color: #888;
+        margin: 10px 0 0;
+      }
+      .destination {
+        position: fixed;
+        margin: auto 0 0;
+        bottom: 0;
+        left: 0;
+        width: 100%;
+        border-radius: 18px 18px 0 0;
+        max-height: min(90dvh, 700px);
+      }
+      .destination-head {
+        display: flex;
+        justify-content: space-between;
+        gap: 12px;
+        padding: 24px 20px 14px;
+      }
+      .destination-head h2 {
+        font-size: 24px;
+        line-height: 1.12;
+        letter-spacing: -0.035em;
+        margin: 0;
+      }
+      .destination-head p {
+        font-size: 9px;
+        letter-spacing: 0.12em;
+        color: #888;
+        margin: 0 0 10px;
+      }
+      .destination-body {
+        padding: 0 20px 22px;
+      }
+      .destination-body > p {
+        font-size: 12px;
+        color: #777;
+        line-height: 1.6;
+        margin: 0 0 18px;
+      }
+      .country-list {
+        margin: 0;
+        padding: 0;
+        list-style: none;
+      }
+      .country-list label {
+        display: flex;
+        gap: 10px;
+        align-items: center;
+        min-height: 52px;
+        border-radius: 8px;
+        padding: 0 10px;
+        font-size: 13px;
+      }
+      .country-list label:has(input:checked) {
+        background: #f2f1ee;
+      }
+      .country-list input {
+        accent-color: var(--ink);
+        width: 18px;
+        height: 18px;
+        margin: 0;
+      }
+      .currency {
+        margin-left: auto;
+        color: #888;
+        font-size: 11px;
+      }
+      .destination .primary {
+        width: 100%;
+        margin-top: 18px;
+        opacity: 0.55;
+      }
+      .prototype-helper {
+        font-size: 10px !important;
+        line-height: 1.6;
+        color: #888 !important;
+        margin: 14px 0 0 !important;
+      }
+      .simple-modal {
+        position: fixed;
+        inset: 0;
+        margin: auto;
+        width: calc(100% - 40px);
+        max-width: 400px;
+        border-radius: 12px;
+        padding: 24px;
+      }
+      .simple-modal h2 {
+        font-size: 23px;
+        letter-spacing: -0.03em;
+        margin: 0 0 16px;
+      }
+      .simple-modal p {
+        font-size: 14px;
+        line-height: 1.75;
+        color: #666;
+      }
+      .simple-modal .primary {
+        width: 100%;
+        margin-top: 22px;
+      }
+      .simple-top {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+      }
+      .simple-top .tool {
+        margin: -14px -12px 0 0;
+      }
+      body.locked {
+        overflow: hidden;
+      }
+      @media (min-width: 768px) {
+        :root {
+          --header-h: 72px;
+        }
+        .toolbar {
+          height: 72px;
+          padding: 0 4%;
+          gap: 12px;
+        }
+        .logo img {
+          width: 100px;
+        }
+        .main-nav {
+          display: flex;
+          position: absolute;
+          left: 50%;
+          top: 14px;
+          transform: translateX(-50%);
+          gap: 24px;
+          width: auto;
+          height: 44px;
+        }
+        .main-nav a {
+          font-size: 12px;
+          letter-spacing: 0.08em;
+        }
+        .main-nav a[aria-current="page"]:after {
+          bottom: 2px;
+        }
+        .menu-trigger {
+          display: none;
+        }
+        .country-trigger {
+          min-width: 90px;
+        }
+        .country-trigger:before {
+          content: "Ship to";
+          font-size: 11px;
+          color: #555;
+          margin-right: 2px;
+        }
+        .page-content.product-layout {
+          display: grid;
+          grid-template-columns: 1.15fr 1fr;
+          gap: 6%;
+          padding: 32px 4%;
+        }
+        .breadcrumb {
+          grid-column: 1/-1;
+          padding: 0;
+          font-size: 11px;
+        }
+        .product-gallery {
+          margin: 0;
+          grid-column: 1;
+          grid-row: 2/5;
+          aspect-ratio: 4/5;
+        }
+        .product-copy {
+          grid-column: 2;
+          padding: 24px 0;
+        }
+        .product-copy h1 {
+          font-size: 40px;
+        }
+        .static-details {
+          grid-column: 2;
+          padding: 0;
+        }
+        .buy-bar {
+          position: static;
+          grid-column: 2;
+          border-top: 0;
+          padding: 0 0 40px;
+          background: none;
+          max-width: 450px;
+        }
+        .buy-price {
+          display: none;
+        }
+        .design-note {
+          grid-column: 1/-1;
+          padding: 28px 0 48px;
+        }
+        .home-hero img {
+          max-height: 640px;
+          object-fit: cover;
+        }
+        .home-title {
+          padding: 48px 4%;
+        }
+        .home-content {
+          padding: 0 4% 60px;
+        }
+        .news-grid {
+          grid-template-columns: 1fr 1fr;
+          max-width: 800px;
+        }
+        .collection-view,
+        .about-view,
+        .shop-view {
+          padding: 48px 4%;
+        }
+        .collection-card {
+          max-width: 800px;
+        }
+        .destination {
+          width: 460px;
+          inset: 0 0 0 auto;
+          margin: 0;
+          height: 100dvh;
+          max-height: none;
+          border-radius: 0;
+        }
+        .destination-head {
+          padding-top: 36px;
+        }
+        .destination-body {
+          padding-inline: 26px;
+        }
+        .drawer {
+          width: 360px;
+        }
+      }
+      @media (prefers-reduced-motion: reduce) {
+        html {
+          scroll-behavior: auto;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <svg class="icon-library" aria-hidden="true">
+      <defs>
+        <symbol id="globe" viewBox="0 0 24 24">
+          <circle cx="12" cy="12" r="9" />
+          <ellipse cx="12" cy="12" rx="4" ry="9" />
+          <path d="M3 12h18" />
+        </symbol>
+        <symbol id="bag" viewBox="0 0 24 24">
+          <path d="M5.5 7.5h13l1 13h-15z" />
+          <path d="M8.5 8V6a3.5 3.5 0 0 1 7 0v2" />
+        </symbol>
+        <symbol id="menu" viewBox="0 0 24 24"><path d="M4 6h16M4 12h16M4 18h16" /></symbol>
+        <symbol id="close" viewBox="0 0 24 24"><path d="m6 6 12 12M18 6 6 18" /></symbol>
+        <symbol id="truck" viewBox="0 0 24 24">
+          <path d="M2 5h12v12H2zM14 10h4l4 4v3h-8" />
+          <circle cx="6" cy="18" r="2" />
+          <circle cx="18" cy="18" r="2" />
+        </symbol>
+      </defs>
+    </svg>
+    <header class="site-header">
+      <div class="toolbar">
+        <a class="logo" href="?page=home" data-page="home" aria-label="OFFY home"
+          ><img src="/assets/brand/is-offy-logo.png" alt="is.offy"
+        /></a>
+        <button
+          class="tool country-trigger"
+          type="button"
+          data-open="destination"
+          aria-label="Ship to United States, USD"
+          aria-haspopup="dialog"
+        >
+          <svg aria-hidden="true"><use href="#globe" /></svg><span>US</span
+          ><span class="chevron" aria-hidden="true">⌄</span>
+        </button>
+        <button
+          class="tool"
+          type="button"
+          data-open="bag-dialog"
+          aria-label="Open bag, 0 items"
+          aria-haspopup="dialog"
+        >
+          <svg aria-hidden="true"><use href="#bag" /></svg
+          ><span class="bag-count" aria-hidden="true">0</span>
+        </button>
+        <button
+          class="tool menu-trigger"
+          type="button"
+          data-open="menu-drawer"
+          aria-label="Open menu"
+          aria-expanded="false"
+          aria-controls="menu-drawer"
+        >
+          <svg aria-hidden="true"><use href="#menu" /></svg>
+        </button>
+      </div>
+      <nav class="main-nav" aria-label="Main navigation">
+        <a href="?page=shop&amp;entry=new" data-page="shop" data-entry="new">NEW IN</a>
+        <a href="?page=shop" data-page="shop" data-entry="shop">SHOP</a>
+        <a href="?page=series" data-page="series">SERIES</a>
+        <a href="?page=about" data-page="about">ABOUT US</a>
+      </nav>
+    </header>
+    <main id="main-content">
+      <article class="page-content product-layout" data-screen="product">
+        <div class="breadcrumb">Shop / OFFY Princess Series</div>
+        <div class="product-gallery">
+          <img class="sample-image" alt="LITTLE HEIRESS" /><span class="gallery-counter"
+            >1 / 6</span
+          >
+        </div>
+        <section class="product-copy">
+          <p class="eyebrow">OFFY PRINCESS SERIES</p>
+          <h1>LITTLE HEIRESS</h1>
+          <p class="price sample-price">—</p>
+          <div id="details" class="product-description">
+            <p class="lead">Born into elegance, with nothing to prove.</p>
+            <p class="body-copy" id="sample-description"></p>
+            <div class="shipping-note">
+              <svg aria-hidden="true"><use href="#truck" /></svg>
+              <p>
+                Worldwide shipping: $15 USD per order.<br />For US orders of 3+ OFFYs, shipping is
+                $20 USD.
+              </p>
+            </div>
+          </div>
+        </section>
+        <section class="static-details">
+          <details>
+            <summary>Shipping &amp; returns</summary>
+            <p>
+              Final shipping and taxes are confirmed at checkout. The existing shipping information
+              stays in the page and bag.
+            </p>
+          </details>
+        </section>
+        <div class="buy-bar">
+          <span class="buy-price sample-price">—</span
+          ><button type="button" class="primary" data-open="preview-dialog">Add to Bag</button>
+        </div>
+        <footer class="design-note">
+          <strong>OFFY · DESIGN PREVIEW</strong>Navigation concept only. Product details are a dated
+          Shopify sample; this preview cannot create a cart, checkout or order.
+        </footer>
+      </article>
+      <div class="page-content" data-screen="home" hidden>
+        <section class="home-hero">
+          <img src="/assets/hero/hero-streetwear.jpg" alt="OFFY Streetwear Series" />
+        </section>
+        <section class="home-title">
+          <p class="eyebrow">STREETWEAR SERIES</p>
+          <h1>Weekend in motion.</h1>
+          <p>A little OFFY, wherever the day takes you.</p>
+          <a href="?page=shop" data-page="shop" class="line-link">Explore the looks</a>
+        </section>
+        <section class="home-content">
+          <h2>The Latest from OFFY</h2>
+          <div class="news-grid">
+            <a href="?page=product" data-page="product"
+              ><img src="/assets/news/news-01.jpg" alt="Romanticizing Everyday Life" />
+              <p>Romanticizing everyday life</p></a
+            ><a href="?page=product" data-page="product"
+              ><img src="/assets/news/news-04.jpg" alt="Cute, Never Basic" />
+              <p>Cute, never basic</p></a
+            >
+          </div>
+        </section>
+        <footer class="design-note">
+          <strong>OFFY · DESIGN PREVIEW</strong>Homepage content is shown only as context for the
+          proposed header.
+        </footer>
+      </div>
+      <div class="page-content" data-screen="shop" hidden>
+        <section class="shop-view">
+          <p class="eyebrow">THE OFFY COLLECTION</p>
+          <h1>All Looks</h1>
+          <a class="sample-card" href="?page=product" data-page="product"
+            ><img class="sample-image" alt="LITTLE HEIRESS" />
+            <h2>LITTLE HEIRESS</h2>
+            <p class="sample-price">—</p></a
+          >
+        </section>
+        <footer class="design-note">
+          <strong>OFFY · DESIGN PREVIEW</strong>One product sample illustrates the navigation
+          destination. Production NEW IN and SHOP retain their existing /products destination and
+          catalog rules.
+        </footer>
+      </div>
+      <div class="page-content" data-screen="series" hidden>
+        <section class="collection-view">
+          <p class="eyebrow">A LOOK FOR EVERY MOOD</p>
+          <h1>Explore the series</h1>
+          <a class="collection-card" href="?page=product" data-page="product"
+            ><img src="/assets/hero/hero-princess.jpg" alt="OFFY Princess Series" />
+            <p>OFFY PRINCESS SERIES →</p></a
+          ><a class="collection-card" href="?page=product" data-page="product"
+            ><img src="/assets/hero/hero-streetwear.jpg" alt="OFFY Streetwear Series" />
+            <p>OFFY STREETWEAR SERIES →</p></a
+          ><a class="collection-card" href="?page=product" data-page="product"
+            ><img src="/assets/hero/hero-dressup.jpg" alt="OFFY Dress-up Series" />
+            <p>OFFY DRESS-UP SERIES →</p></a
+          >
+        </section>
+        <footer class="design-note">
+          <strong>OFFY · DESIGN PREVIEW</strong>The three original collections remain unchanged.
+          Links simulate navigation in this local preview.
+        </footer>
+      </div>
+      <div class="page-content" data-screen="about" hidden>
+        <section class="about-view">
+          <p class="eyebrow">ABOUT OFFY</p>
+          <h1>Meet who you<br />love to be.</h1>
+          <p>Imagine with Love.<br />Create with Companion.</p>
+          <img
+            src="/assets/home/collab-ips.png"
+            alt="The OFFY characters"
+            style="width: 100%; margin-top: 28px"
+          />
+        </section>
+        <footer class="design-note">
+          <strong>OFFY · DESIGN PREVIEW</strong>Brand content is context only. The production About
+          page will keep its current content.
+        </footer>
+      </div>
+    </main>
+    <dialog id="menu-drawer" class="dialog drawer" aria-labelledby="menu-title">
+      <div class="drawer-top">
+        <img src="/assets/brand/is-offy-logo.png" alt="is.offy" /><span
+          id="menu-title"
+          class="eyebrow"
+          style="position: absolute; left: -9999px"
+          >Menu</span
+        ><button class="tool" type="button" data-close aria-label="Close menu">
+          <svg aria-hidden="true"><use href="#close" /></svg>
+        </button>
+      </div>
+      <div class="drawer-content">
+        <p class="nav-label">EXPLORE OFFY</p>
+        <nav aria-label="Collections" class="drawer-links">
+          <a class="strong" href="?page=shop" data-page="shop"
+            >Shop all looks<span class="right-arrow" aria-hidden="true">↗</span></a
+          ><a class="series-name" href="?page=series" data-page="series"
+            >OFFY Princess Series<span class="right-arrow" aria-hidden="true">→</span></a
+          ><a class="series-name" href="?page=series" data-page="series"
+            >OFFY Streetwear Series<span class="right-arrow" aria-hidden="true">→</span></a
+          ><a class="series-name" href="?page=series" data-page="series"
+            >OFFY Dress-up Series<span class="right-arrow" aria-hidden="true">→</span></a
+          >
+        </nav>
+        <p class="nav-label">DISCOVER</p>
+        <nav aria-label="Discover" class="drawer-links">
+          <a href="?page=shop&amp;entry=new" data-page="shop" data-entry="new"
+            >New in<span class="right-arrow" aria-hidden="true">→</span></a
+          ><a href="?page=about" data-page="about"
+            >About OFFY<span class="right-arrow" aria-hidden="true">→</span></a
+          >
+        </nav>
+        <p class="nav-label">HERE TO HELP</p>
+        <nav aria-label="Help" class="drawer-links help">
+          <a href="#shipping" data-help="Shipping & returns"
+            >Shipping &amp; returns<span class="right-arrow" aria-hidden="true">→</span></a
+          ><a href="#faq" data-help="Frequently asked questions"
+            >FAQ<span class="right-arrow" aria-hidden="true">→</span></a
+          ><a href="#contact" data-help="Contact OFFY"
+            >Contact us<span class="right-arrow" aria-hidden="true">→</span></a
+          >
+        </nav>
+      </div>
+      <div class="drawer-bottom">
+        <button class="drawer-country" type="button" data-open="destination">
+          <span
+            ><svg aria-hidden="true"><use href="#globe" /></svg>United States · USD</span
+          ><span aria-hidden="true">⌄</span>
+        </button>
+        <p class="drawer-footer">Imagine with Love.<br />Create with Companion.</p>
+      </div>
+    </dialog>
+    <dialog id="destination" class="dialog destination" aria-labelledby="destination-title">
+      <div class="destination-head">
+        <div>
+          <p>A LITTLE OFFY, ANYWHERE</p>
+          <h2 id="destination-title">Where are we shipping?</h2>
+        </div>
+        <button type="button" class="tool" data-close aria-label="Close destination selector">
+          <svg aria-hidden="true"><use href="#close" /></svg>
+        </button>
+      </div>
+      <div class="destination-body">
+        <p>
+          Shop in your destination’s currency.<br />Final shipping and taxes are confirmed at
+          checkout.
+        </p>
+        <ul class="country-list">
+          <li>
+            <label
+              ><input type="radio" name="country" value="US" checked />United States<span
+                class="currency"
+                >USD</span
+              ></label
+            >
+          </li>
+          <li>
+            <label
+              ><input type="radio" name="country" value="GB" />United Kingdom<span class="currency"
+                >GBP</span
+              ></label
+            >
+          </li>
+          <li>
+            <label
+              ><input type="radio" name="country" value="SG" />Singapore<span class="currency"
+                >SGD</span
+              ></label
+            >
+          </li>
+          <li>
+            <label
+              ><input type="radio" name="country" value="HK" />Hong Kong SAR<span class="currency"
+                >HKD</span
+              ></label
+            >
+          </li>
+        </ul>
+        <button type="button" class="primary" disabled>Confirm destination</button>
+        <p class="prototype-helper">
+          Design preview only. Market confirmation is disabled; the existing live country selector
+          will be reused after approval.
+        </p>
+      </div>
+    </dialog>
+    <dialog id="bag-dialog" class="dialog simple-modal" aria-labelledby="bag-title">
+      <div class="simple-top">
+        <h2 id="bag-title">Your bag</h2>
+        <button type="button" class="tool" data-close aria-label="Close bag">
+          <svg aria-hidden="true"><use href="#close" /></svg>
+        </button>
+      </div>
+      <p>Your bag is empty.</p>
+      <p class="prototype-helper">
+        This is a local design preview, separate from your real shopping bag.
+      </p>
+      <button type="button" class="primary" data-close>Keep exploring</button>
+    </dialog>
+    <dialog id="preview-dialog" class="dialog simple-modal" aria-labelledby="preview-title">
+      <h2 id="preview-title">Design preview</h2>
+      <p>
+        No item has been added. This prototype demonstrates navigation only and cannot create a
+        checkout or order.
+      </p>
+      <button type="button" class="primary" data-close>Back to preview</button>
+    </dialog>
+    <dialog id="help-dialog" class="dialog simple-modal" aria-labelledby="help-title">
+      <h2 id="help-title">Help</h2>
+      <p>
+        This entry will keep its existing OFFY destination. The current page is only a navigation
+        design preview.
+      </p>
+      <button type="button" class="primary" data-close>Back to preview</button>
+    </dialog>
+    <script>
+      const params = new URLSearchParams(location.search);
+      let currentView = params.get("page") || "product";
+      let returnFocus = null;
+      function closeDialogs() {
+        document.querySelectorAll("dialog[open]").forEach((d) => d.close());
+        document.body.classList.remove("locked");
+        document.querySelector(".menu-trigger").setAttribute("aria-expanded", "false");
+      }
+      function setView(page, entry, push = true) {
+        if (!["home", "shop", "series", "about", "product"].includes(page)) page = "product";
+        closeDialogs();
+        currentView = page;
+        document
+          .querySelectorAll("[data-screen]")
+          .forEach((s) => (s.hidden = s.dataset.screen !== page));
+        document.querySelectorAll(".main-nav a").forEach((a) => {
+          const active =
+            page === "product"
+              ? a.dataset.entry === "shop"
+              : page === "shop"
+                ? a.dataset.entry === (entry || "shop")
+                : a.dataset.page === page;
+          if (active) a.setAttribute("aria-current", "page");
+          else a.removeAttribute("aria-current");
+        });
+        if (push)
+          history.pushState({ page, entry }, "", `?page=${page}${entry ? "&entry=" + entry : ""}`);
+        window.scrollTo(0, 0);
+      }
+      function openDialog(id, trigger) {
+        closeDialogs();
+        const dialog = document.getElementById(id);
+        returnFocus = trigger?.closest("dialog")
+          ? document.querySelector(".country-trigger")
+          : trigger;
+        if (id === "destination") dialog.querySelector('input[value="US"]').checked = true;
+        dialog.showModal();
+        document.body.classList.add("locked");
+        document
+          .querySelector(".menu-trigger")
+          .setAttribute("aria-expanded", String(id === "menu-drawer"));
+      }
+      document.addEventListener("click", (e) => {
+        const navigation = e.target.closest("[data-page]");
+        if (navigation) {
+          e.preventDefault();
+          setView(navigation.dataset.page, navigation.dataset.entry);
+          return;
+        }
+        const opener = e.target.closest("[data-open]");
+        if (opener) {
+          openDialog(opener.dataset.open, opener);
+          return;
+        }
+        if (e.target.closest("[data-close]")) {
+          closeDialogs();
+          returnFocus?.focus();
+          return;
+        }
+        const help = e.target.closest("[data-help]");
+        if (help) {
+          e.preventDefault();
+          document.getElementById("help-title").textContent = help.dataset.help;
+          openDialog("help-dialog", document.querySelector(".menu-trigger"));
+        }
+      });
+      document.querySelectorAll("dialog").forEach((d) => {
+        d.addEventListener("cancel", (e) => {
+          e.preventDefault();
+          closeDialogs();
+          returnFocus?.focus();
+        });
+        d.addEventListener("click", (e) => {
+          if (e.target !== d) return;
+          const r = d.getBoundingClientRect();
+          if (
+            e.clientX < r.left ||
+            e.clientX > r.right ||
+            e.clientY < r.top ||
+            e.clientY > r.bottom
+          ) {
+            closeDialogs();
+            returnFocus?.focus();
+          }
+        });
+      });
+      window.addEventListener("popstate", () => {
+        const p = new URLSearchParams(location.search);
+        setView(p.get("page") || "product", p.get("entry"), false);
+      });
+      setView(currentView, params.get("entry"), false);
+      if (params.get("state") === "scrolled")
+        requestAnimationFrame(() => {
+          window.scrollTo(
+            0,
+            document.getElementById("details").getBoundingClientRect().top + window.scrollY - 120,
+          );
+        });
+      if (params.get("state") === "menu")
+        openDialog("menu-drawer", document.querySelector(".menu-trigger"));
+      fetch("./sample.json")
+        .then((r) => r.json())
+        .then((data) => {
+          const product = data.product;
+          document.querySelectorAll(".sample-image").forEach((i) => (i.src = product.previewImage));
+          const price = new Intl.NumberFormat("en-US", {
+            style: "currency",
+            currency: product.currency,
+          }).format(product.priceCents / 100);
+          document.querySelectorAll(".sample-price").forEach((p) => (p.textContent = price));
+          document.getElementById("sample-description").textContent = product.description.replace(
+            /^Born into elegance, with nothing to prove\.[\s\n]*/i,
+            "",
+          );
+          document.querySelector(".gallery-counter").textContent = `1 / ${product.images.length}`;
+        })
+        .catch(() => {
+          document
+            .querySelectorAll(".sample-price")
+            .forEach((p) => (p.textContent = "Sample unavailable"));
+          document.getElementById("sample-description").textContent =
+            "This static design sample could not be loaded.";
+        });
+    </script>
+  </body>
+</html>

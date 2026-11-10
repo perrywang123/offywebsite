@@ -1,0 +1,21 @@
+{
+  "prototypeOnly": true,
+  "checkedAt": "2026-11-10T18:14:22.016Z",
+  "country": "US",
+  "product": {
+    "code": "royal-grey",
+    "name": "LITTLE HEIRESS",
+    "priceCents": 4590,
+    "currency": "USD",
+    "images": [
+      "https://cdn.shopify.com/s/files/1/0999/4174/4929/files/11_379d0ef2-00be-4371-a12a-7b1aa98a1dfd.jpg?v=1791970049",
+      "https://cdn.shopify.com/s/files/1/0999/4174/4929/files/11-1.png?v=1791970049",
+      "https://cdn.shopify.com/s/files/1/0999/4174/4929/files/11-2.png?v=1791970049",
+      "https://cdn.shopify.com/s/files/1/0999/4174/4929/files/6c0c8c8a-e4b3-47ca-ab8d-175ccc8556a6_aaaa3f7e-6bd2-41eb-90d3-fa0a84fd4c63.png?v=1791828827",
+      "https://cdn.shopify.com/s/files/1/0999/4174/4929/files/b317bd392a5906cbd0f007849fb44665.jpg?v=1793281906",
+      "https://cdn.shopify.com/s/files/1/0999/4174/4929/files/01_af12efdb-b8cf-48de-aeb5-d0ad5d00dcb8.jpg?v=1791810581"
+    ],
+    "description": "Born into elegance, with nothing to prove. Dressed in a soft grey knit with a crisp white collar and a black pleated skirt, finished with a tiny pearl-centered flower at her neck. Quietly confident and effortlessly poised, she carries the charm of a little heiress who never needs to announce her arrival.",
+    "previewImage": "./product.jpg"
+  }
+}

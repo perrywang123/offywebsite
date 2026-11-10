@@ -1,0 +1,330 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>OFFY 手机导航 · 设计确认</title>
+    <style>
+      :root {
+        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC", sans-serif;
+        color: #1d1915;
+        background: #f5f4f1;
+      }
+      * {
+        box-sizing: border-box;
+      }
+      body {
+        margin: 0;
+      }
+      a {
+        color: inherit;
+      }
+      button {
+        font: inherit;
+        cursor: pointer;
+      }
+      button:focus-visible,
+      a:focus-visible {
+        outline: 2px solid #1d1915;
+        outline-offset: 3px;
+      }
+      .review-top {
+        max-width: 1136px;
+        margin: auto;
+        padding: 28px 24px;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 20px;
+      }
+      .review-top img {
+        width: 100px;
+      }
+      .status {
+        font-size: 12px;
+        color: #777;
+        letter-spacing: 0.025em;
+      }
+      .layout {
+        max-width: 1136px;
+        margin: auto;
+        display: grid;
+        grid-template-columns: minmax(0, 1fr) 414px;
+        gap: 72px;
+        padding: 12px 24px 48px;
+        align-items: start;
+      }
+      .notes {
+        padding-top: 36px;
+      }
+      .kicker {
+        font-size: 11px;
+        letter-spacing: 0.16em;
+        color: #888;
+        font-weight: 600;
+        margin: 0 0 22px;
+      }
+      h1 {
+        font-size: 44px;
+        line-height: 1.25;
+        letter-spacing: -0.04em;
+        font-weight: 600;
+        margin: 0 0 22px;
+      }
+      .intro {
+        font-size: 15px;
+        color: #666;
+        line-height: 1.95;
+        max-width: 430px;
+        margin: 0 0 30px;
+      }
+      .points {
+        padding: 0;
+        margin: 0 0 32px;
+        list-style: none;
+        border-top: 1px solid #ddd;
+      }
+      .points li {
+        display: grid;
+        grid-template-columns: 30px 1fr;
+        gap: 10px;
+        padding: 18px 0;
+        border-bottom: 1px solid #ddd;
+      }
+      .num {
+        font-size: 11px;
+        font-variant-numeric: tabular-nums;
+        color: #999;
+        padding-top: 3px;
+      }
+      .point-title {
+        font-size: 14px;
+        font-weight: 600;
+        margin: 0 0 5px;
+      }
+      .points p {
+        font-size: 12px;
+        line-height: 1.8;
+        color: #777;
+        margin: 0;
+      }
+      .switcher-label {
+        font-size: 11px;
+        color: #888;
+        margin: 0 0 10px;
+      }
+      .switcher {
+        display: flex;
+        gap: 6px;
+        flex-wrap: wrap;
+      }
+      .switcher button {
+        min-height: 44px;
+        padding: 0 13px;
+        border: 1px solid #d5d3ce;
+        border-radius: 6px;
+        background: transparent;
+        font-size: 12px;
+        color: #666;
+      }
+      .switcher button[aria-pressed="true"] {
+        background: #1d1915;
+        border-color: #1d1915;
+        color: #fff;
+      }
+      .boundary {
+        font-size: 11px;
+        color: #888;
+        line-height: 1.9;
+        margin: 24px 0 0;
+      }
+      .boundary a {
+        text-underline-offset: 3px;
+      }
+      .phone-label {
+        font-size: 10px;
+        color: #888;
+        letter-spacing: 0.08em;
+        padding: 0 12px 12px;
+        display: flex;
+        justify-content: space-between;
+      }
+      .phone-shell {
+        padding: 11px;
+        background: #fff;
+        border: 1px solid #d9d7d2;
+        border-radius: 22px;
+        width: 414px;
+      }
+      .phone-shell iframe {
+        display: block;
+        width: 390px;
+        height: 844px;
+        border: 0;
+        border-radius: 12px;
+        background: #fff;
+      }
+      .frame-note {
+        text-align: center;
+        font-size: 10px;
+        color: #888;
+        margin: 14px 0 0;
+        line-height: 1.6;
+      }
+      @media (max-width: 900px) {
+        .layout {
+          gap: 32px;
+          grid-template-columns: minmax(0, 1fr) 392px;
+        }
+        .phone-shell {
+          width: 392px;
+        }
+        .phone-shell iframe {
+          width: 368px;
+        }
+        .notes {
+          padding-top: 20px;
+        }
+        h1 {
+          font-size: 34px;
+        }
+      }
+      @media (max-width: 730px) {
+        .review-top {
+          padding: 24px 20px;
+        }
+        .review-top img {
+          width: 88px;
+        }
+        .layout {
+          display: flex;
+          flex-direction: column;
+          padding: 0 20px 32px;
+          gap: 28px;
+        }
+        .notes {
+          padding: 10px 0 0;
+          width: 100%;
+        }
+        h1 {
+          font-size: 32px;
+        }
+        .intro {
+          font-size: 13px;
+          margin-bottom: 22px;
+        }
+        .points {
+          display: none;
+        }
+        .boundary {
+          margin: 16px 0 0;
+        }
+        .preview {
+          width: 100%;
+        }
+        .phone-shell {
+          width: 100%;
+          max-width: 414px;
+          padding: 7px;
+          margin: auto;
+        }
+        .phone-shell iframe {
+          width: 100%;
+          height: 844px;
+        }
+        .phone-label {
+          max-width: 414px;
+          margin: auto;
+        }
+        .status {
+          font-size: 10px;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <header class="review-top">
+      <img src="/assets/brand/is-offy-logo.png" alt="is.offy" /><span class="status"
+        >设计确认稿 · 尚未改动正式站点</span
+      >
+    </header>
+    <main class="layout">
+      <section class="notes">
+        <p class="kicker">OFFY / MOBILE NAVIGATION</p>
+        <h1>常用入口，<br />直接出现在顶栏。</h1>
+        <p class="intro">
+          移除黑色轮播提示条，用两行清晰的导航承接品牌、国家与购物。所有手机页面使用同一组四个主入口，向下浏览时始终可见。
+        </p>
+        <ol class="points">
+          <li>
+            <span class="num">01</span>
+            <div>
+              <h2 class="point-title">第一行 · 品牌与工具</h2>
+              <p>OFFY Logo、国家短码、购物袋数量、菜单。56px 高，减少文字挤占。</p>
+            </div>
+          </li>
+          <li>
+            <span class="num">02</span>
+            <div>
+              <h2 class="point-title">第二行 · 四个常用入口</h2>
+              <p>NEW IN / SHOP / SERIES / ABOUT US。44px 高，所有页面常驻。</p>
+            </div>
+          </li>
+          <li>
+            <span class="num">03</span>
+            <div>
+              <h2 class="point-title">侧栏 · 系列和帮助</h2>
+              <p>三个系列、品牌与帮助入口。点击遮罩、关闭按钮或按 Esc 均可关闭。</p>
+            </div>
+          </li>
+          <li>
+            <span class="num">04</span>
+            <div>
+              <h2 class="point-title">保留原来的购买与市场链路</h2>
+              <p>国家面板、购物袋和底部购买操作沿用现有逻辑。桌面保留单行导航，仅去掉黑条。</p>
+            </div>
+          </li>
+        </ol>
+        <p class="switcher-label">切换预览场景 · 右侧页面可点击</p>
+        <div class="switcher" role="group" aria-label="预览场景">
+          <button type="button" data-scenario="product" aria-pressed="true">商品页</button
+          ><button type="button" data-scenario="home" aria-pressed="false">首页</button
+          ><button type="button" data-scenario="menu" aria-pressed="false">侧栏展开</button
+          ><button type="button" data-scenario="scrolled" aria-pressed="false">向下浏览</button>
+        </div>
+        <p class="boundary">
+          仅为本地交互原型，不下单、不改价、不上报广告事件。<br />正式改造将在你确认后启动。<a
+            href="proposal.md"
+            target="_blank"
+            rel="noopener"
+            >查看方案说明 ↗</a
+          >
+        </p>
+      </section>
+      <section class="preview" aria-label="手机交互预览">
+        <div class="phone-label">
+          <span>手机预览 · 390 × 844</span><span>CLICK TO EXPLORE</span>
+        </div>
+        <div class="phone-shell">
+          <iframe id="phone" src="index.html?page=product" title="OFFY 手机双行导航原型"></iframe>
+        </div>
+        <p class="frame-note">正文为设计样本。仅确认顶部导航与侧栏交互。</p>
+      </section>
+    </main>
+    <script>
+      const phone = document.getElementById("phone");
+      document.querySelectorAll("[data-scenario]").forEach((button) =>
+        button.addEventListener("click", () => {
+          document
+            .querySelectorAll("[data-scenario]")
+            .forEach((b) => b.setAttribute("aria-pressed", String(b === button)));
+          const scene = button.dataset.scenario;
+          phone.src =
+            "index.html?page=" +
+            (scene === "home" ? "home" : "product") +
+            (["menu", "scrolled"].includes(scene) ? "&state=" + scene : "");
+        }),
+      );
+    </script>
+  </body>
+</html>
