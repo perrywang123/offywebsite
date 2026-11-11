@@ -60,10 +60,11 @@ export function MobileNav({ series }: { series: Series[] }) {
             role="dialog"
             aria-modal="true"
             aria-label="Menu"
-            className="bg-cream absolute top-0 right-0 flex h-full w-4/5 max-w-xs flex-col shadow-2xl"
+            className="bg-cream absolute top-0 right-0 flex h-full w-[88%] max-w-sm flex-col shadow-2xl"
           >
-            <div className="border-cream-line flex items-center justify-between border-b px-6 py-4">
-              <span className="font-display text-lg font-semibold">{t("brandLatin")}</span>
+            <div className="border-cream-line flex shrink-0 items-center justify-between border-b px-6 py-4">
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img src="/assets/brand/is-offy-logo.png" alt="is.offy" className="h-auto w-[88px]" />
               <button
                 type="button"
                 onClick={close}
@@ -73,49 +74,76 @@ export function MobileNav({ series }: { series: Series[] }) {
                 ✕
               </button>
             </div>
-            <nav className="flex flex-col gap-1 px-6 py-6 text-sm font-medium tracking-[var(--tracking-14)] uppercase">
-              <Link
-                href="/products"
-                onClick={close}
-                className="py-3 transition-opacity hover:opacity-60"
+            <div className="min-h-0 flex-1 overflow-y-auto px-6 py-6">
+              <nav
+                aria-label="Mobile navigation"
+                className="flex flex-col text-[15px] font-medium uppercase"
               >
-                {t("nav.new")}
-              </Link>
-              <Link
-                href="/products"
-                onClick={close}
-                className="py-3 transition-opacity hover:opacity-60"
-              >
-                {t("nav.shop")}
-              </Link>
-              <div className="border-cream-line flex flex-col gap-1 border-l pl-4">
-                {series.map((s) => (
+                <Link
+                  href="/products"
+                  onClick={close}
+                  className="border-cream-line/60 flex min-h-12 items-center border-b transition-opacity hover:opacity-60"
+                >
+                  {t("nav.new")}
+                </Link>
+                <Link
+                  href="/products"
+                  onClick={close}
+                  className="flex min-h-12 items-center transition-opacity hover:opacity-60"
+                >
+                  {t("nav.shop")}
+                </Link>
+                <div className="mb-3.5 flex flex-col py-1 pl-3">
+                  {series.map((s) => (
+                    <Link
+                      key={s.slug}
+                      href={`/collections/${s.slug}`}
+                      onClick={close}
+                      className="text-ink-soft hover:text-ink flex min-h-11 items-center text-[13px] font-normal tracking-[0.01em] normal-case transition-colors hover:underline hover:underline-offset-4"
+                    >
+                      {locale === "zh" ? s.name.zh : s.name.en}
+                    </Link>
+                  ))}
+                </div>
+                <Link
+                  href="/collections"
+                  onClick={close}
+                  className="border-cream-line/60 flex min-h-12 items-center border-b transition-opacity hover:opacity-60"
+                >
+                  {t("nav.series")}
+                </Link>
+                <Link
+                  href="/about"
+                  onClick={close}
+                  className="border-cream-line/60 flex min-h-12 items-center border-b transition-opacity hover:opacity-60"
+                >
+                  {t("nav.about")}
+                </Link>
+              </nav>
+              <p className="text-ink-muted mt-7 mb-3 text-[11px] font-semibold tracking-[0.14em] uppercase">
+                {t("footer.policiesHeading")}
+              </p>
+              <nav aria-label={t("footer.policiesHeading")}>
+                {[
+                  ["/policies", t("footer.shippingReturnsLabel")],
+                  ["/faq", t("footer.faqLabel")],
+                  ["/policies/contact", t("footer.contactLabel")],
+                ].map(([href, label]) => (
                   <Link
-                    key={s.slug}
-                    href={`/collections/${s.slug}`}
+                    key={href}
+                    href={href}
                     onClick={close}
-                    className="text-ink-soft hover:text-brown-600 py-2 text-xs transition-colors"
+                    className="border-cream-line/60 flex min-h-11 items-center justify-between border-b text-[13px] transition-opacity hover:opacity-60"
                   >
-                    {locale === "zh" ? s.name.zh : s.name.en}
+                    {label}
+                    <span aria-hidden="true" className="text-ink-muted text-lg">
+                      →
+                    </span>
                   </Link>
                 ))}
-              </div>
-              <Link
-                href="/collections"
-                onClick={close}
-                className="py-3 transition-opacity hover:opacity-60"
-              >
-                {t("nav.series")}
-              </Link>
-              <Link
-                href="/about"
-                onClick={close}
-                className="py-3 transition-opacity hover:opacity-60"
-              >
-                {t("nav.about")}
-              </Link>
-            </nav>
-            <div className="border-cream-line mt-auto border-t px-6 py-4">
+              </nav>
+            </div>
+            <div className="border-cream-line shrink-0 border-t px-6 py-4">
               <CountryTrigger variant="menu" onOpen={close} />
             </div>
           </aside>

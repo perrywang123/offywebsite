@@ -21,12 +21,13 @@
 - 导航切换点 768px；触控规则扩展到 <1024px。不要把两者当成同一断点。
 - 手机商品网格 2 列，md 3 列，lg 4 列；主按钮胶囊 48px 高。
 - 窄屏独立控件以 44px 命中区为目标，正文与名称保持可读；具体历史规范存在例外，应以浏览器实测记录差异。
-- Header 为 sticky 白底，顶部公告轮换；不是透明覆盖首屏。
+- Header 为 sticky 白底，顶部黑色公告按原文与 4.5 秒节奏轮换；不是透明覆盖首屏。手机 <768px 的白色工具栏为 56px 单行，88px Logo、国家短码、图标购物袋和数量角标、菜单；购物袋/菜单命中区至少 44px。768px 起保留原桌面导航与 BAG 胶囊。
+- 手机侧栏保留四个主导航、Shopify 实时系列名和国家入口；Series 子导航仅用 12px 缩进、13px 次级文字及 44px 行高区分，不加框线。可滚动正文包含 Help & Support：Shipping & returns 指向政策目录，FAQ 指向 /faq，Contact Us 指向 /policies/contact；激活链接照常关闭侧栏。
 - Hero 五屏、整屏链接、自动轮换/手势/指示条；箭头和详情胶囊默认不渲染，无暂停按钮。
 - 页面进入动画的 transform 会影响 fixed 定位。PDP 手机购买条使用 sticky；预告 quick view Portal 到 body。
 - 购物袋运费提示采用小型线性购物车图标、浅灰竖分隔线与两段灰色说明组合；文字自然换行，与小计和 Checkout 保持明确间距。装饰图标不参与读屏，实际运费仍由 Shopify 结账确定。
 - `.hscroll` 用于分类和本商品缩略图；同系列换款入口在页尾网格。
-- “The Latest from OFFY” 使用运营选定的五张本地宣传图：主卡 `news-swan-queen.jpg`（2026-11-11 用户提供，绑定 `swan-princess`），副卡依次 `news-04.jpg`、`news-03.jpg`、`news-08.jpg`、`news-02.jpg`。主卡暂不显示 ROMANTICIZING EVERYDAY LIFE，保留 VIEW DETAILS 和整卡链接，图片替代文字取核验后的商品名称。主图 object-position 为 15% center，按钮距右侧 6%，在原卡片比例下避开左下角 Limited 标识；其他布局不变。这些是品牌构图素材，不用 Shopify 商品首图替换；绑定商品的可售状态、商品详情与购买事实仍由 Shopify 核验。
+- “The Latest from OFFY” 使用运营选定的五张本地宣传图：主卡 `news-swan-queen.jpg`（2026-11-11 用户提供，绑定 `swan-princess`），副卡依次 `news-04.jpg`、`news-03.jpg`、`news-08.jpg`、`news-02.jpg`。主卡暂不显示 ROMANTICIZING EVERYDAY LIFE，保留 VIEW DETAILS 和整卡链接，图片替代文字取核验后的商品名称。主图 object-position 为 15% center，View Details 按钮缩小并横向居中：40% 卡宽、最大 176px、40–48px 高、距底部 4%，以避开左下角 Limited 标识；其余五卡网格不变。这些是品牌构图素材，不用 Shopify 商品首图替换；绑定商品的可售状态、商品详情与购买事实仍由 Shopify 核验。
 
 - Ship to：Header 与购物袋入口；桌面右侧面板，手机底部弹层；搜索 Shopify 当前支持目的地，显式确认后刷新同一 URL。非空购物袋保留并重新核对，缺失商品不显示旧事实。
 

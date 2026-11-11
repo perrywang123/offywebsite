@@ -20,6 +20,7 @@ export function CountryTrigger({
     <button
       type="button"
       className={`destination-trigger destination-trigger--${variant}`}
+      aria-label={`Ship to ${name}${currency ? ` · ${currency}` : ""}`}
       aria-haspopup="dialog"
       disabled={market.resolving}
       aria-busy={market.resolving}
@@ -40,7 +41,7 @@ export function CountryTrigger({
         <path d="M3 12h18" />
       </svg>
       <span>
-        Ship to{" "}
+        <span className="destination-trigger-prefix">Ship to </span>
         <span className="destination-trigger-short">
           {market.state.country === "GB" ? "UK" : market.state.country}
         </span>

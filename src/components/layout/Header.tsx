@@ -72,7 +72,7 @@ export function Header({ series }: { series: Series[] }) {
       </div>
 
       {/* 导航栏 */}
-      <div className={`relative h-16 md:h-[72px] ${overHero ? "text-cream" : "text-ink"}`}>
+      <div className={`relative h-14 md:h-[72px] ${overHero ? "text-cream" : "text-ink"}`}>
         {/* 白底层：滚动 / 非 hero 页从上滑入 */}
         <div
           className={`border-cream-line bg-cream/90 ease-editorial absolute inset-0 border-b backdrop-blur-md transition-transform duration-[400ms] ${
@@ -88,12 +88,16 @@ export function Header({ series }: { series: Series[] }) {
           <Link
             href="/"
             aria-label="is.offy"
-            className={`ease-editorial flex min-h-11 items-center transition-all duration-[400ms] lg:min-h-0 ${
+            className={`ease-editorial flex min-h-11 shrink-0 items-center transition-all duration-[400ms] lg:min-h-0 ${
               overHero ? "translate-y-3 opacity-0" : "translate-y-0 opacity-100 delay-200"
             }`}
           >
             {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img src="/assets/brand/is-offy-logo.png" alt="is.offy" className="h-6 w-auto md:h-7" />
+            <img
+              src="/assets/brand/is-offy-logo.png"
+              alt="is.offy"
+              className="h-auto w-[88px] md:h-7 md:w-auto"
+            />
           </Link>
 
           {/* 中/右导航 */}
@@ -144,7 +148,7 @@ export function Header({ series }: { series: Series[] }) {
             </Link>
           </nav>
 
-          <div className="flex items-center gap-3">
+          <div className="flex shrink-0 items-center gap-1 md:gap-3">
             {/* 语言切换按钮已摘除:站点当前对外英文单语(见 src/i18n/routing.ts)。
                 恢复多语言时,把 `import { LanguageSwitcher } from "./LanguageSwitcher";`
                 加回文件顶部,并在下面这个 div 里放回 <LanguageSwitcher />。 */}

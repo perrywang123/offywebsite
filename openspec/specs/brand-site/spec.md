@@ -31,12 +31,17 @@ The homepage SHALL render Hero → NEWS → Shop by Category (FEATURED, separate
 
 ### Requirement: Header behavior
 
-The Header SHALL be sticky with a solid light navigation background and black text, with rotating promo copy above it. Desktop navigation appears from 768px; mobile navigation opens below that breakpoint. ResizeObserver SHALL publish actual header height to --header-h for sticky category offsets.
+The Header SHALL be sticky with a solid light navigation background and black text, with rotating promo copy above it. Desktop navigation appears from 768px; mobile navigation opens below that breakpoint. Below 768px the white toolbar SHALL be a single compact row with a logo, country-code control, icon-only bag with count and menu; bag and menu hit areas SHALL remain at least 44px. The mobile drawer SHALL retain the four primary links and Shopify-supplied series links, display series without surrounding or per-row borders, and include Help & Support links to the policy index, FAQ and contact page. Desktop bag presentation SHALL retain its text capsule. ResizeObserver SHALL publish actual header height to --header-h for sticky category offsets.
 
 #### Scenario: Promo wraps
 
 - **WHEN** a promo message changes header height
 - **THEN** the published height follows the element and category tabs remain offset beneath it
+
+#### Scenario: Mobile actions and help
+
+- **WHEN** a mobile shopper opens the bag, country selector or menu
+- **THEN** the existing actions still work, and a help or navigation link closes the menu before opening its existing site destination
 
 ### Requirement: Hero carousel with landing links
 
@@ -54,7 +59,7 @@ The Hero SHALL contain five photo-based slides, live overlay copy, a 3250/2041 a
 
 ### Requirement: News module
 
-NEWS SHALL show The Latest from OFFY without News· or the retired NEW ARRIVALS badge. Product bindings, editorial copy and the five curated local editorial photographs SHALL remain site configuration. The feature SHALL use the owner-provided `news-swan-queen.jpg` photograph and link to `swan-princess`; the secondary cards SHALL use `news-04.jpg`, `news-03.jpg`, `news-08.jpg` and `news-02.jpg` in their configured order. The homepage feature SHALL omit the visible ROMANTICIZING EVERYDAY LIFE headline while retaining VIEW DETAILS and meaningful alternative text from the verified product name. Shopify product images SHALL NOT replace these editorial assets or determine image availability. Cards SHALL still render only for Shopify-verified available products in the visitor market. Missing bindings SHALL be hidden rather than advertised as available products. Product prices, inventory, product-detail media and checkout SHALL remain Shopify-authoritative.
+NEWS SHALL show The Latest from OFFY without News· or the retired NEW ARRIVALS badge. Product bindings, editorial copy and the five curated local editorial photographs SHALL remain site configuration. The feature SHALL use the owner-provided `news-swan-queen.jpg` photograph and link to `swan-princess`; the secondary cards SHALL use `news-04.jpg`, `news-03.jpg`, `news-08.jpg` and `news-02.jpg` in their configured order. The homepage feature SHALL omit the visible ROMANTICIZING EVERYDAY LIFE headline while retaining a horizontally centered, compact VIEW DETAILS capsule placed clear of the photograph’s Limited 60 artwork and meaningful alternative text from the verified product name. Shopify product images SHALL NOT replace these editorial assets or determine image availability. Cards SHALL still render only for Shopify-verified available products in the visitor market. Missing bindings SHALL be hidden rather than advertised as available products. Product prices, inventory, product-detail media and checkout SHALL remain Shopify-authoritative.
 
 #### Scenario: News links
 
@@ -75,6 +80,11 @@ NEWS SHALL show The Latest from OFFY without News· or the retired NEW ARRIVALS 
 
 - **WHEN** `swan-princess` is missing or unavailable in the visitor market
 - **THEN** the homepage does not advertise the feature or substitute another product
+
+#### Scenario: Compact centered feature CTA
+
+- **WHEN** the NEWS feature renders on narrow and desktop screens
+- **THEN** VIEW DETAILS is horizontally centered within its card, remains legible, avoids the Limited 60 artwork, and retains the whole-card product link
 
 ### Requirement: Homepage visual sections
 

@@ -8,8 +8,14 @@ vi.mock("next-intl", () => ({
 }));
 
 vi.mock("@/i18n/navigation", () => ({
-  Link: ({ href, children, ...rest }: { href: string; children: React.ReactNode } & Record<string, unknown>) => (
-    <a href={href} {...rest}>{children}</a>
+  Link: ({
+    href,
+    children,
+    ...rest
+  }: { href: string; children: React.ReactNode } & Record<string, unknown>) => (
+    <a href={href} {...rest}>
+      {children}
+    </a>
   ),
   usePathname: () => "/",
 }));
@@ -43,10 +49,16 @@ describe("MobileNav", () => {
     const dialog = screen.getByRole("dialog");
     expect(dialog).toBeInTheDocument();
     expect(screen.getByRole("link", { name: "nav.new" })).toHaveAttribute("href", "/products");
-    expect(screen.getByRole("link", { name: "nav.series" })).toHaveAttribute("href", "/collections");
+    expect(screen.getByRole("link", { name: "nav.series" })).toHaveAttribute(
+      "href",
+      "/collections",
+    );
     expect(screen.getByRole("link", { name: "nav.about" })).toHaveAttribute("href", "/about");
     // 系列子链接的名称来自 props(实时数据),而不是本地静态 seriesList
-    expect(screen.getByRole("link", { name: "公主lady系列" })).toHaveAttribute("href", "/collections/princess-lady");
+    expect(screen.getByRole("link", { name: "公主lady系列" })).toHaveAttribute(
+      "href",
+      "/collections/princess-lady",
+    );
   });
 
   it("closes on Escape", () => {
@@ -68,5 +80,18 @@ describe("MobileNav", () => {
     fireEvent.click(screen.getByRole("button", { name: /menu/i }));
     fireEvent.click(screen.getByRole("link", { name: "nav.new" }));
     expect(screen.getByRole("button", { name: /menu/i })).toHaveAttribute("aria-expanded", "false");
+  });
+
+  it.each([
+    ["footer.shippingReturnsLabel", "/policies"],
+    ["footer.faqLabel", "/faq"],
+    ["footer.contactLabel", "/policies/contact"],
+  ])("provides the %s help link and closes the drawer on activation", (name, href) => {
+    render(<MobileNav series={testSeries} />);
+    fireEvent.click(screen.getByRole("button", { name: /menu/i }));
+    const link = screen.getByRole("link", { name });
+    expect(link).toHaveAttribute("href", href);
+    fireEvent.click(link);
+    expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
   });
 });

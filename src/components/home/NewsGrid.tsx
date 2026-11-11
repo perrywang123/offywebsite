@@ -26,7 +26,7 @@ export interface NewsGridTexts {
  *    底部黑色胶囊按钮 VIEW DETAILS(矩形3拷贝6:宽 694/1324=52.4%,
  *    高 206/2062=10.0%)。PSD 里标题上方还有一行 NEW ARRIVALS(img y6.6%),
  *    已按老板 2026-10 诉求 3 删除,但它的高度并进了可选标题 `mt`。
- *    2026-11-11 主卡按钮靠右避开新图左下角的限量标识。
+ *    2026-11-11 主卡按钮缩小、下移并居中，避开新图左下角的限量标识。
  *  - 副卡文字**全部移入图片底部居中的黑色胶囊按钮**(矩形3拷贝2..5:
  *    宽 525/827=63.5%,高 135/1007=13.4%),不再有图下方的文字说明。
  *
@@ -87,8 +87,8 @@ export function NewsGrid({
                 </h3>
               </div>
             )}
-            {/* 保留胶囊尺寸；靠右避开 SWAN QUEEN 图左下角的 Limited 标识。 */}
-            <span className="bg-ink text-cream absolute right-[6%] bottom-[10%] flex h-[15.56cqw] w-[52.4%] items-center justify-center rounded-full text-[max(11px,4.65cqw)] leading-none font-normal tracking-[var(--tracking-10)] uppercase">
+            {/* 缩小胶囊并下移居中，避开左侧限量标识；整张卡仍为可点击区域。 */}
+            <span className="bg-ink text-cream absolute inset-x-0 bottom-[4%] mx-auto flex h-[clamp(40px,10cqw,48px)] w-[40%] max-w-44 items-center justify-center rounded-full text-[clamp(12px,3.5cqw,16px)] leading-none font-normal tracking-[0.06em] uppercase">
               {texts.cta}
             </span>
           </Link>
