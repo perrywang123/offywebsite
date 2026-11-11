@@ -7,7 +7,7 @@ import en from "../../../../../messages/en.json";
  * PDP(商品详情页)· 老板优化诉求 4 的回归测试。
  *
  * 诉求:去掉图区主图下方那排**同系列其它商品**的小图(每张带常显商品名),
- * 它与页尾「More from this series」网格是同一批 `siblings.slice(0, 6)` 的重复渲染。
+ * 它与页尾「More from this series」网格重复；页尾现展示完整同系列其他商品。
  *
  * 关键护栏(两条,方向相反,不能只测一头):
  *  ① 那排 `a.hscroll` 必须消失 —— 这是本次要删的;
@@ -119,16 +119,23 @@ const CURRENT: Product = {
   sortOrder: 0,
 };
 
-const SIBLINGS: Product[] = ["prep-school", "madame-wild", "diva", "glow", "mori", "extra-one"].map(
-  (code, i) => ({
-    ...CURRENT,
-    code,
-    slug: code,
-    name: { en: code.toUpperCase(), zh: code },
-    images: [`/assets/p/${code}-1.jpg`],
-    sortOrder: i + 1,
-  }),
-);
+const SIBLINGS: Product[] = [
+  "prep-school",
+  "madame-wild",
+  "diva",
+  "glow",
+  "mori",
+  "extra-one",
+  "extra-two",
+  "extra-three",
+].map((code, i) => ({
+  ...CURRENT,
+  code,
+  slug: code,
+  name: { en: code.toUpperCase(), zh: code },
+  images: [`/assets/p/${code}-1.jpg`],
+  sortOrder: i + 1,
+}));
 
 const SERIES: Series[] = [
   {
@@ -176,7 +183,7 @@ describe("PDP · 同系列小图条已移除(诉求 4)", () => {
     expect(container.querySelectorAll(".hscroll a")).toHaveLength(0);
   });
 
-  it("同系列商品名不再出现在图区小图条里(页尾 More 网格仍保留 6 张卡)", async () => {
+  it("同系列商品名不再出现在图区小图条里(页尾 More 网格仍保留)", async () => {
     const { container } = await renderPdp();
     // 页尾网格:每款一张卡,名字是 <p>,链接是裸 <a>(不带 .hscroll)
     const moreLinks = [...container.querySelectorAll(`a[href="/products/prep-school"]`)];
@@ -197,13 +204,36 @@ describe("PDP · 同系列小图条已移除(诉求 4)", () => {
     expect(screen.getByAltText("LADY PEARL")).toHaveAttribute("src", CURRENT.images[0]);
   });
 
-  it("页尾「More from this series」网格仍在,卡片数 = min(siblings.length, 6)", async () => {
+  it("shows every same-series product beyond six in the original response order", async () => {
     const { container } = await renderPdp();
     const grid = container.querySelector("section.mt-10 .grid, section.mt-10 .md\\:mt-20 .grid");
     expect(grid).not.toBeNull();
     const cards = [...(grid?.querySelectorAll("a[href^='/products/']") ?? [])];
-    expect(cards).toHaveLength(Math.min(SIBLINGS.length, 6));
-    expect(cards.map((a) => a.getAttribute("href"))).toContain("/products/madame-wild");
+    expect(cards).toHaveLength(SIBLINGS.length);
+    expect(cards.map((a) => a.getAttribute("href"))).toEqual(
+      SIBLINGS.map((p) => `/products/${p.code}`),
+    );
+  });
+
+  it("excludes the current product while retaining every other series member", async () => {
+    pdpState.siblings = [SIBLINGS[0], CURRENT, ...SIBLINGS.slice(1)];
+    const { container } = await renderPdp();
+    const section = screen.getByRole("heading", { name: en.product.related }).closest("section")!;
+    expect(section.querySelectorAll("a")).toHaveLength(SIBLINGS.length);
+    expect(section.querySelector(`a[href="/products/${CURRENT.code}"]`)).toBeNull();
+    expect(container.querySelectorAll('button[aria-label^="LADY PEARL "]')).toHaveLength(
+      CURRENT.images.length,
+    );
+  });
+
+  it.each([
+    { label: "empty", products: [] },
+    { label: "current only", products: [CURRENT] },
+  ])("omits recommendations when no other product remains: $label", async ({ products }) => {
+    pdpState.siblings = products;
+    await renderPdp();
+    expect(screen.queryByRole("heading", { name: en.product.related })).toBeNull();
+    expect(screen.getByRole("heading", { level: 1, name: "LADY PEARL" })).toBeVisible();
   });
 
   it("面包屑 / 加购按钮等其它入口未被误伤", async () => {

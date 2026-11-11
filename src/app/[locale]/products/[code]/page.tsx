@@ -272,7 +272,7 @@ export default async function ProductDetailPage({
             {/* 窄屏 3 列 → 2 列:3 列时每格只有 98.3px,商品名被砍到 14 个字符以内
               (方案 #16);sizes 也要跟着改,否则按 33vw 过采。 */}
             <div className="grid grid-cols-2 gap-x-4 gap-y-10 sm:grid-cols-3 md:grid-cols-6">
-              {siblings.slice(0, 6).map((sibling) => (
+              {siblings.map((sibling) => (
                 <Link key={sibling.code} href={`/products/${sibling.code}`} className="group">
                   <div className="rounded-soft bg-paper relative aspect-[3/4] overflow-hidden">
                     {sibling.images[0] && (
