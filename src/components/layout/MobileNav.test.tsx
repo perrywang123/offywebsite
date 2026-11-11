@@ -1,4 +1,4 @@
-import { fireEvent, render, screen } from "@testing-library/react";
+import { fireEvent, render, screen, within } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
 import type { Series } from "@/lib/catalog";
 
@@ -83,7 +83,6 @@ describe("MobileNav", () => {
   });
 
   it.each([
-    ["footer.shippingReturnsLabel", "/policies"],
     ["footer.faqLabel", "/faq"],
     ["footer.contactLabel", "/policies/contact"],
   ])("provides the %s help link and closes the drawer on activation", (name, href) => {
@@ -93,5 +92,16 @@ describe("MobileNav", () => {
     expect(link).toHaveAttribute("href", href);
     fireEvent.click(link);
     expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
+  });
+
+  it("keeps exactly FAQ and Contact Us in sidebar help, without Shipping & returns", () => {
+    render(<MobileNav series={testSeries} />);
+    fireEvent.click(screen.getByRole("button", { name: /menu/i }));
+    const help = within(screen.getByRole("navigation", { name: "footer.policiesHeading" }));
+    expect(help.queryByRole("link", { name: "footer.shippingReturnsLabel" })).toBeNull();
+    expect(help.getAllByRole("link").map((link) => link.getAttribute("href"))).toEqual([
+      "/faq",
+      "/policies/contact",
+    ]);
   });
 });

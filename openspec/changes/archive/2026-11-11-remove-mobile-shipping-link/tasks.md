@@ -1,0 +1,4 @@
+- [x] Add a failing test for the requested two-link help group.
+- [x] Remove the shipping entry and update current design documentation.
+- [x] Run tests/build and verify the actual mobile drawer, remaining links and country control.
+- [x] Archive and sync Git.

@@ -1,5 +1,7 @@
 # 当前实现与验证基线
 
+> 2026-11-11：手机侧栏 Help & Support 移除 Shipping & returns，仅保留 FAQ、Contact Us；国家选择、页脚和政策页面保留。属于本地预览更新，尚未发布生产；见 [侧栏验收](design/mobile-help-links/validation.md)。
+
 > 2026-11-11 后续界面调整：NEWS 的 View Details 已增加桌面响应式尺寸，手机保留原样。本轮为本地预览，尚未发布生产；见 [桌面按钮验收](design/desktop-news-cta/validation.md)。
 
 > 2026-11-11：商品详情页已增加单款 1 件 Buy Now，复用 Shopify 结账、市场、诊断和归因上下文；与 Add to Bag 并列，立即购买及回站保留原袋。已完成本地构建与浏览器验收，并以预构建镜像单独发布主站，运行源码 2bf473b；后台及 worker 未替换。未针对 SWAN QUEEN 增加特殊规则，也未修改 Shopify 配置，见 [本地验收](pdp-buy-now-validation.md) 与 [生产发布](pdp-buy-now-production-validation.md)。

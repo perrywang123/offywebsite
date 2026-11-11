@@ -22,7 +22,7 @@
 - 手机商品网格 2 列，md 3 列，lg 4 列；主按钮胶囊 48px 高。
 - 窄屏独立控件以 44px 命中区为目标，正文与名称保持可读；具体历史规范存在例外，应以浏览器实测记录差异。
 - Header 为 sticky 白底，顶部黑色公告按原文与 4.5 秒节奏轮换；不是透明覆盖首屏。手机 <768px 的白色工具栏为 56px 单行，88px Logo、国家短码、图标购物袋和数量角标、菜单；购物袋/菜单命中区至少 44px。768px 起保留原桌面导航与 BAG 胶囊。
-- 手机侧栏保留四个主导航、Shopify 实时系列名和国家入口；Series 子导航仅用 12px 缩进、13px 次级文字及 44px 行高区分，不加框线。可滚动正文包含 Help & Support：Shipping & returns 指向政策目录，FAQ 指向 /faq，Contact Us 指向 /policies/contact；激活链接照常关闭侧栏。
+- 手机侧栏保留四个主导航、Shopify 实时系列名和国家入口；Series 子导航仅用 12px 缩进、13px 次级文字及 44px 行高区分，不加框线。可滚动正文的 Help & Support 仅包含 FAQ（/faq）和 Contact Us（/policies/contact）；激活链接照常关闭侧栏。Shipping & returns 不在侧栏展示，页脚和政策页面保留。
 - Hero 五屏、整屏链接、自动轮换/手势/指示条；箭头和详情胶囊默认不渲染，无暂停按钮。
 - 页面进入动画的 transform 会影响 fixed 定位。PDP 手机购买条使用 sticky bottom-0；上排市场价格与 1 OFFY · 当前币种，下排等宽 Add to Bag 描边 / Buy Now 黑底胶囊，48px 高、10px 间距。桌面在原信息区并列双按钮。立即购买仅当前商品 1 件，不改已有袋子；跳转中禁用两按钮，失败原地重试。预告 quick view Portal 到 body。
 - 购物袋运费提示采用小型线性购物车图标、浅灰竖分隔线与两段灰色说明组合；文字自然换行，与小计和 Checkout 保持明确间距。装饰图标不参与读屏，实际运费仍由 Shopify 结账确定。

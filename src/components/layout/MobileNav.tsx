@@ -125,7 +125,6 @@ export function MobileNav({ series }: { series: Series[] }) {
               </p>
               <nav aria-label={t("footer.policiesHeading")}>
                 {[
-                  ["/policies", t("footer.shippingReturnsLabel")],
                   ["/faq", t("footer.faqLabel")],
                   ["/policies/contact", t("footer.contactLabel")],
                 ].map(([href, label]) => (
