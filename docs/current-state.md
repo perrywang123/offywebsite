@@ -1,6 +1,6 @@
 # 当前实现与验证基线
 
-> 2026-11-11：商品详情页已增加单款 1 件 Buy Now，复用 Shopify 结账、市场、诊断和归因上下文；与 Add to Bag 并列，立即购买及回站保留原袋。已完成本地生产构建和浏览器验收，尚未部署生产。未针对 SWAN QUEEN 增加特殊规则，也未修改 Shopify 配置，见 [本轮验收](pdp-buy-now-validation.md)。
+> 2026-11-11：商品详情页已增加单款 1 件 Buy Now，复用 Shopify 结账、市场、诊断和归因上下文；与 Add to Bag 并列，立即购买及回站保留原袋。已完成本地构建与浏览器验收，并以预构建镜像单独发布主站，运行源码 2bf473b；后台及 worker 未替换。未针对 SWAN QUEEN 增加特殊规则，也未修改 Shopify 配置，见 [本地验收](pdp-buy-now-validation.md) 与 [生产发布](pdp-buy-now-production-validation.md)。
 
 > 2026-11-09：已按所有者确认更新顶部运费公告、购物袋侧栏两行提示及 Shipping FAQ 首条，FAQ 共 11 条；其余原问答保持不变。该轮代码/本地验收与实际 Shopify 运费配置、生产部署分开记录，见 [运费文案验收](shipping-copy-validation.md)。
 
@@ -19,7 +19,7 @@
 - 2026-11-07 后台资源保护与生产独立发布已验收：构建默认1 CPU / 1536 MiB，检查额外可用内存和旧systemd服务，镜像标记Git revision；最新后台功能及worker已单独发布，主站容器和代理保持原样。实际运行版本和边界见 [发布验收](safe-admin-release-validation.md)。
 
 - 英文单语、默认语言无前缀。中文保留代码，`/zh/*` 308 去前缀；`/en/*` 307 去前缀。
-- 品牌首页：五屏 Hero → NEWS → FEATURED（精选缺失/失败时按原日期选品）/REGIONAL EXCLUSIVE/All Products 圆形名册 → 包挂预告 → 联名 → 订阅 → 未来 IP。新首页选品布局已本地验收，待用户截图确认后发布。
+- 品牌首页：五屏 Hero → NEWS → FEATURED（精选缺失/失败时按原日期选品）/REGIONAL EXCLUSIVE/All Products 圆形名册 → 包挂预告 → 联名 → 订阅 → 未来 IP。新首页选品布局已于 2026-11-11 发布并核对实际 FEATURED 集合顺序。
 - NEWS 的五张宣传图使用 `lib/content.ts` 登记的本地品牌素材；仅用 Shopify 核验绑定商品的市场可售状态，不以商品首图覆盖宣传构图。2026-11-02 从 `808d9b8` 之前的映射恢复；商品详情、价格、库存和结账继续使用 Shopify。见 [恢复验收](news-editorial-restoration-validation.md)。
 - 三大系列名称来自 Shopify；slug/Collection handle/系列图/tagline 的站点映射仍本地配置。
 - 实时商品清单、详情、市场金额/币种、SKU、多图、售罄列表状态；周边仅在 All Looks，排在公仔之后。

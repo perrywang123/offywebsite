@@ -31,7 +31,7 @@
 
 - Ship to：Header 与购物袋入口；桌面右侧面板，手机底部弹层；搜索 Shopify 当前支持目的地，显式确认后刷新同一 URL。非空购物袋保留并重新核对，缺失商品不显示旧事实。
 
-- 首页造型推荐（2026-11-11 用户纠正后的本地实现、待截图确认）：保留原 Shop by Category 标题、container-site / section-y 宽度间距与 4:5 cover 商品卡，不使用收窄方形画布或紧凑侧栏。主区标题统一 FEATURED，区域区标题 REGIONAL EXCLUSIVE，两者为同字号/字重的 h3（24px / md 30px），均位于匹配的桌面三列/手机两列网格上方。区域红色角标沿用共享 ProductCard。下方保留 All Products 圆形商品缩略图名册，覆盖当前市场全部非周边公仔，不受精选六款限制；不替换成三系列入口。只读 Shopify FEATURED 集合（handle: featured），失败保留实时日期选品逻辑。其他页面、原三个系列和支付不变。
+- 首页造型推荐（2026-11-11 用户确认并已发布）：保留原 Shop by Category 标题、container-site / section-y 宽度间距与 4:5 cover 商品卡，不使用收窄方形画布或紧凑侧栏。主区标题统一 FEATURED，区域区标题 REGIONAL EXCLUSIVE，两者为同字号/字重的 h3（24px / md 30px），均位于匹配的桌面三列/手机两列网格上方。区域红色角标沿用共享 ProductCard。下方保留 All Products 圆形商品缩略图名册，覆盖当前市场全部非周边公仔，不受精选六款限制；不替换成三系列入口。只读 Shopify FEATURED 集合（handle: featured），失败保留实时日期选品逻辑。其他页面、原三个系列和支付不变。
 
 ## 验收
 
