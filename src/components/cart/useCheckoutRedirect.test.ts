@@ -24,6 +24,7 @@ const realLocation = window.location;
 let assign: ReturnType<typeof vi.fn>;
 
 beforeEach(() => {
+  sessionStorage.clear();
   vi.mocked(beginCheckoutAttempt).mockReset().mockResolvedValue(undefined);
   vi.mocked(reportCheckoutObservation).mockClear();
   mockPush.mockClear();
@@ -45,6 +46,32 @@ afterEach(() => {
 });
 
 const ITEMS = [{ code: "noir", quantity: 2 }];
+
+it("forwards buy-now intent with only the passed product, and remembers it only after a valid redirect", async () => {
+  const f = mockFetch(async () =>
+    ok({ redirect: { kind: "redirect", url: "https://offy.myshopify.com/cart/c/direct" } }),
+  );
+  const { result } = renderHook(() => useCheckoutRedirect(undefined, "buy-now"));
+  await act(async () => {
+    await result.current.startCheckout([{ code: "current", quantity: 1 }]);
+  });
+  expect(JSON.parse(String(f.mock.calls[0][1]?.body))).toMatchObject({
+    intent: "buy-now",
+    items: [{ code: "current", quantity: 1 }],
+  });
+  expect(sessionStorage.getItem("offy.checkout.intent.v1")).toBe("buy-now");
+});
+
+it("failed Buy Now never replaces the previous valid checkout marker", async () => {
+  sessionStorage.setItem("offy.checkout.intent.v1", "cart");
+  mockFetch(async () => failed(503, { error: "catalog_unavailable" }));
+  const { result } = renderHook(() => useCheckoutRedirect(undefined, "buy-now"));
+  await act(async () => {
+    await result.current.startCheckout([{ code: "current", quantity: 1 }]);
+  });
+  expect(sessionStorage.getItem("offy.checkout.intent.v1")).toBe("cart");
+  expect(assign).not.toHaveBeenCalled();
+});
 
 type FetchLike = (input: RequestInfo | URL, init?: RequestInit) => Promise<Response>;
 

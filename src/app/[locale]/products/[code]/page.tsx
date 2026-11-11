@@ -15,7 +15,7 @@ import { getProductHandleAlias, merchSeriesName } from "@/lib/catalog";
 import { env } from "@/lib/env";
 import { pickCountry } from "@/lib/geo";
 import { formatPrice } from "@/lib/pricing";
-import { AddToCartButton } from "@/components/cart/AddToCartButton";
+import { PurchaseActions } from "@/components/product/PurchaseActions";
 import { MetaProductView } from "@/components/marketing/MetaTracking";
 import { ProductGallery } from "@/components/product/ProductGallery";
 import { StickyBuyBar } from "@/components/product/StickyBuyBar";
@@ -252,11 +252,13 @@ export default async function ProductDetailPage({
                 </p>
               ) : (
                 // 窄屏由吸底购买条接手(`max-md:hidden`),避免同屏两个"加入购物袋"
-                <AddToCartButton
-                  code={product.code}
-                  disabled={!product.isAvailable || !product.shopifyVariantId}
-                  className="w-full max-md:hidden"
-                />
+                <div className="max-md:hidden">
+                  <PurchaseActions
+                    code={product.code}
+                    isAvailable={product.isAvailable && Boolean(product.shopifyVariantId)}
+                    isUpcoming={product.isUpcoming}
+                  />
+                </div>
               )}
             </div>
           </div>
@@ -304,7 +306,7 @@ export default async function ProductDetailPage({
         priceCents={product.priceCents}
         currency={product.currency}
         locale={locale}
-        isAvailable={product.isAvailable}
+        isAvailable={product.isAvailable && Boolean(product.shopifyVariantId)}
         isUpcoming={product.isUpcoming}
       />
     </>

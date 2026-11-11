@@ -6,6 +6,7 @@ import { useOptionalMarket } from "@/components/market/MarketProvider";
 import { useLocale } from "next-intl";
 import { beginCheckoutAttempt, reportCheckoutObservation } from "./checkout-diagnostics-client";
 import { metaAllowed, observeMeta, metaCartData } from "@/components/marketing/runtime";
+import { rememberCheckoutIntent, type CheckoutIntent } from "@/lib/checkout-intent";
 export interface CheckoutItemInput {
   code: string;
   quantity: number;
@@ -22,7 +23,10 @@ export interface CheckoutRedirectState {
   startCheckout: (items: CheckoutItemInput[]) => Promise<void>;
 }
 /** Fresh client verification + server-authoritative checkout. Failure stays on the current page. */
-export function useCheckoutRedirect(verify?: () => Promise<boolean>): CheckoutRedirectState {
+export function useCheckoutRedirect(
+  verify?: () => Promise<boolean>,
+  intent: CheckoutIntent = "cart",
+): CheckoutRedirectState {
   const market = useOptionalMarket();
   const [destinationChanged, setDestinationChanged] = useState(false);
   const locale = useLocale(),
@@ -54,6 +58,7 @@ export function useCheckoutRedirect(verify?: () => Promise<boolean>): CheckoutRe
           signal: AbortSignal.timeout(15000),
           body: JSON.stringify({
             provider: "shopify",
+            ...(intent === "buy-now" ? { intent } : {}),
             ...(market ? { expectedCountry: market.state.country } : {}),
             items,
             locale,
@@ -72,6 +77,7 @@ export function useCheckoutRedirect(verify?: () => Promise<boolean>): CheckoutRe
               /* redirect always wins */
             }
             reportCheckoutObservation(receipt, "redirect_requested");
+            rememberCheckoutIntent(intent);
             window.location.assign(target);
             return;
           }
@@ -104,7 +110,7 @@ export function useCheckoutRedirect(verify?: () => Promise<boolean>): CheckoutRe
         setPending(false);
       }
     },
-    [locale, verify, market],
+    [locale, verify, market, intent],
   );
   return { pending, failed, blocked, destinationChanged, startCheckout };
 }

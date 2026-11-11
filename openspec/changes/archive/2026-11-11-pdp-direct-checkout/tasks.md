@@ -1,0 +1,5 @@
+- [x] Add failing tests for direct intent, return bag preservation, responsive purchase states.
+- [x] Implement single-product checkout using the existing checkout path and tracking.
+- [x] Implement distinct direct-checkout return handling.
+- [x] Verify focused and full tests, type/lint/build, and real local browser interactions.
+- [x] Deploy locally, capture screenshots, update current documentation and archive.

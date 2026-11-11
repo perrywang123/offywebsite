@@ -56,6 +56,7 @@ vi.mock("next-intl/server", async () => {
 // useTranslations,其余原样放行。
 vi.mock("next-intl", async (importOriginal) => ({
   ...(await importOriginal<typeof import("next-intl")>()),
+  useLocale: () => "en",
   useTranslations: () => (key: string) => key,
 }));
 

@@ -1,5 +1,7 @@
 # 当前实现与验证基线
 
+> 2026-11-11：商品详情页已增加单款 1 件 Buy Now，复用 Shopify 结账、市场、诊断和归因上下文；与 Add to Bag 并列，立即购买及回站保留原袋。已完成本地生产构建和浏览器验收，尚未部署生产。未针对 SWAN QUEEN 增加特殊规则，也未修改 Shopify 配置，见 [本轮验收](pdp-buy-now-validation.md)。
+
 > 2026-11-09：已按所有者确认更新顶部运费公告、购物袋侧栏两行提示及 Shipping FAQ 首条，FAQ 共 11 条；其余原问答保持不变。该轮代码/本地验收与实际 Shopify 运费配置、生产部署分开记录，见 [运费文案验收](shipping-copy-validation.md)。
 
 > 2026-11-09：可选 [Meta 站内漏斗与关键事件 CAPI](meta-technical-plan.md) 已在生产开启，后台 `/admin/meta` 可查看接收状态；源码默认开关仍为关闭。预构建镜像已分别发布主站及后台，独立 worker 运行，实际加购和结账准备 CAPI 均被 Meta 接收。见 [生产验收](meta-production-validation.md) 与 [SOP](meta-ads-sop.md)。真实 Shopify Purchase、广告购买归因及目录匹配仍待单独验收。

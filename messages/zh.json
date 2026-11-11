@@ -134,6 +134,14 @@
     }
   },
   "product": {
+    "buyNow": "立即购买",
+    "opening": "正在打开…",
+    "openingCheckout": "正在打开 Shopify 结账",
+    "tryAgain": "重试",
+    "buyNowFailed": "暂时无法打开结账，请重试。购物袋已保留。",
+    "buyNowDestinationChanged": "配送国家已改变。请刷新页面确认商品后再结账。",
+    "buyNowUnavailable": "此商品目前无法结账。请刷新确认可售状态。",
+    "refreshProduct": "刷新页面",
     "series": "系列",
     "dimensions": "尺寸规格",
     "emotion": "情绪标签",

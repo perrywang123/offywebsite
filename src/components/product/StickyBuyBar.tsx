@@ -1,7 +1,7 @@
 "use client";
 
 import { useTranslations } from "next-intl";
-import { AddToCartButton } from "@/components/cart/AddToCartButton";
+import { PurchaseActions } from "./PurchaseActions";
 import { formatPrice } from "@/lib/pricing";
 
 /**
@@ -19,7 +19,7 @@ import { formatPrice } from "@/lib/pricing";
  *     一直贴底,滚到页尾才落回原位 —— 这正是吸底条要的效果。
  *
  * 三态都有条(在售 / 售罄 / 预告),窄屏唯一入口;`md:hidden` 保证 ≥768px
- * 不出现(桌面端信息区已有自己的 Add to Bag)。
+ * 不出现(桌面端信息区已有同一组 Add to Bag / Buy Now)。
  */
 export function StickyBuyBar({
   code,
@@ -37,7 +37,6 @@ export function StickyBuyBar({
   isUpcoming: boolean;
 }) {
   const t = useTranslations("product");
-  const soldOut = !isUpcoming && !isAvailable;
   const price = formatPrice(priceCents, currency, locale);
 
   return (
@@ -47,29 +46,20 @@ export function StickyBuyBar({
     >
       {/* 内层用 container-site + safe-b:左右与站内版心一致(16px),
           底部留出 home indicator 的安全区(需 layout.tsx 的 viewportFit:"cover")。 */}
-      <div className="container-site safe-b flex items-center gap-3 pt-3">
+      <div className="container-site safe-b pt-3">
         {isUpcoming ? (
-          // 预告款:还没有价格,也没有可点的动作。这里不摆一个点了没反应的按钮
-          // (与信息区 `upcomingNotice` 同一句话),整条只说明状态。
-          <p className="text-brown-600 flex-1 text-center text-sm font-medium tracking-[var(--tracking-14)] uppercase">
+          <p className="text-brown-600 text-center text-sm font-medium tracking-[var(--tracking-14)] uppercase">
             {t("upcomingNotice")}
           </p>
         ) : (
           <>
-            <p className="font-display min-w-0 flex-1 text-base font-medium tabular-nums">
-              {price}
-            </p>
-            {soldOut ? (
-              <button
-                type="button"
-                disabled
-                className="bg-cream-deep text-ink-muted h-12 flex-1 rounded-full text-sm font-medium"
-              >
-                {t("outOfStock")}
-              </button>
-            ) : (
-              <AddToCartButton code={code} className="h-12 flex-1" />
-            )}
+            <div className="mb-2.5 flex items-baseline justify-between gap-3">
+              <p className="font-display min-w-0 text-xl font-medium tabular-nums">{price}</p>
+              <p className="text-ink-soft shrink-0 text-[11px] tracking-wide">
+                1 OFFY · {currency}
+              </p>
+            </div>
+            <PurchaseActions code={code} isAvailable={isAvailable} isUpcoming={isUpcoming} />
           </>
         )}
       </div>

@@ -24,6 +24,7 @@ const shippingSchema = z.object({
 });
 
 const bodySchema = z.object({
+  intent: z.enum(["cart", "buy-now"]).optional(),
   expectedCountry: z
     .string()
     .refine((c) => normalizeMarketCountry(c) === c)
@@ -45,6 +46,12 @@ export async function POST(request: Request) {
   let parsed: z.infer<typeof bodySchema>;
   try {
     parsed = bodySchema.parse(await request.json());
+    if (
+      parsed.intent === "buy-now" &&
+      (parsed.provider !== "shopify" || parsed.items.length !== 1 || parsed.items[0].quantity !== 1)
+    ) {
+      return NextResponse.json({ error: "invalid_request" }, { status: 400 });
+    }
   } catch {
     return NextResponse.json({ error: "invalid_request" }, { status: 400 });
   }
@@ -80,6 +87,7 @@ export async function POST(request: Request) {
   let result;
   try {
     result = await provider.createCheckout({
+      ...(parsed.intent ? { intent: parsed.intent } : {}),
       diagnostics: recording?.observe,
       shopifyTracking,
       items,

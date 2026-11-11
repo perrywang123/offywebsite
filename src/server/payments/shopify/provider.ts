@@ -15,6 +15,7 @@ import { createIntent, bindCart } from "../../kol/core";
 import { setRuntime } from "../../kol/sync";
 import { cartCreate, type CartLineInput, type ShopifyCart } from "./client";
 import { observeCheckout } from "@/lib/checkout-diagnostics";
+import { shopifyCheckoutReturnUrl } from "@/lib/checkout-intent";
 
 /** CountryCode 是 GraphQL 枚举，必须作为字面量注入（用变量传不生效）。仅允许两位字母。 */
 function marketCountry(): string {
@@ -112,8 +113,12 @@ export class ShopifyPaymentProvider implements PaymentProvider {
     // 回站信号:Shopify 托管结算页不会自动把我们带回来,所以把回跳地址作为
     // **cart attribute** 一起建进购物车(Storefront 的 CartInput 没有 returnUrl
     // 字段,attributes 是官方支持的载体),商家/后台据此配置订单完成后的回跳。
-    // 落点页 `/checkout/return` 负责清空袋子(方案 P0-4 / §2 F)。
-    const returnUrl = `${env.SITE_URL}${publicPath(input.locale, "/checkout/return")}`;
+    // 普通购物袋回站沿用清袋，buy-now 回站保留原袋；attribute 不会自动触发回站。
+    const returnUrl = shopifyCheckoutReturnUrl(
+      env.SITE_URL,
+      publicPath(input.locale, "/checkout/return"),
+      input.intent,
+    );
     let intent: ReturnType<typeof createIntent> = null;
     if (kolEnabled() && !collabsMode() && input.referralTicket) {
       try {

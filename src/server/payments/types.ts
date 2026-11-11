@@ -17,6 +17,8 @@ export interface ShippingInfo {
 }
 
 export interface CreateCheckoutInput {
+  /** Direct PDP checkout uses one unit and preserves the existing bag on return. */
+  intent?: import("@/lib/checkout-intent").CheckoutIntent;
   /** Per-request Shopify consent/cookie context; never accepted from client JSON. */
   shopifyTracking?: {
     context: import("@shopify/hydrogen").ShopifyRequestContext;

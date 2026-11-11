@@ -14,14 +14,22 @@ import { ClearCartOnSuccess } from "@/components/cart/ClearCart";
  * `server/payments/shopify/client.ts`);Shopify 托管结算页不会自动跳到站外地址,
  * 还需要商家侧配置订单完成后的回跳(或后续里程碑的 webhook 落库)。
  */
-export default async function CheckoutReturnPage() {
+export default async function CheckoutReturnPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ source?: string | string[] }>;
+}) {
   const t = await getTranslations("checkout");
+  const { source } = await searchParams;
 
   return (
     <div className="container-site section-y lg:py-24">
       <div className="mx-auto max-w-2xl text-center">
-        {/* 挂载即清空:这一页只可能由"付款流程回到站上"打开 */}
-        <ClearCartOnSuccess />
+        {/* A return is not payment proof. Direct checkout must preserve the unrelated bag. */}
+        <ClearCartOnSuccess
+          shopifyReturn
+          source={typeof source === "string" ? source : undefined}
+        />
         <div className="bg-leaf text-cream mx-auto mb-6 flex h-16 w-16 items-center justify-center rounded-full text-3xl">
           ✓
         </div>

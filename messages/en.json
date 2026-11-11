@@ -134,6 +134,14 @@
     }
   },
   "product": {
+    "buyNow": "Buy Now",
+    "opening": "Opening…",
+    "openingCheckout": "Opening Shopify checkout",
+    "tryAgain": "Try again",
+    "buyNowFailed": "We couldn’t open checkout. Please try again. Your bag is saved.",
+    "buyNowDestinationChanged": "Your shipping destination changed. Refresh to review this product before checkout.",
+    "buyNowUnavailable": "This item can’t be checked out right now. Refresh to check availability.",
+    "refreshProduct": "Refresh page",
     "series": "Series",
     "dimensions": "Dimensions",
     "emotion": "Mood tags",

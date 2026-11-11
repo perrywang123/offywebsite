@@ -13,6 +13,20 @@ function req(body: unknown): Request {
 const validItems = [{ code: "swan-princess", quantity: 1 }];
 
 describe("POST /api/payments/checkout", () => {
+  it.each([
+    { items: [{ code: "one", quantity: 2 }] },
+    {
+      items: [
+        { code: "one", quantity: 1 },
+        { code: "two", quantity: 1 },
+      ],
+    },
+    { items: validItems, provider: "stripe" },
+  ])("rejects invalid direct checkout shapes before creating any checkout: %o", async (body) => {
+    const res = await POST(req({ provider: "shopify", ...body, intent: "buy-now", locale: "en" }));
+    expect(res.status).toBe(400);
+    expect(await res.json()).toMatchObject({ error: "invalid_request" });
+  });
   it("routes provider=stripe to the Stripe provider (passes zod, reaches provider)", async () => {
     const res = await POST(req({ provider: "stripe", items: validItems, locale: "zh" }));
     // Stripe 未配置时返回 503 checkout_unavailable —— 证明已通过 zod 到达 provider 层,

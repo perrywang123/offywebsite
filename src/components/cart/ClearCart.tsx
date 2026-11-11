@@ -2,12 +2,17 @@
 
 import { useEffect } from "react";
 import { useCart } from "./CartProvider";
+import { preserveBagOnShopifyReturn } from "@/lib/checkout-intent";
 
-/** 成功页挂载时清空购物车（订单已由服务端 capture/webhook 落库）。 */
-export function ClearCartOnSuccess() {
+/** Bag cleanup policy; a hosted return by itself is not proof of payment. */
+export function ClearCartOnSuccess({
+  shopifyReturn = false,
+  source,
+}: { shopifyReturn?: boolean; source?: string } = {}) {
   const { clear } = useCart();
   useEffect(() => {
+    if (shopifyReturn && preserveBagOnShopifyReturn(source)) return;
     clear();
-  }, [clear]);
+  }, [clear, shopifyReturn, source]);
   return null;
 }

@@ -1,6 +1,6 @@
 # PDP Buy Now · 设计提案
 
-状态：2026-11-11，待用户确认，仅原型；真实站点仍只有 Add to Bag。
+状态：2026-11-11，设计已确认，真实商品页已本地实现并验证；原型仅保留作设计记录。
 
 ## 设计目标
 
@@ -16,22 +16,20 @@
 - 原型采用 12/16/24px 间距；名称 28px（桌面 40px），正文 14px，辅助说明最低 11px。
 - 实际实现沿用 StickyBuyBar 的 sticky bottom-0 与 safe-area 机制，避免现有带 transform 的页面祖先造成 fixed 失效。
 
-## 行为建议（待确认）
+## 已确认行为
 
 1. Add to Bag：保留现有加购和打开购物袋的行为。
 2. Buy Now：默认仅当前商品 1 件，直接创建 Shopify 结账；不合并、不清空已有购物袋。多件、多款和凑赠品继续通过购物袋操作。若后续另加数量选择，再明确是否沿用所选数量，本版不额外增加数量器。
 3. 跳转中：Buy Now 显示 Opening… 与小型 spinner（读屏名称 Opening Shopify checkout），两按钮暂时禁用，阻止重复点击；不增加中间确认页。
 4. 失败：留在当前 PDP，以短错误文案和 Try again 恢复重试，Add to Bag 仍可使用；不删除原购物袋、不假装支付完成。
 5. 售罄：两个按钮禁用，主按钮显示 Sold out。预告/商品数据不可用沿用现有规则，不能创建结账。
-6. 赠品：Shopify 当前明确 SWAN QUEEN 不可单独出售，99 美元为占位价。建议不为此类商品新增独立 Buy Now；保留加购，并显示满 6 件赠品说明。原型中隐藏占位价属于待确认建议，不代表真实站已改价。
+6. 按用户最新指示，不针对 SWAN QUEEN 增加特殊分支、不修改 Shopify 标签或优惠配置。
 
-## 赠品识别和实现边界
+## 实现边界
 
-赠品示例仅依据本次只读确认的 Shopify 正文展示，不是可投产的判断算法。若确认该分支，实现前需约定 Shopify 的结构化标记（如商品 metafield）作为机器依据；不能仅按标题关键词或本地 handle 硬编码。实际赠送资格和优惠仍由 Shopify 配置与结账校验决定，不在本设计中改动。
+复用 useCheckoutRedirect / /api/payments/checkout，提交当前单款 1 件和 buy-now intent，仍由服务端核验市场与商品事实。保留 checkout diagnostics、Collabs 与 Meta 现有上下文。
 
-确认后拟复用现有 useCheckoutRedirect / /api/payments/checkout，传入当前单款，而不是创建第二条支付链路。继续校验当前国家、实时 Shopify 商品事实，复用 checkout diagnostics、Collabs 与 Meta 现有上下文；仅从点击按钮不能当作支付成功。此处均为后续实现要求，尚未接入。
-
-额外核对：当前 checkout/return 页面挂载 ClearCartOnSuccess，会在回站时清空购物袋。因此后续不能只给按钮接现有接口；必须同时区分「立即购买」和「购物袋结账」的来源，确保直接购买后回站也不误清原购物袋，并验证中断和重试。该处涉及核心回站逻辑，本轮仅记录，待用户确认后再实施。
+Shopify 的 return_url attribute 对立即购买附加 source=buy-now；回站组件据此保留原购物袋，并用跳转前写入的 tab-local sessionStorage 标记兼容商家回站链接丢失 query 的情况。后续普通购物袋结账会覆盖此标记；Stripe/PayPal success 页沿用原有逻辑。标记不是付款凭证，回站页不验证支付成功。Shopify 不会仅因这个 attribute 自动回站，仍需要商家侧回站配置。
 
 ## 原型说明
 
