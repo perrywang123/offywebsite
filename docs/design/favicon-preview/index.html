@@ -1,0 +1,126 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <link rel="icon" type="image/svg+xml" href="offy-favicon.svg?v=1" />
+    <title>OFFY · 标签图标比例检查</title>
+    <style>
+      body {
+        margin: 0;
+        background: #efefef;
+        color: #1d1915;
+        font:
+          16px/1.6 -apple-system,
+          BlinkMacSystemFont,
+          "PingFang SC",
+          sans-serif;
+      }
+      main {
+        max-width: 700px;
+        margin: 48px auto;
+        padding: 24px;
+      }
+      h1 {
+        font-size: 28px;
+        margin: 0 0 8px;
+      }
+      p {
+        color: #525252;
+        margin: 0 0 24px;
+      }
+      section {
+        background: white;
+        padding: 24px;
+        margin-top: 18px;
+        border-radius: 12px;
+      }
+      h2 {
+        font-size: 18px;
+        margin: 0 0 20px;
+      }
+      .icons {
+        display: flex;
+        align-items: center;
+        gap: 32px;
+      }
+      .icons figure {
+        margin: 0;
+        text-align: center;
+      }
+      .icons img {
+        display: block;
+        margin: 0 auto;
+      }
+      figcaption {
+        color: #777;
+        font-size: 12px;
+        margin-top: 8px;
+      }
+      .old img {
+        object-fit: fill;
+      }
+      a {
+        color: inherit;
+      }
+    </style>
+  </head>
+  <body>
+    <main>
+      <h1>OFFY 标签图标比例修正</h1>
+      <p>横版 Logo 保持原比例，放入方形画布；修正仅应用于本轮预览页面。</p>
+      <section>
+        <h2>原横图直接拉伸为方形（示意）</h2>
+        <div class="icons old">
+          <figure>
+            <img
+              src="/public/assets/brand/is-offy-logo.png"
+              width="16"
+              height="16"
+              alt="拉伸的16px图标"
+            />
+            <figcaption>16px</figcaption>
+          </figure>
+          <figure>
+            <img
+              src="/public/assets/brand/is-offy-logo.png"
+              width="32"
+              height="32"
+              alt="拉伸的32px图标"
+            />
+            <figcaption>32px</figcaption>
+          </figure>
+          <figure>
+            <img
+              src="/public/assets/brand/is-offy-logo.png"
+              width="64"
+              height="64"
+              alt="拉伸的64px图标"
+            />
+            <figcaption>64px</figcaption>
+          </figure>
+        </div>
+      </section>
+      <section>
+        <h2>等比居中后的图标</h2>
+        <div class="icons">
+          <figure>
+            <img src="offy-favicon.svg?v=1" width="16" height="16" alt="等比16px图标" />
+            <figcaption>16px</figcaption>
+          </figure>
+          <figure>
+            <img src="offy-favicon.svg?v=1" width="32" height="32" alt="等比32px图标" />
+            <figcaption>32px</figcaption>
+          </figure>
+          <figure>
+            <img src="offy-favicon.svg?v=1" width="64" height="64" alt="等比64px图标" />
+            <figcaption>64px</figcaption>
+          </figure>
+        </div>
+      </section>
+      <p style="margin-top: 24px">
+        <a href="../hero-brand-responsive/all-slides/index.html?slide=promo">返回五屏方案预览</a>
+      </p>
+    </main>
+  </body>
+</html>
