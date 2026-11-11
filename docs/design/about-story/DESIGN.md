@@ -1,6 +1,6 @@
 # About / Our Story design contract
 
-Status: implemented and locally verified; production unchanged, 2026-11-11. Inputs: `关于我们.psd` (3250×4361) and `IP故事背景介绍.psd` (3251×21286), supplied by the owner. Product, interaction and visual specialists reviewed both sources independently. Source PSDs remain outside Git.
+Status: implemented, locally verified and released to production at `a787ae7`, 2026-11-11. See [production validation](../../about-story-production-validation.md). Inputs: `关于我们.psd` (3250×4361) and `IP故事背景介绍.psd` (3251×21286), supplied by the owner. Product, interaction and visual specialists reviewed both sources independently. Source PSDs remain outside Git.
 
 ## Goal and composition
 

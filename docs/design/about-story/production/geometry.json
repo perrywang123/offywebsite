@@ -1,0 +1,56 @@
+[
+  {
+    "bodyFont": "18px",
+    "h1Count": 1,
+    "height": 812,
+    "overflow": [],
+    "path": "/about",
+    "scrollWidth": 320,
+    "width": 320
+  },
+  {
+    "bodyFont": "18px",
+    "h1Count": 1,
+    "height": 812,
+    "overflow": [],
+    "path": "/about",
+    "scrollWidth": 375,
+    "width": 375
+  },
+  {
+    "bodyFont": "40.32px",
+    "h1Count": 1,
+    "height": 900,
+    "overflow": [],
+    "path": "/about",
+    "scrollWidth": 1440,
+    "width": 1440
+  },
+  {
+    "bodyFont": "17px",
+    "h1Count": 1,
+    "height": 812,
+    "overflow": [],
+    "path": "/our-story",
+    "scrollWidth": 320,
+    "width": 320
+  },
+  {
+    "bodyFont": "17px",
+    "h1Count": 1,
+    "height": 812,
+    "overflow": [],
+    "path": "/our-story",
+    "scrollWidth": 375,
+    "width": 375
+  },
+  {
+    "bodyFont": "20px",
+    "h1Count": 1,
+    "height": 900,
+    "overflow": [],
+    "path": "/our-story",
+    "scrollWidth": 1440,
+    "width": 1440
+  }
+]

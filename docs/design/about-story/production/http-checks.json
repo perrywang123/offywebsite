@@ -1,0 +1,25 @@
+{
+  "/about": {
+    "status": 200,
+    "bytes": 74377
+  },
+  "/our-story": {
+    "status": 200,
+    "bytes": 153705
+  },
+  "/": {
+    "status": 200,
+    "bytes": 297885
+  },
+  "/products/warm-biscuit": {
+    "status": 200,
+    "bytes": 141099
+  },
+  "/api/health": {
+    "status": 200,
+    "bytes": 155
+  },
+  "/admin": {
+    "status": 404
+  }
+}

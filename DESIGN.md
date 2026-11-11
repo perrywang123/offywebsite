@@ -40,6 +40,6 @@
 
 ## About / OFFY story（2026-11-11 新版 PSD）
 
-/about 使用白底居中宣言、OFFY 与 Gia 双图、EXPLORE OUR STORY 真链接；目标为 /our-story。移除原 About 的长文、新 IP 与定制模块。故事页保留原黑白横幅、1/2/3 章、作者自述、四幅手稿与 25 款原始角色设计及版权文字。全部叙事用原生 HTML，自然换行；手机作者图文改单栏、手稿逐幅展示、角色名册重排，素材不拉伸或误裁。共享导航/购物袋/页脚保持，正文不依赖 Reveal；故事顶部/末尾均可回 About。详细约定见 `docs/design/about-story/DESIGN.md`。当前仅本地验收，不代表生产已更新。
+/about 使用白底居中宣言、OFFY 与 Gia 双图、EXPLORE OUR STORY 真链接；目标为 /our-story。移除原 About 的长文、新 IP 与定制模块。故事页保留原黑白横幅、1/2/3 章、作者自述、四幅手稿与 25 款原始角色设计及版权文字。全部叙事用原生 HTML，自然换行；手机作者图文改单栏、手稿逐幅展示、角色名册重排，素材不拉伸或误裁。共享导航/购物袋/页脚保持，正文不依赖 Reveal；故事顶部/末尾均可回 About。详细约定见 `docs/design/about-story/DESIGN.md`。已于 2026-11-11 随 `a787ae7` 发布生产，见 `docs/about-story-production-validation.md`。
 
 手机排版修订：<768px About 标题和四段文案改为左对齐、24px 边距，前三段 18px，末段 16px 灰色说明；故事正文 16px / 1.75、导语 17px、章节标题 24–28px，标签与正文分层、段间留白。完整文案和桌面居中构图保持。

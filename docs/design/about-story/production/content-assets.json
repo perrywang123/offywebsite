@@ -1,0 +1,204 @@
+{
+  "/about": {
+    "canonical": "https://isoffy.com/about",
+    "expectedTextCount": 6,
+    "missing": []
+  },
+  "/our-story": {
+    "canonical": "https://isoffy.com/our-story",
+    "expectedTextCount": 68,
+    "missing": []
+  },
+  "assets": [
+    {
+      "asset": "collection-artwork.webp",
+      "status": 200,
+      "matchesSource": true
+    },
+    {
+      "asset": "collection-look-01.webp",
+      "status": 200,
+      "matchesSource": true
+    },
+    {
+      "asset": "collection-look-02.webp",
+      "status": 200,
+      "matchesSource": true
+    },
+    {
+      "asset": "collection-look-03.webp",
+      "status": 200,
+      "matchesSource": true
+    },
+    {
+      "asset": "collection-look-04.webp",
+      "status": 200,
+      "matchesSource": true
+    },
+    {
+      "asset": "collection-look-05.webp",
+      "status": 200,
+      "matchesSource": true
+    },
+    {
+      "asset": "collection-look-06.webp",
+      "status": 200,
+      "matchesSource": true
+    },
+    {
+      "asset": "collection-look-07.webp",
+      "status": 200,
+      "matchesSource": true
+    },
+    {
+      "asset": "collection-look-08.webp",
+      "status": 200,
+      "matchesSource": true
+    },
+    {
+      "asset": "collection-look-09.webp",
+      "status": 200,
+      "matchesSource": true
+    },
+    {
+      "asset": "collection-look-10.webp",
+      "status": 200,
+      "matchesSource": true
+    },
+    {
+      "asset": "collection-look-11.webp",
+      "status": 200,
+      "matchesSource": true
+    },
+    {
+      "asset": "collection-look-12.webp",
+      "status": 200,
+      "matchesSource": true
+    },
+    {
+      "asset": "collection-look-13.webp",
+      "status": 200,
+      "matchesSource": true
+    },
+    {
+      "asset": "collection-look-14.webp",
+      "status": 200,
+      "matchesSource": true
+    },
+    {
+      "asset": "collection-look-15.webp",
+      "status": 200,
+      "matchesSource": true
+    },
+    {
+      "asset": "collection-look-16.webp",
+      "status": 200,
+      "matchesSource": true
+    },
+    {
+      "asset": "collection-look-17.webp",
+      "status": 200,
+      "matchesSource": true
+    },
+    {
+      "asset": "collection-look-18.webp",
+      "status": 200,
+      "matchesSource": true
+    },
+    {
+      "asset": "collection-look-19.webp",
+      "status": 200,
+      "matchesSource": true
+    },
+    {
+      "asset": "collection-look-20.webp",
+      "status": 200,
+      "matchesSource": true
+    },
+    {
+      "asset": "collection-look-21.webp",
+      "status": 200,
+      "matchesSource": true
+    },
+    {
+      "asset": "collection-look-22.webp",
+      "status": 200,
+      "matchesSource": true
+    },
+    {
+      "asset": "collection-look-23.webp",
+      "status": 200,
+      "matchesSource": true
+    },
+    {
+      "asset": "collection-look-24.webp",
+      "status": 200,
+      "matchesSource": true
+    },
+    {
+      "asset": "collection-look-25.webp",
+      "status": 200,
+      "matchesSource": true
+    },
+    {
+      "asset": "collection-mark.webp",
+      "status": 200,
+      "matchesSource": true
+    },
+    {
+      "asset": "gia-about.webp",
+      "status": 200,
+      "matchesSource": true
+    },
+    {
+      "asset": "gia-story.webp",
+      "status": 200,
+      "matchesSource": true
+    },
+    {
+      "asset": "offy-expressions.webp",
+      "status": 200,
+      "matchesSource": true
+    },
+    {
+      "asset": "offy-illustration-pair.webp",
+      "status": 200,
+      "matchesSource": true
+    },
+    {
+      "asset": "offy-illustration.webp",
+      "status": 200,
+      "matchesSource": true
+    },
+    {
+      "asset": "offy-prototype.webp",
+      "status": 200,
+      "matchesSource": true
+    },
+    {
+      "asset": "sketch-1.webp",
+      "status": 200,
+      "matchesSource": true
+    },
+    {
+      "asset": "sketch-2.webp",
+      "status": 200,
+      "matchesSource": true
+    },
+    {
+      "asset": "sketch-3.webp",
+      "status": 200,
+      "matchesSource": true
+    },
+    {
+      "asset": "sketch-4.webp",
+      "status": 200,
+      "matchesSource": true
+    },
+    {
+      "asset": "story-banner.webp",
+      "status": 200,
+      "matchesSource": true
+    }
+  ]
+}
