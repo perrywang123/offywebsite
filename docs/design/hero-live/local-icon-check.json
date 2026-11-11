@@ -2,15 +2,7 @@
   "status": 200,
   "contentType": "image/png",
   "iconUrl": "/icon?409b446eef7b18dc",
-  "iconSize": [
-    64,
-    64
-  ],
-  "inkBox": [
-    3,
-    21,
-    60,
-    42
-  ],
+  "iconSize": [64, 64],
+  "inkBox": [3, 21, 60, 42],
   "ratio": 2.6363636363636362
 }

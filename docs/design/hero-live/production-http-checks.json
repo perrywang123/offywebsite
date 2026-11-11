@@ -1,0 +1,22 @@
+{
+  "/": {
+    "status": 200,
+    "bytes": 297842
+  },
+  "/products/swan-princess": {
+    "status": 200,
+    "bytes": 142878
+  },
+  "/api/health": {
+    "status": 200,
+    "bytes": 155
+  },
+  "icon": {
+    "status": 200,
+    "url": "/icon?409b446eef7b18dc",
+    "contentType": "image/png",
+    "size": [64, 64],
+    "sha256": "6b27c95f1ae011b012a1a6ed9c12314c2284a5ba7f840528ab2ebda7affa845a"
+  },
+  "heroPanels": 5
+}

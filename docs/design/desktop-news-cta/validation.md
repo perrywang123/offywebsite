@@ -31,3 +31,7 @@
 预览：[真实本地首页](http://127.0.0.1:4317/)。
 
 截图：[桌面之前](desktop-before.jpg)、[桌面之后](desktop-after.jpg)、[1024px](desktop-1024.jpg)、[1920px](desktop-1920.jpg)、[手机保持原样](mobile-unchanged.jpg)。
+
+## 后续发布
+
+2026-11-11 已随五屏轮播版本 `114cb56` 独立发布主站；原本的未发布表述是本项完成时的历史状态。当前生产验证见[五屏发布记录](../hero-live/validation.md)。

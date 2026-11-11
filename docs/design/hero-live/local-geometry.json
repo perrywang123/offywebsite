@@ -26,10 +26,7 @@
     "pageOverflow": false,
     "slides": [
       {
-        "fonts": [
-          "20px",
-          "16px"
-        ],
+        "fonts": ["20px", "16px"],
         "height": 257.8515625,
         "horizontalOverflow": false,
         "href": "/about",
@@ -39,10 +36,7 @@
         "slide": "0"
       },
       {
-        "fonts": [
-          "12px",
-          "23.04px"
-        ],
+        "fonts": ["12px", "23.04px"],
         "height": 257.8515625,
         "horizontalOverflow": false,
         "href": "/products",
@@ -52,10 +46,7 @@
         "slide": "1"
       },
       {
-        "fonts": [
-          "12px",
-          "24px"
-        ],
+        "fonts": ["12px", "24px"],
         "height": 257.8515625,
         "horizontalOverflow": false,
         "href": "/collections/princess-lady",
@@ -65,10 +56,7 @@
         "slide": "2"
       },
       {
-        "fonts": [
-          "12px",
-          "24px"
-        ],
+        "fonts": ["12px", "24px"],
         "height": 257.8515625,
         "horizontalOverflow": false,
         "href": "/collections/outdoor-sporty",
@@ -78,10 +66,7 @@
         "slide": "3"
       },
       {
-        "fonts": [
-          "12px",
-          "24px"
-        ],
+        "fonts": ["12px", "24px"],
         "height": 257.8515625,
         "horizontalOverflow": false,
         "href": "/collections/playful-life",
@@ -120,10 +105,7 @@
     "pageOverflow": false,
     "slides": [
       {
-        "fonts": [
-          "22.14px",
-          "16.614px"
-        ],
+        "fonts": ["22.14px", "16.614px"],
         "height": 277.96875,
         "horizontalOverflow": false,
         "href": "/about",
@@ -133,10 +115,7 @@
         "slide": "0"
       },
       {
-        "fonts": [
-          "12px",
-          "25.92px"
-        ],
+        "fonts": ["12px", "25.92px"],
         "height": 277.96875,
         "horizontalOverflow": false,
         "href": "/products",
@@ -146,10 +125,7 @@
         "slide": "1"
       },
       {
-        "fonts": [
-          "12px",
-          "24.876px"
-        ],
+        "fonts": ["12px", "24.876px"],
         "height": 277.96875,
         "horizontalOverflow": false,
         "href": "/collections/princess-lady",
@@ -159,10 +135,7 @@
         "slide": "2"
       },
       {
-        "fonts": [
-          "12px",
-          "24.876px"
-        ],
+        "fonts": ["12px", "24.876px"],
         "height": 277.96875,
         "horizontalOverflow": false,
         "href": "/collections/outdoor-sporty",
@@ -172,10 +145,7 @@
         "slide": "3"
       },
       {
-        "fonts": [
-          "12px",
-          "24.876px"
-        ],
+        "fonts": ["12px", "24.876px"],
         "height": 277.96875,
         "horizontalOverflow": false,
         "href": "/collections/playful-life",
@@ -214,10 +184,7 @@
     "pageOverflow": false,
     "slides": [
       {
-        "fonts": [
-          "23.985px",
-          "17.9985px"
-        ],
+        "fonts": ["23.985px", "17.9985px"],
         "height": 296.8046875,
         "horizontalOverflow": false,
         "href": "/about",
@@ -227,10 +194,7 @@
         "slide": "0"
       },
       {
-        "fonts": [
-          "12px",
-          "28.08px"
-        ],
+        "fonts": ["12px", "28.08px"],
         "height": 296.8046875,
         "horizontalOverflow": false,
         "href": "/products",
@@ -240,10 +204,7 @@
         "slide": "1"
       },
       {
-        "fonts": [
-          "12.87px",
-          "26.949px"
-        ],
+        "fonts": ["12.87px", "26.949px"],
         "height": 296.8046875,
         "horizontalOverflow": false,
         "href": "/collections/princess-lady",
@@ -253,10 +214,7 @@
         "slide": "2"
       },
       {
-        "fonts": [
-          "12.87px",
-          "26.949px"
-        ],
+        "fonts": ["12.87px", "26.949px"],
         "height": 296.8046875,
         "horizontalOverflow": false,
         "href": "/collections/outdoor-sporty",
@@ -266,10 +224,7 @@
         "slide": "3"
       },
       {
-        "fonts": [
-          "12.87px",
-          "26.949px"
-        ],
+        "fonts": ["12.87px", "26.949px"],
         "height": 296.8046875,
         "horizontalOverflow": false,
         "href": "/collections/playful-life",
@@ -308,10 +263,7 @@
     "pageOverflow": false,
     "slides": [
       {
-        "fonts": [
-          "26px",
-          "19.8445px"
-        ],
+        "fonts": ["26px", "19.8445px"],
         "height": 321.3828125,
         "horizontalOverflow": false,
         "href": "/about",
@@ -321,10 +273,7 @@
         "slide": "0"
       },
       {
-        "fonts": [
-          "12px",
-          "30.96px"
-        ],
+        "fonts": ["12px", "30.96px"],
         "height": 321.3828125,
         "horizontalOverflow": false,
         "href": "/products",
@@ -334,10 +283,7 @@
         "slide": "1"
       },
       {
-        "fonts": [
-          "14.19px",
-          "29.713px"
-        ],
+        "fonts": ["14.19px", "29.713px"],
         "height": 321.3828125,
         "horizontalOverflow": false,
         "href": "/collections/princess-lady",
@@ -347,10 +293,7 @@
         "slide": "2"
       },
       {
-        "fonts": [
-          "14.19px",
-          "29.713px"
-        ],
+        "fonts": ["14.19px", "29.713px"],
         "height": 321.3828125,
         "horizontalOverflow": false,
         "href": "/collections/outdoor-sporty",
@@ -360,10 +303,7 @@
         "slide": "3"
       },
       {
-        "fonts": [
-          "14.19px",
-          "29.713px"
-        ],
+        "fonts": ["14.19px", "29.713px"],
         "height": 321.3828125,
         "horizontalOverflow": false,
         "href": "/collections/playful-life",
@@ -402,10 +342,7 @@
     "pageOverflow": false,
     "slides": [
       {
-        "fonts": [
-          "28px",
-          "22px"
-        ],
+        "fonts": ["28px", "22px"],
         "height": 503.4921875,
         "horizontalOverflow": false,
         "href": "/about",
@@ -415,10 +352,7 @@
         "slide": "0"
       },
       {
-        "fonts": [
-          "18.8928px",
-          "55.296px"
-        ],
+        "fonts": ["18.8928px", "55.296px"],
         "height": 503.4921875,
         "horizontalOverflow": false,
         "href": "/products",
@@ -428,10 +362,7 @@
         "slide": "1"
       },
       {
-        "fonts": [
-          "18.8928px",
-          "53.0688px"
-        ],
+        "fonts": ["18.8928px", "53.0688px"],
         "height": 503.4921875,
         "horizontalOverflow": false,
         "href": "/collections/princess-lady",
@@ -441,10 +372,7 @@
         "slide": "2"
       },
       {
-        "fonts": [
-          "18.8928px",
-          "53.0688px"
-        ],
+        "fonts": ["18.8928px", "53.0688px"],
         "height": 503.4921875,
         "horizontalOverflow": false,
         "href": "/collections/outdoor-sporty",
@@ -454,10 +382,7 @@
         "slide": "3"
       },
       {
-        "fonts": [
-          "18.8928px",
-          "53.0688px"
-        ],
+        "fonts": ["18.8928px", "53.0688px"],
         "height": 503.4921875,
         "horizontalOverflow": false,
         "href": "/collections/playful-life",
@@ -496,10 +421,7 @@
     "pageOverflow": false,
     "slides": [
       {
-        "fonts": [
-          "36.864px",
-          "27.648px"
-        ],
+        "fonts": ["36.864px", "27.648px"],
         "height": 643.0703125,
         "horizontalOverflow": false,
         "href": "/about",
@@ -509,10 +431,7 @@
         "slide": "0"
       },
       {
-        "fonts": [
-          "25.1904px",
-          "73.728px"
-        ],
+        "fonts": ["25.1904px", "73.728px"],
         "height": 643.0703125,
         "horizontalOverflow": false,
         "href": "/products",
@@ -522,10 +441,7 @@
         "slide": "1"
       },
       {
-        "fonts": [
-          "25.1904px",
-          "70.7584px"
-        ],
+        "fonts": ["25.1904px", "70.7584px"],
         "height": 643.0703125,
         "horizontalOverflow": false,
         "href": "/collections/princess-lady",
@@ -535,10 +451,7 @@
         "slide": "2"
       },
       {
-        "fonts": [
-          "25.1904px",
-          "70.7584px"
-        ],
+        "fonts": ["25.1904px", "70.7584px"],
         "height": 643.0703125,
         "horizontalOverflow": false,
         "href": "/collections/outdoor-sporty",
@@ -548,10 +461,7 @@
         "slide": "3"
       },
       {
-        "fonts": [
-          "25.1904px",
-          "70.7584px"
-        ],
+        "fonts": ["25.1904px", "70.7584px"],
         "height": 643.0703125,
         "horizontalOverflow": false,
         "href": "/collections/playful-life",
@@ -590,10 +500,7 @@
     "pageOverflow": false,
     "slides": [
       {
-        "fonts": [
-          "51.84px",
-          "38px"
-        ],
+        "fonts": ["51.84px", "38px"],
         "height": 904.3125,
         "horizontalOverflow": false,
         "href": "/about",
@@ -603,10 +510,7 @@
         "slide": "0"
       },
       {
-        "fonts": [
-          "35.424px",
-          "100px"
-        ],
+        "fonts": ["35.424px", "100px"],
         "height": 904.3125,
         "horizontalOverflow": false,
         "href": "/products",
@@ -616,10 +520,7 @@
         "slide": "1"
       },
       {
-        "fonts": [
-          "35.424px",
-          "99.504px"
-        ],
+        "fonts": ["35.424px", "99.504px"],
         "height": 904.3125,
         "horizontalOverflow": false,
         "href": "/collections/princess-lady",
@@ -629,10 +530,7 @@
         "slide": "2"
       },
       {
-        "fonts": [
-          "35.424px",
-          "99.504px"
-        ],
+        "fonts": ["35.424px", "99.504px"],
         "height": 904.3125,
         "horizontalOverflow": false,
         "href": "/collections/outdoor-sporty",
@@ -642,10 +540,7 @@
         "slide": "3"
       },
       {
-        "fonts": [
-          "35.424px",
-          "99.504px"
-        ],
+        "fonts": ["35.424px", "99.504px"],
         "height": 904.3125,
         "horizontalOverflow": false,
         "href": "/collections/playful-life",
@@ -684,10 +579,7 @@
     "pageOverflow": false,
     "slides": [
       {
-        "fonts": [
-          "54px",
-          "38px"
-        ],
+        "fonts": ["54px", "38px"],
         "height": 1205.7578125,
         "horizontalOverflow": false,
         "href": "/about",
@@ -697,10 +589,7 @@
         "slide": "0"
       },
       {
-        "fonts": [
-          "36px",
-          "100px"
-        ],
+        "fonts": ["36px", "100px"],
         "height": 1205.7578125,
         "horizontalOverflow": false,
         "href": "/products",
@@ -710,10 +599,7 @@
         "slide": "1"
       },
       {
-        "fonts": [
-          "36px",
-          "100px"
-        ],
+        "fonts": ["36px", "100px"],
         "height": 1205.7578125,
         "horizontalOverflow": false,
         "href": "/collections/princess-lady",
@@ -723,10 +609,7 @@
         "slide": "2"
       },
       {
-        "fonts": [
-          "36px",
-          "100px"
-        ],
+        "fonts": ["36px", "100px"],
         "height": 1205.7578125,
         "horizontalOverflow": false,
         "href": "/collections/outdoor-sporty",
@@ -736,10 +619,7 @@
         "slide": "3"
       },
       {
-        "fonts": [
-          "36px",
-          "100px"
-        ],
+        "fonts": ["36px", "100px"],
         "height": 1205.7578125,
         "horizontalOverflow": false,
         "href": "/collections/playful-life",

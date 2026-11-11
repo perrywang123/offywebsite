@@ -1,0 +1,98 @@
+[
+  {
+    "height": 296.767578125,
+    "minControlHeight": 43.994140625,
+    "pageOverflow": false,
+    "slides": [
+      {
+        "href": "/about",
+        "indicatorOverlap": false,
+        "photoLoaded": true,
+        "photoOverlap": false,
+        "slide": "0",
+        "textOverflow": false
+      },
+      {
+        "href": "/products",
+        "indicatorOverlap": false,
+        "photoLoaded": true,
+        "photoOverlap": false,
+        "slide": "1",
+        "textOverflow": false
+      },
+      {
+        "href": "/collections/princess-lady",
+        "indicatorOverlap": false,
+        "photoLoaded": true,
+        "photoOverlap": false,
+        "slide": "2",
+        "textOverflow": false
+      },
+      {
+        "href": "/collections/outdoor-sporty",
+        "indicatorOverlap": false,
+        "photoLoaded": true,
+        "photoOverlap": false,
+        "slide": "3",
+        "textOverflow": false
+      },
+      {
+        "href": "/collections/playful-life",
+        "indicatorOverlap": false,
+        "photoLoaded": true,
+        "photoOverlap": false,
+        "slide": "4",
+        "textOverflow": false
+      }
+    ],
+    "width": 390
+  },
+  {
+    "height": 904.31640625,
+    "minControlHeight": 92.158203125,
+    "pageOverflow": false,
+    "slides": [
+      {
+        "href": "/about",
+        "indicatorOverlap": false,
+        "photoLoaded": true,
+        "photoOverlap": false,
+        "slide": "0",
+        "textOverflow": false
+      },
+      {
+        "href": "/products",
+        "indicatorOverlap": false,
+        "photoLoaded": true,
+        "photoOverlap": false,
+        "slide": "1",
+        "textOverflow": false
+      },
+      {
+        "href": "/collections/princess-lady",
+        "indicatorOverlap": false,
+        "photoLoaded": true,
+        "photoOverlap": false,
+        "slide": "2",
+        "textOverflow": false
+      },
+      {
+        "href": "/collections/outdoor-sporty",
+        "indicatorOverlap": false,
+        "photoLoaded": true,
+        "photoOverlap": false,
+        "slide": "3",
+        "textOverflow": false
+      },
+      {
+        "href": "/collections/playful-life",
+        "indicatorOverlap": false,
+        "photoLoaded": true,
+        "photoOverlap": false,
+        "slide": "4",
+        "textOverflow": false
+      }
+    ],
+    "width": 1440
+  }
+]

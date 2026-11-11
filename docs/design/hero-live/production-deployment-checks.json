@@ -1,0 +1,63 @@
+{
+  "containers": {
+    "offywebsite-app-1": {
+      "id": "28833196f96f6dbc8816326a68f9170d0989ac762e784a2a13fed777626ada1c",
+      "image": "sha256:d84f0299851922a3a6b81d7ac36a9f47e01b5e89582fa17085a6bbda39cd3733",
+      "health": "healthy",
+      "startedAt": "2026-11-11T11:37:50.52569879Z",
+      "envUnchanged": true,
+      "mountsUnchanged": true
+    },
+    "offywebsite-admin-1": {
+      "id": "388cc774d966f2f1901100a74126966b5790a0b4ec7ec72397c4fab036922ebd",
+      "image": "sha256:a56c57544c70db2999dd3e81d041acfcdf04abc93c720fe9a4aea2d2972df30c",
+      "health": "healthy",
+      "startedAt": "2026-11-08T18:25:09.593340937Z",
+      "envUnchanged": true,
+      "mountsUnchanged": true
+    },
+    "offywebsite-kol-worker-1": {
+      "id": "c20868529f5d105271528a03bb0c049dd815989aad30aba9de8a6197cbd8f077",
+      "image": "sha256:a56c57544c70db2999dd3e81d041acfcdf04abc93c720fe9a4aea2d2972df30c",
+      "health": null,
+      "startedAt": "2026-11-08T16:19:00.107992073Z",
+      "envUnchanged": true,
+      "mountsUnchanged": true
+    },
+    "offywebsite-meta-worker-1": {
+      "id": "a141bd73df3ad538733f3989d9b1d46243112f419926be5a4c56777b515ccd9c",
+      "image": "sha256:a56c57544c70db2999dd3e81d041acfcdf04abc93c720fe9a4aea2d2972df30c",
+      "health": null,
+      "startedAt": "2026-11-08T16:19:32.706080892Z",
+      "envUnchanged": true,
+      "mountsUnchanged": true
+    },
+    "offywebsite-geoipupdate-1": {
+      "id": "cf3585896d1fb6339655982a927b9b6f9866fd113f81844d4eca21b49f5a4a8a",
+      "image": "sha256:51e70dd6f16cd3e4d845ac02d09940b10772a75b9d741427d235a78570923c1d",
+      "health": "healthy",
+      "startedAt": "2026-11-10T10:07:00.782425313Z",
+      "envUnchanged": true,
+      "mountsUnchanged": true
+    }
+  },
+  "unchangedPeers": true,
+  "envFileUnchanged": true,
+  "nginxUnchanged": true,
+  "adminTagUnchanged": true,
+  "health": {
+    "status": "ok",
+    "timestamp": "2026-11-11T11:38:14.546Z",
+    "config": {
+      "shopify": "configured",
+      "siteUrl": "configured",
+      "stripe": "configured",
+      "paypal": "configured"
+    }
+  },
+  "readiness": "{\"kolEnabled\":true,\"ownerReady\":true,\"workerReady\":true,\"shopMatched\":true,\"shopifyAdminConfigured\":true}",
+  "dbQuickCheck": "ok",
+  "revision": "114cb56bb07b72998feca493cd1aa88c2c9b87e6",
+  "releaseWorkflow": "https://github.com/perrywang123/offywebsite/actions/runs/43012636173",
+  "qualityWorkflow": "https://github.com/perrywang123/offywebsite/actions/runs/43012635989"
+}

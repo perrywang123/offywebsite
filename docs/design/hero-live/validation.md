@@ -1,6 +1,6 @@
 # 五屏轮播与网站图标验收
 
-2026-11-11，用户确认后实施。发布状态：本地验收通过，生产待发布。
+2026-11-11，用户确认后实施。发布状态：本地验收及生产发布后验证通过。
 
 ## 实现范围
 
@@ -21,4 +21,20 @@
 
 ## 生产发布
 
-待本地验证全部完成后使用 GitHub Actions 预构建 Linux/amd64 镜像，服务器不编译。只更新 app，保留后台、worker、数据库和 Nginx；不创建订单或调整 Shopify 配置。
+2026-11-11 19:37（北京时间）完成独立主站发布：
+
+- 运行源码：`114cb56bb07b72998feca493cd1aa88c2c9b87e6`。
+- [完整 CI](https://github.com/perrywang123/offywebsite/actions/runs/43012635989) 与 [Linux/amd64 镜像工作流](https://github.com/perrywang123/offywebsite/actions/runs/43012636173) 均成功。
+- Artifact ID：`13851437342`；ZIP SHA-256：`498eae1f20c5436a925d50b3eb1aaba4617d2a5a2427337c294e9a3d592e046f`；压缩镜像 SHA-256：`7aee1712966922cf9acbce449c778d5958732d2a161ec0bc1f2883647292be2e`。服务器直接下载，核对 ZIP 摘要、镜像校验清单、REVISION 和 OCI revision 后加载。
+- app 镜像：`sha256:d84f0299851922a3a6b81d7ac36a9f47e01b5e89582fa17085a6bbda39cd3733`。运行 `bash deploy/update-storefront.sh --kol --prebuilt`，未在服务器构建。
+- 旧主站回退镜像：`offy-app:before-hero-20261111`；一致性数据库备份：`/data/deploy-backups/offy-2026-11-11T11-37-49-891Z-ce7171b7.db`。下载产生的 ZIP/gzip 临时文件已清理，镜像、备份和校验清单保留。
+- admin、KOL worker、Meta worker、GeoIP updater 的容器 ID、镜像及启动时间均与发布前一致。所有服务的环境变量摘要和挂载一致；`.env` 文件与 Nginx 配置摘要一致。加载双标签镜像后已恢复原 `offy-admin:local` 标签。证据 `production-deployment-checks.json`；服务器原始对照在 `.deploy-backups/hero-20261111/`。
+- app/admin healthy，owner/worker/shop readiness 全部通过，SQLite `quick_check=ok`。
+- 公网首页、SWAN QUEEN 商品页、health 和站点图标实际返回 200，图标为 64×64 PNG。证据 `production-http-checks.json`。
+- 线上真实 CSS 视口 390px 和 1440px 的五屏布局均无图文/指示条重叠、文本溢出或页面横向溢出，五屏图片完整加载；手机共享高度约 296.8px，桌面约 904.3px。浏览器原有站点缩放为 80%，视口工具输入作了补偿，以 `innerWidth` 实测为准；截图裁掉采集器额外边缘，没有改动页面内容。证据 `production-geometry.json`。
+- 逐屏点击五个指示条，自动播放正常推进；NEWS 主卡进入 `/products/swan-princess`，显示真实 Shopify 标题及 Add to Bag / Buy Now。只读取按钮，没有加购或创建 checkout，原有购物袋数量 2 保持不变。
+- 手机侧栏 Help & Support 只含 FAQ 和 Contact Us，国家选择入口保留；浏览器无 hydration 错误记录。未执行实际付款、退款、订单修改或 Shopify 配置修改。
+
+线上截图：[品牌手机](production-mobile-brand.jpg)、[赠品手机](production-mobile-promo.jpg)、[Princess](production-mobile-princess.jpg)、[Streetwear](production-mobile-streetwear.jpg)、[Dress-up](production-mobile-dressup.jpg)、[品牌桌面](production-desktop-brand.jpg)、[赠品桌面](production-desktop-promo.jpg)。
+
+实际 iOS Safari / 微信客户端未在本次接管环境验证；大字号结论来自本地编译组件的隔离压力测试。

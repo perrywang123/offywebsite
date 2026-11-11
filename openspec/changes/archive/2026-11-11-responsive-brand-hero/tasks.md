@@ -6,4 +6,4 @@
 - [x] Implement the approved layout with stable carousel sizing and original other-slide composition.
 - [x] Run tests, build and five-slide browser acceptance; archive only after implementation.
 - [x] Replace the scaffold favicon with an aspect-preserving OFFY icon and verify the rendered image.
-- [ ] Publish a revision-verified prebuilt image to the storefront only; verify production and preserve the admin/workers.
+- [x] Publish a revision-verified prebuilt image to the storefront only; verify production and preserve the admin/workers.

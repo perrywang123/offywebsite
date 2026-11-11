@@ -84,6 +84,6 @@ Ship to 与会话国家偏好已实现、测试并独立发布主站；优先手
 
 2026-11-10：自动推荐改为固定 30 分钟有效，手动选择仍保留 90 天。旧版无时间戳自动 Cookie 失效，读取不续期；导航/返回前台同步过期上下文，购物袋国家冲突先阻断再刷新，保留商品及数量。全量 886 项测试、生产构建及浏览器验证通过，版本 `9618d5c` 已用 GitHub 预构建镜像独立发布主站，后台和各 worker 未被替换。见[有效期验收](market-preference-expiry-verification.md)。
 
-2026-11-11：首页选品读取用户已配置的 Shopify FEATURED（handle featured），失败回退原每系列时间逻辑，限定商品在名额前排除并独立展示。按用户纠正恢复原宽度、4:5 大图卡和 All Products 圆形名册；FEATURED 与 REGIONAL EXCLUSIVE 标题等大。原三系列和支付链路不变，当前待截图确认、尚未发布。见[选品说明](homepage-merchandising.md)与[截图验收](homepage-merchandising-verification.md)。
+2026-11-11：首页选品读取用户已配置的 Shopify FEATURED（handle featured），失败回退原每系列时间逻辑，限定商品在名额前排除并独立展示。按用户纠正恢复原宽度、4:5 大图卡和 All Products 圆形名册；FEATURED 与 REGIONAL EXCLUSIVE 标题等大。原三系列和支付链路不变，已完成用户确认、测试与主站独立发布。见[选品说明](homepage-merchandising.md)与[截图验收](homepage-merchandising-verification.md)。
 
-2026-11-11：用户已确认五屏轮播响应式方案与图标修正。真实组件采用照片/文字分区和共享自然高度，保留原图片、文案、跳转和手势/自动播放；已完成 939 项测试、生产构建与本地浏览器验收，待使用 CI 镜像独立发布主站。见[验收记录](design/hero-live/validation.md)。
+2026-11-11：用户已确认五屏轮播响应式方案与图标修正。真实组件采用照片/文字分区和共享自然高度，保留原图片、文案、跳转和手势/自动播放；已完成 939 项测试、生产构建、本地浏览器验收及上线后验证；运行源码 `114cb56` 已使用 CI 预构建镜像独立发布主站。后台、KOL/Meta worker、GeoIP、环境配置和 Nginx 均保持原样，数据库检查通过。见[验收记录](design/hero-live/validation.md)。
