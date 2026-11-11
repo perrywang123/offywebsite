@@ -22,13 +22,16 @@ export interface NewsItem {
  * 不随 Shopify 商品首图变化；商品详情、价格、库存和可售状态仍以 Shopify 为准。
  *
  * 当前 5 张卡对应的真实商品(2026-10 由运营指定):
- *   1(大卡) CARAMEL RÊVE → warm-biscuit
+ *   1(大卡) SWAN QUEEN 宣传图 → swan-princess（2026-11-11 用户更新）
  *   2       PETITE BUNNY → bunny-hug
  *   3       CLUB 28      → ace
  *   4       WANDERER     → wander
  *   5       NEON RUSH    → offy_redrush
  */
-export const newsFeature = { image: "/assets/news/news-01.jpg", productCode: "warm-biscuit" };
+export const newsFeature = {
+  image: "/assets/news/news-swan-queen.jpg",
+  productCode: "swan-princess",
+};
 
 export const newsItems: NewsItem[] = [
   {

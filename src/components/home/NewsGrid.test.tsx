@@ -53,9 +53,33 @@ const items: NewsItem[] = [
     productCode: "offy_redrush",
   },
 ];
-const texts = { featureTitle: "仪式感生活", cta: "查看详情", browseAll: "逛全部系列" };
+const texts = {
+  featureTitle: "仪式感生活",
+  featureAlt: "仪式感生活",
+  cta: "查看详情",
+  browseAll: "逛全部系列",
+};
 
 describe("NewsGrid (editorial layout, data-driven: productCode + image + copy)", () => {
+  it("can omit the headline while retaining an independently named image and card link", () => {
+    render(
+      <NewsGrid
+        feature={feature}
+        items={items}
+        texts={{
+          featureAlt: "Verified SWAN QUEEN",
+          cta: "View details",
+          browseAll: "Browse all",
+        }}
+        locale="en"
+      />,
+    );
+    expect(screen.queryByRole("heading")).toBeNull();
+    expect(screen.getByRole("img", { name: "Verified SWAN QUEEN" })).toBeVisible();
+    expect(
+      screen.getByRole("link", { name: "Verified SWAN QUEEN — View details" }),
+    ).toHaveAttribute("href", "/products/warm-biscuit");
+  });
   it("renders the feature card with headline, and the whole card links to its bound product detail page", () => {
     render(<NewsGrid feature={feature} items={items} texts={texts} locale="zh" />);
     expect(screen.getByText("仪式感生活")).toBeInTheDocument();

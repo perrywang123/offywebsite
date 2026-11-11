@@ -26,7 +26,7 @@
 - 页面进入动画的 transform 会影响 fixed 定位。PDP 手机购买条使用 sticky；预告 quick view Portal 到 body。
 - 购物袋运费提示采用小型线性购物车图标、浅灰竖分隔线与两段灰色说明组合；文字自然换行，与小计和 Checkout 保持明确间距。装饰图标不参与读屏，实际运费仍由 Shopify 结账确定。
 - `.hscroll` 用于分类和本商品缩略图；同系列换款入口在页尾网格。
-- “The Latest from OFFY” 使用运营选定的五张本地宣传图：主卡 `news-01.jpg`，副卡依次 `news-04.jpg`、`news-03.jpg`、`news-08.jpg`、`news-02.jpg`。这些是品牌构图素材，不用 Shopify 商品首图替换；绑定商品的可售状态、商品详情与购买事实仍由 Shopify 核验。
+- “The Latest from OFFY” 使用运营选定的五张本地宣传图：主卡 `news-swan-queen.jpg`（2026-11-11 用户提供，绑定 `swan-princess`），副卡依次 `news-04.jpg`、`news-03.jpg`、`news-08.jpg`、`news-02.jpg`。主卡暂不显示 ROMANTICIZING EVERYDAY LIFE，保留 VIEW DETAILS 和整卡链接，图片替代文字取核验后的商品名称。主图 object-position 为 15% center，按钮距右侧 6%，在原卡片比例下避开左下角 Limited 标识；其他布局不变。这些是品牌构图素材，不用 Shopify 商品首图替换；绑定商品的可售状态、商品详情与购买事实仍由 Shopify 核验。
 
 - Ship to：Header 与购物袋入口；桌面右侧面板，手机底部弹层；搜索 Shopify 当前支持目的地，显式确认后刷新同一 URL。非空购物袋保留并重新核对，缺失商品不显示旧事实。
 

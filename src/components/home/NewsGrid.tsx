@@ -10,7 +10,9 @@ export interface NewsGridTexts {
    * 是同一句文案的登记处(messages.json 的 `home.newsBadge` 也保留未删)。
    */
   badge?: string;
-  featureTitle: string;
+  /** 可见宣传标题可暂时省略；图片替代文字独立保留商品名称。 */
+  featureTitle?: string;
+  featureAlt: string;
   cta: string;
   browseAll: string;
 }
@@ -20,10 +22,11 @@ export interface NewsGridTexts {
  *
  * PSD 布局(左 1 张大主卡 1324×2062 + 右 2×2 四张副卡 827×1007,列宽比
  * 1324:1746 = 43:57,与现网格一致):
- *  - 主卡文字在图片**上方居中**:ROMANTICIZING EVERYDAY LIFE(img y12.9%,两行);
- *    底部居中黑色胶囊按钮 VIEW DETAILS(矩形3拷贝6:宽 694/1324=52.4%,
+ *  - 可选主卡标题在图片上方居中；2026-11-11 首页暂不传入宣传标题。
+ *    底部黑色胶囊按钮 VIEW DETAILS(矩形3拷贝6:宽 694/1324=52.4%,
  *    高 206/2062=10.0%)。PSD 里标题上方还有一行 NEW ARRIVALS(img y6.6%),
- *    已按老板 2026-10 诉求 3 删除,但它的高度并进了标题 `mt`(位置保持不变)。
+ *    已按老板 2026-10 诉求 3 删除,但它的高度并进了可选标题 `mt`。
+ *    2026-11-11 主卡按钮靠右避开新图左下角的限量标识。
  *  - 副卡文字**全部移入图片底部居中的黑色胶囊按钮**(矩形3拷贝2..5:
  *    宽 525/827=63.5%,高 135/1007=13.4%),不再有图下方的文字说明。
  *
@@ -55,15 +58,16 @@ export function NewsGrid({
         <Reveal>
           <Link
             href={featureHref}
+            aria-label={`${texts.featureAlt} — ${texts.cta}`}
             className="group rounded-card bg-cream-deep relative block aspect-[3/4] overflow-hidden lg:aspect-auto lg:h-full lg:min-h-[32rem]"
             style={{ containerType: "inline-size" }}
           >
             <Image
               src={feature.image}
-              alt={texts.featureTitle}
+              alt={texts.featureAlt}
               fill
               sizes="(max-width: 1024px) 100vw, 50vw"
-              className="ease-editorial object-cover transition-transform duration-500 group-hover:scale-105"
+              className="ease-editorial object-cover object-[15%_center] transition-transform duration-500 group-hover:scale-105"
             />
             {/* PSD:文案压在图片上方、居中(不是左下角),图片本身不加暗渐变。
                 窄屏文字框 14% → 8%:字号**不缩**(主卡大标题是设计定稿的 9.59cqw),
@@ -76,13 +80,15 @@ export function NewsGrid({
                 margin 折叠的 flex column,不补的话标题会上移
                 `max(11px,4.77cqw) + 3.5cqw`(375px ≈ 28px、1440px ≈ 42px),
                 压到主图人物头部;老板只要求删一行字,没要求重排构图。 */}
-            <div className="absolute inset-x-0 top-0 flex flex-col items-center px-[8%] pt-[6.6%] text-center sm:px-[14%]">
-              <h3 className="font-display text-ink mt-[calc(max(11px,4.77cqw)+3.5cqw)] text-[max(30px,9.59cqw)] leading-[1.12] font-semibold tracking-tight uppercase">
-                {texts.featureTitle}
-              </h3>
-            </div>
-            {/* PSD 矩形3拷贝6:底部居中黑色胶囊,白字,宽 52.4% 卡宽、高 15.56cqw */}
-            <span className="bg-ink text-cream absolute inset-x-0 bottom-[10%] mx-auto flex h-[15.56cqw] w-[52.4%] items-center justify-center rounded-full text-[max(11px,4.65cqw)] leading-none font-normal tracking-[var(--tracking-10)] uppercase">
+            {texts.featureTitle && (
+              <div className="absolute inset-x-0 top-0 flex flex-col items-center px-[8%] pt-[6.6%] text-center sm:px-[14%]">
+                <h3 className="font-display text-ink mt-[calc(max(11px,4.77cqw)+3.5cqw)] text-[max(30px,9.59cqw)] leading-[1.12] font-semibold tracking-tight uppercase">
+                  {texts.featureTitle}
+                </h3>
+              </div>
+            )}
+            {/* 保留胶囊尺寸；靠右避开 SWAN QUEEN 图左下角的 Limited 标识。 */}
+            <span className="bg-ink text-cream absolute right-[6%] bottom-[10%] flex h-[15.56cqw] w-[52.4%] items-center justify-center rounded-full text-[max(11px,4.65cqw)] leading-none font-normal tracking-[var(--tracking-10)] uppercase">
               {texts.cta}
             </span>
           </Link>

@@ -107,7 +107,7 @@ const item = (handle: string, title: string, priceCents = 4990): ShopifyListItem
 });
 
 // 有系列的:公主系列公仔(必须在名册里 —— 过滤不能把公仔一起干掉)
-const DOLL = liveProduct(item("swan-princess", "SWAN QUEEN- LIMITED", 0), "princess-lady", 0);
+const DOLL = liveProduct(item("little-heiress", "LITTLE HEIRESS", 0), "princess-lady", 0);
 // 不属于任何系列的周边:线上实测两款 + 一款"未来才上架"的假想款,
 // 用来证明过滤是按 series,而不是按 handle 硬编码名单。
 const MERCH = [
@@ -156,8 +156,14 @@ async function renderHome(locale: "en" | "zh" = "en") {
 }
 
 describe("homepage NEWS editorial photographs", () => {
-  const handles = ["warm-biscuit", "bunny-hug", "ace", "wander", "offy_redrush"];
-  const images = ["news-01.jpg", "news-04.jpg", "news-03.jpg", "news-08.jpg", "news-02.jpg"];
+  const handles = ["swan-princess", "bunny-hug", "ace", "wander", "offy_redrush"];
+  const images = [
+    "news-swan-queen.jpg",
+    "news-04.jpg",
+    "news-03.jpg",
+    "news-08.jpg",
+    "news-02.jpg",
+  ];
   function setNewsProducts(withRemoteImages: boolean) {
     homeState.newsProducts = handles.map((handle, i) => ({
       ...liveProduct(item(handle, `Verified ${handle}`), "princess-lady", i),
@@ -187,6 +193,31 @@ describe("homepage NEWS editorial photographs", () => {
     expect(within(section).getAllByRole("img")).toHaveLength(4);
     expect(section.querySelector('a[href="/products/bunny-hug"]')).toBeNull();
   });
+  it("uses the verified Swan Queen name as alternative text without the old visible headline", async () => {
+    setNewsProducts(true);
+    const name = "BUY 6 OFFY, GET A FREE LIMITED-EDITION SWAN QUEEN";
+    homeState.newsProducts[0].name = { en: name, zh: name };
+    await renderHome();
+    const section = screen.getByRole("heading", { name: en.home.newsTitle }).closest("section")!;
+    const image = within(section).getByRole("img", { name });
+    expect(image.closest("a")).toHaveAttribute("href", "/products/swan-princess");
+    expect(within(image.closest("a")!).getByText(en.home.teaserCta)).toBeVisible();
+    expect(within(section).queryByText(en.home.newsFeatureTitle)).toBeNull();
+    expect(within(section).queryByRole("heading", { level: 3 })).toBeNull();
+  });
+  it.each(["missing", "unavailable"])(
+    "does not advertise a %s Swan Queen binding",
+    async (state) => {
+      setNewsProducts(true);
+      if (state === "missing") homeState.newsProducts.shift();
+      else homeState.newsProducts[0].isAvailable = false;
+      homeState.newsProducts.push(
+        liveProduct(item("warm-biscuit", "CARAMEL RÊVE"), "princess-lady", 10),
+      );
+      await renderHome();
+      expect(screen.queryByRole("heading", { name: en.home.newsTitle })).toBeNull();
+    },
+  );
 });
 
 describe("首页 · 语义 H1", () => {

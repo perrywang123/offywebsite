@@ -25,7 +25,7 @@ import Home from "./[locale]/page";
 beforeEach(() => vi.clearAllMocks());
 it("keeps independently verified NEWS and brand sections when recommendations fail", async () => {
   vi.mocked(getLiveProducts).mockResolvedValue([
-    testProduct("warm-biscuit"),
+    testProduct("swan-princess"),
     testProduct("bunny-hug"),
   ]);
   vi.mocked(getHomeLooks).mockRejectedValue(new Error("timeout"));

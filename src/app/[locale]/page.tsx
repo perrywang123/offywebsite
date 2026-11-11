@@ -114,7 +114,7 @@ export default async function HomePage({ params }: { params: Promise<{ locale: s
                 feature={newsFeature}
                 items={verifiedNews}
                 texts={{
-                  featureTitle: t("newsFeatureTitle"),
+                  featureAlt: locale === "zh" ? featureProduct.name.zh : featureProduct.name.en,
                   cta: t("teaserCta"),
                   browseAll: t("browseAll"),
                 }}
