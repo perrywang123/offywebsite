@@ -1,0 +1,8 @@
+- [x] Inspect both PSDs, extract editable text and source artwork, and obtain product/interaction/visual expert recommendations.
+- [x] Define the responsive design contract, content mapping, routing and implementation boundaries.
+- [x] Add failing tests for About replacement, complete story content/order, navigation, metadata and sitemap.
+- [x] Extract optimized original assets; implement `/about` and `/our-story` as semantic responsive pages.
+- [x] Run focused and full tests, formatting, lint/type checks and a production build.
+- [x] Start an isolated local preview with live commerce reads but tracking/financial writes disabled.
+- [x] Validate phone/tablet/desktop geometry, text scaling, image composition, CTA/back navigation, keyboard and shared shell; revise weakest visual decisions and save screenshots.
+- [x] Record evidence, archive the completed spec and synchronize Git; provide local URLs for owner verification, without production deployment.

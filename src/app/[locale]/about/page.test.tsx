@@ -1,190 +1,59 @@
 import { render, screen } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
-import en from "../../../../messages/en.json";
-import zh from "../../../../messages/zh.json";
-
-/**
- * About 页(OUR STORY 表改版)渲染测试。
- *
- * 页面是 async server component,靠 `getTranslations` 取文案;测试里没有 next-intl 的
- * 请求上下文,所以把 next-intl/server 换成"真字典 + 真 createTranslator" —— key 写错
- * 或数组用错时,报错方式与运行时一致,而不是悄悄渲染出 key 名。
- */
-const mockState = vi.hoisted(() => ({ locale: "en" }));
+import source from "../../../../docs/design/about-story/source-copy.json";
 
 vi.mock("next-intl/server", async () => {
-  const [{ createTranslator }, enModule, zhModule] = await Promise.all([
-    import("next-intl"),
-    import("../../../../messages/en.json"),
-    import("../../../../messages/zh.json"),
-  ]);
-  type Messages = typeof en;
-  const dictionaries: Record<"en" | "zh", Messages> = {
-    en: enModule.default,
-    zh: zhModule.default,
-  };
+  const { createTranslator } = await import("next-intl");
+  const { default: messages } = await import("../../../../messages/en.json");
   return {
     getTranslations: async (namespace: string) =>
-      createTranslator({
-        locale: mockState.locale,
-        messages: dictionaries[mockState.locale as "en" | "zh"],
-        // 页面按命名空间字符串取文案;这里不复制那串受约束的命名空间联合类型
-        namespace: namespace as keyof Messages,
-      }),
+      createTranslator({ locale: "en", messages, namespace: namespace as keyof typeof messages }),
   };
 });
 
+vi.mock("@/i18n/navigation", () => ({
+  Link: ({ href, children, ...props }: React.ComponentProps<"a">) => (
+    <a href={href} {...props}>
+      {children}
+    </a>
+  ),
+}));
+
 import AboutPage, { generateMetadata } from "./page";
+const params = Promise.resolve({ locale: "en" });
 
-function flatten(obj: Record<string, unknown>, prefix = ""): string[] {
-  return Object.entries(obj).flatMap(([key, value]) => {
-    const path = prefix ? `${prefix}.${key}` : key;
-    return typeof value === "object" && value !== null && !Array.isArray(value)
-      ? flatten(value as Record<string, unknown>, path)
-      : [path];
-  });
-}
-
-async function renderAbout(locale: "en" | "zh") {
-  mockState.locale = locale;
-  const ui = await AboutPage({ params: Promise.resolve({ locale }) });
-  return render(ui);
-}
-
-describe("About 页 · OUR STORY 表改版", () => {
-  describe("row 3 页首", () => {
-    it("en:主标语换成 Meet Who You Love to Be,原标语降为副行", async () => {
-      await renderAbout("en");
-      expect(
-        screen.getByRole("heading", { level: 1, name: "Meet Who You Love to Be" }),
-      ).toBeInTheDocument();
-      expect(screen.getByText("Imagine with Love. Create with Companion.")).toBeInTheDocument();
-    });
-
-    it("zh:两行都是中文,且主标语与英文不同", async () => {
-      await renderAbout("zh");
-      expect(screen.getByRole("heading", { level: 1, name: zh.about.title })).toBeInTheDocument();
-      expect(screen.getByText(zh.about.tagline)).toBeInTheDocument();
-      expect(zh.about.title).not.toBe(en.about.title);
-    });
+describe("PSD About invitation", () => {
+  it("renders the four supplied manifesto paragraphs as selectable text", async () => {
+    const { container } = render(await AboutPage({ params }));
+    expect(screen.getByRole("heading", { level: 1, name: source.about.title })).toBeInTheDocument();
+    for (const p of source.about.paragraphs) expect(screen.getByText(p)).toBeInTheDocument();
+    expect(container.querySelectorAll("h1")).toHaveLength(1);
+    expect(container.querySelector("main")).toBeNull();
   });
 
-  describe("row 4 Where She Came From 正文", () => {
-    it("标题保留,12 段新正文按顺序全部渲染,图集还在", async () => {
-      const { container } = await renderAbout("en");
-      expect(
-        screen.getByRole("heading", { level: 2, name: "Where She Came From" }),
-      ).toBeInTheDocument();
-      expect(en.about.storyParagraphs).toHaveLength(12);
-      for (const paragraph of en.about.storyParagraphs) {
-        expect(screen.getByText(paragraph)).toBeInTheDocument();
-      }
-      expect(container.querySelector('[data-slot="story-image"]')).not.toBeNull();
-    });
-
-    it("旧的三段塞尔达起源文案不再出现", async () => {
-      await renderAbout("en");
-      expect(screen.queryByText(/Korok/)).toBeNull();
-      expect(screen.queryByText(/die-hard Zelda/)).toBeNull();
-    });
-
-    it("zh:12 段一一对应中文,不留英文原文", async () => {
-      await renderAbout("zh");
-      expect(zh.about.storyParagraphs).toHaveLength(en.about.storyParagraphs.length);
-      for (const paragraph of zh.about.storyParagraphs) {
-        expect(screen.getByText(paragraph)).toBeInTheDocument();
-      }
-      for (const paragraph of en.about.storyParagraphs) {
-        expect(screen.queryByText(paragraph)).toBeNull();
-      }
-    });
+  it("pairs original character and creator images before the single story CTA", async () => {
+    const { container } = render(await AboutPage({ params }));
+    const images = [...container.querySelectorAll("img")];
+    expect(images).toHaveLength(2);
+    expect(images[0]).toHaveAttribute("alt", expect.stringContaining("OFFY"));
+    expect(images[1]).toHaveAttribute("alt", expect.stringContaining("Gia"));
+    expect(
+      images.every(
+        (x) => Number(x.getAttribute("width")) > 0 && Number(x.getAttribute("height")) > 0,
+      ),
+    ).toBe(true);
+    const link = screen.getByRole("link", { name: "EXPLORE OUR STORY" });
+    expect(link).toHaveAttribute("href", "/our-story");
+    expect(images[1].compareDocumentPosition(link) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+    expect(screen.queryByText("NEW IPS AHEAD")).toBeNull();
+    expect(screen.queryByText("Custom & Collab")).toBeNull();
+    expect(screen.queryByText(/XXXX/)).toBeNull();
   });
 
-  describe("row 5 / row 6 删除的区块", () => {
-    it("创作团队黑条(JIE / 桃子 / The Makers)整块不在", async () => {
-      const { container } = await renderAbout("en");
-      expect(screen.queryByText("JIE")).toBeNull();
-      expect(screen.queryByText("桃子")).toBeNull();
-      expect(screen.queryByText("The Makers")).toBeNull();
-      // 结构性判断:深色色块本身也不在(不只是文字被删)
-      expect(container.querySelector(".bg-ink")).toBeNull();
-    });
-
-    it("零售网络 Stockists 区块不在", async () => {
-      await renderAbout("en");
-      expect(screen.queryByText("Stockists")).toBeNull();
-      expect(screen.queryByText(/Shanghai TX Huaihai/)).toBeNull();
-      expect(screen.queryByText(/Hangzhou Intime/)).toBeNull();
-    });
-
-    it("zh 页同样不再出现这两块", async () => {
-      await renderAbout("zh");
-      expect(screen.queryByText("创作团队")).toBeNull();
-      expect(screen.queryByText("零售网络")).toBeNull();
-    });
-  });
-
-  describe("row 7 后续计划", () => {
-    it("换成首页那块:NEW IPS AHEAD + comingSub + UpcomingCard 角色插画", async () => {
-      const { container } = await renderAbout("en");
-      expect(screen.getByRole("heading", { level: 2, name: "NEW IPS AHEAD" })).toBeInTheDocument();
-      expect(screen.getByText(en.home.comingSub)).toBeInTheDocument();
-      expect(screen.getAllByText("IN DEVELOPMENT")).toHaveLength(2);
-
-      const sources = [...container.querySelectorAll("img")].map(
-        (img) => img.getAttribute("src") ?? "",
-      );
-      expect(sources.some((src) => src.includes("upcoming-kitty"))).toBe(true);
-      expect(sources.some((src) => src.includes("upcoming-butterfly"))).toBe(true);
-    });
-
-    it("旧的点阵占位与 COMING SOON — TBD 不再渲染", async () => {
-      const { container } = await renderAbout("en");
-      expect(screen.queryByText("Coming Soon — TBD")).toBeNull();
-      expect(container.querySelector(".media-placeholder")).toBeNull();
-    });
-  });
-
-  describe("metadata · self-canonical", () => {
-    it("canonical 是自己的 /about,不是首页 /(此前的 bug:继承 layout 的首页 canonical)", async () => {
-      mockState.locale = "en";
-      const meta = await generateMetadata({ params: Promise.resolve({ locale: "en" }) });
-      expect(meta.alternates?.canonical).toBe("/about");
-      expect(meta.alternates?.canonical).not.toBe("/");
-    });
-
-    it("title 是 Our Story,description 写品牌故事而不是首页 tagline", async () => {
-      mockState.locale = "en";
-      const meta = await generateMetadata({ params: Promise.resolve({ locale: "en" }) });
-      expect(meta.title).toBe(en.about.storyKicker);
-      expect(meta.title).toBe("Our Story");
-      expect(meta.description).toBe(
-        "The story behind is.offy — a gentle spirit from Briar Island, made to help you meet who you love to be.",
-      );
-      expect(meta.description).not.toBe(en.common.tagline);
-    });
-  });
-
-  describe("about 字典", () => {
-    it("en / zh key 集合完全一致", () => {
-      expect(flatten(zh.about).sort()).toEqual(flatten(en.about).sort());
-    });
-
-    it("两版正文段数一致、都非空", () => {
-      expect(en.about.storyParagraphs).toHaveLength(12);
-      expect(zh.about.storyParagraphs).toHaveLength(12);
-      expect(
-        [...en.about.storyParagraphs, ...zh.about.storyParagraphs].every(
-          (p) => p.trim().length > 0,
-        ),
-      ).toBe(true);
-    });
-
-    it("旧版 team / retail / future / storyP* key 已清理", () => {
-      const legacy = flatten(en.about).filter((key) =>
-        /^(team|retail|future|comingSoonLabel|storyP\d)/.test(key),
-      );
-      expect(legacy).toEqual([]);
-    });
+  it("advertises its own canonical and About metadata", async () => {
+    const meta = await generateMetadata({ params });
+    expect(meta.title).toBe("About Us");
+    expect(meta.alternates?.canonical).toBe("/about");
+    expect(meta.openGraph).toMatchObject({ title: "About Us", url: "/about" });
   });
 });

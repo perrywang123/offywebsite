@@ -1,0 +1,13 @@
+{
+  "overflow": true,
+  "violations": [
+    {
+      "font": "52px",
+      "scroll": 347,
+      "tag": "H2",
+      "text": "THE OFFY COLLECTION",
+      "width": 280
+    }
+  ],
+  "width": 320
+}

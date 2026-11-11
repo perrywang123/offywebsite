@@ -1,0 +1,58 @@
+[
+  {
+    "page": "story",
+    "scale": 2,
+    "overflow": false,
+    "violations": [],
+    "width": 320
+  },
+  {
+    "page": "story",
+    "scale": 2,
+    "overflow": false,
+    "violations": [],
+    "width": 375
+  },
+  {
+    "page": "story",
+    "scale": 2,
+    "overflow": false,
+    "violations": [],
+    "width": 768
+  },
+  {
+    "page": "story",
+    "scale": 2,
+    "overflow": false,
+    "violations": [],
+    "width": 1440
+  },
+  {
+    "page": "about",
+    "scale": 2,
+    "overflow": false,
+    "violations": [],
+    "width": 320
+  },
+  {
+    "page": "about",
+    "scale": 2,
+    "overflow": false,
+    "violations": [],
+    "width": 375
+  },
+  {
+    "page": "about",
+    "scale": 2,
+    "overflow": false,
+    "violations": [],
+    "width": 768
+  },
+  {
+    "page": "about",
+    "scale": 2,
+    "overflow": false,
+    "violations": [],
+    "width": 1440
+  }
+]

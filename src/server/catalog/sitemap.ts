@@ -28,6 +28,7 @@ export async function sitemapEntries(): Promise<MetadataRoute.Sitemap> {
     "/products",
     "/collections",
     "/about",
+    "/our-story",
     "/bag-charm",
     "/faq",
     "/policies", // 政策二级目录页(那 4 条政策从页脚下沉到这里)

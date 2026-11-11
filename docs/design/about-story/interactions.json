@@ -1,0 +1,17 @@
+{
+  "keyboard": {
+    "focusVisible": true,
+    "outline": "2px",
+    "text": "EXPLORE OUR STORY"
+  },
+  "ctaNavigated": true,
+  "topAndBottomReturns": true,
+  "browserBack": true,
+  "directStoryRefresh": true,
+  "mobileMenuOpenClose": true,
+  "emptyBagOpenEscapeClose": true,
+  "bagQuantityBefore": 0,
+  "bagQuantityAfter": 0,
+  "hydrationLogs": [],
+  "consoleNote": "Several opaque Object console records appeared, including one from a Chrome extension; no usable hydration error or functional failure was observed. Final image requests all succeeded."
+}

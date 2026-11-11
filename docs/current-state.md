@@ -87,3 +87,5 @@ Ship to 与会话国家偏好已实现、测试并独立发布主站；优先手
 2026-11-11：首页选品读取用户已配置的 Shopify FEATURED（handle featured），失败回退原每系列时间逻辑，限定商品在名额前排除并独立展示。按用户纠正恢复原宽度、4:5 大图卡和 All Products 圆形名册；FEATURED 与 REGIONAL EXCLUSIVE 标题等大。原三系列和支付链路不变，已完成用户确认、测试与主站独立发布。见[选品说明](homepage-merchandising.md)与[截图验收](homepage-merchandising-verification.md)。
 
 2026-11-11：用户已确认五屏轮播响应式方案与图标修正。真实组件采用照片/文字分区和共享自然高度，保留原图片、文案、跳转和手势/自动播放；已完成 939 项测试、生产构建、本地浏览器验收及上线后验证；运行源码 `114cb56` 已使用 CI 预构建镜像独立发布主站。后台、KOL/Meta worker、GeoIP、环境配置和 Nginx 均保持原样，数据库检查通过。见[验收记录](design/hero-live/validation.md)。
+
+2026-11-11：新版 About / OFFY 故事页已按用户 PSD 完成设计、实现和本地验收。`/about` 为四段宣言、双图与 EXPLORE OUR STORY；新 `/our-story` 保留作者介绍、世界观、手稿、自述和角色名册。931 项测试、生产构建、两页 12 组真实尺寸及 8 组双倍字号检查通过。当前仅本地预览，**未发布生产**；未修改 Shopify、管理后台、商品或结账。见[验收与预览](design/about-story/validation.md)。

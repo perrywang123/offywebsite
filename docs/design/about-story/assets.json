@@ -1,0 +1,268 @@
+[
+  {
+    "file": "/assets/about/offy-illustration.webp",
+    "width": 1254,
+    "height": 1254,
+    "bytes": 155746,
+    "source": "About PSD smart object layer 921"
+  },
+  {
+    "file": "/assets/about/gia-about.webp",
+    "width": 1350,
+    "height": 1465,
+    "bytes": 239242,
+    "source": "About PSD merged crop [1640,1960,2990,3425]"
+  },
+  {
+    "file": "/assets/about/gia-story.webp",
+    "width": 1172,
+    "height": 1599,
+    "bytes": 237648,
+    "source": "Story PSD merged crop [236,1906,1408,3505]"
+  },
+  {
+    "file": "/assets/about/story-banner.webp",
+    "width": 2400,
+    "height": 771,
+    "bytes": 46720,
+    "source": "Story PSD merged crop [0,0,3251,1044]"
+  },
+  {
+    "file": "/assets/about/offy-expressions.webp",
+    "width": 1600,
+    "height": 742,
+    "bytes": 166518,
+    "source": "Story PSD smart object layer 921"
+  },
+  {
+    "file": "/assets/about/sketch-1.webp",
+    "width": 1600,
+    "height": 1299,
+    "bytes": 236652,
+    "source": "Story PSD smart object layer 928"
+  },
+  {
+    "file": "/assets/about/sketch-2.webp",
+    "width": 1086,
+    "height": 1448,
+    "bytes": 447362,
+    "source": "Story PSD smart object layer 929"
+  },
+  {
+    "file": "/assets/about/sketch-3.webp",
+    "width": 1086,
+    "height": 1448,
+    "bytes": 285984,
+    "source": "Story PSD smart object layer 930"
+  },
+  {
+    "file": "/assets/about/sketch-4.webp",
+    "width": 1093,
+    "height": 1438,
+    "bytes": 266212,
+    "source": "Story PSD smart object layer 931"
+  },
+  {
+    "file": "/assets/about/collection-mark.webp",
+    "width": 360,
+    "height": 333,
+    "bytes": 17980,
+    "source": "Story PSD merged crop [230,18307,590,18640]"
+  },
+  {
+    "file": "/assets/about/offy-prototype.webp",
+    "width": 990,
+    "height": 1570,
+    "bytes": 269468,
+    "source": "Story PSD merged crop [170,19035,1160,20605]"
+  },
+  {
+    "file": "/assets/about/collection-artwork.webp",
+    "width": 1810,
+    "height": 1520,
+    "bytes": 631860,
+    "source": "Story PSD merged crop [1240,19060,3050,20580]"
+  },
+  {
+    "file": "/assets/about/collection-look-01.webp",
+    "width": 266,
+    "height": 400,
+    "bytes": 27108,
+    "source": "Collection artwork grid row 1, column 1"
+  },
+  {
+    "file": "/assets/about/collection-look-02.webp",
+    "width": 257,
+    "height": 400,
+    "bytes": 27492,
+    "source": "Collection artwork grid row 1, column 2"
+  },
+  {
+    "file": "/assets/about/collection-look-03.webp",
+    "width": 261,
+    "height": 400,
+    "bytes": 26354,
+    "source": "Collection artwork grid row 1, column 3"
+  },
+  {
+    "file": "/assets/about/collection-look-04.webp",
+    "width": 258,
+    "height": 400,
+    "bytes": 28404,
+    "source": "Collection artwork grid row 1, column 4"
+  },
+  {
+    "file": "/assets/about/collection-look-05.webp",
+    "width": 259,
+    "height": 400,
+    "bytes": 27244,
+    "source": "Collection artwork grid row 1, column 5"
+  },
+  {
+    "file": "/assets/about/collection-look-06.webp",
+    "width": 256,
+    "height": 400,
+    "bytes": 25928,
+    "source": "Collection artwork grid row 1, column 6"
+  },
+  {
+    "file": "/assets/about/collection-look-07.webp",
+    "width": 253,
+    "height": 400,
+    "bytes": 26342,
+    "source": "Collection artwork grid row 1, column 7"
+  },
+  {
+    "file": "/assets/about/collection-look-08.webp",
+    "width": 266,
+    "height": 347,
+    "bytes": 24446,
+    "source": "Collection artwork grid row 2, column 1"
+  },
+  {
+    "file": "/assets/about/collection-look-09.webp",
+    "width": 257,
+    "height": 347,
+    "bytes": 22144,
+    "source": "Collection artwork grid row 2, column 2"
+  },
+  {
+    "file": "/assets/about/collection-look-10.webp",
+    "width": 261,
+    "height": 347,
+    "bytes": 23928,
+    "source": "Collection artwork grid row 2, column 3"
+  },
+  {
+    "file": "/assets/about/collection-look-11.webp",
+    "width": 258,
+    "height": 347,
+    "bytes": 23368,
+    "source": "Collection artwork grid row 2, column 4"
+  },
+  {
+    "file": "/assets/about/collection-look-12.webp",
+    "width": 259,
+    "height": 347,
+    "bytes": 24142,
+    "source": "Collection artwork grid row 2, column 5"
+  },
+  {
+    "file": "/assets/about/collection-look-13.webp",
+    "width": 256,
+    "height": 347,
+    "bytes": 24364,
+    "source": "Collection artwork grid row 2, column 6"
+  },
+  {
+    "file": "/assets/about/collection-look-14.webp",
+    "width": 253,
+    "height": 347,
+    "bytes": 25500,
+    "source": "Collection artwork grid row 2, column 7"
+  },
+  {
+    "file": "/assets/about/collection-look-15.webp",
+    "width": 266,
+    "height": 366,
+    "bytes": 27394,
+    "source": "Collection artwork grid row 3, column 1"
+  },
+  {
+    "file": "/assets/about/collection-look-16.webp",
+    "width": 257,
+    "height": 366,
+    "bytes": 27362,
+    "source": "Collection artwork grid row 3, column 2"
+  },
+  {
+    "file": "/assets/about/collection-look-17.webp",
+    "width": 261,
+    "height": 366,
+    "bytes": 27748,
+    "source": "Collection artwork grid row 3, column 3"
+  },
+  {
+    "file": "/assets/about/collection-look-18.webp",
+    "width": 258,
+    "height": 366,
+    "bytes": 27934,
+    "source": "Collection artwork grid row 3, column 4"
+  },
+  {
+    "file": "/assets/about/collection-look-19.webp",
+    "width": 259,
+    "height": 366,
+    "bytes": 29644,
+    "source": "Collection artwork grid row 3, column 5"
+  },
+  {
+    "file": "/assets/about/collection-look-20.webp",
+    "width": 256,
+    "height": 366,
+    "bytes": 29992,
+    "source": "Collection artwork grid row 3, column 6"
+  },
+  {
+    "file": "/assets/about/collection-look-21.webp",
+    "width": 253,
+    "height": 366,
+    "bytes": 27992,
+    "source": "Collection artwork grid row 3, column 7"
+  },
+  {
+    "file": "/assets/about/collection-look-22.webp",
+    "width": 266,
+    "height": 407,
+    "bytes": 22278,
+    "source": "Collection artwork grid row 4, column 1"
+  },
+  {
+    "file": "/assets/about/collection-look-23.webp",
+    "width": 257,
+    "height": 407,
+    "bytes": 23348,
+    "source": "Collection artwork grid row 4, column 2"
+  },
+  {
+    "file": "/assets/about/collection-look-24.webp",
+    "width": 261,
+    "height": 407,
+    "bytes": 21528,
+    "source": "Collection artwork grid row 4, column 3"
+  },
+  {
+    "file": "/assets/about/collection-look-25.webp",
+    "width": 258,
+    "height": 407,
+    "bytes": 16664,
+    "source": "Collection artwork grid row 4, column 4"
+  },
+  {
+    "file": "/assets/about/offy-illustration-pair.webp",
+    "width": 879,
+    "height": 1105,
+    "bytes": 158372,
+    "source": "About PSD smart object layer 921; remove outer white margin only, crop [180, 91, 1059, 1196], preserve all artwork plus 30px clear space"
+  }
+]

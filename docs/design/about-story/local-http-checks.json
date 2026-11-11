@@ -1,0 +1,219 @@
+[
+  {
+    "path": "/assets/about/offy-illustration.webp",
+    "status": 200,
+    "dimensions": [1254, 1254]
+  },
+  {
+    "path": "/assets/about/gia-about.webp",
+    "status": 200,
+    "dimensions": [1350, 1465]
+  },
+  {
+    "path": "/assets/about/gia-story.webp",
+    "status": 200,
+    "dimensions": [1172, 1599]
+  },
+  {
+    "path": "/assets/about/story-banner.webp",
+    "status": 200,
+    "dimensions": [2400, 771]
+  },
+  {
+    "path": "/assets/about/offy-expressions.webp",
+    "status": 200,
+    "dimensions": [1600, 742]
+  },
+  {
+    "path": "/assets/about/sketch-1.webp",
+    "status": 200,
+    "dimensions": [1600, 1299]
+  },
+  {
+    "path": "/assets/about/sketch-2.webp",
+    "status": 200,
+    "dimensions": [1086, 1448]
+  },
+  {
+    "path": "/assets/about/sketch-3.webp",
+    "status": 200,
+    "dimensions": [1086, 1448]
+  },
+  {
+    "path": "/assets/about/sketch-4.webp",
+    "status": 200,
+    "dimensions": [1093, 1438]
+  },
+  {
+    "path": "/assets/about/collection-mark.webp",
+    "status": 200,
+    "dimensions": [360, 333]
+  },
+  {
+    "path": "/assets/about/offy-prototype.webp",
+    "status": 200,
+    "dimensions": [990, 1570]
+  },
+  {
+    "path": "/assets/about/collection-artwork.webp",
+    "status": 200,
+    "dimensions": [1810, 1520]
+  },
+  {
+    "path": "/assets/about/collection-look-01.webp",
+    "status": 200,
+    "dimensions": [266, 400]
+  },
+  {
+    "path": "/assets/about/collection-look-02.webp",
+    "status": 200,
+    "dimensions": [257, 400]
+  },
+  {
+    "path": "/assets/about/collection-look-03.webp",
+    "status": 200,
+    "dimensions": [261, 400]
+  },
+  {
+    "path": "/assets/about/collection-look-04.webp",
+    "status": 200,
+    "dimensions": [258, 400]
+  },
+  {
+    "path": "/assets/about/collection-look-05.webp",
+    "status": 200,
+    "dimensions": [259, 400]
+  },
+  {
+    "path": "/assets/about/collection-look-06.webp",
+    "status": 200,
+    "dimensions": [256, 400]
+  },
+  {
+    "path": "/assets/about/collection-look-07.webp",
+    "status": 200,
+    "dimensions": [253, 400]
+  },
+  {
+    "path": "/assets/about/collection-look-08.webp",
+    "status": 200,
+    "dimensions": [266, 347]
+  },
+  {
+    "path": "/assets/about/collection-look-09.webp",
+    "status": 200,
+    "dimensions": [257, 347]
+  },
+  {
+    "path": "/assets/about/collection-look-10.webp",
+    "status": 200,
+    "dimensions": [261, 347]
+  },
+  {
+    "path": "/assets/about/collection-look-11.webp",
+    "status": 200,
+    "dimensions": [258, 347]
+  },
+  {
+    "path": "/assets/about/collection-look-12.webp",
+    "status": 200,
+    "dimensions": [259, 347]
+  },
+  {
+    "path": "/assets/about/collection-look-13.webp",
+    "status": 200,
+    "dimensions": [256, 347]
+  },
+  {
+    "path": "/assets/about/collection-look-14.webp",
+    "status": 200,
+    "dimensions": [253, 347]
+  },
+  {
+    "path": "/assets/about/collection-look-15.webp",
+    "status": 200,
+    "dimensions": [266, 366]
+  },
+  {
+    "path": "/assets/about/collection-look-16.webp",
+    "status": 200,
+    "dimensions": [257, 366]
+  },
+  {
+    "path": "/assets/about/collection-look-17.webp",
+    "status": 200,
+    "dimensions": [261, 366]
+  },
+  {
+    "path": "/assets/about/collection-look-18.webp",
+    "status": 200,
+    "dimensions": [258, 366]
+  },
+  {
+    "path": "/assets/about/collection-look-19.webp",
+    "status": 200,
+    "dimensions": [259, 366]
+  },
+  {
+    "path": "/assets/about/collection-look-20.webp",
+    "status": 200,
+    "dimensions": [256, 366]
+  },
+  {
+    "path": "/assets/about/collection-look-21.webp",
+    "status": 200,
+    "dimensions": [253, 366]
+  },
+  {
+    "path": "/assets/about/collection-look-22.webp",
+    "status": 200,
+    "dimensions": [266, 407]
+  },
+  {
+    "path": "/assets/about/collection-look-23.webp",
+    "status": 200,
+    "dimensions": [257, 407]
+  },
+  {
+    "path": "/assets/about/collection-look-24.webp",
+    "status": 200,
+    "dimensions": [261, 407]
+  },
+  {
+    "path": "/assets/about/collection-look-25.webp",
+    "status": 200,
+    "dimensions": [258, 407]
+  },
+  {
+    "path": "/assets/about/offy-illustration-pair.webp",
+    "status": 200,
+    "dimensions": [879, 1105]
+  },
+  {
+    "optimized": "story-banner",
+    "status": 200,
+    "dimensions": [640, 206]
+  },
+  {
+    "optimized": "gia-story",
+    "status": 200,
+    "dimensions": [640, 873]
+  },
+  {
+    "optimized": "collection-look-01",
+    "status": 200,
+    "dimensions": [266, 400]
+  },
+  {
+    "page": "/about",
+    "status": 200,
+    "title": "About Us | is.offy",
+    "canonical": "http://127.0.0.1:4317/about"
+  },
+  {
+    "page": "/our-story",
+    "status": 200,
+    "title": "The Story of OFFY | is.offy",
+    "canonical": "http://127.0.0.1:4317/our-story"
+  }
+]

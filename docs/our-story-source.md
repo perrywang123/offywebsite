@@ -1,4 +1,4 @@
-> 文档状态（2026-10-31）：故事文案提取证据，不是运行时快照；当前内容见 [../messages/en.json](../messages/en.json)。
+> 文档状态（2026-11-11）：旧版 Excel 故事文案的历史提取证据。其字典作为保留资产，不再定义新版 About。当前本地实现采用用户最新两份 PSD，见 [About / Story 验收](design/about-story/validation.md)；生产尚未发布该改版。
 
 # OUR STORY 页改版文案（Excel 提取）
 
