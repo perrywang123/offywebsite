@@ -314,19 +314,32 @@
 }
 @media (max-width: 767px) {
   .aboutWrap {
+    width: calc(100% - 48px);
     padding-block: 48px 64px;
   }
   .aboutTitle {
-    font-size: clamp(30px, 8.5vw, 36px);
+    font-size: clamp(28px, 7.5vw, 34px);
+    line-height: 1.2;
+    text-align: left;
   }
   .manifesto {
+    max-width: 36ch;
     margin-top: 28px;
-    font-size: clamp(20px, 5.5vw, 22px);
+    font-size: 18px;
     font-weight: 400;
-    line-height: 1.5;
+    line-height: 1.6;
+    letter-spacing: -0.01em;
+    text-align: left;
   }
   .manifesto p + p {
     margin-top: 16px;
+  }
+  .manifesto p:last-child {
+    margin-top: 28px;
+    color: #525252;
+    font-size: 16px;
+    line-height: 1.75;
+    letter-spacing: 0;
   }
   .aboutPair {
     gap: 12px;
@@ -339,7 +352,8 @@
     font-size: 15px;
   }
   .storyWrap {
-    width: calc(100% - 40px);
+    width: calc(100% - 48px);
+    max-width: 640px;
   }
   .topReturn {
     padding-block: 20px 24px;
@@ -348,30 +362,56 @@
     margin-top: 56px;
   }
   .chapterTitle {
-    font-size: clamp(26px, 7.1vw, 30px);
+    font-size: clamp(24px, 6.5vw, 28px);
+    line-height: 1.25;
   }
   .creatorLabel,
   .chapterSubtitle,
   .reflectionLabel {
     margin-top: 12px;
-    font-size: 16px;
-    line-height: 1.5;
+    color: #525252;
+    font-size: 14px;
+    line-height: 1.6;
   }
-  .creatorIntro,
+  .creatorLabel {
+    font-size: 12px;
+    font-weight: 500;
+    letter-spacing: 0.1em;
+  }
   .prose {
-    font-size: 18px;
-    line-height: 1.7;
+    color: #333;
+    font-size: 16px;
+    line-height: 1.75;
+    letter-spacing: 0;
+  }
+  .prose p + p {
+    margin-top: 16px;
   }
   .creatorIntro {
-    margin-bottom: 24px;
+    margin-block: 16px 28px;
+    font-size: 17px;
+    line-height: 1.65;
   }
   .quote {
-    margin-top: 28px;
-    padding-left: 18px;
-    font-size: 17px;
+    margin-top: 36px;
+    padding-left: 16px;
+    color: #525252;
+    font-style: normal;
+  }
+  .quote .quoteLabel {
+    font-size: 13px;
+    letter-spacing: 0.04em;
+  }
+  .prose .originClosing {
+    margin-top: 24px;
   }
   .subheading {
-    font-size: 17px;
+    margin-block: 32px 12px;
+    font-size: 18px;
+    line-height: 1.4;
+  }
+  .reflection + .reflection {
+    margin-top: 40px;
   }
   .sketchGrid {
     grid-template-columns: minmax(0, 1fr);

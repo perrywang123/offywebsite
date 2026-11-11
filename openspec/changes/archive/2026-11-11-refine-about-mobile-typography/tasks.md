@@ -1,0 +1,5 @@
+- [x] Record the phone typography problem and freeze a focused presentation spec.
+- [x] Refine mobile type alignment, hierarchy, measure and spacing without changing source content or desktop composition.
+- [x] Run existing content/routing tests, full tests, lint/type/build validation.
+- [x] Restart isolated local preview; verify phone/tablet/desktop and enlarged text, capture before/after evidence and links.
+- [x] Archive the change and synchronize Git; leave production untouched.
