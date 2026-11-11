@@ -1,0 +1,23 @@
+{
+  "prototypeOnly": true,
+  "checkedAt": "2026-11-11T06:57:53.136Z",
+  "country": "US",
+  "regular": {
+    "handle": "warm-biscuit",
+    "title": "CARAMEL RÊVE",
+    "description": "Nothing planned until sunset. A caramel knit dress, a matching sun hat, and delicate pearl details. She settles into a garden chair, sipping iced tea and watching the trees sway. Lunch runs late. The afternoon drifts by. For once, there’s no feeling she should be doing something else. *Outfit is securely attached to OFFY and is not removable.",
+    "available": true,
+    "priceCents": 4590,
+    "currency": "USD",
+    "image": "./product.jpg"
+  },
+  "gift": {
+    "handle": "swan-princess",
+    "title": "BUY 6 OFFY, GET A FREE LIMITED-EDITION SWAN QUEEN",
+    "description": "Receive a complimentary SWAN QUEEN for every 6 OFFY dolls purchased This limited-edition doll is not sold separately; the displayed price is a placeholder. Simply add SWAN QUEEN to your cart when purchasing 6 or more OFFYs. Forgot to add her? No worries! We’ll include the correct number of gifts when packing your order. While supplies last.",
+    "available": true,
+    "priceCents": 9900,
+    "currency": "USD",
+    "image": "/assets/news/news-swan-queen.jpg"
+  }
+}
