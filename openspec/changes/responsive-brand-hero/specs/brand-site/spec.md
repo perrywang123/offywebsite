@@ -32,3 +32,12 @@ Promo and series slides SHALL retain their original English copy and complete ph
 
 - **WHEN** a shopper views the Princess, Streetwear or Dress-up slide on a narrow screen
 - **THEN** the existing left-aligned primary title and subtitle remain complete, with mobile subtitles at least 12px in the default style
+
+### Requirement: Brand favicon proportions
+
+The storefront SHALL serve an OFFY favicon on a square canvas. The existing brand logo SHALL retain its original aspect ratio and be centered with clear space, without stretching or cropping. The icon SHALL be readable on a white canvas and available as a browser-compatible PNG. The scaffold favicon SHALL no longer be advertised.
+
+#### Scenario: Browser icon rendering
+
+- **WHEN** a browser requests the site icon
+- **THEN** it receives a square PNG containing the original OFFY mark with its original proportions

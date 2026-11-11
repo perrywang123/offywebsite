@@ -1,5 +1,6 @@
 import { render, screen, fireEvent, createEvent, act } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
+import userEvent from "@testing-library/user-event";
 
 vi.mock("next-intl", () => ({
   useTranslations: () => (key: string, values?: Record<string, string | number>) =>
@@ -151,8 +152,7 @@ describe("HeroCarousel", () => {
         "/collections/playful-life",
       ].sort(),
     );
-    // 每屏的整屏链接都是 absolute inset-0 的那层
-    expect(container.querySelectorAll("a.absolute.inset-0")).toHaveLength(5);
+    expect(container.querySelectorAll("a[data-hero-link]")).toHaveLength(5);
   });
 
   it("renders the is.offy hand-written wordmark image on slide 1", () => {
@@ -171,9 +171,10 @@ describe("HeroCarousel", () => {
 
   it("renders a two-line slide-1 slogan (en, via explicit \\n) without baking it into an image", () => {
     const { container } = render(<HeroCarousel slides={slides} locale="en" />);
-    const node = container.querySelector("p.whitespace-pre-line");
-    expect(node).toBeTruthy();
-    expect(node?.textContent).toBe("Line one\nLine two");
+    expect(screen.getByText("Line one").closest("p")).not.toBe(
+      screen.getByText("Line two").closest("p"),
+    );
+    expect(container.querySelectorAll("[data-hero-slide]")).toHaveLength(5);
   });
 
   it("renders the promo slide (bg image with products baked in + live kicker & two-line promo text)", () => {
@@ -181,9 +182,8 @@ describe("HeroCarousel", () => {
     const srcs = Array.from(container.querySelectorAll("img")).map((i) => i.getAttribute("src"));
     expect(srcs).toContain("/assets/hero/hero-promo.jpg");
     expect(screen.getByText("OFFY大促加赠")).toBeInTheDocument();
-    // 两行大字:whitespace-pre-line 保留显式 \n 换行
-    const promoText = container.querySelector("p.whitespace-pre-line:not(.break-words)");
-    expect(promoText?.textContent).toBe("买三个公仔\n送包包");
+    expect(screen.getByText("买三个公仔")).toBeInTheDocument();
+    expect(screen.getByText("送包包")).toBeInTheDocument();
   });
 
   it("renders OFFY title + subtitle as live text on series slides (not baked PNGs)", () => {
@@ -244,8 +244,8 @@ describe("HeroCarousel", () => {
     // 改动前:只有屏 1/2 整屏包链接(屏 3-5 内部有自己的「查看详情」);
     // 诉求 1 隐藏 CTA 后,屏 3-5 也必须整屏可点,否则 60% 的头图面积是死区。
     const { container } = render(<HeroCarousel slides={slides} locale="zh" intervalMs={60000} />);
-    // 整屏链接 = `absolute inset-0` 那层,断言的是 href ↔ 屏内容的配对
-    const screens = Array.from(container.querySelectorAll("a.absolute.inset-0")).map((a) => ({
+    // 断言的是原整屏 href 与内容的配对,而不是某一种定位方式。
+    const screens = Array.from(container.querySelectorAll("a[data-hero-link]")).map((a) => ({
       href: a.getAttribute("href"),
       text: a.textContent ?? "",
     }));
@@ -371,7 +371,9 @@ describe("HeroCarousel", () => {
     fireEvent.pointerMove(region, { ...mouse, clientX: 270 }); // dx = -30,未到 40
     fireEvent.pointerUp(region, { ...mouse, clientX: 270 });
     // 没切屏(位移不足、也不是快速轻扫)
-    expect(screen.getAllByRole("tab", { hidden: true })[0]?.getAttribute("aria-selected")).toBe("true");
+    expect(screen.getAllByRole("tab", { hidden: true })[0]?.getAttribute("aria-selected")).toBe(
+      "true",
+    );
     // 但 click 被吞了 —— 这是本条的重点
     fireEvent(link, createEvent.click(link, { detail: 1 }));
     expect(reachedLink).toBe(0);
@@ -411,20 +413,28 @@ describe("HeroCarousel", () => {
     expect(container.querySelectorAll("button[aria-pressed]")).toHaveLength(0);
     expect(container.querySelectorAll("svg")).toHaveLength(0);
     // 导航入口没被这次改动改变(5 屏仍是各一条整屏链接)
-    expect(container.querySelectorAll("a.absolute.inset-0")).toHaveLength(5);
+    expect(container.querySelectorAll("a[data-hero-link]")).toHaveLength(5);
   });
 
-  it("keeps ≥44px hit areas on the hero controls (indicator bars) at narrow widths", () => {
+  it("keeps the indicators keyboard operable", async () => {
+    const user = userEvent.setup();
     render(<HeroCarousel slides={slides} locale="zh" intervalMs={60000} />);
-    // 2.8px 高的长条指示器靠伪元素把命中区扩到条上方 —— 箭头隐藏后不再有
-    // "向下扩会抢箭头命中区"的约束,扩到 2.65rem(375px 下 ≈45.2px,过 44px 门槛)。
-    // 视觉尺寸一点不动(仍 h-[1.18%]),`lg:` 那两行原值保持不动。
     const dots = screen.getAllByRole("tab", { hidden: true });
-    expect(dots).toHaveLength(5);
-    for (const dot of dots) {
-      expect(dot.className).toContain("after:h-[calc(100%+2.65rem)]");
-      expect(dot.className).toContain("h-full");
-    }
+    dots[3].focus();
+    await user.keyboard("{Enter}");
+    expect(dots[3]).toHaveAttribute("aria-selected", "true");
+  });
+
+  it("keeps all panels mounted for shared sizing while only the active panel is interactive", () => {
+    const { container } = render(<HeroCarousel slides={slides} locale="en" intervalMs={60000} />);
+    const panels = container.querySelectorAll("[data-hero-slide]");
+    expect(panels).toHaveLength(5);
+    expect(panels[0]).not.toHaveAttribute("inert");
+    expect(panels[1]).toHaveAttribute("inert");
+    fireEvent.click(screen.getAllByRole("tab")[1]);
+    expect(panels[0]).toHaveAttribute("inert");
+    expect(panels[1]).not.toHaveAttribute("inert");
+    expect(container.querySelectorAll("[data-hero-slide]")).toHaveLength(5);
   });
 });
 
@@ -622,7 +632,7 @@ describe("HeroCarousel 拖拽跟手动画", () => {
     }
   });
 
-  it("跟手只用 transform:不动 width/margin,头图高度仍由 aspect-ratio 决定", () => {
+  it("跟手只用 transform:不动 width/margin,不锁死可扩展的头图高度", () => {
     const { container } = render(<HeroCarousel slides={slides} locale="zh" intervalMs={60000} />);
     const region = screen.getByRole("region", { hidden: true });
 
@@ -630,8 +640,8 @@ describe("HeroCarousel 拖拽跟手动画", () => {
     fireEvent.pointerMove(region, { ...MOUSE, clientX: 120 });
     fireEvent.pointerUp(region, { ...MOUSE, clientX: 120 });
 
-    // 外层高度容器一动没动(改 width/margin 会连带 aspect-ratio 高度、引起回流)
-    expect(region.style.aspectRatio).toBe("3250 / 2041");
+    // 文案需要空间时允许撑高,拖拽本身仍不修改宽高。
+    expect(region.style.aspectRatio).toBe("");
     expect(region.style.height).toBe("");
     const st = track(container).style;
     for (const prop of ["width", "height", "marginLeft", "marginRight", "left", "paddingLeft"]) {

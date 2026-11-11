@@ -4,6 +4,9 @@ import { defineConfig } from "vitest/config";
 
 export default defineConfig({
   plugins: [react()],
+  // Unit tests import plain CSS modules; Next's PostCSS plugin declaration is
+  // framework-specific. Real Tailwind/layout acceptance runs in the built app.
+  css: { postcss: { plugins: [] } },
   test: {
     environment: "jsdom",
     // jsdom 默认在 `about:blank`(不透明源)上跑,**没有 localStorage** ——

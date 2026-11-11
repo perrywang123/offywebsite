@@ -1,0 +1,302 @@
+[
+  {
+    "copyBottom": 239.6953125,
+    "height": 328.9140625,
+    "overflow": false,
+    "overlap": false,
+    "slide": "0",
+    "textBottom": 239.6953125,
+    "width": 320,
+    "scale": "1.3"
+  },
+  {
+    "copyBottom": 346.9140625,
+    "height": 328.9140625,
+    "overflow": false,
+    "overlap": false,
+    "slide": "1",
+    "textBottom": 346.9140625,
+    "width": 320,
+    "scale": "1.3"
+  },
+  {
+    "copyBottom": 314.046875,
+    "height": 328.9140625,
+    "overflow": false,
+    "overlap": false,
+    "slide": "2",
+    "textBottom": 314.046875,
+    "width": 320,
+    "scale": "1.3"
+  },
+  {
+    "copyBottom": 330.4296875,
+    "height": 328.9140625,
+    "overflow": false,
+    "overlap": false,
+    "slide": "3",
+    "textBottom": 330.4296875,
+    "width": 320,
+    "scale": "1.3"
+  },
+  {
+    "copyBottom": 314.046875,
+    "height": 328.9140625,
+    "overflow": false,
+    "overlap": false,
+    "slide": "4",
+    "textBottom": 314.046875,
+    "width": 320,
+    "scale": "1.3"
+  },
+  {
+    "copyBottom": 365.515625,
+    "height": 490.7890625,
+    "overflow": false,
+    "overlap": false,
+    "slide": "0",
+    "textBottom": 365.515625,
+    "width": 320,
+    "scale": "2"
+  },
+  {
+    "copyBottom": 508.7890625,
+    "height": 490.7890625,
+    "overflow": false,
+    "overlap": false,
+    "slide": "1",
+    "textBottom": 508.7890625,
+    "width": 320,
+    "scale": "2"
+  },
+  {
+    "copyBottom": 451.28125,
+    "height": 490.7890625,
+    "overflow": false,
+    "overlap": false,
+    "slide": "2",
+    "textBottom": 451.28125,
+    "width": 320,
+    "scale": "2"
+  },
+  {
+    "copyBottom": 434.78125,
+    "height": 490.7890625,
+    "overflow": false,
+    "overlap": false,
+    "slide": "3",
+    "textBottom": 434.78125,
+    "width": 320,
+    "scale": "2"
+  },
+  {
+    "copyBottom": 451.28125,
+    "height": 490.7890625,
+    "overflow": false,
+    "overlap": false,
+    "slide": "4",
+    "textBottom": 451.28125,
+    "width": 320,
+    "scale": "2"
+  },
+  {
+    "copyBottom": 223.6640625,
+    "height": 352.09375,
+    "overflow": false,
+    "overlap": false,
+    "slide": "0",
+    "textBottom": 223.6640625,
+    "width": 390,
+    "scale": "1.3"
+  },
+  {
+    "copyBottom": 348.09375,
+    "height": 352.09375,
+    "overflow": false,
+    "overlap": false,
+    "slide": "1",
+    "textBottom": 348.09375,
+    "width": 390,
+    "scale": "1.3"
+  },
+  {
+    "copyBottom": 320.5390625,
+    "height": 352.09375,
+    "overflow": false,
+    "overlap": false,
+    "slide": "2",
+    "textBottom": 320.5390625,
+    "width": 390,
+    "scale": "1.3"
+  },
+  {
+    "copyBottom": 338.9296875,
+    "height": 352.09375,
+    "overflow": false,
+    "overlap": false,
+    "slide": "3",
+    "textBottom": 338.9296875,
+    "width": 390,
+    "scale": "1.3"
+  },
+  {
+    "copyBottom": 320.5390625,
+    "height": 352.09375,
+    "overflow": false,
+    "overlap": false,
+    "slide": "4",
+    "textBottom": 320.5390625,
+    "width": 390,
+    "scale": "1.3"
+  },
+  {
+    "copyBottom": 362.140625,
+    "height": 525.5625,
+    "overflow": false,
+    "overlap": false,
+    "slide": "0",
+    "textBottom": 362.140625,
+    "width": 390,
+    "scale": "2"
+  },
+  {
+    "copyBottom": 521.5625,
+    "height": 525.5625,
+    "overflow": false,
+    "overlap": false,
+    "slide": "1",
+    "textBottom": 521.5625,
+    "width": 390,
+    "scale": "2"
+  },
+  {
+    "copyBottom": 469.3515625,
+    "height": 525.5625,
+    "overflow": false,
+    "overlap": false,
+    "slide": "2",
+    "textBottom": 469.3515625,
+    "width": 390,
+    "scale": "2"
+  },
+  {
+    "copyBottom": 451.65625,
+    "height": 525.5625,
+    "overflow": false,
+    "overlap": false,
+    "slide": "3",
+    "textBottom": 451.65625,
+    "width": 390,
+    "scale": "2"
+  },
+  {
+    "copyBottom": 469.3515625,
+    "height": 525.5625,
+    "overflow": false,
+    "overlap": false,
+    "slide": "4",
+    "textBottom": 469.3515625,
+    "width": 390,
+    "scale": "2"
+  },
+  {
+    "copyBottom": 428.9609375,
+    "height": 1107.4765625,
+    "overflow": false,
+    "overlap": false,
+    "slide": "0",
+    "textBottom": 428.9609375,
+    "width": 1440,
+    "scale": "1.3"
+  },
+  {
+    "copyBottom": 1055.3203125,
+    "height": 1107.4765625,
+    "overflow": false,
+    "overlap": false,
+    "slide": "1",
+    "textBottom": 1055.3203125,
+    "width": 1440,
+    "scale": "1.3"
+  },
+  {
+    "copyBottom": 961.7109375,
+    "height": 1107.4765625,
+    "overflow": false,
+    "overlap": false,
+    "slide": "2",
+    "textBottom": 961.7109375,
+    "width": 1440,
+    "scale": "1.3"
+  },
+  {
+    "copyBottom": 1029.6171875,
+    "height": 1107.4765625,
+    "overflow": false,
+    "overlap": false,
+    "slide": "3",
+    "textBottom": 1029.6171875,
+    "width": 1440,
+    "scale": "1.3"
+  },
+  {
+    "copyBottom": 961.7109375,
+    "height": 1107.4765625,
+    "overflow": false,
+    "overlap": false,
+    "slide": "4",
+    "textBottom": 961.7109375,
+    "width": 1440,
+    "scale": "1.3"
+  },
+  {
+    "copyBottom": 762.484375,
+    "height": 1698.203125,
+    "overflow": false,
+    "overlap": false,
+    "slide": "0",
+    "textBottom": 762.484375,
+    "width": 1440,
+    "scale": "2"
+  },
+  {
+    "copyBottom": 1646.046875,
+    "height": 1698.203125,
+    "overflow": false,
+    "overlap": false,
+    "slide": "1",
+    "textBottom": 1646.046875,
+    "width": 1440,
+    "scale": "2"
+  },
+  {
+    "copyBottom": 1415.171875,
+    "height": 1698.203125,
+    "overflow": false,
+    "overlap": false,
+    "slide": "2",
+    "textBottom": 1415.171875,
+    "width": 1440,
+    "scale": "2"
+  },
+  {
+    "copyBottom": 1415.171875,
+    "height": 1698.203125,
+    "overflow": false,
+    "overlap": false,
+    "slide": "3",
+    "textBottom": 1415.171875,
+    "width": 1440,
+    "scale": "2"
+  },
+  {
+    "copyBottom": 1415.171875,
+    "height": 1698.203125,
+    "overflow": false,
+    "overlap": false,
+    "slide": "4",
+    "textBottom": 1415.171875,
+    "width": 1440,
+    "scale": "2"
+  }
+]

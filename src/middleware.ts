@@ -30,6 +30,7 @@ function redirectZhPrefix(request: NextRequest): NextResponse | null {
 export default function middleware(request: NextRequest) {
   const path = request.nextUrl.pathname;
   if (
+    path === "/icon" ||
     path.startsWith("/discount/") ||
     path.startsWith("/__shopify/") ||
     path === "/admin" ||
