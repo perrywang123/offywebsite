@@ -1,0 +1,76 @@
+{
+  "normal": [
+    {
+      "headline": "20px",
+      "heroHeight": 257.8515625,
+      "overflow": false,
+      "tagline": "16px",
+      "textToPhotoGap": 18,
+      "width": 320
+    },
+    {
+      "headline": "22.14px",
+      "heroHeight": 277.96875,
+      "overflow": false,
+      "tagline": "16.614px",
+      "textToPhotoGap": 18,
+      "width": 360
+    },
+    {
+      "headline": "23.985px",
+      "heroHeight": 296.8046875,
+      "overflow": false,
+      "tagline": "17.9985px",
+      "textToPhotoGap": 18,
+      "width": 390
+    },
+    {
+      "headline": "26px",
+      "heroHeight": 321.3828125,
+      "overflow": false,
+      "tagline": "19.8445px",
+      "textToPhotoGap": 18,
+      "width": 430
+    },
+    {
+      "headline": "28px",
+      "heroHeight": 503.4921875,
+      "overflow": false,
+      "tagline": "22px",
+      "textToPhotoGap": 24,
+      "width": 768
+    },
+    {
+      "headline": "36.864px",
+      "heroHeight": 643.0625,
+      "overflow": false,
+      "tagline": "27.648px",
+      "textToPhotoGap": 27.0234375,
+      "width": 1024
+    },
+    {
+      "headline": "51.84px",
+      "heroHeight": 904.3125,
+      "overflow": false,
+      "tagline": "38px",
+      "textToPhotoGap": 44.2578125,
+      "width": 1440
+    },
+    {
+      "headline": "54px",
+      "heroHeight": 1205.75,
+      "overflow": false,
+      "tagline": "38px",
+      "textToPhotoGap": 86.015625,
+      "width": 1920
+    }
+  ],
+  "largeTextSimulation": {
+    "headline": "40px",
+    "heroHeight": 392.2421875,
+    "overflow": false,
+    "tagline": "32px",
+    "textToPhotoGap": 18,
+    "width": 320
+  }
+}

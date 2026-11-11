@@ -1,0 +1,5 @@
+- [x] Render and visually validate the proposed brand slide at mobile and desktop widths; deliver screenshots for confirmation.
+- [ ] Obtain owner confirmation before changing the actual carousel.
+- [ ] Add failing behavior and boundary tests for the approved design.
+- [ ] Implement the approved layout with stable carousel sizing and original other-slide composition.
+- [ ] Run tests, build and five-slide browser acceptance; archive only after implementation.
