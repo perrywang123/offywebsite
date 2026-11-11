@@ -1,0 +1,3680 @@
+{
+  "existing": [
+    {
+      "heroHeight": 200.953125,
+      "slides": [
+        {
+          "copy": [
+            {
+              "bottom": 83.2890625,
+              "clipped": false,
+              "font": "15px",
+              "height": 39.890625,
+              "indicatorOverlap": false,
+              "lineHeight": "19.95px",
+              "text": "Designer Plush Art Toys\nMeet who you love to be.",
+              "top": 43.3984375,
+              "width": 209.6875
+            }
+          ],
+          "slide": 1
+        },
+        {
+          "copy": [
+            {
+              "bottom": 118.3125,
+              "clipped": false,
+              "font": "11px",
+              "height": 15.125,
+              "indicatorOverlap": false,
+              "lineHeight": "15.125px",
+              "text": "OFFY Big Sale: Bonus Gift Included",
+              "top": 103.1875,
+              "width": 228.5078125
+            },
+            {
+              "bottom": 173.0703125,
+              "clipped": false,
+              "font": "22.112px",
+              "height": 53.0625,
+              "indicatorOverlap": false,
+              "lineHeight": "26.5344px",
+              "text": "BUY ANY 3 OFFYs,\nGET A FREE BIG TOTE",
+              "top": 120.0078125,
+              "width": 231.3203125
+            }
+          ],
+          "slide": 2
+        },
+        {
+          "copy": [
+            {
+              "bottom": 144.7578125,
+              "clipped": false,
+              "font": "11px",
+              "height": 15.125,
+              "indicatorOverlap": false,
+              "lineHeight": "15.125px",
+              "text": "Romanticize the Everyday",
+              "top": 129.6328125,
+              "width": 279.046875
+            },
+            {
+              "bottom": 169.90625,
+              "clipped": false,
+              "font": "22.112px",
+              "height": 23.2109375,
+              "indicatorOverlap": false,
+              "lineHeight": "23.2176px",
+              "text": "Princess Series",
+              "top": 146.6953125,
+              "width": 281.59375
+            }
+          ],
+          "slide": 3
+        },
+        {
+          "copy": [
+            {
+              "bottom": 144.7578125,
+              "clipped": false,
+              "font": "11px",
+              "height": 15.125,
+              "indicatorOverlap": false,
+              "lineHeight": "15.125px",
+              "text": "Weekend in Motion",
+              "top": 129.6328125,
+              "width": 279.046875
+            },
+            {
+              "bottom": 169.90625,
+              "clipped": false,
+              "font": "22.112px",
+              "height": 23.2109375,
+              "indicatorOverlap": false,
+              "lineHeight": "23.2176px",
+              "text": "STREETWEAR SERIES",
+              "top": 146.6953125,
+              "width": 281.59375
+            }
+          ],
+          "slide": 4
+        },
+        {
+          "copy": [
+            {
+              "bottom": 144.7578125,
+              "clipped": false,
+              "font": "11px",
+              "height": 15.125,
+              "indicatorOverlap": false,
+              "lineHeight": "15.125px",
+              "text": "Too Cute to Dress Normal",
+              "top": 129.6328125,
+              "width": 279.046875
+            },
+            {
+              "bottom": 169.90625,
+              "clipped": false,
+              "font": "22.112px",
+              "height": 23.2109375,
+              "indicatorOverlap": false,
+              "lineHeight": "23.2176px",
+              "text": "DRESS-UP SERIES",
+              "top": 146.6953125,
+              "width": 281.59375
+            }
+          ],
+          "slide": 5
+        }
+      ],
+      "width": 320
+    },
+    {
+      "heroHeight": 244.9140625,
+      "slides": [
+        {
+          "copy": [
+            {
+              "bottom": 92.7890625,
+              "clipped": false,
+              "font": "15px",
+              "height": 39.890625,
+              "indicatorOverlap": false,
+              "lineHeight": "19.95px",
+              "text": "Designer Plush Art Toys\nMeet who you love to be.",
+              "top": 52.8984375,
+              "width": 209.6875
+            }
+          ],
+          "slide": 1
+        },
+        {
+          "copy": [
+            {
+              "bottom": 140.8828125,
+              "clipped": false,
+              "font": "11px",
+              "height": 15.125,
+              "indicatorOverlap": false,
+              "lineHeight": "15.125px",
+              "text": "OFFY Big Sale: Bonus Gift Included",
+              "top": 125.7578125,
+              "width": 228.5078125
+            },
+            {
+              "bottom": 210.9140625,
+              "clipped": false,
+              "font": "26.949px",
+              "height": 64.65625,
+              "indicatorOverlap": false,
+              "lineHeight": "32.3388px",
+              "text": "BUY ANY 3 OFFYs,\nGET A FREE BIG TOTE",
+              "top": 146.2578125,
+              "width": 281.8984375
+            }
+          ],
+          "slide": 2
+        },
+        {
+          "copy": [
+            {
+              "bottom": 173.1171875,
+              "clipped": false,
+              "font": "11px",
+              "height": 15.125,
+              "indicatorOverlap": false,
+              "lineHeight": "15.125px",
+              "text": "Romanticize the Everyday",
+              "top": 157.9921875,
+              "width": 340.09375
+            },
+            {
+              "bottom": 207.0703125,
+              "clipped": false,
+              "font": "26.949px",
+              "height": 28.2890625,
+              "indicatorOverlap": false,
+              "lineHeight": "28.2964px",
+              "text": "Princess Series",
+              "top": 178.78125,
+              "width": 343.1953125
+            }
+          ],
+          "slide": 3
+        },
+        {
+          "copy": [
+            {
+              "bottom": 173.1171875,
+              "clipped": false,
+              "font": "11px",
+              "height": 15.125,
+              "indicatorOverlap": false,
+              "lineHeight": "15.125px",
+              "text": "Weekend in Motion",
+              "top": 157.9921875,
+              "width": 340.09375
+            },
+            {
+              "bottom": 207.0703125,
+              "clipped": false,
+              "font": "26.949px",
+              "height": 28.2890625,
+              "indicatorOverlap": false,
+              "lineHeight": "28.2964px",
+              "text": "STREETWEAR SERIES",
+              "top": 178.78125,
+              "width": 343.1953125
+            }
+          ],
+          "slide": 4
+        },
+        {
+          "copy": [
+            {
+              "bottom": 173.1171875,
+              "clipped": false,
+              "font": "11px",
+              "height": 15.125,
+              "indicatorOverlap": false,
+              "lineHeight": "15.125px",
+              "text": "Too Cute to Dress Normal",
+              "top": 157.9921875,
+              "width": 340.09375
+            },
+            {
+              "bottom": 207.0703125,
+              "clipped": false,
+              "font": "26.949px",
+              "height": 28.2890625,
+              "indicatorOverlap": false,
+              "lineHeight": "28.2964px",
+              "text": "DRESS-UP SERIES",
+              "top": 178.78125,
+              "width": 343.1953125
+            }
+          ],
+          "slide": 5
+        }
+      ],
+      "width": 390
+    },
+    {
+      "heroHeight": 270.0390625,
+      "slides": [
+        {
+          "copy": [
+            {
+              "bottom": 98.21875,
+              "clipped": false,
+              "font": "15px",
+              "height": 39.890625,
+              "indicatorOverlap": false,
+              "lineHeight": "19.95px",
+              "text": "Designer Plush Art Toys\nMeet who you love to be.",
+              "top": 58.328125,
+              "width": 209.6875
+            }
+          ],
+          "slide": 1
+        },
+        {
+          "copy": [
+            {
+              "bottom": 153.7890625,
+              "clipped": false,
+              "font": "11px",
+              "height": 15.125,
+              "indicatorOverlap": false,
+              "lineHeight": "15.125px",
+              "text": "OFFY Big Sale: Bonus Gift Included",
+              "top": 138.6640625,
+              "width": 228.5078125
+            },
+            {
+              "bottom": 232.5625,
+              "clipped": false,
+              "font": "29.713px",
+              "height": 71.296875,
+              "indicatorOverlap": false,
+              "lineHeight": "35.6556px",
+              "text": "BUY ANY 3 OFFYs,\nGET A FREE BIG TOTE",
+              "top": 161.265625,
+              "width": 310.828125
+            }
+          ],
+          "slide": 2
+        },
+        {
+          "copy": [
+            {
+              "bottom": 189.3203125,
+              "clipped": false,
+              "font": "11px",
+              "height": 15.125,
+              "indicatorOverlap": false,
+              "lineHeight": "15.125px",
+              "text": "Romanticize the Everyday",
+              "top": 174.1953125,
+              "width": 374.96875
+            },
+            {
+              "bottom": 228.3203125,
+              "clipped": false,
+              "font": "29.713px",
+              "height": 31.1953125,
+              "indicatorOverlap": false,
+              "lineHeight": "31.1987px",
+              "text": "Princess Series",
+              "top": 197.125,
+              "width": 378.3984375
+            }
+          ],
+          "slide": 3
+        },
+        {
+          "copy": [
+            {
+              "bottom": 189.3203125,
+              "clipped": false,
+              "font": "11px",
+              "height": 15.125,
+              "indicatorOverlap": false,
+              "lineHeight": "15.125px",
+              "text": "Weekend in Motion",
+              "top": 174.1953125,
+              "width": 374.96875
+            },
+            {
+              "bottom": 228.3203125,
+              "clipped": false,
+              "font": "29.713px",
+              "height": 31.1953125,
+              "indicatorOverlap": false,
+              "lineHeight": "31.1987px",
+              "text": "STREETWEAR SERIES",
+              "top": 197.125,
+              "width": 378.3984375
+            }
+          ],
+          "slide": 4
+        },
+        {
+          "copy": [
+            {
+              "bottom": 189.3203125,
+              "clipped": false,
+              "font": "11px",
+              "height": 15.125,
+              "indicatorOverlap": false,
+              "lineHeight": "15.125px",
+              "text": "Too Cute to Dress Normal",
+              "top": 174.1953125,
+              "width": 374.96875
+            },
+            {
+              "bottom": 228.3203125,
+              "clipped": false,
+              "font": "29.713px",
+              "height": 31.1953125,
+              "indicatorOverlap": false,
+              "lineHeight": "31.1987px",
+              "text": "DRESS-UP SERIES",
+              "top": 197.125,
+              "width": 378.3984375
+            }
+          ],
+          "slide": 5
+        }
+      ],
+      "width": 430
+    },
+    {
+      "heroHeight": 482.296875,
+      "slides": [
+        {
+          "copy": [
+            {
+              "bottom": 169.9375,
+              "clipped": false,
+              "font": "24.7296px",
+              "height": 65.765625,
+              "indicatorOverlap": false,
+              "lineHeight": "32.8904px",
+              "text": "Designer Plush Art Toys\nMeet who you love to be.",
+              "top": 104.171875,
+              "width": 345.640625
+            }
+          ],
+          "slide": 1
+        },
+        {
+          "copy": [
+            {
+              "bottom": 273.625,
+              "clipped": false,
+              "font": "18.8928px",
+              "height": 25.96875,
+              "indicatorOverlap": false,
+              "lineHeight": "25.9776px",
+              "text": "OFFY Big Sale: Bonus Gift Included",
+              "top": 247.65625,
+              "width": 392.40625
+            },
+            {
+              "bottom": 415.3828125,
+              "clipped": false,
+              "font": "53.0688px",
+              "height": 127.359375,
+              "indicatorOverlap": false,
+              "lineHeight": "63.6826px",
+              "text": "BUY ANY 3 OFFYs,\nGET A FREE BIG TOTE",
+              "top": 288.0234375,
+              "width": 555.171875
+            }
+          ],
+          "slide": 2
+        },
+        {
+          "copy": [
+            {
+              "bottom": 337.09375,
+              "clipped": false,
+              "font": "18.8928px",
+              "height": 25.96875,
+              "indicatorOverlap": false,
+              "lineHeight": "25.9776px",
+              "text": "Romanticize the Everyday",
+              "top": 311.125,
+              "width": 669.703125
+            },
+            {
+              "bottom": 407.7890625,
+              "clipped": false,
+              "font": "53.0688px",
+              "height": 55.71875,
+              "indicatorOverlap": false,
+              "lineHeight": "55.7222px",
+              "text": "Princess Series",
+              "top": 352.0703125,
+              "width": 675.8359375
+            }
+          ],
+          "slide": 3
+        },
+        {
+          "copy": [
+            {
+              "bottom": 337.09375,
+              "clipped": false,
+              "font": "18.8928px",
+              "height": 25.96875,
+              "indicatorOverlap": false,
+              "lineHeight": "25.9776px",
+              "text": "Weekend in Motion",
+              "top": 311.125,
+              "width": 669.703125
+            },
+            {
+              "bottom": 407.7890625,
+              "clipped": false,
+              "font": "53.0688px",
+              "height": 55.71875,
+              "indicatorOverlap": false,
+              "lineHeight": "55.7222px",
+              "text": "STREETWEAR SERIES",
+              "top": 352.0703125,
+              "width": 675.8359375
+            }
+          ],
+          "slide": 4
+        },
+        {
+          "copy": [
+            {
+              "bottom": 337.09375,
+              "clipped": false,
+              "font": "18.8928px",
+              "height": 25.96875,
+              "indicatorOverlap": false,
+              "lineHeight": "25.9776px",
+              "text": "Too Cute to Dress Normal",
+              "top": 311.125,
+              "width": 669.703125
+            },
+            {
+              "bottom": 407.7890625,
+              "clipped": false,
+              "font": "53.0688px",
+              "height": 55.71875,
+              "indicatorOverlap": false,
+              "lineHeight": "55.7222px",
+              "text": "DRESS-UP SERIES",
+              "top": 352.0703125,
+              "width": 675.8359375
+            }
+          ],
+          "slide": 5
+        }
+      ],
+      "width": 768
+    },
+    {
+      "heroHeight": 904.3125,
+      "slides": [
+        {
+          "copy": [
+            {
+              "bottom": 317.6875,
+              "clipped": false,
+              "font": "46px",
+              "height": 122.359375,
+              "indicatorOverlap": false,
+              "lineHeight": "61.18px",
+              "text": "Designer Plush Art Toys\nMeet who you love to be.",
+              "top": 195.328125,
+              "width": 643.0390625
+            }
+          ],
+          "slide": 1
+        },
+        {
+          "copy": [
+            {
+              "bottom": 513.0625,
+              "clipped": false,
+              "font": "35.424px",
+              "height": 48.703125,
+              "indicatorOverlap": false,
+              "lineHeight": "48.708px",
+              "text": "OFFY Big Sale: Bonus Gift Included",
+              "top": 464.359375,
+              "width": 735.7890625
+            },
+            {
+              "bottom": 778.8671875,
+              "clipped": false,
+              "font": "99.504px",
+              "height": 238.8125,
+              "indicatorOverlap": false,
+              "lineHeight": "119.405px",
+              "text": "BUY ANY 3 OFFYs,\nGET A FREE BIG TOTE",
+              "top": 540.0546875,
+              "width": 1040.96875
+            }
+          ],
+          "slide": 2
+        },
+        {
+          "copy": [
+            {
+              "bottom": 632.0703125,
+              "clipped": false,
+              "font": "35.424px",
+              "height": 48.703125,
+              "indicatorOverlap": false,
+              "lineHeight": "48.708px",
+              "text": "Romanticize the Everyday",
+              "top": 583.3671875,
+              "width": 1255.6875
+            },
+            {
+              "bottom": 748.34375,
+              "clipped": false,
+              "font": "99.504px",
+              "height": 104.4765625,
+              "indicatorOverlap": false,
+              "lineHeight": "104.479px",
+              "text": "Princess Series",
+              "top": 643.8671875,
+              "width": 1267.1953125
+            }
+          ],
+          "slide": 3
+        },
+        {
+          "copy": [
+            {
+              "bottom": 632.0703125,
+              "clipped": false,
+              "font": "35.424px",
+              "height": 48.703125,
+              "indicatorOverlap": false,
+              "lineHeight": "48.708px",
+              "text": "Weekend in Motion",
+              "top": 583.3671875,
+              "width": 1255.6875
+            },
+            {
+              "bottom": 748.34375,
+              "clipped": false,
+              "font": "99.504px",
+              "height": 104.4765625,
+              "indicatorOverlap": false,
+              "lineHeight": "104.479px",
+              "text": "STREETWEAR SERIES",
+              "top": 643.8671875,
+              "width": 1267.1953125
+            }
+          ],
+          "slide": 4
+        },
+        {
+          "copy": [
+            {
+              "bottom": 632.0703125,
+              "clipped": false,
+              "font": "35.424px",
+              "height": 48.703125,
+              "indicatorOverlap": false,
+              "lineHeight": "48.708px",
+              "text": "Too Cute to Dress Normal",
+              "top": 583.3671875,
+              "width": 1255.6875
+            },
+            {
+              "bottom": 748.34375,
+              "clipped": false,
+              "font": "99.504px",
+              "height": 104.4765625,
+              "indicatorOverlap": false,
+              "lineHeight": "104.479px",
+              "text": "DRESS-UP SERIES",
+              "top": 643.8671875,
+              "width": 1267.1953125
+            }
+          ],
+          "slide": 5
+        }
+      ],
+      "width": 1440
+    }
+  ],
+  "proposed": [
+    {
+      "frameHeight": 257.8515625,
+      "overflow": false,
+      "panels": [
+        {
+          "copy": [
+            {
+              "beyondControls": false,
+              "bottom": 45.0546875,
+              "intersectsPhoto": false,
+              "outsidePanel": false,
+              "text": "is.offy",
+              "top": 18
+            },
+            {
+              "beyondControls": false,
+              "bottom": 81.0546875,
+              "intersectsPhoto": false,
+              "outsidePanel": false,
+              "text": "Designer Plush Art Toys",
+              "top": 57.0546875
+            },
+            {
+              "beyondControls": false,
+              "bottom": 105.8515625,
+              "intersectsPhoto": false,
+              "outsidePanel": false,
+              "text": "Meet who you love to be.",
+              "top": 85.0546875
+            }
+          ],
+          "height": 257.8515625,
+          "key": "brand"
+        },
+        {
+          "copy": [
+            {
+              "beyondControls": false,
+              "bottom": 138.0703125,
+              "intersectsPhoto": false,
+              "outsidePanel": false,
+              "text": "OFFY Big Sale: Bonus Gift Included",
+              "top": 121.5703125
+            },
+            {
+              "beyondControls": false,
+              "bottom": 199.6640625,
+              "intersectsPhoto": false,
+              "outsidePanel": false,
+              "text": "BUY ANY 3 OFFYs,GET A FREE BIG TOTE",
+              "top": 148.0703125
+            }
+          ],
+          "height": 257.8515625,
+          "key": "promo"
+        },
+        {
+          "copy": [
+            {
+              "beyondControls": false,
+              "bottom": 165.0703125,
+              "intersectsPhoto": false,
+              "outsidePanel": false,
+              "text": "Romanticize the Everyday",
+              "top": 148.5703125
+            },
+            {
+              "beyondControls": false,
+              "bottom": 198.265625,
+              "intersectsPhoto": false,
+              "outsidePanel": false,
+              "text": "Princess Series",
+              "top": 173.0703125
+            }
+          ],
+          "height": 257.8515625,
+          "key": "princess"
+        },
+        {
+          "copy": [
+            {
+              "beyondControls": false,
+              "bottom": 165.0703125,
+              "intersectsPhoto": false,
+              "outsidePanel": false,
+              "text": "Weekend in Motion",
+              "top": 148.5703125
+            },
+            {
+              "beyondControls": false,
+              "bottom": 198.265625,
+              "intersectsPhoto": false,
+              "outsidePanel": false,
+              "text": "STREETWEAR SERIES",
+              "top": 173.0703125
+            }
+          ],
+          "height": 257.8515625,
+          "key": "streetwear"
+        },
+        {
+          "copy": [
+            {
+              "beyondControls": false,
+              "bottom": 165.0703125,
+              "intersectsPhoto": false,
+              "outsidePanel": false,
+              "text": "Too Cute to Dress Normal",
+              "top": 148.5703125
+            },
+            {
+              "beyondControls": false,
+              "bottom": 198.265625,
+              "intersectsPhoto": false,
+              "outsidePanel": false,
+              "text": "DRESS-UP SERIES",
+              "top": 173.0703125
+            }
+          ],
+          "height": 257.8515625,
+          "key": "dressup"
+        }
+      ],
+      "scale": "1",
+      "width": 320
+    },
+    {
+      "frameHeight": 324.9140625,
+      "overflow": false,
+      "panels": [
+        {
+          "copy": [
+            {
+              "beyondControls": false,
+              "bottom": 56.2734375,
+              "intersectsPhoto": false,
+              "outsidePanel": false,
+              "text": "is.offy",
+              "top": 29.21875
+            },
+            {
+              "beyondControls": false,
+              "bottom": 130.6640625,
+              "intersectsPhoto": false,
+              "outsidePanel": false,
+              "text": "Designer Plush Art Toys",
+              "top": 68.2734375
+            },
+            {
+              "beyondControls": false,
+              "bottom": 161.6953125,
+              "intersectsPhoto": false,
+              "outsidePanel": false,
+              "text": "Meet who you love to be.",
+              "top": 134.6640625
+            }
+          ],
+          "height": 324.9140625,
+          "key": "brand"
+        },
+        {
+          "copy": [
+            {
+              "beyondControls": false,
+              "bottom": 160.2734375,
+              "intersectsPhoto": false,
+              "outsidePanel": false,
+              "text": "OFFY Big Sale: Bonus Gift Included",
+              "top": 117.3828125
+            },
+            {
+              "beyondControls": false,
+              "bottom": 270.9140625,
+              "intersectsPhoto": false,
+              "outsidePanel": false,
+              "text": "BUY ANY 3 OFFYs,GET A FREE BIG TOTE",
+              "top": 170.2734375
+            }
+          ],
+          "height": 324.9140625,
+          "key": "promo"
+        },
+        {
+          "copy": [
+            {
+              "beyondControls": false,
+              "bottom": 197.2890625,
+              "intersectsPhoto": false,
+              "outsidePanel": false,
+              "text": "Romanticize the Everyday",
+              "top": 175.84375
+            },
+            {
+              "beyondControls": false,
+              "bottom": 238.046875,
+              "intersectsPhoto": false,
+              "outsidePanel": false,
+              "text": "Princess Series",
+              "top": 205.2890625
+            }
+          ],
+          "height": 324.9140625,
+          "key": "princess"
+        },
+        {
+          "copy": [
+            {
+              "beyondControls": false,
+              "bottom": 180.9140625,
+              "intersectsPhoto": false,
+              "outsidePanel": false,
+              "text": "Weekend in Motion",
+              "top": 159.46875
+            },
+            {
+              "beyondControls": false,
+              "bottom": 254.4296875,
+              "intersectsPhoto": false,
+              "outsidePanel": false,
+              "text": "STREETWEAR SERIES",
+              "top": 188.9140625
+            }
+          ],
+          "height": 324.9140625,
+          "key": "streetwear"
+        },
+        {
+          "copy": [
+            {
+              "beyondControls": false,
+              "bottom": 197.2890625,
+              "intersectsPhoto": false,
+              "outsidePanel": false,
+              "text": "Too Cute to Dress Normal",
+              "top": 175.84375
+            },
+            {
+              "beyondControls": false,
+              "bottom": 238.046875,
+              "intersectsPhoto": false,
+              "outsidePanel": false,
+              "text": "DRESS-UP SERIES",
+              "top": 205.2890625
+            }
+          ],
+          "height": 324.9140625,
+          "key": "dressup"
+        }
+      ],
+      "scale": "1.3",
+      "width": 320
+    },
+    {
+      "frameHeight": 486.7890625,
+      "overflow": false,
+      "panels": [
+        {
+          "copy": [
+            {
+              "beyondControls": false,
+              "bottom": 92.328125,
+              "intersectsPhoto": false,
+              "outsidePanel": false,
+              "text": "is.offy",
+              "top": 65.2734375
+            },
+            {
+              "beyondControls": false,
+              "bottom": 200.328125,
+              "intersectsPhoto": false,
+              "outsidePanel": false,
+              "text": "Designer Plush Art Toys",
+              "top": 104.328125
+            },
+            {
+              "beyondControls": false,
+              "bottom": 287.515625,
+              "intersectsPhoto": false,
+              "outsidePanel": false,
+              "text": "Meet who you love to be.",
+              "top": 204.328125
+            }
+          ],
+          "height": 486.7890625,
+          "key": "brand"
+        },
+        {
+          "copy": [
+            {
+              "beyondControls": false,
+              "bottom": 216.3828125,
+              "intersectsPhoto": false,
+              "outsidePanel": false,
+              "text": "OFFY Big Sale: Bonus Gift Included",
+              "top": 117.3828125
+            },
+            {
+              "beyondControls": false,
+              "bottom": 432.7890625,
+              "intersectsPhoto": false,
+              "outsidePanel": false,
+              "text": "BUY ANY 3 OFFYs,GET A FREE BIG TOTE",
+              "top": 226.3828125
+            }
+          ],
+          "height": 486.7890625,
+          "key": "promo"
+        },
+        {
+          "copy": [
+            {
+              "beyondControls": false,
+              "bottom": 266.484375,
+              "intersectsPhoto": false,
+              "outsidePanel": false,
+              "text": "Romanticize the Everyday",
+              "top": 200.484375
+            },
+            {
+              "beyondControls": false,
+              "bottom": 375.28125,
+              "intersectsPhoto": false,
+              "outsidePanel": false,
+              "text": "Princess Series",
+              "top": 274.484375
+            }
+          ],
+          "height": 486.7890625,
+          "key": "princess"
+        },
+        {
+          "copy": [
+            {
+              "beyondControls": false,
+              "bottom": 249.984375,
+              "intersectsPhoto": false,
+              "outsidePanel": false,
+              "text": "Weekend in Motion",
+              "top": 216.984375
+            },
+            {
+              "beyondControls": false,
+              "bottom": 358.78125,
+              "intersectsPhoto": false,
+              "outsidePanel": false,
+              "text": "STREETWEAR SERIES",
+              "top": 257.984375
+            }
+          ],
+          "height": 486.7890625,
+          "key": "streetwear"
+        },
+        {
+          "copy": [
+            {
+              "beyondControls": false,
+              "bottom": 266.484375,
+              "intersectsPhoto": false,
+              "outsidePanel": false,
+              "text": "Too Cute to Dress Normal",
+              "top": 200.484375
+            },
+            {
+              "beyondControls": false,
+              "bottom": 375.28125,
+              "intersectsPhoto": false,
+              "outsidePanel": false,
+              "text": "DRESS-UP SERIES",
+              "top": 274.484375
+            }
+          ],
+          "height": 486.7890625,
+          "key": "dressup"
+        }
+      ],
+      "scale": "2",
+      "width": 320
+    },
+    {
+      "frameHeight": 277.96875,
+      "overflow": false,
+      "panels": [
+        {
+          "copy": [
+            {
+              "beyondControls": false,
+              "bottom": 45.0546875,
+              "intersectsPhoto": false,
+              "outsidePanel": false,
+              "text": "is.offy",
+              "top": 18
+            },
+            {
+              "beyondControls": false,
+              "bottom": 83.6171875,
+              "intersectsPhoto": false,
+              "outsidePanel": false,
+              "text": "Designer Plush Art Toys",
+              "top": 57.0546875
+            },
+            {
+              "beyondControls": false,
+              "bottom": 109.21875,
+              "intersectsPhoto": false,
+              "outsidePanel": false,
+              "text": "Meet who you love to be.",
+              "top": 87.6171875
+            }
+          ],
+          "height": 277.96875,
+          "key": "brand"
+        },
+        {
+          "copy": [
+            {
+              "beyondControls": false,
+              "bottom": 151.3515625,
+              "intersectsPhoto": false,
+              "outsidePanel": false,
+              "text": "OFFY Big Sale: Bonus Gift Included",
+              "top": 134.8515625
+            },
+            {
+              "beyondControls": false,
+              "bottom": 219.4140625,
+              "intersectsPhoto": false,
+              "outsidePanel": false,
+              "text": "BUY ANY 3 OFFYs,GET A FREE BIG TOTE",
+              "top": 161.3515625
+            }
+          ],
+          "height": 277.96875,
+          "key": "promo"
+        },
+        {
+          "copy": [
+            {
+              "beyondControls": false,
+              "bottom": 182.7265625,
+              "intersectsPhoto": false,
+              "outsidePanel": false,
+              "text": "Romanticize the Everyday",
+              "top": 166.2265625
+            },
+            {
+              "beyondControls": false,
+              "bottom": 216.84375,
+              "intersectsPhoto": false,
+              "outsidePanel": false,
+              "text": "Princess Series",
+              "top": 190.7265625
+            }
+          ],
+          "height": 277.96875,
+          "key": "princess"
+        },
+        {
+          "copy": [
+            {
+              "beyondControls": false,
+              "bottom": 182.7265625,
+              "intersectsPhoto": false,
+              "outsidePanel": false,
+              "text": "Weekend in Motion",
+              "top": 166.2265625
+            },
+            {
+              "beyondControls": false,
+              "bottom": 216.84375,
+              "intersectsPhoto": false,
+              "outsidePanel": false,
+              "text": "STREETWEAR SERIES",
+              "top": 190.7265625
+            }
+          ],
+          "height": 277.96875,
+          "key": "streetwear"
+        },
+        {
+          "copy": [
+            {
+              "beyondControls": false,
+              "bottom": 182.7265625,
+              "intersectsPhoto": false,
+              "outsidePanel": false,
+              "text": "Too Cute to Dress Normal",
+              "top": 166.2265625
+            },
+            {
+              "beyondControls": false,
+              "bottom": 216.84375,
+              "intersectsPhoto": false,
+              "outsidePanel": false,
+              "text": "DRESS-UP SERIES",
+              "top": 190.7265625
+            }
+          ],
+          "height": 277.96875,
+          "key": "dressup"
+        }
+      ],
+      "scale": "1",
+      "width": 360
+    },
+    {
+      "frameHeight": 350.3984375,
+      "overflow": false,
+      "panels": [
+        {
+          "copy": [
+            {
+              "beyondControls": false,
+              "bottom": 56.78125,
+              "intersectsPhoto": false,
+              "outsidePanel": false,
+              "text": "is.offy",
+              "top": 29.7265625
+            },
+            {
+              "beyondControls": false,
+              "bottom": 137.84375,
+              "intersectsPhoto": false,
+              "outsidePanel": false,
+              "text": "Designer Plush Art Toys",
+              "top": 68.78125
+            },
+            {
+              "beyondControls": false,
+              "bottom": 169.921875,
+              "intersectsPhoto": false,
+              "outsidePanel": false,
+              "text": "Meet who you love to be.",
+              "top": 141.84375
+            }
+          ],
+          "height": 350.3984375,
+          "key": "brand"
+        },
+        {
+          "copy": [
+            {
+              "beyondControls": false,
+              "bottom": 173.1953125,
+              "intersectsPhoto": false,
+              "outsidePanel": false,
+              "text": "OFFY Big Sale: Bonus Gift Included",
+              "top": 130.3046875
+            },
+            {
+              "beyondControls": false,
+              "bottom": 296.3984375,
+              "intersectsPhoto": false,
+              "outsidePanel": false,
+              "text": "BUY ANY 3 OFFYs,GET A FREE BIG TOTE",
+              "top": 183.1953125
+            }
+          ],
+          "height": 350.3984375,
+          "key": "promo"
+        },
+        {
+          "copy": [
+            {
+              "beyondControls": false,
+              "bottom": 217.5,
+              "intersectsPhoto": false,
+              "outsidePanel": false,
+              "text": "Romanticize the Everyday",
+              "top": 196.0546875
+            },
+            {
+              "beyondControls": false,
+              "bottom": 259.4453125,
+              "intersectsPhoto": false,
+              "outsidePanel": false,
+              "text": "Princess Series",
+              "top": 225.5
+            }
+          ],
+          "height": 350.3984375,
+          "key": "princess"
+        },
+        {
+          "copy": [
+            {
+              "beyondControls": false,
+              "bottom": 200.5234375,
+              "intersectsPhoto": false,
+              "outsidePanel": false,
+              "text": "Weekend in Motion",
+              "top": 179.078125
+            },
+            {
+              "beyondControls": false,
+              "bottom": 276.4140625,
+              "intersectsPhoto": false,
+              "outsidePanel": false,
+              "text": "STREETWEAR SERIES",
+              "top": 208.5234375
+            }
+          ],
+          "height": 350.3984375,
+          "key": "streetwear"
+        },
+        {
+          "copy": [
+            {
+              "beyondControls": false,
+              "bottom": 217.5,
+              "intersectsPhoto": false,
+              "outsidePanel": false,
+              "text": "Too Cute to Dress Normal",
+              "top": 196.0546875
+            },
+            {
+              "beyondControls": false,
+              "bottom": 259.4453125,
+              "intersectsPhoto": false,
+              "outsidePanel": false,
+              "text": "DRESS-UP SERIES",
+              "top": 225.5
+            }
+          ],
+          "height": 350.3984375,
+          "key": "dressup"
+        }
+      ],
+      "scale": "1.3",
+      "width": 360
+    },
+    {
+      "frameHeight": 492.5546875,
+      "overflow": false,
+      "panels": [
+        {
+          "copy": [
+            {
+              "beyondControls": false,
+              "bottom": 80.109375,
+              "intersectsPhoto": false,
+              "outsidePanel": false,
+              "text": "is.offy",
+              "top": 53.0546875
+            },
+            {
+              "beyondControls": false,
+              "bottom": 198.375,
+              "intersectsPhoto": false,
+              "outsidePanel": false,
+              "text": "Designer Plush Art Toys",
+              "top": 92.109375
+            },
+            {
+              "beyondControls": false,
+              "bottom": 288.75,
+              "intersectsPhoto": false,
+              "outsidePanel": false,
+              "text": "Meet who you love to be.",
+              "top": 202.375
+            }
+          ],
+          "height": 492.5546875,
+          "key": "brand"
+        },
+        {
+          "copy": [
+            {
+              "beyondControls": false,
+              "bottom": 196.3046875,
+              "intersectsPhoto": false,
+              "outsidePanel": false,
+              "text": "OFFY Big Sale: Bonus Gift Included",
+              "top": 130.3046875
+            },
+            {
+              "beyondControls": false,
+              "bottom": 438.5546875,
+              "intersectsPhoto": false,
+              "outsidePanel": false,
+              "text": "BUY ANY 3 OFFYs,GET A FREE BIG TOTE",
+              "top": 206.3046875
+            }
+          ],
+          "height": 492.5546875,
+          "key": "promo"
+        },
+        {
+          "copy": [
+            {
+              "beyondControls": false,
+              "bottom": 275.59375,
+              "intersectsPhoto": false,
+              "outsidePanel": false,
+              "text": "Romanticize the Everyday",
+              "top": 209.59375
+            },
+            {
+              "beyondControls": false,
+              "bottom": 388.0625,
+              "intersectsPhoto": false,
+              "outsidePanel": false,
+              "text": "Princess Series",
+              "top": 283.59375
+            }
+          ],
+          "height": 492.5546875,
+          "key": "princess"
+        },
+        {
+          "copy": [
+            {
+              "beyondControls": false,
+              "bottom": 259.09375,
+              "intersectsPhoto": false,
+              "outsidePanel": false,
+              "text": "Weekend in Motion",
+              "top": 226.09375
+            },
+            {
+              "beyondControls": false,
+              "bottom": 371.5625,
+              "intersectsPhoto": false,
+              "outsidePanel": false,
+              "text": "STREETWEAR SERIES",
+              "top": 267.09375
+            }
+          ],
+          "height": 492.5546875,
+          "key": "streetwear"
+        },
+        {
+          "copy": [
+            {
+              "beyondControls": false,
+              "bottom": 275.59375,
+              "intersectsPhoto": false,
+              "outsidePanel": false,
+              "text": "Too Cute to Dress Normal",
+              "top": 209.59375
+            },
+            {
+              "beyondControls": false,
+              "bottom": 388.0625,
+              "intersectsPhoto": false,
+              "outsidePanel": false,
+              "text": "DRESS-UP SERIES",
+              "top": 283.59375
+            }
+          ],
+          "height": 492.5546875,
+          "key": "dressup"
+        }
+      ],
+      "scale": "2",
+      "width": 360
+    },
+    {
+      "frameHeight": 296.8046875,
+      "overflow": false,
+      "panels": [
+        {
+          "copy": [
+            {
+              "beyondControls": false,
+              "bottom": 47.3125,
+              "intersectsPhoto": false,
+              "outsidePanel": false,
+              "text": "is.offy",
+              "top": 18
+            },
+            {
+              "beyondControls": false,
+              "bottom": 88.09375,
+              "intersectsPhoto": false,
+              "outsidePanel": false,
+              "text": "Designer Plush Art Toys",
+              "top": 59.3125
+            },
+            {
+              "beyondControls": false,
+              "bottom": 115.4921875,
+              "intersectsPhoto": false,
+              "outsidePanel": false,
+              "text": "Meet who you love to be.",
+              "top": 92.09375
+            }
+          ],
+          "height": 296.8046875,
+          "key": "brand"
+        },
+        {
+          "copy": [
+            {
+              "beyondControls": false,
+              "bottom": 163.203125,
+              "intersectsPhoto": false,
+              "outsidePanel": false,
+              "text": "OFFY Big Sale: Bonus Gift Included",
+              "top": 146.703125
+            },
+            {
+              "beyondControls": false,
+              "bottom": 236.09375,
+              "intersectsPhoto": false,
+              "outsidePanel": false,
+              "text": "BUY ANY 3 OFFYs,GET A FREE BIG TOTE",
+              "top": 173.203125
+            }
+          ],
+          "height": 296.8046875,
+          "key": "promo"
+        },
+        {
+          "copy": [
+            {
+              "beyondControls": false,
+              "bottom": 197.6953125,
+              "intersectsPhoto": false,
+              "outsidePanel": false,
+              "text": "Romanticize the Everyday",
+              "top": 180.0078125
+            },
+            {
+              "beyondControls": false,
+              "bottom": 233.984375,
+              "intersectsPhoto": false,
+              "outsidePanel": false,
+              "text": "Princess Series",
+              "top": 205.6953125
+            }
+          ],
+          "height": 296.8046875,
+          "key": "princess"
+        },
+        {
+          "copy": [
+            {
+              "beyondControls": false,
+              "bottom": 197.6953125,
+              "intersectsPhoto": false,
+              "outsidePanel": false,
+              "text": "Weekend in Motion",
+              "top": 180.0078125
+            },
+            {
+              "beyondControls": false,
+              "bottom": 233.984375,
+              "intersectsPhoto": false,
+              "outsidePanel": false,
+              "text": "STREETWEAR SERIES",
+              "top": 205.6953125
+            }
+          ],
+          "height": 296.8046875,
+          "key": "streetwear"
+        },
+        {
+          "copy": [
+            {
+              "beyondControls": false,
+              "bottom": 197.6953125,
+              "intersectsPhoto": false,
+              "outsidePanel": false,
+              "text": "Too Cute to Dress Normal",
+              "top": 180.0078125
+            },
+            {
+              "beyondControls": false,
+              "bottom": 233.984375,
+              "intersectsPhoto": false,
+              "outsidePanel": false,
+              "text": "DRESS-UP SERIES",
+              "top": 205.6953125
+            }
+          ],
+          "height": 296.8046875,
+          "key": "dressup"
+        }
+      ],
+      "scale": "1",
+      "width": 390
+    },
+    {
+      "frameHeight": 349.8671875,
+      "overflow": false,
+      "panels": [
+        {
+          "copy": [
+            {
+              "beyondControls": false,
+              "bottom": 47.3125,
+              "intersectsPhoto": false,
+              "outsidePanel": false,
+              "text": "is.offy",
+              "top": 18
+            },
+            {
+              "beyondControls": false,
+              "bottom": 134.140625,
+              "intersectsPhoto": false,
+              "outsidePanel": false,
+              "text": "Designer Plush Art Toys",
+              "top": 59.3125
+            },
+            {
+              "beyondControls": false,
+              "bottom": 168.5546875,
+              "intersectsPhoto": false,
+              "outsidePanel": false,
+              "text": "Meet who you love to be.",
+              "top": 138.140625
+            }
+          ],
+          "height": 349.8671875,
+          "key": "brand"
+        },
+        {
+          "copy": [
+            {
+              "beyondControls": false,
+              "bottom": 162.328125,
+              "intersectsPhoto": false,
+              "outsidePanel": false,
+              "text": "OFFY Big Sale: Bonus Gift Included",
+              "top": 140.8828125
+            },
+            {
+              "beyondControls": false,
+              "bottom": 294.9765625,
+              "intersectsPhoto": false,
+              "outsidePanel": false,
+              "text": "BUY ANY 3 OFFYs,GET A FREE BIG TOTE",
+              "top": 172.328125
+            }
+          ],
+          "height": 349.8671875,
+          "key": "promo"
+        },
+        {
+          "copy": [
+            {
+              "beyondControls": false,
+              "bottom": 222.640625,
+              "intersectsPhoto": false,
+              "outsidePanel": false,
+              "text": "Romanticize the Everyday",
+              "top": 199.6328125
+            },
+            {
+              "beyondControls": false,
+              "bottom": 267.421875,
+              "intersectsPhoto": false,
+              "outsidePanel": false,
+              "text": "Princess Series",
+              "top": 230.640625
+            }
+          ],
+          "height": 349.8671875,
+          "key": "princess"
+        },
+        {
+          "copy": [
+            {
+              "beyondControls": false,
+              "bottom": 204.25,
+              "intersectsPhoto": false,
+              "outsidePanel": false,
+              "text": "Weekend in Motion",
+              "top": 181.2421875
+            },
+            {
+              "beyondControls": false,
+              "bottom": 285.8125,
+              "intersectsPhoto": false,
+              "outsidePanel": false,
+              "text": "STREETWEAR SERIES",
+              "top": 212.25
+            }
+          ],
+          "height": 349.8671875,
+          "key": "streetwear"
+        },
+        {
+          "copy": [
+            {
+              "beyondControls": false,
+              "bottom": 222.640625,
+              "intersectsPhoto": false,
+              "outsidePanel": false,
+              "text": "Too Cute to Dress Normal",
+              "top": 199.6328125
+            },
+            {
+              "beyondControls": false,
+              "bottom": 267.421875,
+              "intersectsPhoto": false,
+              "outsidePanel": false,
+              "text": "DRESS-UP SERIES",
+              "top": 230.640625
+            }
+          ],
+          "height": 349.8671875,
+          "key": "dressup"
+        }
+      ],
+      "scale": "1.3",
+      "width": 390
+    },
+    {
+      "frameHeight": 521.5625,
+      "overflow": false,
+      "panels": [
+        {
+          "copy": [
+            {
+              "beyondControls": false,
+              "bottom": 81.421875,
+              "intersectsPhoto": false,
+              "outsidePanel": false,
+              "text": "is.offy",
+              "top": 52.109375
+            },
+            {
+              "beyondControls": false,
+              "bottom": 208.546875,
+              "intersectsPhoto": false,
+              "outsidePanel": false,
+              "text": "Designer Plush Art Toys",
+              "top": 93.421875
+            },
+            {
+              "beyondControls": false,
+              "bottom": 306.140625,
+              "intersectsPhoto": false,
+              "outsidePanel": false,
+              "text": "Meet who you love to be.",
+              "top": 212.546875
+            }
+          ],
+          "height": 521.5625,
+          "key": "brand"
+        },
+        {
+          "copy": [
+            {
+              "beyondControls": false,
+              "bottom": 206,
+              "intersectsPhoto": false,
+              "outsidePanel": false,
+              "text": "OFFY Big Sale: Bonus Gift Included",
+              "top": 140
+            },
+            {
+              "beyondControls": false,
+              "bottom": 467.5625,
+              "intersectsPhoto": false,
+              "outsidePanel": false,
+              "text": "BUY ANY 3 OFFYs,GET A FREE BIG TOTE",
+              "top": 216
+            }
+          ],
+          "height": 521.5625,
+          "key": "promo"
+        },
+        {
+          "copy": [
+            {
+              "beyondControls": false,
+              "bottom": 294.1796875,
+              "intersectsPhoto": false,
+              "outsidePanel": false,
+              "text": "Romanticize the Everyday",
+              "top": 223.3984375
+            },
+            {
+              "beyondControls": false,
+              "bottom": 415.3515625,
+              "intersectsPhoto": false,
+              "outsidePanel": false,
+              "text": "Princess Series",
+              "top": 302.1796875
+            }
+          ],
+          "height": 521.5625,
+          "key": "princess"
+        },
+        {
+          "copy": [
+            {
+              "beyondControls": false,
+              "bottom": 276.484375,
+              "intersectsPhoto": false,
+              "outsidePanel": false,
+              "text": "Weekend in Motion",
+              "top": 241.09375
+            },
+            {
+              "beyondControls": false,
+              "bottom": 397.65625,
+              "intersectsPhoto": false,
+              "outsidePanel": false,
+              "text": "STREETWEAR SERIES",
+              "top": 284.484375
+            }
+          ],
+          "height": 521.5625,
+          "key": "streetwear"
+        },
+        {
+          "copy": [
+            {
+              "beyondControls": false,
+              "bottom": 294.1796875,
+              "intersectsPhoto": false,
+              "outsidePanel": false,
+              "text": "Too Cute to Dress Normal",
+              "top": 223.3984375
+            },
+            {
+              "beyondControls": false,
+              "bottom": 415.3515625,
+              "intersectsPhoto": false,
+              "outsidePanel": false,
+              "text": "DRESS-UP SERIES",
+              "top": 302.1796875
+            }
+          ],
+          "height": 521.5625,
+          "key": "dressup"
+        }
+      ],
+      "scale": "2",
+      "width": 390
+    },
+    {
+      "frameHeight": 321.3828125,
+      "overflow": false,
+      "panels": [
+        {
+          "copy": [
+            {
+              "beyondControls": false,
+              "bottom": 50.3203125,
+              "intersectsPhoto": false,
+              "outsidePanel": false,
+              "text": "is.offy",
+              "top": 18
+            },
+            {
+              "beyondControls": false,
+              "bottom": 93.515625,
+              "intersectsPhoto": false,
+              "outsidePanel": false,
+              "text": "Designer Plush Art Toys",
+              "top": 62.3203125
+            },
+            {
+              "beyondControls": false,
+              "bottom": 123.3125,
+              "intersectsPhoto": false,
+              "outsidePanel": false,
+              "text": "Meet who you love to be.",
+              "top": 97.515625
+            }
+          ],
+          "height": 321.3828125,
+          "key": "brand"
+        },
+        {
+          "copy": [
+            {
+              "beyondControls": false,
+              "bottom": 178.7265625,
+              "intersectsPhoto": false,
+              "outsidePanel": false,
+              "text": "OFFY Big Sale: Bonus Gift Included",
+              "top": 162.2265625
+            },
+            {
+              "beyondControls": false,
+              "bottom": 258.0703125,
+              "intersectsPhoto": false,
+              "outsidePanel": false,
+              "text": "BUY ANY 3 OFFYs,GET A FREE BIG TOTE",
+              "top": 188.7265625
+            }
+          ],
+          "height": 321.3828125,
+          "key": "promo"
+        },
+        {
+          "copy": [
+            {
+              "beyondControls": false,
+              "bottom": 217.5078125,
+              "intersectsPhoto": false,
+              "outsidePanel": false,
+              "text": "Romanticize the Everyday",
+              "top": 198
+            },
+            {
+              "beyondControls": false,
+              "bottom": 256.703125,
+              "intersectsPhoto": false,
+              "outsidePanel": false,
+              "text": "Princess Series",
+              "top": 225.5078125
+            }
+          ],
+          "height": 321.3828125,
+          "key": "princess"
+        },
+        {
+          "copy": [
+            {
+              "beyondControls": false,
+              "bottom": 217.5078125,
+              "intersectsPhoto": false,
+              "outsidePanel": false,
+              "text": "Weekend in Motion",
+              "top": 198
+            },
+            {
+              "beyondControls": false,
+              "bottom": 256.703125,
+              "intersectsPhoto": false,
+              "outsidePanel": false,
+              "text": "STREETWEAR SERIES",
+              "top": 225.5078125
+            }
+          ],
+          "height": 321.3828125,
+          "key": "streetwear"
+        },
+        {
+          "copy": [
+            {
+              "beyondControls": false,
+              "bottom": 217.5078125,
+              "intersectsPhoto": false,
+              "outsidePanel": false,
+              "text": "Too Cute to Dress Normal",
+              "top": 198
+            },
+            {
+              "beyondControls": false,
+              "bottom": 256.703125,
+              "intersectsPhoto": false,
+              "outsidePanel": false,
+              "text": "DRESS-UP SERIES",
+              "top": 225.5078125
+            }
+          ],
+          "height": 321.3828125,
+          "key": "dressup"
+        }
+      ],
+      "scale": "1",
+      "width": 430
+    },
+    {
+      "frameHeight": 373.6015625,
+      "overflow": false,
+      "panels": [
+        {
+          "copy": [
+            {
+              "beyondControls": false,
+              "bottom": 67.8828125,
+              "intersectsPhoto": false,
+              "outsidePanel": false,
+              "text": "is.offy",
+              "top": 35.5625
+            },
+            {
+              "beyondControls": false,
+              "bottom": 120.4375,
+              "intersectsPhoto": false,
+              "outsidePanel": false,
+              "text": "Designer Plush Art Toys",
+              "top": 79.8828125
+            },
+            {
+              "beyondControls": false,
+              "bottom": 157.96875,
+              "intersectsPhoto": false,
+              "outsidePanel": false,
+              "text": "Meet who you love to be.",
+              "top": 124.4375
+            }
+          ],
+          "height": 373.6015625,
+          "key": "brand"
+        },
+        {
+          "copy": [
+            {
+              "beyondControls": false,
+              "bottom": 174.3671875,
+              "intersectsPhoto": false,
+              "outsidePanel": false,
+              "text": "OFFY Big Sale: Bonus Gift Included",
+              "top": 152.921875
+            },
+            {
+              "beyondControls": false,
+              "bottom": 319.6015625,
+              "intersectsPhoto": false,
+              "outsidePanel": false,
+              "text": "BUY ANY 3 OFFYs,GET A FREE BIG TOTE",
+              "top": 184.3671875
+            }
+          ],
+          "height": 373.6015625,
+          "key": "promo"
+        },
+        {
+          "copy": [
+            {
+              "beyondControls": false,
+              "bottom": 241.859375,
+              "intersectsPhoto": false,
+              "outsidePanel": false,
+              "text": "Romanticize the Everyday",
+              "top": 216.5
+            },
+            {
+              "beyondControls": false,
+              "bottom": 290.4140625,
+              "intersectsPhoto": false,
+              "outsidePanel": false,
+              "text": "Princess Series",
+              "top": 249.859375
+            }
+          ],
+          "height": 373.6015625,
+          "key": "princess"
+        },
+        {
+          "copy": [
+            {
+              "beyondControls": false,
+              "bottom": 221.5859375,
+              "intersectsPhoto": false,
+              "outsidePanel": false,
+              "text": "Weekend in Motion",
+              "top": 196.2265625
+            },
+            {
+              "beyondControls": false,
+              "bottom": 310.6953125,
+              "intersectsPhoto": false,
+              "outsidePanel": false,
+              "text": "STREETWEAR SERIES",
+              "top": 229.5859375
+            }
+          ],
+          "height": 373.6015625,
+          "key": "streetwear"
+        },
+        {
+          "copy": [
+            {
+              "beyondControls": false,
+              "bottom": 241.859375,
+              "intersectsPhoto": false,
+              "outsidePanel": false,
+              "text": "Too Cute to Dress Normal",
+              "top": 216.5
+            },
+            {
+              "beyondControls": false,
+              "bottom": 290.4140625,
+              "intersectsPhoto": false,
+              "outsidePanel": false,
+              "text": "DRESS-UP SERIES",
+              "top": 249.859375
+            }
+          ],
+          "height": 373.6015625,
+          "key": "dressup"
+        }
+      ],
+      "scale": "1.3",
+      "width": 430
+    },
+    {
+      "frameHeight": 560.328125,
+      "overflow": false,
+      "panels": [
+        {
+          "copy": [
+            {
+              "beyondControls": false,
+              "bottom": 84.296875,
+              "intersectsPhoto": false,
+              "outsidePanel": false,
+              "text": "is.offy",
+              "top": 51.9765625
+            },
+            {
+              "beyondControls": false,
+              "bottom": 221.09375,
+              "intersectsPhoto": false,
+              "outsidePanel": false,
+              "text": "Designer Plush Art Toys",
+              "top": 96.296875
+            },
+            {
+              "beyondControls": false,
+              "bottom": 328.28125,
+              "intersectsPhoto": false,
+              "outsidePanel": false,
+              "text": "Meet who you love to be.",
+              "top": 225.09375
+            }
+          ],
+          "height": 560.328125,
+          "key": "brand"
+        },
+        {
+          "copy": [
+            {
+              "beyondControls": false,
+              "bottom": 218.921875,
+              "intersectsPhoto": false,
+              "outsidePanel": false,
+              "text": "OFFY Big Sale: Bonus Gift Included",
+              "top": 152.921875
+            },
+            {
+              "beyondControls": false,
+              "bottom": 506.328125,
+              "intersectsPhoto": false,
+              "outsidePanel": false,
+              "text": "BUY ANY 3 OFFYs,GET A FREE BIG TOTE",
+              "top": 228.921875
+            }
+          ],
+          "height": 560.328125,
+          "key": "promo"
+        },
+        {
+          "copy": [
+            {
+              "beyondControls": false,
+              "bottom": 319.4453125,
+              "intersectsPhoto": false,
+              "outsidePanel": false,
+              "text": "Romanticize the Everyday",
+              "top": 241.3984375
+            },
+            {
+              "beyondControls": false,
+              "bottom": 452.2421875,
+              "intersectsPhoto": false,
+              "outsidePanel": false,
+              "text": "Princess Series",
+              "top": 327.4453125
+            }
+          ],
+          "height": 560.328125,
+          "key": "princess"
+        },
+        {
+          "copy": [
+            {
+              "beyondControls": false,
+              "bottom": 299.9375,
+              "intersectsPhoto": false,
+              "outsidePanel": false,
+              "text": "Weekend in Motion",
+              "top": 260.9140625
+            },
+            {
+              "beyondControls": false,
+              "bottom": 432.734375,
+              "intersectsPhoto": false,
+              "outsidePanel": false,
+              "text": "STREETWEAR SERIES",
+              "top": 307.9375
+            }
+          ],
+          "height": 560.328125,
+          "key": "streetwear"
+        },
+        {
+          "copy": [
+            {
+              "beyondControls": false,
+              "bottom": 319.4453125,
+              "intersectsPhoto": false,
+              "outsidePanel": false,
+              "text": "Too Cute to Dress Normal",
+              "top": 241.3984375
+            },
+            {
+              "beyondControls": false,
+              "bottom": 452.2421875,
+              "intersectsPhoto": false,
+              "outsidePanel": false,
+              "text": "DRESS-UP SERIES",
+              "top": 327.4453125
+            }
+          ],
+          "height": 560.328125,
+          "key": "dressup"
+        }
+      ],
+      "scale": "2",
+      "width": 430
+    },
+    {
+      "frameHeight": 503.4921875,
+      "overflow": false,
+      "panels": [
+        {
+          "copy": [
+            {
+              "beyondControls": false,
+              "bottom": 73.09375,
+              "intersectsPhoto": false,
+              "outsidePanel": false,
+              "text": "is.offy",
+              "top": 28
+            },
+            {
+              "beyondControls": false,
+              "bottom": 123.2890625,
+              "intersectsPhoto": false,
+              "outsidePanel": false,
+              "text": "Designer Plush Art Toys",
+              "top": 91.09375
+            },
+            {
+              "beyondControls": false,
+              "bottom": 157.8828125,
+              "intersectsPhoto": false,
+              "outsidePanel": false,
+              "text": "Meet who you love to be.",
+              "top": 129.2890625
+            }
+          ],
+          "height": 503.4921875,
+          "key": "brand"
+        },
+        {
+          "copy": [
+            {
+              "beyondControls": false,
+              "bottom": 296.28125,
+              "intersectsPhoto": false,
+              "outsidePanel": false,
+              "text": "OFFY Big Sale: Bonus Gift Included",
+              "top": 270.3125
+            },
+            {
+              "beyondControls": false,
+              "bottom": 430.140625,
+              "intersectsPhoto": false,
+              "outsidePanel": false,
+              "text": "BUY ANY 3 OFFYs,GET A FREE BIG TOTE",
+              "top": 306.28125
+            }
+          ],
+          "height": 503.4921875,
+          "key": "promo"
+        },
+        {
+          "copy": [
+            {
+              "beyondControls": false,
+              "bottom": 361.46875,
+              "intersectsPhoto": false,
+              "outsidePanel": false,
+              "text": "Romanticize the Everyday",
+              "top": 335.5
+            },
+            {
+              "beyondControls": false,
+              "bottom": 426.3984375,
+              "intersectsPhoto": false,
+              "outsidePanel": false,
+              "text": "Princess Series",
+              "top": 370.6796875
+            }
+          ],
+          "height": 503.4921875,
+          "key": "princess"
+        },
+        {
+          "copy": [
+            {
+              "beyondControls": false,
+              "bottom": 361.46875,
+              "intersectsPhoto": false,
+              "outsidePanel": false,
+              "text": "Weekend in Motion",
+              "top": 335.5
+            },
+            {
+              "beyondControls": false,
+              "bottom": 426.3984375,
+              "intersectsPhoto": false,
+              "outsidePanel": false,
+              "text": "STREETWEAR SERIES",
+              "top": 370.6796875
+            }
+          ],
+          "height": 503.4921875,
+          "key": "streetwear"
+        },
+        {
+          "copy": [
+            {
+              "beyondControls": false,
+              "bottom": 361.46875,
+              "intersectsPhoto": false,
+              "outsidePanel": false,
+              "text": "Too Cute to Dress Normal",
+              "top": 335.5
+            },
+            {
+              "beyondControls": false,
+              "bottom": 426.3984375,
+              "intersectsPhoto": false,
+              "outsidePanel": false,
+              "text": "DRESS-UP SERIES",
+              "top": 370.6796875
+            }
+          ],
+          "height": 503.4921875,
+          "key": "dressup"
+        }
+      ],
+      "scale": "1",
+      "width": 768
+    },
+    {
+      "frameHeight": 689.0703125,
+      "overflow": false,
+      "panels": [
+        {
+          "copy": [
+            {
+              "beyondControls": false,
+              "bottom": 156.7578125,
+              "intersectsPhoto": false,
+              "outsidePanel": false,
+              "text": "is.offy",
+              "top": 111.6640625
+            },
+            {
+              "beyondControls": false,
+              "bottom": 216.609375,
+              "intersectsPhoto": false,
+              "outsidePanel": false,
+              "text": "Designer Plush Art Toys",
+              "top": 174.7578125
+            },
+            {
+              "beyondControls": false,
+              "bottom": 259.7890625,
+              "intersectsPhoto": false,
+              "outsidePanel": false,
+              "text": "Meet who you love to be.",
+              "top": 222.609375
+            }
+          ],
+          "height": 689.0703125,
+          "key": "brand"
+        },
+        {
+          "copy": [
+            {
+              "beyondControls": false,
+              "bottom": 293.890625,
+              "intersectsPhoto": false,
+              "outsidePanel": false,
+              "text": "OFFY Big Sale: Bonus Gift Included",
+              "top": 260.1171875
+            },
+            {
+              "beyondControls": false,
+              "bottom": 625.921875,
+              "intersectsPhoto": false,
+              "outsidePanel": false,
+              "text": "BUY ANY 3 OFFYs,GET A FREE BIG TOTE",
+              "top": 303.890625
+            }
+          ],
+          "height": 689.0703125,
+          "key": "promo"
+        },
+        {
+          "copy": [
+            {
+              "beyondControls": false,
+              "bottom": 449.8046875,
+              "intersectsPhoto": false,
+              "outsidePanel": false,
+              "text": "Romanticize the Everyday",
+              "top": 416.03125
+            },
+            {
+              "beyondControls": false,
+              "bottom": 531.453125,
+              "intersectsPhoto": false,
+              "outsidePanel": false,
+              "text": "Princess Series",
+              "top": 459.015625
+            }
+          ],
+          "height": 689.0703125,
+          "key": "princess"
+        },
+        {
+          "copy": [
+            {
+              "beyondControls": false,
+              "bottom": 413.5859375,
+              "intersectsPhoto": false,
+              "outsidePanel": false,
+              "text": "Weekend in Motion",
+              "top": 379.8125
+            },
+            {
+              "beyondControls": false,
+              "bottom": 567.671875,
+              "intersectsPhoto": false,
+              "outsidePanel": false,
+              "text": "STREETWEAR SERIES",
+              "top": 422.796875
+            }
+          ],
+          "height": 689.0703125,
+          "key": "streetwear"
+        },
+        {
+          "copy": [
+            {
+              "beyondControls": false,
+              "bottom": 449.8046875,
+              "intersectsPhoto": false,
+              "outsidePanel": false,
+              "text": "Too Cute to Dress Normal",
+              "top": 416.03125
+            },
+            {
+              "beyondControls": false,
+              "bottom": 531.453125,
+              "intersectsPhoto": false,
+              "outsidePanel": false,
+              "text": "DRESS-UP SERIES",
+              "top": 459.015625
+            }
+          ],
+          "height": 689.0703125,
+          "key": "dressup"
+        }
+      ],
+      "scale": "1.3",
+      "width": 768
+    },
+    {
+      "frameHeight": 1056.46875,
+      "overflow": false,
+      "panels": [
+        {
+          "copy": [
+            {
+              "beyondControls": false,
+              "bottom": 319.1796875,
+              "intersectsPhoto": false,
+              "outsidePanel": false,
+              "text": "is.offy",
+              "top": 274.0859375
+            },
+            {
+              "beyondControls": false,
+              "bottom": 401.578125,
+              "intersectsPhoto": false,
+              "outsidePanel": false,
+              "text": "Designer Plush Art Toys",
+              "top": 337.1796875
+            },
+            {
+              "beyondControls": false,
+              "bottom": 464.7734375,
+              "intersectsPhoto": false,
+              "outsidePanel": false,
+              "text": "Meet who you love to be.",
+              "top": 407.578125
+            }
+          ],
+          "height": 1056.46875,
+          "key": "brand"
+        },
+        {
+          "copy": [
+            {
+              "beyondControls": false,
+              "bottom": 364.0234375,
+              "intersectsPhoto": false,
+              "outsidePanel": false,
+              "text": "OFFY Big Sale: Bonus Gift Included",
+              "top": 260.1171875
+            },
+            {
+              "beyondControls": false,
+              "bottom": 993.3203125,
+              "intersectsPhoto": false,
+              "outsidePanel": false,
+              "text": "BUY ANY 3 OFFYs,GET A FREE BIG TOTE",
+              "top": 374.0234375
+            }
+          ],
+          "height": 1056.46875,
+          "key": "promo"
+        },
+        {
+          "copy": [
+            {
+              "beyondControls": false,
+              "bottom": 567.3671875,
+              "intersectsPhoto": false,
+              "outsidePanel": false,
+              "text": "Romanticize the Everyday",
+              "top": 515.4140625
+            },
+            {
+              "beyondControls": false,
+              "bottom": 799.46875,
+              "intersectsPhoto": false,
+              "outsidePanel": false,
+              "text": "Princess Series",
+              "top": 576.578125
+            }
+          ],
+          "height": 1056.46875,
+          "key": "princess"
+        },
+        {
+          "copy": [
+            {
+              "beyondControls": false,
+              "bottom": 567.3671875,
+              "intersectsPhoto": false,
+              "outsidePanel": false,
+              "text": "Weekend in Motion",
+              "top": 515.4140625
+            },
+            {
+              "beyondControls": false,
+              "bottom": 799.46875,
+              "intersectsPhoto": false,
+              "outsidePanel": false,
+              "text": "STREETWEAR SERIES",
+              "top": 576.578125
+            }
+          ],
+          "height": 1056.46875,
+          "key": "streetwear"
+        },
+        {
+          "copy": [
+            {
+              "beyondControls": false,
+              "bottom": 567.3671875,
+              "intersectsPhoto": false,
+              "outsidePanel": false,
+              "text": "Too Cute to Dress Normal",
+              "top": 515.4140625
+            },
+            {
+              "beyondControls": false,
+              "bottom": 799.46875,
+              "intersectsPhoto": false,
+              "outsidePanel": false,
+              "text": "DRESS-UP SERIES",
+              "top": 576.578125
+            }
+          ],
+          "height": 1056.46875,
+          "key": "dressup"
+        }
+      ],
+      "scale": "2",
+      "width": 768
+    },
+    {
+      "frameHeight": 643.0703125,
+      "overflow": false,
+      "panels": [
+        {
+          "copy": [
+            {
+              "beyondControls": false,
+              "bottom": 84.8984375,
+              "intersectsPhoto": false,
+              "outsidePanel": false,
+              "text": "is.offy",
+              "top": 31.0234375
+            },
+            {
+              "beyondControls": false,
+              "bottom": 145.2890625,
+              "intersectsPhoto": false,
+              "outsidePanel": false,
+              "text": "Designer Plush Art Toys",
+              "top": 102.8984375
+            },
+            {
+              "beyondControls": false,
+              "bottom": 187.2265625,
+              "intersectsPhoto": false,
+              "outsidePanel": false,
+              "text": "Meet who you love to be.",
+              "top": 151.2890625
+            }
+          ],
+          "height": 643.0703125,
+          "key": "brand"
+        },
+        {
+          "copy": [
+            {
+              "beyondControls": false,
+              "bottom": 381.4140625,
+              "intersectsPhoto": false,
+              "outsidePanel": false,
+              "text": "OFFY Big Sale: Bonus Gift Included",
+              "top": 346.78125
+            },
+            {
+              "beyondControls": false,
+              "bottom": 559.859375,
+              "intersectsPhoto": false,
+              "outsidePanel": false,
+              "text": "BUY ANY 3 OFFYs,GET A FREE BIG TOTE",
+              "top": 394.71875
+            }
+          ],
+          "height": 643.0703125,
+          "key": "promo"
+        },
+        {
+          "copy": [
+            {
+              "beyondControls": false,
+              "bottom": 468.3125,
+              "intersectsPhoto": false,
+              "outsidePanel": false,
+              "text": "Romanticize the Everyday",
+              "top": 433.6796875
+            },
+            {
+              "beyondControls": false,
+              "bottom": 554.8828125,
+              "intersectsPhoto": false,
+              "outsidePanel": false,
+              "text": "Princess Series",
+              "top": 480.59375
+            }
+          ],
+          "height": 643.0703125,
+          "key": "princess"
+        },
+        {
+          "copy": [
+            {
+              "beyondControls": false,
+              "bottom": 468.3125,
+              "intersectsPhoto": false,
+              "outsidePanel": false,
+              "text": "Weekend in Motion",
+              "top": 433.6796875
+            },
+            {
+              "beyondControls": false,
+              "bottom": 554.8828125,
+              "intersectsPhoto": false,
+              "outsidePanel": false,
+              "text": "STREETWEAR SERIES",
+              "top": 480.59375
+            }
+          ],
+          "height": 643.0703125,
+          "key": "streetwear"
+        },
+        {
+          "copy": [
+            {
+              "beyondControls": false,
+              "bottom": 468.3125,
+              "intersectsPhoto": false,
+              "outsidePanel": false,
+              "text": "Too Cute to Dress Normal",
+              "top": 433.6796875
+            },
+            {
+              "beyondControls": false,
+              "bottom": 554.8828125,
+              "intersectsPhoto": false,
+              "outsidePanel": false,
+              "text": "DRESS-UP SERIES",
+              "top": 480.59375
+            }
+          ],
+          "height": 643.0703125,
+          "key": "dressup"
+        }
+      ],
+      "scale": "1",
+      "width": 1024
+    },
+    {
+      "frameHeight": 910.3515625,
+      "overflow": false,
+      "panels": [
+        {
+          "copy": [
+            {
+              "beyondControls": false,
+              "bottom": 206.7890625,
+              "intersectsPhoto": false,
+              "outsidePanel": false,
+              "text": "is.offy",
+              "top": 152.9140625
+            },
+            {
+              "beyondControls": false,
+              "bottom": 279.8984375,
+              "intersectsPhoto": false,
+              "outsidePanel": false,
+              "text": "Designer Plush Art Toys",
+              "top": 224.7890625
+            },
+            {
+              "beyondControls": false,
+              "bottom": 332.625,
+              "intersectsPhoto": false,
+              "outsidePanel": false,
+              "text": "Meet who you love to be.",
+              "top": 285.8984375
+            }
+          ],
+          "height": 910.3515625,
+          "key": "brand"
+        },
+        {
+          "copy": [
+            {
+              "beyondControls": false,
+              "bottom": 388.140625,
+              "intersectsPhoto": false,
+              "outsidePanel": false,
+              "text": "OFFY Big Sale: Bonus Gift Included",
+              "top": 343.109375
+            },
+            {
+              "beyondControls": false,
+              "bottom": 830.8203125,
+              "intersectsPhoto": false,
+              "outsidePanel": false,
+              "text": "BUY ANY 3 OFFYs,GET A FREE BIG TOTE",
+              "top": 401.4453125
+            }
+          ],
+          "height": 910.3515625,
+          "key": "promo"
+        },
+        {
+          "copy": [
+            {
+              "beyondControls": false,
+              "bottom": 596.0078125,
+              "intersectsPhoto": false,
+              "outsidePanel": false,
+              "text": "Romanticize the Everyday",
+              "top": 550.9765625
+            },
+            {
+              "beyondControls": false,
+              "bottom": 704.8671875,
+              "intersectsPhoto": false,
+              "outsidePanel": false,
+              "text": "Princess Series",
+              "top": 608.2890625
+            }
+          ],
+          "height": 910.3515625,
+          "key": "princess"
+        },
+        {
+          "copy": [
+            {
+              "beyondControls": false,
+              "bottom": 547.71875,
+              "intersectsPhoto": false,
+              "outsidePanel": false,
+              "text": "Weekend in Motion",
+              "top": 502.6875
+            },
+            {
+              "beyondControls": false,
+              "bottom": 753.15625,
+              "intersectsPhoto": false,
+              "outsidePanel": false,
+              "text": "STREETWEAR SERIES",
+              "top": 560
+            }
+          ],
+          "height": 910.3515625,
+          "key": "streetwear"
+        },
+        {
+          "copy": [
+            {
+              "beyondControls": false,
+              "bottom": 596.0078125,
+              "intersectsPhoto": false,
+              "outsidePanel": false,
+              "text": "Too Cute to Dress Normal",
+              "top": 550.9765625
+            },
+            {
+              "beyondControls": false,
+              "bottom": 704.8671875,
+              "intersectsPhoto": false,
+              "outsidePanel": false,
+              "text": "DRESS-UP SERIES",
+              "top": 608.2890625
+            }
+          ],
+          "height": 910.3515625,
+          "key": "dressup"
+        }
+      ],
+      "scale": "1.3",
+      "width": 1024
+    },
+    {
+      "frameHeight": 1400.1953125,
+      "overflow": false,
+      "panels": [
+        {
+          "copy": [
+            {
+              "beyondControls": false,
+              "bottom": 424.296875,
+              "intersectsPhoto": false,
+              "outsidePanel": false,
+              "text": "is.offy",
+              "top": 370.421875
+            },
+            {
+              "beyondControls": false,
+              "bottom": 527.078125,
+              "intersectsPhoto": false,
+              "outsidePanel": false,
+              "text": "Designer Plush Art Toys",
+              "top": 442.296875
+            },
+            {
+              "beyondControls": false,
+              "bottom": 604.9609375,
+              "intersectsPhoto": false,
+              "outsidePanel": false,
+              "text": "Meet who you love to be.",
+              "top": 533.078125
+            }
+          ],
+          "height": 1400.1953125,
+          "key": "brand"
+        },
+        {
+          "copy": [
+            {
+              "beyondControls": false,
+              "bottom": 481.65625,
+              "intersectsPhoto": false,
+              "outsidePanel": false,
+              "text": "OFFY Big Sale: Bonus Gift Included",
+              "top": 343.109375
+            },
+            {
+              "beyondControls": false,
+              "bottom": 1320.6640625,
+              "intersectsPhoto": false,
+              "outsidePanel": false,
+              "text": "BUY ANY 3 OFFYs,GET A FREE BIG TOTE",
+              "top": 494.9609375
+            }
+          ],
+          "height": 1400.1953125,
+          "key": "promo"
+        },
+        {
+          "copy": [
+            {
+              "beyondControls": false,
+              "bottom": 752.7578125,
+              "intersectsPhoto": false,
+              "outsidePanel": false,
+              "text": "Romanticize the Everyday",
+              "top": 683.484375
+            },
+            {
+              "beyondControls": false,
+              "bottom": 1062.2109375,
+              "intersectsPhoto": false,
+              "outsidePanel": false,
+              "text": "Princess Series",
+              "top": 765.0390625
+            }
+          ],
+          "height": 1400.1953125,
+          "key": "princess"
+        },
+        {
+          "copy": [
+            {
+              "beyondControls": false,
+              "bottom": 752.7578125,
+              "intersectsPhoto": false,
+              "outsidePanel": false,
+              "text": "Weekend in Motion",
+              "top": 683.484375
+            },
+            {
+              "beyondControls": false,
+              "bottom": 1062.2109375,
+              "intersectsPhoto": false,
+              "outsidePanel": false,
+              "text": "STREETWEAR SERIES",
+              "top": 765.0390625
+            }
+          ],
+          "height": 1400.1953125,
+          "key": "streetwear"
+        },
+        {
+          "copy": [
+            {
+              "beyondControls": false,
+              "bottom": 752.7578125,
+              "intersectsPhoto": false,
+              "outsidePanel": false,
+              "text": "Too Cute to Dress Normal",
+              "top": 683.484375
+            },
+            {
+              "beyondControls": false,
+              "bottom": 1062.2109375,
+              "intersectsPhoto": false,
+              "outsidePanel": false,
+              "text": "DRESS-UP SERIES",
+              "top": 765.0390625
+            }
+          ],
+          "height": 1400.1953125,
+          "key": "dressup"
+        }
+      ],
+      "scale": "2",
+      "width": 1024
+    },
+    {
+      "frameHeight": 904.3125,
+      "overflow": false,
+      "panels": [
+        {
+          "copy": [
+            {
+              "beyondControls": false,
+              "bottom": 124.015625,
+              "intersectsPhoto": false,
+              "outsidePanel": false,
+              "text": "is.offy",
+              "top": 48.25
+            },
+            {
+              "beyondControls": false,
+              "bottom": 201.6328125,
+              "intersectsPhoto": false,
+              "outsidePanel": false,
+              "text": "Designer Plush Art Toys",
+              "top": 142.015625
+            },
+            {
+              "beyondControls": false,
+              "bottom": 257.03125,
+              "intersectsPhoto": false,
+              "outsidePanel": false,
+              "text": "Meet who you love to be.",
+              "top": 207.6328125
+            }
+          ],
+          "height": 904.3125,
+          "key": "brand"
+        },
+        {
+          "copy": [
+            {
+              "beyondControls": false,
+              "bottom": 543.3203125,
+              "intersectsPhoto": false,
+              "outsidePanel": false,
+              "text": "OFFY Big Sale: Bonus Gift Included",
+              "top": 494.6171875
+            },
+            {
+              "beyondControls": false,
+              "bottom": 786.0390625,
+              "intersectsPhoto": false,
+              "outsidePanel": false,
+              "text": "BUY ANY 3 OFFYs,GET A FREE BIG TOTE",
+              "top": 562.0390625
+            }
+          ],
+          "height": 904.3125,
+          "key": "promo"
+        },
+        {
+          "copy": [
+            {
+              "beyondControls": false,
+              "bottom": 661.40625,
+              "intersectsPhoto": false,
+              "outsidePanel": false,
+              "text": "Romanticize the Everyday",
+              "top": 612.703125
+            },
+            {
+              "beyondControls": false,
+              "bottom": 783.15625,
+              "intersectsPhoto": false,
+              "outsidePanel": false,
+              "text": "Princess Series",
+              "top": 678.6796875
+            }
+          ],
+          "height": 904.3125,
+          "key": "princess"
+        },
+        {
+          "copy": [
+            {
+              "beyondControls": false,
+              "bottom": 661.40625,
+              "intersectsPhoto": false,
+              "outsidePanel": false,
+              "text": "Weekend in Motion",
+              "top": 612.703125
+            },
+            {
+              "beyondControls": false,
+              "bottom": 783.15625,
+              "intersectsPhoto": false,
+              "outsidePanel": false,
+              "text": "STREETWEAR SERIES",
+              "top": 678.6796875
+            }
+          ],
+          "height": 904.3125,
+          "key": "streetwear"
+        },
+        {
+          "copy": [
+            {
+              "beyondControls": false,
+              "bottom": 661.40625,
+              "intersectsPhoto": false,
+              "outsidePanel": false,
+              "text": "Too Cute to Dress Normal",
+              "top": 612.703125
+            },
+            {
+              "beyondControls": false,
+              "bottom": 783.15625,
+              "intersectsPhoto": false,
+              "outsidePanel": false,
+              "text": "DRESS-UP SERIES",
+              "top": 678.6796875
+            }
+          ],
+          "height": 904.3125,
+          "key": "dressup"
+        }
+      ],
+      "scale": "1",
+      "width": 1440
+    },
+    {
+      "frameHeight": 1107.4765625,
+      "overflow": false,
+      "panels": [
+        {
+          "copy": [
+            {
+              "beyondControls": false,
+              "bottom": 209.2578125,
+              "intersectsPhoto": false,
+              "outsidePanel": false,
+              "text": "is.offy",
+              "top": 133.4921875
+            },
+            {
+              "beyondControls": false,
+              "bottom": 304.75,
+              "intersectsPhoto": false,
+              "outsidePanel": false,
+              "text": "Designer Plush Art Toys",
+              "top": 227.2578125
+            },
+            {
+              "beyondControls": false,
+              "bottom": 374.9609375,
+              "intersectsPhoto": false,
+              "outsidePanel": false,
+              "text": "Meet who you love to be.",
+              "top": 310.75
+            }
+          ],
+          "height": 1107.4765625,
+          "key": "brand"
+        },
+        {
+          "copy": [
+            {
+              "beyondControls": false,
+              "bottom": 545.8203125,
+              "intersectsPhoto": false,
+              "outsidePanel": false,
+              "text": "OFFY Big Sale: Bonus Gift Included",
+              "top": 482.5
+            },
+            {
+              "beyondControls": false,
+              "bottom": 1001.3203125,
+              "intersectsPhoto": false,
+              "outsidePanel": false,
+              "text": "BUY ANY 3 OFFYs,GET A FREE BIG TOTE",
+              "top": 564.5390625
+            }
+          ],
+          "height": 1107.4765625,
+          "key": "promo"
+        },
+        {
+          "copy": [
+            {
+              "beyondControls": false,
+              "bottom": 754.625,
+              "intersectsPhoto": false,
+              "outsidePanel": false,
+              "text": "Romanticize the Everyday",
+              "top": 691.3046875
+            },
+            {
+              "beyondControls": false,
+              "bottom": 907.7109375,
+              "intersectsPhoto": false,
+              "outsidePanel": false,
+              "text": "Princess Series",
+              "top": 771.8984375
+            }
+          ],
+          "height": 1107.4765625,
+          "key": "princess"
+        },
+        {
+          "copy": [
+            {
+              "beyondControls": false,
+              "bottom": 686.71875,
+              "intersectsPhoto": false,
+              "outsidePanel": false,
+              "text": "Weekend in Motion",
+              "top": 623.3984375
+            },
+            {
+              "beyondControls": false,
+              "bottom": 975.6171875,
+              "intersectsPhoto": false,
+              "outsidePanel": false,
+              "text": "STREETWEAR SERIES",
+              "top": 703.9921875
+            }
+          ],
+          "height": 1107.4765625,
+          "key": "streetwear"
+        },
+        {
+          "copy": [
+            {
+              "beyondControls": false,
+              "bottom": 754.625,
+              "intersectsPhoto": false,
+              "outsidePanel": false,
+              "text": "Too Cute to Dress Normal",
+              "top": 691.3046875
+            },
+            {
+              "beyondControls": false,
+              "bottom": 907.7109375,
+              "intersectsPhoto": false,
+              "outsidePanel": false,
+              "text": "DRESS-UP SERIES",
+              "top": 771.8984375
+            }
+          ],
+          "height": 1107.4765625,
+          "key": "dressup"
+        }
+      ],
+      "scale": "1.3",
+      "width": 1440
+    },
+    {
+      "frameHeight": 1698.203125,
+      "overflow": false,
+      "panels": [
+        {
+          "copy": [
+            {
+              "beyondControls": false,
+              "bottom": 466.4609375,
+              "intersectsPhoto": false,
+              "outsidePanel": false,
+              "text": "is.offy",
+              "top": 390.6953125
+            },
+            {
+              "beyondControls": false,
+              "bottom": 603.6875,
+              "intersectsPhoto": false,
+              "outsidePanel": false,
+              "text": "Designer Plush Art Toys",
+              "top": 484.4609375
+            },
+            {
+              "beyondControls": false,
+              "bottom": 708.484375,
+              "intersectsPhoto": false,
+              "outsidePanel": false,
+              "text": "Meet who you love to be.",
+              "top": 609.6875
+            }
+          ],
+          "height": 1698.203125,
+          "key": "brand"
+        },
+        {
+          "copy": [
+            {
+              "beyondControls": false,
+              "bottom": 677.328125,
+              "intersectsPhoto": false,
+              "outsidePanel": false,
+              "text": "OFFY Big Sale: Bonus Gift Included",
+              "top": 482.5
+            },
+            {
+              "beyondControls": false,
+              "bottom": 1592.046875,
+              "intersectsPhoto": false,
+              "outsidePanel": false,
+              "text": "BUY ANY 3 OFFYs,GET A FREE BIG TOTE",
+              "top": 696.046875
+            }
+          ],
+          "height": 1698.203125,
+          "key": "promo"
+        },
+        {
+          "copy": [
+            {
+              "beyondControls": false,
+              "bottom": 925.9921875,
+              "intersectsPhoto": false,
+              "outsidePanel": false,
+              "text": "Romanticize the Everyday",
+              "top": 828.578125
+            },
+            {
+              "beyondControls": false,
+              "bottom": 1361.171875,
+              "intersectsPhoto": false,
+              "outsidePanel": false,
+              "text": "Princess Series",
+              "top": 943.265625
+            }
+          ],
+          "height": 1698.203125,
+          "key": "princess"
+        },
+        {
+          "copy": [
+            {
+              "beyondControls": false,
+              "bottom": 925.9921875,
+              "intersectsPhoto": false,
+              "outsidePanel": false,
+              "text": "Weekend in Motion",
+              "top": 828.578125
+            },
+            {
+              "beyondControls": false,
+              "bottom": 1361.171875,
+              "intersectsPhoto": false,
+              "outsidePanel": false,
+              "text": "STREETWEAR SERIES",
+              "top": 943.265625
+            }
+          ],
+          "height": 1698.203125,
+          "key": "streetwear"
+        },
+        {
+          "copy": [
+            {
+              "beyondControls": false,
+              "bottom": 925.9921875,
+              "intersectsPhoto": false,
+              "outsidePanel": false,
+              "text": "Too Cute to Dress Normal",
+              "top": 828.578125
+            },
+            {
+              "beyondControls": false,
+              "bottom": 1361.171875,
+              "intersectsPhoto": false,
+              "outsidePanel": false,
+              "text": "DRESS-UP SERIES",
+              "top": 943.265625
+            }
+          ],
+          "height": 1698.203125,
+          "key": "dressup"
+        }
+      ],
+      "scale": "2",
+      "width": 1440
+    },
+    {
+      "frameHeight": 1205.7578125,
+      "overflow": false,
+      "panels": [
+        {
+          "copy": [
+            {
+              "beyondControls": false,
+              "bottom": 180.2109375,
+              "intersectsPhoto": false,
+              "outsidePanel": false,
+              "text": "is.offy",
+              "top": 90.015625
+            },
+            {
+              "beyondControls": false,
+              "bottom": 260.3046875,
+              "intersectsPhoto": false,
+              "outsidePanel": false,
+              "text": "Designer Plush Art Toys",
+              "top": 198.2109375
+            },
+            {
+              "beyondControls": false,
+              "bottom": 315.703125,
+              "intersectsPhoto": false,
+              "outsidePanel": false,
+              "text": "Meet who you love to be.",
+              "top": 266.3046875
+            }
+          ],
+          "height": 1205.7578125,
+          "key": "brand"
+        },
+        {
+          "copy": [
+            {
+              "beyondControls": false,
+              "bottom": 767.78125,
+              "intersectsPhoto": false,
+              "outsidePanel": false,
+              "text": "OFFY Big Sale: Bonus Gift Included",
+              "top": 718.28125
+            },
+            {
+              "beyondControls": false,
+              "bottom": 1013.78125,
+              "intersectsPhoto": false,
+              "outsidePanel": false,
+              "text": "BUY ANY 3 OFFYs,GET A FREE BIG TOTE",
+              "top": 789.78125
+            }
+          ],
+          "height": 1205.7578125,
+          "key": "promo"
+        },
+        {
+          "copy": [
+            {
+              "beyondControls": false,
+              "bottom": 906.078125,
+              "intersectsPhoto": false,
+              "outsidePanel": false,
+              "text": "Romanticize the Everyday",
+              "top": 856.578125
+            },
+            {
+              "beyondControls": false,
+              "bottom": 1029.078125,
+              "intersectsPhoto": false,
+              "outsidePanel": false,
+              "text": "Princess Series",
+              "top": 924.078125
+            }
+          ],
+          "height": 1205.7578125,
+          "key": "princess"
+        },
+        {
+          "copy": [
+            {
+              "beyondControls": false,
+              "bottom": 906.078125,
+              "intersectsPhoto": false,
+              "outsidePanel": false,
+              "text": "Weekend in Motion",
+              "top": 856.578125
+            },
+            {
+              "beyondControls": false,
+              "bottom": 1029.078125,
+              "intersectsPhoto": false,
+              "outsidePanel": false,
+              "text": "STREETWEAR SERIES",
+              "top": 924.078125
+            }
+          ],
+          "height": 1205.7578125,
+          "key": "streetwear"
+        },
+        {
+          "copy": [
+            {
+              "beyondControls": false,
+              "bottom": 906.078125,
+              "intersectsPhoto": false,
+              "outsidePanel": false,
+              "text": "Too Cute to Dress Normal",
+              "top": 856.578125
+            },
+            {
+              "beyondControls": false,
+              "bottom": 1029.078125,
+              "intersectsPhoto": false,
+              "outsidePanel": false,
+              "text": "DRESS-UP SERIES",
+              "top": 924.078125
+            }
+          ],
+          "height": 1205.7578125,
+          "key": "dressup"
+        }
+      ],
+      "scale": "1",
+      "width": 1920
+    },
+    {
+      "frameHeight": 1205.7578125,
+      "overflow": false,
+      "panels": [
+        {
+          "copy": [
+            {
+              "beyondControls": false,
+              "bottom": 163.4921875,
+              "intersectsPhoto": false,
+              "outsidePanel": false,
+              "text": "is.offy",
+              "top": 73.296875
+            },
+            {
+              "beyondControls": false,
+              "bottom": 262.21875,
+              "intersectsPhoto": false,
+              "outsidePanel": false,
+              "text": "Designer Plush Art Toys",
+              "top": 181.4921875
+            },
+            {
+              "beyondControls": false,
+              "bottom": 332.4296875,
+              "intersectsPhoto": false,
+              "outsidePanel": false,
+              "text": "Meet who you love to be.",
+              "top": 268.21875
+            }
+          ],
+          "height": 1205.7578125,
+          "key": "brand"
+        },
+        {
+          "copy": [
+            {
+              "beyondControls": false,
+              "bottom": 741.609375,
+              "intersectsPhoto": false,
+              "outsidePanel": false,
+              "text": "OFFY Big Sale: Bonus Gift Included",
+              "top": 677.265625
+            },
+            {
+              "beyondControls": false,
+              "bottom": 1054.796875,
+              "intersectsPhoto": false,
+              "outsidePanel": false,
+              "text": "BUY ANY 3 OFFYs,GET A FREE BIG TOTE",
+              "top": 763.609375
+            }
+          ],
+          "height": 1205.7578125,
+          "key": "promo"
+        },
+        {
+          "copy": [
+            {
+              "beyondControls": false,
+              "bottom": 897.75,
+              "intersectsPhoto": false,
+              "outsidePanel": false,
+              "text": "Romanticize the Everyday",
+              "top": 833.40625
+            },
+            {
+              "beyondControls": false,
+              "bottom": 1052.25,
+              "intersectsPhoto": false,
+              "outsidePanel": false,
+              "text": "Princess Series",
+              "top": 915.75
+            }
+          ],
+          "height": 1205.7578125,
+          "key": "princess"
+        },
+        {
+          "copy": [
+            {
+              "beyondControls": false,
+              "bottom": 897.75,
+              "intersectsPhoto": false,
+              "outsidePanel": false,
+              "text": "Weekend in Motion",
+              "top": 833.40625
+            },
+            {
+              "beyondControls": false,
+              "bottom": 1052.25,
+              "intersectsPhoto": false,
+              "outsidePanel": false,
+              "text": "STREETWEAR SERIES",
+              "top": 915.75
+            }
+          ],
+          "height": 1205.7578125,
+          "key": "streetwear"
+        },
+        {
+          "copy": [
+            {
+              "beyondControls": false,
+              "bottom": 897.75,
+              "intersectsPhoto": false,
+              "outsidePanel": false,
+              "text": "Too Cute to Dress Normal",
+              "top": 833.40625
+            },
+            {
+              "beyondControls": false,
+              "bottom": 1052.25,
+              "intersectsPhoto": false,
+              "outsidePanel": false,
+              "text": "DRESS-UP SERIES",
+              "top": 915.75
+            }
+          ],
+          "height": 1205.7578125,
+          "key": "dressup"
+        }
+      ],
+      "scale": "1.3",
+      "width": 1920
+    },
+    {
+      "frameHeight": 1771.3046875,
+      "overflow": false,
+      "panels": [
+        {
+          "copy": [
+            {
+              "beyondControls": false,
+              "bottom": 407.234375,
+              "intersectsPhoto": false,
+              "outsidePanel": false,
+              "text": "is.offy",
+              "top": 317.0390625
+            },
+            {
+              "beyondControls": false,
+              "bottom": 549.4296875,
+              "intersectsPhoto": false,
+              "outsidePanel": false,
+              "text": "Designer Plush Art Toys",
+              "top": 425.234375
+            },
+            {
+              "beyondControls": false,
+              "bottom": 654.2265625,
+              "intersectsPhoto": false,
+              "outsidePanel": false,
+              "text": "Meet who you love to be.",
+              "top": 555.4296875
+            }
+          ],
+          "height": 1771.3046875,
+          "key": "brand"
+        },
+        {
+          "copy": [
+            {
+              "beyondControls": false,
+              "bottom": 739.3046875,
+              "intersectsPhoto": false,
+              "outsidePanel": false,
+              "text": "OFFY Big Sale: Bonus Gift Included",
+              "top": 640.3046875
+            },
+            {
+              "beyondControls": false,
+              "bottom": 1657.3046875,
+              "intersectsPhoto": false,
+              "outsidePanel": false,
+              "text": "BUY ANY 3 OFFYs,GET A FREE BIG TOTE",
+              "top": 761.3046875
+            }
+          ],
+          "height": 1771.3046875,
+          "key": "promo"
+        },
+        {
+          "copy": [
+            {
+              "beyondControls": false,
+              "bottom": 1056.1015625,
+              "intersectsPhoto": false,
+              "outsidePanel": false,
+              "text": "Romanticize the Everyday",
+              "top": 957.1015625
+            },
+            {
+              "beyondControls": false,
+              "bottom": 1494.1015625,
+              "intersectsPhoto": false,
+              "outsidePanel": false,
+              "text": "Princess Series",
+              "top": 1074.1015625
+            }
+          ],
+          "height": 1771.3046875,
+          "key": "princess"
+        },
+        {
+          "copy": [
+            {
+              "beyondControls": false,
+              "bottom": 1056.1015625,
+              "intersectsPhoto": false,
+              "outsidePanel": false,
+              "text": "Weekend in Motion",
+              "top": 957.1015625
+            },
+            {
+              "beyondControls": false,
+              "bottom": 1494.1015625,
+              "intersectsPhoto": false,
+              "outsidePanel": false,
+              "text": "STREETWEAR SERIES",
+              "top": 1074.1015625
+            }
+          ],
+          "height": 1771.3046875,
+          "key": "streetwear"
+        },
+        {
+          "copy": [
+            {
+              "beyondControls": false,
+              "bottom": 1056.1015625,
+              "intersectsPhoto": false,
+              "outsidePanel": false,
+              "text": "Too Cute to Dress Normal",
+              "top": 957.1015625
+            },
+            {
+              "beyondControls": false,
+              "bottom": 1494.1015625,
+              "intersectsPhoto": false,
+              "outsidePanel": false,
+              "text": "DRESS-UP SERIES",
+              "top": 1074.1015625
+            }
+          ],
+          "height": 1771.3046875,
+          "key": "dressup"
+        }
+      ],
+      "scale": "2",
+      "width": 1920
+    }
+  ]
+}
