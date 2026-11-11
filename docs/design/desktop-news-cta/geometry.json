@@ -1,0 +1,52 @@
+[
+  {
+    "acceptance": true,
+    "centerError": 0.00390625,
+    "fontSize": 12.53,
+    "height": 40,
+    "href": "/products/swan-princess",
+    "overflow": false,
+    "viewport": 390,
+    "width": 143.1953125
+  },
+  {
+    "acceptance": true,
+    "centerError": 0.00390625,
+    "fontSize": 16,
+    "height": 48,
+    "href": "/products/swan-princess",
+    "overflow": false,
+    "viewport": 768,
+    "width": 176
+  },
+  {
+    "acceptance": true,
+    "centerError": 0.00390625,
+    "fontSize": 18,
+    "height": 52,
+    "href": "/products/swan-princess",
+    "overflow": false,
+    "viewport": 1024,
+    "width": 189.484375
+  },
+  {
+    "acceptance": true,
+    "centerError": 0.00390625,
+    "fontSize": 24,
+    "height": 64,
+    "href": "/products/swan-princess",
+    "overflow": false,
+    "viewport": 1920,
+    "width": 320
+  },
+  {
+    "acceptance": true,
+    "centerError": 0,
+    "fontSize": 19.5765,
+    "height": 55.9296875,
+    "href": "/products/swan-princess",
+    "overflow": false,
+    "viewport": 1440,
+    "width": 268.4765625
+  }
+]

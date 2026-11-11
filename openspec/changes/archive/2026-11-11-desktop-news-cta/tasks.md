@@ -1,0 +1,4 @@
+- [x] Observe failing desktop size acceptance on the current real page; record mobile baseline.
+- [x] Apply desktop-only responsive capsule dimensions and verify artwork clearance.
+- [x] Run the full suite and production build; verify desktop/mobile browsers and screenshots.
+- [x] Update design documentation, archive and sync Git.

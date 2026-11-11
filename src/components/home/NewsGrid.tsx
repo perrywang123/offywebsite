@@ -87,8 +87,8 @@ export function NewsGrid({
                 </h3>
               </div>
             )}
-            {/* 缩小胶囊并下移居中，避开左侧限量标识；整张卡仍为可点击区域。 */}
-            <span className="bg-ink text-cream absolute inset-x-0 bottom-[4%] mx-auto flex h-[clamp(40px,10cqw,48px)] w-[40%] max-w-44 items-center justify-center rounded-full text-[clamp(12px,3.5cqw,16px)] leading-none font-normal tracking-[0.06em] uppercase">
+            {/* 手机保留紧凑尺寸；桌面随主卡放大，仍居中并留出限量标识。 */}
+            <span className="bg-ink text-cream absolute inset-x-0 bottom-[4%] mx-auto flex h-[clamp(40px,10cqw,48px)] w-[40%] max-w-44 items-center justify-center rounded-full text-[clamp(12px,3.5cqw,16px)] leading-none font-normal tracking-[0.06em] uppercase lg:bottom-[2%] lg:h-[clamp(52px,10cqw,64px)] lg:w-[48%] lg:max-w-80 lg:text-[clamp(18px,3.5cqw,24px)]">
               {texts.cta}
             </span>
           </Link>
