@@ -4,7 +4,7 @@
 - [x] GREEN: additive order evidence migration, best-effort cart reference and bounded read-only sync.
 - [x] GREEN: dated/test-excluding diagnostics, trace UI and source parameter helper.
 - [x] Unit/integration, full tests, typecheck, lint and production build.
-- [ ] Isolated browser journey → checkout → simulated order → admin verification, denial/withdrawal and narrow/wide layouts.
-- [ ] Git sync, prebuilt deployment with backup/health checks, then production no-payment verification.
-- [ ] Concise/detailed SOPs and explicit real-ad attribution acceptance status.
-- [ ] Archive the implementation specification after required verification.
+- [x] Isolated browser journey → checkout → simulated order → admin verification, denial/withdrawal and narrow/wide layouts.
+- [x] Git sync, prebuilt deployment with backup/health checks, then production no-payment verification.
+- [x] Concise/detailed SOPs and explicit real-ad attribution acceptance status.
+- [x] Archive the implementation specification after required verification.

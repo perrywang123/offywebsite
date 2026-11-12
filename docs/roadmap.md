@@ -2,7 +2,7 @@
 
 > 2026-11-12 广告追溯：新增默认排除内部测试的日期/广告ID筛选、同浏览器→结账→Shopify订单证据及动态参数助手。只读订单由后台 worker 处理，不改支付。真实广告成交验收单列，见 [本轮记录](meta-order-trace-validation.md)。
 
-> 2026-11-12：Meta 专项漏斗（PageView、ViewContent、AddToCart、站内 CheckoutReady）、关键事件 CAPI 队列及只读广告诊断已实现并在生产启用；这不替代通用 BI。生产令牌、独立 worker 和购买前事件实收已核验；目录映射、平台最终去重及 Shopify Purchase 跨域广告归因仍待验收。见 [方案](meta-technical-plan.md)、[生产记录](meta-production-validation.md)、[SOP](meta-ads-sop.md)。
+> 2026-11-12：Meta 专项漏斗（PageView、ViewContent、AddToCart、站内 CheckoutReady）、关键事件 CAPI 队列及只读广告诊断已实现并在生产启用；这不替代通用 BI。生产令牌、独立 worker 和购买前事件实收已核验；目录地区价格/实际匹配、平台最终去重及 Shopify Purchase 跨域广告归因仍待验收。见 [方案](meta-technical-plan.md)、[生产记录](meta-production-validation.md)、[SOP](meta-ads-sop.md)。
 
 > 2026-11-08：增加 [短链打开观察及 Flow 官方归属同步](collabs-observation.md)；与导入财务报告分开，不新增本地计佣或付款。启用及生产验收状态另见发布记录。
 
