@@ -1,0 +1,8 @@
+- [x] Freeze and validate approved scope and metrics.
+- [x] RED: daily boundaries, independent vs cohort counts, optional Buy Now cart, source changes, tests, refunds/cancellations, order times, pagination, redaction and detail filters.
+- [x] GREEN: bounded read-only analytics and stage drill-down.
+- [x] GREEN: responsive trends, cohort funnel, source/health panels and scoped evidence.
+- [x] Validate UI interactions, empty/unknown/error states and mobile/tablet/desktop layouts in isolation.
+- [ ] Full tests, typecheck, lint, build and Git/CI.
+- [ ] Prebuilt admin-only production release; verify image provenance, runtime health and unchanged storefront/Meta worker.
+- [ ] Verify deployed charts/read-only evidence; update SOP/state and archive the specification.

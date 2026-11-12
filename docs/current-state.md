@@ -1,5 +1,7 @@
 # 当前实现与验证基线
 
+> 2026-11-13 广告图表：已实现每日单指标趋势、浏览器概览、同队列顺序漏斗、广告分组与采集/同步状态；加购为可选分支，未知付款不显示0。只读后台改动，生产发布待验收，见[本轮记录](meta-analytics-charts-validation.md)。
+
 > 2026-11-12 广告追溯：新增默认排除内部测试的日期/广告ID筛选、同浏览器→结账→Shopify订单证据及动态参数助手。只读订单由后台 worker 处理，不改支付。真实广告成交验收单列，见 [本轮记录](meta-order-trace-validation.md)。
 
 > 2026-11-11：手机侧栏 Help & Support 移除 Shipping & returns，仅保留 FAQ、Contact Us；国家选择、页脚和政策页面保留。属于本地预览更新，尚未发布生产；见 [侧栏验收](design/mobile-help-links/validation.md)。

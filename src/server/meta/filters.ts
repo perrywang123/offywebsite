@@ -11,6 +11,8 @@ const date = z
     return Number.isFinite(ms) && new Date(ms).toISOString().slice(0, 10) === s;
   });
 export const evidenceFilterSchema = z.object({
+  source: z.enum(["all", "ad", "unlabelled"]).optional(),
+  stage: z.enum(["view", "content", "cart", "checkout", "paid"]).optional(),
   name: z.enum(eventNames).optional(),
   status: z
     .enum(["observed", "unconfigured", "pending", "sending", "sent", "failed", "suppressed"])
@@ -56,6 +58,11 @@ export function evidenceWhere(filter: EvidenceFilter, now: number) {
     filter.adId
       ? sql`json_extract(${metaEvents.sourceJson}, '$.ad_id') = ${filter.adId}`
       : undefined,
+    filter.source === "ad"
+      ? sql`coalesce(json_extract(${metaEvents.sourceJson}, '$.ad_id'), '') <> ''`
+      : filter.source === "unlabelled"
+        ? sql`coalesce(json_extract(${metaEvents.sourceJson}, '$.ad_id'), '') = ''`
+        : undefined,
     filter.includeTests ? undefined : sql`NOT ${labelledTest}`,
     gte(metaEvents.createdAt, range.from),
     lt(metaEvents.createdAt, range.to),

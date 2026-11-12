@@ -73,11 +73,25 @@ export function evidenceOverview(db: Db, filter: EvidenceFilter, now = Date.now(
       : null,
   };
 }
-export function traceEvidence(db: Db, id: string, filter: EvidenceFilter, now = Date.now()) {
+export function traceEvidence(
+  db: Db,
+  id: string,
+  filter: EvidenceFilter,
+  now = Date.now(),
+  visitors?: string[],
+) {
   const selected = db
     .select()
     .from(metaEvents)
-    .where(and(eq(metaEvents.id, id), evidenceWhere(filter, now)))
+    .where(
+      and(
+        eq(metaEvents.id, id),
+        evidenceWhere(filter, now),
+        visitors === undefined
+          ? undefined
+          : sql`${metaEvents.visitorHash} IN (SELECT value FROM json_each(${JSON.stringify(visitors)}))`,
+      ),
+    )
     .get();
   if (!selected) return null;
   const range = evidenceRange(filter, now);

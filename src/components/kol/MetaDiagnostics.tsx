@@ -4,9 +4,13 @@ import Link from "next/link";
 import type { listMetaEvents } from "@/server/meta/store";
 import type { evidenceOverview, traceEvidence } from "@/server/meta/evidence";
 import { buildMetaLink, metaUrlParameters } from "@/lib/meta/links";
+import { MetaAnalyticsCharts } from "./MetaAnalyticsCharts";
+import type { MetaAnalyticsData } from "@/server/meta/analytics";
+import type { AnalyticsStage } from "@/lib/meta/analytics";
 import { decimal } from "@/server/kol/money";
 type Evidence = ReturnType<typeof listMetaEvents> & {
   overview?: ReturnType<typeof evidenceOverview>;
+  analytics?: MetaAnalyticsData;
   config: {
     enabled: boolean;
     pixelId: string;
@@ -138,79 +142,193 @@ function SourceHelper({ origin }: { origin: string }) {
     </details>
   );
 }
+
+type GlobalScope = {
+  from: string;
+  to: string;
+  source: "all" | "ad" | "unlabelled";
+  campaignId: string;
+  adId: string;
+  includeTests: boolean;
+};
+const initialScope = (): GlobalScope => ({
+  from: day(Date.now() - 6 * 86400000),
+  to: day(Date.now()),
+  source: "all",
+  campaignId: "",
+  adId: "",
+  includeTests: false,
+});
+const stageLabels: Record<AnalyticsStage, string> = {
+  view: "访问",
+  content: "商品浏览",
+  cart: "可选加购",
+  checkout: "结账准备",
+  paid: "关联付款",
+};
+function EvidenceDialog({ onClose, children }: { onClose: () => void; children: React.ReactNode }) {
+  const dialog = useRef<HTMLDialogElement>(null);
+  useEffect(() => {
+    const element = dialog.current,
+      opener = document.activeElement instanceof HTMLElement ? document.activeElement : null;
+    if (element?.showModal) element.showModal();
+    else element?.setAttribute("open", "");
+    return () => {
+      element?.close?.();
+      if (opener?.isConnected) opener.focus({ preventScroll: true });
+    };
+  }, []);
+  return (
+    <dialog
+      className="admin-dialog meta-evidence-dialog"
+      ref={dialog}
+      aria-label="广告事件与链路证据"
+      onCancel={(e) => {
+        e.preventDefault();
+        onClose();
+      }}
+    >
+      <header>
+        <h2>广告事件与链路证据</h2>
+        <button type="button" className="icon-button" aria-label="关闭广告证据" onClick={onClose}>
+          ×
+        </button>
+      </header>
+      <div className="dialog-content">{children}</div>
+    </dialog>
+  );
+}
 export function MetaDiagnostics() {
-  const [data, setData] = useState<Evidence>(),
-    [name, setName] = useState(""),
-    [status, setStatus] = useState(""),
-    [page, setPage] = useState(1),
-    [error, setError] = useState(""),
-    [loading, setLoading] = useState(false),
-    [from, setFrom] = useState(() => day(Date.now() - 6 * 86400000)),
-    [to, setTo] = useState(() => day(Date.now())),
-    [campaignId, setCampaignId] = useState(""),
-    [adId, setAdId] = useState(""),
-    [includeTests, setIncludeTests] = useState(false),
-    [trace, setTrace] = useState<Trace>(),
-    [traceError, setTraceError] = useState(""),
-    [tracing, setTracing] = useState("");
+  const [data, setData] = useState<Evidence>();
+  const [scope, setScope] = useState(initialScope);
+  const [draft, setDraft] = useState(scope);
+  const [period, setPeriod] = useState("7");
+  const [name, setName] = useState("");
+  const [status, setStatus] = useState("");
+  const [stage, setStage] = useState<AnalyticsStage | "">("");
+  const [page, setPage] = useState(1);
+  const [error, setError] = useState("");
+  const [loading, setLoading] = useState(false);
+  const [trace, setTrace] = useState<Trace>();
+  const [traceError, setTraceError] = useState("");
+  const [selected, setSelected] = useState<Evidence["rows"][number]>();
+  const [tracing, setTracing] = useState(false);
   const requestId = useRef(0),
     traceRequest = useRef(0);
+  const controller = useRef<AbortController | null>(null);
+  const scopePanel = useRef<HTMLDetailsElement>(null),
+    detailsPanel = useRef<HTMLDetailsElement>(null),
+    ordersPanel = useRef<HTMLDetailsElement>(null);
   const query = useCallback(
     () =>
       new URLSearchParams({
         page: String(page),
-        from,
-        to,
+        from: scope.from,
+        to: scope.to,
+        ...(scope.source !== "all" ? { source: scope.source } : {}),
+        ...(scope.campaignId ? { campaignId: scope.campaignId } : {}),
+        ...(scope.adId ? { adId: scope.adId } : {}),
+        ...(scope.includeTests ? { includeTests: "true" } : {}),
         ...(name ? { name } : {}),
         ...(status ? { status } : {}),
-        ...(campaignId ? { campaignId } : {}),
-        ...(adId ? { adId } : {}),
-        ...(includeTests ? { includeTests: "true" } : {}),
+        ...(stage ? { stage } : {}),
       }),
-    [page, from, to, name, status, campaignId, adId, includeTests],
+    [scope, page, name, status, stage],
   );
   const load = useCallback(async () => {
     const id = ++requestId.current;
+    controller.current?.abort();
+    const current = new AbortController();
+    controller.current = current;
     setLoading(true);
     setError("");
-    setTrace(undefined);
+    setSelected(undefined);
     traceRequest.current++;
-    setTracing("");
+    setTrace(undefined);
+    setTracing(false);
     setTraceError("");
-    if (!from || !to || from > to || [campaignId, adId].some((v) => v && !/^\d{1,30}$/.test(v))) {
-      setError("请检查日期顺序及广告编号（只填写数字）。");
-      setLoading(false);
-      return;
-    }
     try {
-      const response = await fetch(`/api/admin/kol/meta?${query()}`, { cache: "no-store" });
+      const response = await fetch(`/api/admin/kol/meta?${query()}`, {
+        cache: "no-store",
+        signal: current.signal,
+      });
       if (!response.ok) throw new Error();
-      const result = await response.json();
+      const result: Evidence = await response.json();
       if (id === requestId.current) setData(result);
     } catch {
-      if (id === requestId.current) setError("广告诊断暂时读取失败，请重试；不会影响独立站下单。");
+      if (!current.signal.aborted && id === requestId.current)
+        setError(
+          "广告诊断暂时读取失败，请重试；不会影响独立站下单。当前图表如有显示，为上次成功结果。",
+        );
     } finally {
       if (id === requestId.current) setLoading(false);
     }
-  }, [query, from, to, campaignId, adId]);
-  const invalidateRequests = useCallback(() => {
+  }, [query]);
+  const cancelRequests = useCallback(() => {
     requestId.current++;
     traceRequest.current++;
+    controller.current?.abort();
   }, []);
   useEffect(() => {
+    setLoading(true);
     const timer = setTimeout(() => void load(), 250);
     return () => {
       clearTimeout(timer);
-      invalidateRequests();
+      cancelRequests();
     };
-  }, [load, invalidateRequests]);
-  async function openTrace(id: string) {
+  }, [load, cancelRequests]);
+  useEffect(() => {
+    let wide = window.innerWidth > 640;
+    if (scopePanel.current) scopePanel.current.open = wide;
+    const resize = () => {
+      const next = window.innerWidth > 640;
+      if (wide !== next && scopePanel.current) scopePanel.current.open = next;
+      wide = next;
+    };
+    window.addEventListener("resize", resize);
+    return () => window.removeEventListener("resize", resize);
+  }, []);
+  function applyScope(next = draft) {
+    if (
+      !next.from ||
+      !next.to ||
+      next.from > next.to ||
+      [next.campaignId, next.adId].some((v) => v && !/^\d{1,30}$/.test(v))
+    ) {
+      setError("请检查日期顺序及广告编号（只填写数字）。");
+      return;
+    }
+    setError("");
+    setScope({ ...next });
+    setPage(1);
+    setStage("");
+    setName("");
+    setStatus("");
+    if (window.innerWidth <= 640 && scopePanel.current) scopePanel.current.open = false;
+  }
+  function drillStage(value: AnalyticsStage) {
+    setStage(value);
+    setName("");
+    setStatus("");
+    setPage(1);
+    if (detailsPanel.current) {
+      detailsPanel.current.open = true;
+      detailsPanel.current.scrollIntoView?.({ block: "start", behavior: "auto" });
+    }
+  }
+  function drillAd(id: string | null) {
+    const next: GlobalScope = { ...scope, adId: id ?? "", source: id ? "ad" : "unlabelled" };
+    setDraft(next);
+    applyScope(next);
+  }
+  async function openTrace(row: Evidence["rows"][number]) {
     const seq = ++traceRequest.current;
-    setTracing(id);
+    setSelected(row);
     setTrace(undefined);
     setTraceError("");
+    setTracing(true);
     try {
-      const response = await fetch(`/api/admin/kol/meta/trace/${id}?${query()}`, {
+      const response = await fetch(`/api/admin/kol/meta/trace/${row.id}?${query()}`, {
         cache: "no-store",
       });
       if (!response.ok) throw new Error();
@@ -220,18 +338,17 @@ export function MetaDiagnostics() {
       if (seq === traceRequest.current)
         setTraceError("链路暂时读取失败，请重试；过期或未采集记录可能无法关联。");
     } finally {
-      if (seq === traceRequest.current) setTracing("");
+      if (seq === traceRequest.current) setTracing(false);
     }
   }
-  const overview = data?.overview;
+  const overview = data?.overview,
+    analytics = data?.analytics;
   return (
-    <section aria-label="Meta 广告诊断" aria-busy={loading}>
+    <section className="meta-dashboard" aria-label="Meta 广告诊断" aria-busy={loading}>
       <div className="section-line">
         <div>
           <h2>广告来源与订单核对</h2>
-          <p className="muted">
-            站内观察、Meta 接收回执与 Shopify 订单证据；不代表广告归因或佣金。
-          </p>
+          <p className="muted">站内趋势、观察漏斗与 Shopify 订单证据；不代表广告归因或佣金。</p>
         </div>
         <button onClick={() => void load()} disabled={loading}>
           {loading ? "读取中…" : "刷新数据"}
@@ -244,20 +361,19 @@ export function MetaDiagnostics() {
       )}
       {data && (
         <>
-          <div className="message" role="status">
-            Pixel：{data.config.enabled ? data.config.pixelId : "未启用或 ID 未配置"} · CAPI：
-            {data.config.capi ? "配置齐备" : "未启用或配置不全"} · 目录映射：
-            {data.config.catalogCount} 项
-            {data.config.simulation
-              ? " · 本地模拟验收（非真实 Meta）"
-              : data.config.testMode
-                ? " · 测试事件模式（投放前必须关闭）"
-                : ""}
-            <br />
-            Purchase 由 Shopify 官方集成负责；InitiateCheckout 同样由官方上报，Offy
-            的结账准备仅在本地记录。
+          <div className="meta-connection-strip">
+            <span>Pixel：{data.config.enabled ? data.config.pixelId : "未启用"}</span>
+            <span>CAPI：{data.config.capi ? "配置齐备" : "未启用或配置不全"}</span>
+            <span>目录映射：{data.config.catalogCount} 项</span>
+            {data.config.simulation ? (
+              <strong>本地模拟验收（非真实 Meta）</strong>
+            ) : data.config.testMode ? (
+              <strong>测试事件模式（投放前必须关闭）</strong>
+            ) : null}
           </div>
-          <p>
+          <p className="meta-owner-caption">
+            Purchase 由 Shopify 官方集成负责；InitiateCheckout 同样由官方上报，Offy
+            的结账准备仅在本地记录。{" "}
             <a
               href="https://eventsmanager.facebook.com/events_manager2/list/pixel/1120625754196383/overview?business_id=837128189448656"
               target="_blank"
@@ -276,285 +392,414 @@ export function MetaDiagnostics() {
           </p>
         </>
       )}
-      <div className="toolbar meta-filters">
-        <label>
-          开始日期
+      <details open ref={scopePanel} className="meta-global-panel">
+        <summary>
+          筛选范围{" "}
+          <strong>
+            {scope.from} – {scope.to}
+          </strong>
+        </summary>
+        <div className="meta-global-filters">
+          <label>
+            统计周期
+            <select
+              value={period}
+              onChange={(e) => {
+                const value = e.target.value;
+                setPeriod(value);
+                if (value !== "custom")
+                  setDraft((d) => ({
+                    ...d,
+                    from: day(Date.now() - (Number(value) - 1) * 86400000),
+                    to: day(Date.now()),
+                  }));
+              }}
+            >
+              <option value="7">最近 7 天</option>
+              <option value="30">最近 30 天</option>
+              <option value="custom">自定义日期</option>
+            </select>
+          </label>
+          {period === "custom" && (
+            <>
+              <label>
+                开始日期
+                <input
+                  type="date"
+                  value={draft.from}
+                  onChange={(e) => setDraft((d) => ({ ...d, from: e.target.value }))}
+                />
+              </label>
+              <label>
+                结束日期
+                <input
+                  type="date"
+                  value={draft.to}
+                  onChange={(e) => setDraft((d) => ({ ...d, to: e.target.value }))}
+                />
+              </label>
+            </>
+          )}
+          <label>
+            流量范围
+            <select
+              value={draft.source}
+              onChange={(e) =>
+                setDraft((d) => ({ ...d, source: e.target.value as GlobalScope["source"] }))
+              }
+            >
+              <option value="all">全部站内流量</option>
+              <option value="ad">仅带广告 ID 的流量</option>
+              <option value="unlabelled">未记录广告 ID 的流量</option>
+            </select>
+          </label>
+          <label>
+            广告系列 ID
+            <input
+              inputMode="numeric"
+              value={draft.campaignId}
+              onChange={(e) => setDraft((d) => ({ ...d, campaignId: e.target.value.trim() }))}
+              placeholder="全部系列"
+            />
+          </label>
+          <label>
+            广告 ID
+            <input
+              inputMode="numeric"
+              value={draft.adId}
+              onChange={(e) => setDraft((d) => ({ ...d, adId: e.target.value.trim() }))}
+              placeholder="全部广告"
+            />
+          </label>
+          <button className="primary" type="button" disabled={loading} onClick={() => applyScope()}>
+            应用筛选
+          </button>
+        </div>
+        <label className="meta-test-toggle">
           <input
-            type="date"
-            value={from}
-            onChange={(e) => {
-              setFrom(e.target.value);
-              setPage(1);
-            }}
+            type="checkbox"
+            checked={draft.includeTests}
+            onChange={(e) => setDraft((d) => ({ ...d, includeTests: e.target.checked }))}
           />
+          包含内部测试与 Shopify 测试订单
         </label>
-        <label>
-          结束日期
-          <input
-            type="date"
-            value={to}
-            onChange={(e) => {
-              setTo(e.target.value);
-              setPage(1);
-            }}
-          />
-        </label>
-        <label>
-          广告系列 ID
-          <input
-            inputMode="numeric"
-            value={campaignId}
-            onChange={(e) => {
-              setCampaignId(e.target.value.trim());
-              setPage(1);
-            }}
-            placeholder="全部系列"
-          />
-        </label>
-        <label>
-          广告 ID
-          <input
-            inputMode="numeric"
-            value={adId}
-            onChange={(e) => {
-              setAdId(e.target.value.trim());
-              setPage(1);
-            }}
-            placeholder="全部广告"
-          />
-        </label>
-        <label>
-          事件
-          <select
-            value={name}
-            onChange={(e) => {
-              setName(e.target.value);
-              setPage(1);
-            }}
-          >
-            <option value="">全部事件</option>
-            {Object.entries(names).map(([key, label]) => (
-              <option key={key} value={key}>
-                {label}
-              </option>
-            ))}
-          </select>
-        </label>
-        <label>
-          发送状态
-          <select
-            value={status}
-            onChange={(e) => {
-              setStatus(e.target.value);
-              setPage(1);
-            }}
-          >
-            <option value="">全部状态</option>
-            {Object.entries(labels).map(([key, label]) => (
-              <option key={key} value={key}>
-                {label}
-              </option>
-            ))}
-          </select>
-        </label>
-      </div>
-      <label className="meta-test-toggle">
-        <input
-          type="checkbox"
-          checked={includeTests}
-          onChange={(e) => {
-            setIncludeTests(e.target.checked);
-            setPage(1);
-          }}
-        />
-        包含内部测试与 Shopify 测试订单
-      </label>
-      <p className="muted">
-        时间 Asia/Shanghai · 最多保留 30 天 · 订单按所选站内事件关联。
-        {loading && "正在读取新筛选，以下为上次结果。"}
-      </p>
-      {overview && (
+        <p className="meta-filter-note">
+          日期按 Asia/Shanghai；最多保留 30 天 / 20,000 条记录。修改后点击“应用筛选”。
+        </p>
+      </details>
+      {(loading || error) && data && (
+        <p className="meta-snapshot-note" role="status">
+          {loading
+            ? "正在读取新筛选；当前展示上次成功快照，暂不可下钻。"
+            : "读取失败，保留上次快照；请刷新后再核对。"}
+        </p>
+      )}
+      {analytics && (
         <>
-          <div className="meta-counts">
-            {["PageView", "ViewContent", "AddToCart", "CheckoutReady"].map((n) => {
-              const e = overview.events.find((x) => x.name === n);
-              return (
-                <div key={n}>
-                  <span>{names[n]}</span>
-                  <strong>{e?.count ?? 0}</strong>
-                  <small>
-                    {e?.browsers ?? 0} 个浏览器标识 · {e?.withAdId ?? 0} 条带广告 ID
-                  </small>
-                </div>
-              );
-            })}
-          </div>
-          <p className="muted">
-            浏览器标识不是实际人数；未许可、拦截、跨设备和清理存储会影响记录。
-            {!includeTests && `本范围已排除 ${overview.excludedTests} 条标记的内部测试。`}
-            旧版结账事件仅在明细中保留。
+          <p className="meta-filter-note">
+            当前图表：
+            {
+              { all: "全部站内流量", ad: "带广告 ID 的流量", unlabelled: "未记录广告 ID 的流量" }[
+                analytics.scope.source
+              ]
+            }
+            {analytics.scope.adId ? ` · 广告 ${analytics.scope.adId}` : ""}
+            {analytics.scope.campaignId ? ` · 系列 ${analytics.scope.campaignId}` : ""} ·{" "}
+            {analytics.scope.includeTests
+              ? "包含内部测试"
+              : `已排除 ${overview?.excludedTests ?? 0} 条内部测试`}{" "}
+            · 更新 {time(analytics.generatedAt)}
           </p>
-          <section aria-label="Shopify 订单核对" className="meta-reconciliation">
-            <h3>Shopify 订单核对</h3>
+          <MetaAnalyticsCharts
+            data={analytics}
+            enabled={data!.config.enabled}
+            ordersConfigured={!!data!.config.ordersConfigured}
+            sync={overview?.sync ?? null}
+            busy={loading || !!error}
+            onStage={drillStage}
+            onAd={drillAd}
+          />
+        </>
+      )}
+      <div className="meta-evidence-heading">
+        <div>
+          <h3>继续核对原始证据</h3>
+          <p className="muted">查看事件、结账与订单记录，定位具体异常。</p>
+        </div>
+        <div>
+          <button
+            type="button"
+            onClick={() => {
+              if (detailsPanel.current) {
+                detailsPanel.current.open = true;
+                detailsPanel.current.scrollIntoView?.({ block: "start" });
+              }
+            }}
+          >
+            查看事件明细 ↓
+          </button>
+          <button
+            type="button"
+            onClick={() => {
+              if (ordersPanel.current) {
+                ordersPanel.current.open = true;
+                ordersPanel.current.scrollIntoView?.({ block: "start" });
+              }
+            }}
+          >
+            查看订单证据 ↓
+          </button>
+        </div>
+      </div>
+      <details className="meta-evidence-section" ref={ordersPanel}>
+        <summary>Shopify 订单核对</summary>
+        {overview && (
+          <section aria-label="Shopify 订单核对">
             <p>
               {!data?.config.ordersConfigured
                 ? "Shopify Admin 尚未配置，订单证据暂不可用。"
                 : overview.sync?.lastError
-                  ? "订单读取暂时失败，将自动重试。站内记录与 CAPI 发送继续运行。"
+                  ? "订单读取暂时失败，将自动重试；以下若有证据为上次读取结果。"
                   : overview.sync?.lastSuccess
                     ? `最近成功读取 ${time(overview.sync.lastSuccess)}${overview.sync.scanning ? " · 分页读取中" : " · 完成扫描后每 15 分钟检查"}`
-                    : "等待管理后台 worker 首次读取订单；当前没有订单证据不等于没有成交。"}
+                    : "等待首次读取；没有证据不等于没有成交。"}
             </p>
             <p className="muted">
-              仅关联本次上线后、许可内且带签名结账编号的订单。不推测历史来源，不向 Meta 重发
-              Purchase。金额为 Shopify 订单总额（含运税），不是 Meta 广告购买金额。
+              关联本次上线后、许可内且带签名结账编号的订单。金额是 Shopify
+              订单总额（含运税），非广告归因金额；不同币种分开显示。下列按事件范围关联，可能包含漏斗前序不完整或范围外创建的订单，不能作为漏斗转化分子。
             </p>
             {overview.currencies.map((c) => (
               <p key={c.currency}>
-                <strong>{c.currency}</strong> · {c.orders} 笔有付款记录且未取消的订单 · 总额{" "}
+                <strong>{c.currency}</strong> · {c.orders} 笔有付款历史且未取消的订单 · 总额{" "}
                 {decimal(c.totalMinor, c.currency)} · 已退款 {decimal(c.refundedMinor, c.currency)}
               </p>
             ))}
             {overview.orders.length ? (
               <>
-                {overview.orderCount > overview.orders.length && (
-                  <p className="muted">
-                    共 {overview.orderCount} 笔匹配订单，以下显示最近 {overview.orders.length}{" "}
-                    笔；币种汇总包含全部匹配订单。
-                  </p>
-                )}
+                <p className="muted">
+                  共 {overview.orderCount} 笔匹配订单，显示最近 {overview.orders.length}{" "}
+                  笔；汇总包含全部匹配订单。
+                </p>
                 <Orders orders={overview.orders} />
               </>
             ) : (
-              <p className="muted">尚无匹配订单证据；请同时查看 Shopify 订单与 Meta 广告报表。</p>
+              <p className="muted">尚无匹配订单证据；请同时查看 Shopify 订单与 Meta 报表。</p>
             )}
           </section>
-        </>
-      )}
+        )}
+      </details>
       {data && <SourceHelper origin={data.config.siteUrl ?? "https://isoffy.com"} />}
-      <h3>事件明细</h3>
-      {!data && !error && <p role="status">正在读取诊断…</p>}
-      {data?.rows.length === 0 && (
-        <div className="empty">
-          <h3>暂无匹配事件</h3>
-          <p>从追踪启用后且许可允许的浏览开始采集；未接入或未许可不代表没有访问。</p>
-        </div>
-      )}
-      <div className="meta-records">
-        {data?.rows.map((row) => (
-          <article key={row.id} className="meta-record">
-            <div className="section-line">
-              <strong>{names[row.name] ?? row.name}</strong>
-              <span>{labels[row.status] ?? row.status}</span>
-            </div>
-            <p className="muted">
-              {time(row.createdAt)} · {row.pagePath}
-            </p>
-            <p>
-              {row.data.value !== undefined
-                ? `${row.data.value} ${row.data.currency}`
-                : "金额未记录"}{" "}
-              · {row.data.num_items ?? "—"} 件 ·{" "}
-              {row.name === "PageView"
-                ? "页面浏览，无需商品目录 ID"
-                : row.data.content_ids?.length
-                  ? "已按配置映射目录 ID"
-                  : "未提供目录 ID，需核对映射"}
-            </p>
-            <details>
-              <summary>查看来源与发送明细</summary>
-              <dl>
-                <dt>广告来源</dt>
-                <dd>{sourceText(row.source)}</dd>
-                <dt>匹配信息</dt>
-                <dd>
-                  Meta 点击标识：{row.hasFbc ? "有" : "无"}；浏览器标识：{row.hasFbp ? "有" : "无"}
-                  。标识存在不代表此事件已归因给广告。
-                </dd>
-                <dt>浏览器</dt>
-                <dd>
-                  {["CheckoutReady", "InitiateCheckout"].includes(row.name)
-                    ? "结账由 Shopify 官方上报；本条仅本地核对"
-                    : row.pixelAttempted
-                      ? "已调用 Pixel（平台接收另行核对）"
-                      : "未成功调用 Pixel"}
-                </dd>
-                <dt>CAPI 尝试</dt>
-                <dd>
-                  {row.attempts} 次{row.lastError ? ` · ${row.lastError}` : ""}
-                </dd>
-                <dt>事件编号</dt>
-                <dd>{row.id}</dd>
-                <dt>结账诊断编号</dt>
-                <dd>
-                  {row.attemptId ? (
-                    <Link href={`/admin/checkouts?query=${row.attemptId}`}>{row.attemptId} ↗</Link>
-                  ) : (
-                    "未关联"
-                  )}
-                </dd>
-              </dl>
-            </details>
+      <details className="meta-evidence-section" ref={detailsPanel} open>
+        <summary>事件明细</summary>
+        <p className="meta-filter-note">
+          以下筛选仅作用于事件明细，不改变上方趋势和漏斗。旧版结账事件只保留历史证据。
+        </p>
+        <div className="toolbar meta-detail-filters">
+          <label>
+            事件
+            <select
+              value={name}
+              onChange={(e) => {
+                setName(e.target.value);
+                setPage(1);
+              }}
+            >
+              <option value="">全部事件</option>
+              {Object.entries(names).map(([key, label]) => (
+                <option value={key} key={key}>
+                  {label}
+                </option>
+              ))}
+            </select>
+          </label>
+          <label>
+            发送状态
+            <select
+              value={status}
+              onChange={(e) => {
+                setStatus(e.target.value);
+                setPage(1);
+              }}
+            >
+              <option value="">全部状态</option>
+              {Object.entries(labels).map(([key, label]) => (
+                <option value={key} key={key}>
+                  {label}
+                </option>
+              ))}
+            </select>
+          </label>
+          {stage && (
             <button
               type="button"
-              disabled={loading || !!tracing}
-              onClick={() => void openTrace(row.id)}
+              onClick={() => {
+                setStage("");
+                setPage(1);
+              }}
             >
-              {tracing === row.id ? "读取链路中…" : "查看浏览 → 结账 → 订单"}
+              仅看漏斗「{stageLabels[stage]}」队列 ×
             </button>
-            {trace?.selectedId === row.id && (
-              <section className="meta-trace" aria-label="同一浏览器链路">
-                <h4>同一浏览器的许可内观察</h4>
-                <p className="muted">
-                  当前日期范围内最多 50 条；表示观察到的顺序，不等于 Meta 最终归因。
-                  {trace.truncated && "更早记录已省略。"}
-                </p>
-                <ol>
-                  {trace.events.map((e) => (
-                    <li key={e.id}>
-                      <strong>{names[e.name] ?? e.name}</strong> · {time(e.createdAt)}
-                      <p>{e.pagePath}</p>
-                      <p className="muted">{sourceText(e.source)}</p>
-                      {e.attemptId && <p>结账编号 {e.attemptId}</p>}
-                    </li>
-                  ))}
-                </ol>
-                {trace.checkouts.map((c) => (
-                  <p key={c.id}>
-                    Shopify 结账准备：{c.status === "redirect_ready" ? "已生成链接" : c.status} ·{" "}
-                    {c.country}
-                    {c.error ? ` · ${c.error}` : ""}
-                  </p>
-                ))}
-                <Orders orders={trace.orders} />
-                {!trace.orders.length && <p>尚无关联订单证据；不能据此断定未付款。</p>}
-              </section>
-            )}
-          </article>
-        ))}
-      </div>
-      {traceError && (
-        <p className="message error" role="alert">
-          {traceError}
-        </p>
-      )}
-      {data && (
-        <div className="section-line">
-          <span>
-            共 {data.total} 条 · 第 {page} 页
-          </span>
-          <div>
-            <button disabled={page === 1 || loading} onClick={() => setPage((p) => p - 1)}>
-              上一页
-            </button>{" "}
-            <button
-              disabled={page * 30 >= data.total || loading}
-              onClick={() => setPage((p) => p + 1)}
-            >
-              下一页
-            </button>
-          </div>
+          )}
         </div>
+        {!data && !error && <p role="status">正在读取诊断…</p>}
+        {data?.rows.length === 0 && (
+          <div className="empty">
+            <h3>暂无匹配事件</h3>
+            <p>未接入、未许可或保留期外没有记录，不代表没有实际访问。</p>
+          </div>
+        )}
+        {!!data?.rows.length && (
+          <div
+            className="table-scroll meta-event-table"
+            tabIndex={0}
+            role="region"
+            aria-label="事件明细，可横向滚动"
+          >
+            <table>
+              <thead>
+                <tr>
+                  <th>事件 / 时间</th>
+                  <th>页面</th>
+                  <th>广告来源</th>
+                  <th>发送状态</th>
+                  <th>证据</th>
+                </tr>
+              </thead>
+              <tbody>
+                {data.rows.map((row) => (
+                  <tr key={row.id}>
+                    <td>
+                      <strong>{names[row.name] ?? row.name}</strong>
+                      <small>{time(row.createdAt)}</small>
+                    </td>
+                    <td className="code">{row.pagePath}</td>
+                    <td className="code">{row.source.ad_id ?? "未记录广告 ID"}</td>
+                    <td>{labels[row.status] ?? row.status}</td>
+                    <td>
+                      <button
+                        type="button"
+                        disabled={loading || !!error}
+                        aria-label={`查看${names[row.name] ?? row.name}事件 ${row.id.slice(0, 8)} 的链路`}
+                        onClick={() => void openTrace(row)}
+                      >
+                        查看链路 ↗
+                      </button>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
+        {data && (
+          <div className="section-line meta-pages">
+            <span>
+              共 {data.total} 条 · 第 {page} 页
+            </span>
+            <div>
+              <button disabled={page === 1 || loading} onClick={() => setPage((p) => p - 1)}>
+                上一页
+              </button>{" "}
+              <button
+                disabled={page * 30 >= data.total || loading}
+                onClick={() => setPage((p) => p + 1)}
+              >
+                下一页
+              </button>
+            </div>
+          </div>
+        )}
+      </details>
+      {selected && (
+        <EvidenceDialog
+          onClose={() => {
+            traceRequest.current++;
+            setSelected(undefined);
+            setTrace(undefined);
+            setTracing(false);
+          }}
+        >
+          <article className="meta-record meta-selected-record">
+            <h3>{names[selected.name] ?? selected.name}</h3>
+            <p className="muted">
+              {time(selected.createdAt)} · {selected.pagePath}
+            </p>
+            <p>
+              {labels[selected.status] ?? selected.status} ·{" "}
+              {selected.data.value !== undefined
+                ? `${selected.data.value} ${selected.data.currency}`
+                : "金额未记录"}{" "}
+              · {selected.data.num_items ?? "—"} 件
+            </p>
+            <dl>
+              <dt>广告来源</dt>
+              <dd>{sourceText(selected.source)}</dd>
+              <dt>匹配信息</dt>
+              <dd>
+                Meta 点击标识：{selected.hasFbc ? "有" : "无"}；浏览器标识：
+                {selected.hasFbp ? "有" : "无"}。标识存在不代表已归因。
+              </dd>
+              <dt>浏览器</dt>
+              <dd>
+                {["CheckoutReady", "InitiateCheckout"].includes(selected.name)
+                  ? "Shopify 官方负责结账上报；本条仅站内记录"
+                  : selected.pixelAttempted
+                    ? "已调用 Pixel，平台接收需另行核对"
+                    : "未成功调用 Pixel"}
+              </dd>
+              <dt>CAPI 尝试</dt>
+              <dd>
+                {selected.attempts} 次{selected.lastError ? ` · ${selected.lastError}` : ""}
+              </dd>
+              <dt>事件编号</dt>
+              <dd>{selected.id}</dd>
+              <dt>结账诊断</dt>
+              <dd>
+                {selected.attemptId ? (
+                  <Link href={`/admin/checkouts?query=${selected.attemptId}`}>
+                    {selected.attemptId} ↗
+                  </Link>
+                ) : (
+                  "未关联"
+                )}
+              </dd>
+            </dl>
+          </article>
+          {tracing && <p role="status">正在读取浏览 → 结账 → 订单…</p>}
+          {traceError && (
+            <p className="message error" role="alert">
+              {traceError}
+            </p>
+          )}
+          {trace && (
+            <section className="meta-trace" aria-label="同一浏览器链路">
+              <h3>同一浏览器的许可内观察</h3>
+              <p className="muted">
+                当前日期范围内最多 50 条；表示观察顺序，不等于 Meta 最终归因。
+                {trace.truncated && "更早记录已省略。"}
+              </p>
+              <ol>
+                {trace.events.map((e) => (
+                  <li key={e.id}>
+                    <strong>{names[e.name] ?? e.name}</strong> · {time(e.createdAt)}
+                    <p>{e.pagePath}</p>
+                    <p className="muted">{sourceText(e.source)}</p>
+                    {e.attemptId && <p>结账编号 {e.attemptId}</p>}
+                  </li>
+                ))}
+              </ol>
+              {trace.checkouts.map((c) => (
+                <p key={c.id}>
+                  Shopify 结账准备：{c.status === "redirect_ready" ? "已生成链接" : c.status} ·{" "}
+                  {c.country}
+                  {c.error ? ` · ${c.error}` : ""}
+                </p>
+              ))}
+              <Orders orders={trace.orders} />
+              {!trace.orders.length && <p>尚无关联订单证据；不能据此断定未付款。</p>}
+            </section>
+          )}
+        </EvidenceDialog>
       )}
     </section>
   );

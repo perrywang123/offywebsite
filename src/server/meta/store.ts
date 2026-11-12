@@ -1,5 +1,5 @@
 import { createHmac, randomUUID } from "node:crypto";
-import { and, asc, count, desc, eq, gte, inArray, lt, lte, or } from "drizzle-orm";
+import { and, asc, count, desc, eq, gte, inArray, lt, lte, or, sql } from "drizzle-orm";
 import type { Db } from "../kol/db";
 import { metaEvents, metaOrderEvidence } from "../db/schema";
 import { capiMetaEvent, type MetaEvent } from "@/lib/meta/events";
@@ -203,8 +203,18 @@ export function forgetVisitor(db: Db, id: string, key: Buffer) {
       .run();
   });
 }
-export function listMetaEvents(db: Db, filter: EvidenceFilter, now = Date.now()) {
-  const where = evidenceWhere(filter, now);
+export function listMetaEvents(
+  db: Db,
+  filter: EvidenceFilter,
+  now = Date.now(),
+  visitors?: string[],
+) {
+  const where = and(
+    evidenceWhere(filter, now),
+    visitors === undefined
+      ? undefined
+      : sql`${metaEvents.visitorHash} IN (SELECT value FROM json_each(${JSON.stringify(visitors)}))`,
+  );
   const rows = db
     .select({
       id: metaEvents.id,
