@@ -23,6 +23,8 @@ export interface CreateCheckoutInput {
   shopifyTracking?: {
     context: import("@shopify/hydrogen").ShopifyRequestContext;
     discountCode?: string;
+    /** Optional signed, non-personal reconciliation reference; not a price/discount input. */
+    checkoutReference?: string;
   };
   /** Server-only diagnostic observer; must never influence commercial decisions. */
   diagnostics?: import("@/lib/checkout-diagnostics").CheckoutObserver;

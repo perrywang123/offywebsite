@@ -1,41 +1,56 @@
-# Offy Meta 站内漏斗与 CAPI 技术方案
+# Offy Meta 追踪与订单证据技术方案
 
-2026-11-08。授权范围：先规划，再以 SDD/spec-first + TDD 实现两步，并进行隔离页面验收及 SOP 交付。本方案不等同生产已启用。
+更新：2026-11-12。按 OpenSpec + TDD 实现；[操作简版](meta-ads-sop.md)、[详细版](meta-ads-sop-detailed.md)、[本轮验收](meta-order-trace-validation.md)。
 
-## 第一步：Pixel、来源与结账诊断
+## 整条链路
 
-继续使用同一数据集 1120625754196383，由运行时 META_PIXEL_ID 配置，默认关闭。新增 MetaTracking 客户端模块，加载公开配置；复用 Shopify Customer Privacy，不依赖 Collabs 模式。只有 analyticsProcessingAllowed、marketingAllowed、saleOfDataAllowed 均明确允许且无 GPC 时加载 Pixel。许可变更时重新判定；不回放许可之前的加购，不在后台、支付回跳或 API 页面发送事件。
+```mermaid
+flowchart LR
+  A[Meta 广告<br/>动态 campaign/adset/ad ID] --> B[Offy 落地页]
+  B --> C{Shopify 隐私许可 / GPC}
+  C -->|允许| D[来源上下文 + 匿名浏览器标识]
+  D --> E[PageView / ViewContent Pixel]
+  D --> F[加购 Pixel + CAPI<br/>同一 event ID]
+  B --> G[现有购物袋 / 立即购买]
+  G --> H[Shopify cartCreate<br/>可选签名 offy_checkout_ref]
+  D -.可选元数据.-> H
+  H --> I[Offy 本地 CheckoutReady<br/>不发 Meta 结账事件]
+  H --> J[Shopify 托管结账]
+  J --> K[官方 Meta IC / Purchase]
+  K --> L[Meta 广告归因与 ROAS]
+  H -.结账编号.-> M[Offy 管理后台只读订单核对]
+  J -.Shopify Admin 最小字段.-> M
+  I --> M
+```
 
-PageView 在初次加载及客户端路径变更后发送；ViewContent 在实时商品详情成功展示后发送；AddToCart 在本地购物袋成功增加后发送，数量为实际增量；InitiateCheckout 在原有服务器成功返回受校验 Shopify 跳转链接后、离站之前发送，故统计“结账准备成功”，不包含被库存/网络检查阻止的点击。当前无搜索功能，不虚构 Search。
+## 上报分工与兼容
 
-使用统一浏览器 event_id，许可下的随机访问 ID，白名单 UTM/广告 ID；有真实 fbclid 时保留时间/匹配信息，复用合法 _fbp/_fbc，不伪造广告点击。来源仅保留允许字符及有限长度，页面仅记录 pathname，清除邮箱、完整 URL 查询、支付资料。商品值来自原目录；不在数据失败时恢复旧价。目录 ID 使用可选、逐商品审核的 JSON 映射（商品 code → Meta 目录实际 retailer ID），未配置则不发 content_ids 并在诊断标明；不猜 shopify_US 等模板。
+Offy 浏览器只发 PageView、ViewContent、AddToCart；CAPI 只补 AddToCart。浏览器与服务器同一次加购共用 event ID，重试不换 ID、不改原时间。Shopify 官方独占 InitiateCheckout/Purchase，Offy 不另发购买事件；站内成功生成跳转链接只记 CheckoutReady。保留旧 InitiateCheckout 接收/明细兼容，但不再入 CAPI；旧待发/发送中结账任务改为 suppressed，保留历史。
 
-服务器 /api/meta/events 同源校验、请求大小与速率限制、严格事件白名单；记录本地观察，浏览器 Pixel 调用只表示“尝试发送”，不冒认平台接收。结账成功响应可附加仅在有效营销许可下的匿名追踪关联，记录已有 attemptId 与 Shopify cart ID（从服务端 observer 读取）；不修改 cartCreate 参数、国家、折扣、价格或 checkoutUrl，不向 Shopify 塞未获官方支持的 Meta 参数。
+复用 Shopify Customer Privacy：analyticsProcessingAllowed、marketingAllowed、saleOfDataAllowed 全部允许且无 GPC 才处理营销数据。拒绝时购物继续；撤回删除营销观察及其关联订单证据，不删 Shopify 订单。URL 只留 pathname、白名单来源标签；不记录买家邮箱、地址、支付资料。真实 fbclid/_fbc 保留原时间，最多30天，不猜广告点击；新来源标签整体替换，不能混合上一次 ad_id。
 
-## 第二步：关键事件 CAPI
+## 可选结账元数据
 
-仅 AddToCart、InitiateCheckout 进入 SQLite 持久 outbox。payload 包含 event_name、原始 event_time、event_id、action_source=website、清理后的 event_source_url、fbp/fbc、散列匿名 external_id、UA 及商品数据。没有真实依据不填 email、电话/IP；令牌仅存服务端运行时，不进入日志/构建/浏览器。匹配 payload 复用现有 AES-GCM 诊断密钥，管理 API 不解密返回。
+现有结账请求承载许可内的匿名上下文，成功创建购物车后服务端记录本地观察，避免离站 beacon 丢失。不增加跳转步骤和 Meta 外部调用。商品选择、数量、国家、折扣、原 Shopify checkoutUrl、buy-now 与购物袋回跳规则保持。元数据生成、签名或持久化失败只降级记录，不能阻止结账。
 
-独立 meta-worker 使用现有 app 镜像和内部 worker 认证，调用 /api/meta/worker。最多 5 条/轮，单请求 5 秒，独占租约 60 秒；网络/429/5xx 有限指数退避，永久错误终止，过期事件停止；保留 30 天并清理。worker 可使用 META_WORKER_SECRET，现有 KOL 环境可复用服务器私密 KOL_WORKER_SECRET；不调用 Shopify Admin、不依赖 KOL 开关。无 CAPI 令牌时只显示未配置，不阻断站点启动。
+将随机结账 UUID 以域隔离 HMAC 签名作为 Shopify 官方支持的 cart attribute `offy_checkout_ref`；它不是购买证明或 Meta 参数。只用现有诊断密钥签名，不新增商户密钥体系。仅在诊断可用及许可上下文存在时能形成后续关联。
 
-Pixel 与 CAPI 关键事件共用同一 event_id；同一事件的重试不换 ID、不改时间。此版本绝不自发 Purchase，以免与 Shopify 官方 Pixel/CAPI 重复计数。新增 /admin/meta 只读显示配置是否齐备、事件、来源、金额币种、目录映射、结账编号和本地送达状态；不展示 fbc/fbp/访问 ID/令牌，不计算广告应归因收入或 Collabs 佣金。
+## 订单读取及证据存储
 
-## 配置、发布与回退
+新增 SQLite `meta_order_evidence`、`meta_order_sync`，可加迁移。**管理后台 KOL worker**复用现有 Shopify Admin API 认证，只执行 orders query；不向主站注入 Admin Client Secret，不修改订单、商品、支付或 Collabs。每轮最多25笔、8秒HTTP超时、持久租约和游标；首次回看30天，完成扫描后15分钟检查、5分钟重叠，失败5分钟后重试。分页有下一页时至少间隔10秒继续，不能跳过未读页。
 
-META_TRACKING_ENABLED、META_CAPI_ENABLED 默认 false。Pixel ID 是公开标识；CAPI_ACCESS_TOKEN、META_WORKER_SECRET 只在私密服务器环境注入。META_GRAPH_API_VERSION 显式配置受支持版本，示例 v26.0（已核对官方 SDK 当前版本），发布前核对 Meta 控制台；META_CAPI_TEST_EVENT_CODE 仅用于明确测试，不用于正常投放。META_CATALOG_IDS 为可选 JSON 映射。新配置缺失只关闭对应能力并在诊断说明。
+只有签名有效、仍有许可内结账观察、时间合理的订单落库；按 Shopify ID 幂等覆盖，较旧 updatedAt 不能覆盖新版退款/取消。保存最少订单字段：编号、时间、财务状态、取消/测试标记、金额币种和结账编号；不保存完整客户信息或原签名。撤回后不能重新导入；保留期最多30天，接收器/worker清理孤立证据。Admin凭据不可用只影响订单核对，CAPI与购物仍运行。
 
-已有独立端口、Git 部署及数据卷保持；可先独立更新主站，再独立更新后台，最后用 --profile meta 启动无需编译的 worker。本轮不操作线上部署，不重置令牌、不投放/发布广告、不下真实订单。回退时关闭两个开关、停止 meta-worker，原有购买流程继续运行。
+## 后台与口径
 
-## 验收及边界
+`/admin/meta` 和 trace API 均在现有可信入口及登录后访问，no-store/noindex。默认近7个上海日历日、最多30天，默认排除 `utm_source=offy_validation` 或 `utm_medium=internal_test` 以及 Shopify 测试订单。显示观察次数、匿名浏览器标识数、来源 ID、CAPI 结果；展开同浏览器最多50条观察与对应结账/订单，展示截断提示。汇总按币种，含运税的订单总额和退款分开，不做净利润、ROAS、最终归因或佣金推断。
 
-先用失败测试锁定许可、重复事件、币种、过滤、加密、租约/重试和交易失败隔离，再实现。浏览器使用独立临时 DB/模拟 Shopify/模拟 Pixel+CAPI，不向真实 Meta 发送伪购买；验证用户浏览 → 商品 → 加购 → 模拟托管结账及后台证据，拒绝许可和关闭追踪时不发。
+链接助手仅生成广告 URL parameters 模板，不编辑或发布广告。Meta Ads Manager 仍是广告归因/花费/ROAS的最终入口；自然访问、标签及CAPI回执都不能证明真实广告购买归因。
 
-真实平台另需 Meta Test Events 确认接收、目录匹配及去重；官方 Shopify Purchase 的跨域匹配必须用经授权的真实/测试店订单核验。CAPI 返回 events_received 不等于 Ads Manager 归因成功；资产关联、普通浏览测试与广告归因订单是三个不同验收层级。若官方购买衔接不成立，另拟单一 Purchase 发送方案并经用户确认，不擅自改支付或关闭官方集成。
+## 发布及回退
 
-## 依据
+测试、类型、lint、本地生产构建及隔离浏览器交互先完成。Git同步后在构建机/CI打Linux amd64镜像，校验Git revision、架构和校验和，再分别发布主站/后台，避免2核服务器编译。切换前停止旧 Meta worker；新主站健康后复用新镜像启动。数据库/镜像备份，现有Nginx与私密配置保留。旧浏览器未导航前可能仍执行旧Pixel；不强制刷新客户、不改历史数据。
 
-- [Shopify Analytics / destination](https://shopify.dev/docs/storefronts/hydrogen/analytics)
-- [Customer Privacy API](https://shopify.dev/docs/api/customer-privacy)
-- [Shopify Meta data sharing](https://help.shopify.com/en/manual/promoting-marketing/analyze-marketing/meta-data-sharing)
-- [Meta matching identifiers](https://github.com/meta/facebook-nodejs-business-sdk/blob/main/src/objects/serverside/user-data.js)
-- [Meta event ID](https://github.com/meta/facebook-nodejs-business-sdk/blob/main/src/objects/serverside/server-event.js)
+只读订单故障看后台最近成功/错误状态；可停止对应worker或关闭营销开关而不修改支付密钥。技术接收验收、模拟全链路与真实广告互动成交分层报告；不将未执行的真实订单或Meta最终去重写为已通过。
+
+依据：[Shopify 隐私 API](https://shopify.dev/docs/api/customer-privacy)、[Shopify Meta 数据共享](https://help.shopify.com/en/manual/promoting-marketing/analyze-marketing/meta-data-sharing)、[Shopify Admin Order](https://shopify.dev/docs/api/admin-graphql/2026-07/objects/Order)。

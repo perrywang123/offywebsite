@@ -1,9 +1,11 @@
 import { createHmac, randomUUID } from "node:crypto";
 import { and, asc, count, desc, eq, gte, inArray, lt, lte, or } from "drizzle-orm";
 import type { Db } from "../kol/db";
-import { metaEvents } from "../db/schema";
-import type { MetaEvent } from "@/lib/meta/events";
+import { metaEvents, metaOrderEvidence } from "../db/schema";
+import { capiMetaEvent, type MetaEvent } from "@/lib/meta/events";
 import { encryptDiagnostic } from "../checkout-diagnostics/crypto";
+import { evidenceWhere, type EvidenceFilter } from "./filters";
+import { pruneOrderEvidence } from "./retention";
 const DAY = 86400000;
 export const visitorHash = (id: string, key: Buffer) =>
   createHmac("sha256", key)
@@ -23,7 +25,7 @@ export function acceptEvent(
 ) {
   const now = options.now ?? Date.now();
   if (Math.abs(now - input.occurredAt) > 5 * 60000) throw new Error("event_expired");
-  const critical = ["AddToCart", "InitiateCheckout"].includes(input.name);
+  const critical = capiMetaEvent(input.name);
   const payload =
     critical && options.capi
       ? encryptDiagnostic(
@@ -55,11 +57,14 @@ export function acceptEvent(
     tx.delete(metaEvents)
       .where(lt(metaEvents.createdAt, now - 30 * DAY))
       .run();
+    pruneOrderEvidence(tx, now);
     if (tx.select({ n: count() }).from(metaEvents).get()!.n >= 20000) {
       const disposable = tx
         .select({ id: metaEvents.id })
         .from(metaEvents)
-        .where(inArray(metaEvents.status, ["observed", "unconfigured", "sent", "failed"]))
+        .where(
+          inArray(metaEvents.status, ["observed", "unconfigured", "sent", "failed", "suppressed"]),
+        )
         .orderBy(asc(metaEvents.createdAt))
         .limit(500)
         .all();
@@ -96,6 +101,22 @@ export function acceptEvent(
 }
 export function claimJobs(db: Db, now = Date.now()) {
   return db.transaction((tx) => {
+    pruneOrderEvidence(tx, now);
+    tx.update(metaEvents)
+      .set({
+        status: "suppressed",
+        payload: null,
+        lastError: "shopify_owned_checkout",
+        leaseUntil: 0,
+        leaseToken: null,
+      })
+      .where(
+        and(
+          inArray(metaEvents.name, ["InitiateCheckout", "CheckoutReady"]),
+          inArray(metaEvents.status, ["pending", "sending"]),
+        ),
+      )
+      .run();
     tx.delete(metaEvents)
       .where(lt(metaEvents.createdAt, now - 30 * DAY))
       .run();
@@ -165,20 +186,25 @@ export function finishJob(
     .run();
 }
 export function forgetVisitor(db: Db, id: string, key: Buffer) {
-  db.delete(metaEvents)
-    .where(eq(metaEvents.visitorHash, visitorHash(id, key)))
-    .run();
+  db.transaction((db) => {
+    db.delete(metaOrderEvidence)
+      .where(
+        inArray(
+          metaOrderEvidence.attemptId,
+          db
+            .select({ id: metaEvents.attemptId })
+            .from(metaEvents)
+            .where(eq(metaEvents.visitorHash, visitorHash(id, key))),
+        ),
+      )
+      .run();
+    db.delete(metaEvents)
+      .where(eq(metaEvents.visitorHash, visitorHash(id, key)))
+      .run();
+  });
 }
-export function listMetaEvents(
-  db: Db,
-  filter: { name?: string; status?: string; page?: number },
-  now = Date.now(),
-) {
-  const where = and(
-    filter.name ? eq(metaEvents.name, filter.name) : undefined,
-    filter.status ? eq(metaEvents.status, filter.status) : undefined,
-    lte(metaEvents.createdAt, now),
-  );
+export function listMetaEvents(db: Db, filter: EvidenceFilter, now = Date.now()) {
+  const where = evidenceWhere(filter, now);
   const rows = db
     .select({
       id: metaEvents.id,

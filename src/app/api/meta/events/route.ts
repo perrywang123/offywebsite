@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { z } from "zod";
 import { createHash } from "node:crypto";
 import { env } from "@/lib/env";
-import { eventSchema } from "@/lib/meta/events";
+import { eventSchema, checkoutObservation } from "@/lib/meta/events";
 import { metaConfig } from "@/server/meta/config";
 import { getMetaDb, receiptAttempt } from "@/server/meta/runtime";
 import { acceptEvent, forgetVisitor } from "@/server/meta/store";
@@ -69,7 +69,7 @@ export async function POST(request: Request) {
   // Ingestion is rate-limited by the ingress IP, not this client-provided identity.
   if (
     /^\/(?:admin|api|checkout)(?:\/|$)/.test(input.pagePath) &&
-    !(input.name === "InitiateCheckout" && input.pagePath === "/checkout")
+    !(checkoutObservation(input.name) && input.pagePath === "/checkout")
   )
     return new Response(null, { status: 400, headers });
   try {
@@ -77,8 +77,9 @@ export async function POST(request: Request) {
       key: diagnosticKey(),
       capi: config.capi,
       origin: new URL(env.SITE_URL).origin,
-      attemptId:
-        input.name === "InitiateCheckout" ? receiptAttempt(input.checkoutReceipt) : undefined,
+      attemptId: checkoutObservation(input.name)
+        ? receiptAttempt(input.checkoutReceipt)
+        : undefined,
       userAgent: request.headers.get("user-agent") ?? undefined,
     });
     const response = NextResponse.json({ ok: true, ...result }, { headers });

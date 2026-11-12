@@ -2,13 +2,15 @@ import { collabsMode } from "@/server/collabs/mode";
 import { getDiscount, trackingContext } from "@/server/collabs/storefront";
 import { NextResponse } from "next/server";
 import { z } from "zod";
+import { env } from "@/lib/env";
 import { normalizeMarketCountry } from "@/lib/market";
 import { pickCountry } from "@/lib/geo";
 import { clampQuantity } from "@/lib/pricing";
 import { resolveProvider } from "@/server/payments/registry";
 import { startCheckoutRecording } from "@/server/checkout-diagnostics/runtime";
-import { checkoutMetaReceipt } from "@/server/meta/runtime";
+import { checkoutMetaReceipt, marketingCheckoutReference } from "@/server/meta/runtime";
 import { metaConfig } from "@/server/meta/config";
+import { recordCheckoutReady } from "@/server/meta/checkout";
 
 export const dynamic = "force-dynamic";
 
@@ -31,6 +33,8 @@ const bodySchema = z.object({
     .optional(),
   diagnosticReceipt: z.string().max(100).optional(),
   metaTracking: z.literal(true).optional(),
+  // Validate optional marketing metadata separately; malformed telemetry cannot reject a cart.
+  metaContext: z.unknown().optional(),
   referralTicket: z.string().uuid().optional(),
   provider: z.enum(["stripe", "paypal", "shopify"]).optional(),
   items: z
@@ -85,11 +89,23 @@ export async function POST(request: Request) {
     );
   }
   let result;
+  // This best-effort metadata is never a condition of creating/redirecting checkout.
+  let marketingReference: string | undefined;
+  if (parsed.metaTracking && provider.name === "shopify") {
+    try {
+      marketingReference = marketingCheckoutReference(recording?.id);
+    } catch {
+      /* optional */
+    }
+  }
   try {
     result = await provider.createCheckout({
       ...(parsed.intent ? { intent: parsed.intent } : {}),
       diagnostics: recording?.observe,
-      shopifyTracking,
+      shopifyTracking: shopifyTracking && {
+        ...shopifyTracking,
+        ...(marketingReference ? { checkoutReference: marketingReference } : {}),
+      },
       items,
       locale: parsed.locale === "en" ? "en" : "zh",
       email: parsed.email,
@@ -108,6 +124,10 @@ export async function POST(request: Request) {
   recording?.finish(result);
 
   if (result.ok) {
+    const marketingVisitor =
+      parsed.metaTracking && provider.name === "shopify"
+        ? recordCheckoutReady(recording?.id, parsed.metaContext, request.headers)
+        : undefined;
     const response = NextResponse.json(
       {
         provider: result.provider,
@@ -120,6 +140,14 @@ export async function POST(request: Request) {
       { headers: { "Cache-Control": "no-store" } },
     );
     shopifyTracking?.context.applyResponseHeaders(response.headers);
+    if (marketingVisitor)
+      response.cookies.set("offy_meta_visitor", marketingVisitor, {
+        httpOnly: true,
+        secure: env.SITE_URL.startsWith("https:"),
+        sameSite: "strict",
+        path: "/",
+        maxAge: 30 * 86400,
+      });
     return response;
   }
   // 4xx 必须带上「哪些商品、为什么」—— 客户端据此在原地指名商品并让顾客重试,

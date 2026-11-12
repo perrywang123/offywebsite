@@ -59,6 +59,35 @@ describe("Meta durable outbox", () => {
     expect(db.select().from(metaEvents).get()?.status).toBe("failed");
     expect(claimJobs(db, time)).toHaveLength(0);
   });
+  it("never queues new local or legacy checkout observations and suppresses old jobs", () => {
+    const db = testDb(),
+      input = event();
+    for (const name of ["CheckoutReady", "InitiateCheckout"] as const)
+      acceptEvent(
+        db,
+        { ...input, eventId: randomUUID(), name },
+        { key, capi: true, origin: "https://isoffy.com", now },
+      );
+    expect(claimJobs(db, now)).toHaveLength(0);
+    const old = event();
+    acceptEvent(db, old, { key, capi: true, origin: "https://isoffy.com", now });
+    db.update(metaEvents).set({ name: "InitiateCheckout" }).run();
+    expect(claimJobs(db, now)).toHaveLength(0);
+    expect(
+      db
+        .select()
+        .from(metaEvents)
+        .all()
+        .every((r) => r.payload === null),
+    ).toBe(true);
+    expect(
+      db
+        .select()
+        .from(metaEvents)
+        .all()
+        .some((r) => r.status === "suppressed"),
+    ).toBe(true);
+  });
   it("does not queue PageView, skips expired events and erases withdrawn visitors", () => {
     const db = testDb(),
       input = event();

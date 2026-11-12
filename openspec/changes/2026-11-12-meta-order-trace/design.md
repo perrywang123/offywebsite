@@ -1,0 +1,13 @@
+# Architecture and boundaries
+
+Consented landing → browser source context → PageView/ViewContent/paired AddToCart → optional signed checkout reference → local CheckoutReady → Shopify hosted InitiateCheckout/Purchase → bounded read-only order polling → authenticated evidence view. Meta Ads Manager remains authoritative for attributed purchases/spend/ROAS.
+
+Use the existing diagnostic encryption key to HMAC the random checkout UUID, with a domain separator. The cart attribute contains only a versioned UUID/signature. It is best-effort; unavailable recording or signing must never prevent or alter a checkout. The order reader stores no customer name, email, address, payment credentials or full checkout URLs. Accept an order reference only if its signature is valid and a retained consented checkout observation exists. Withdrawal removes linked marketing order evidence, preventing re-import without an observation. No retroactive guessed links for old orders.
+
+The admin-side KOL worker owns read-only Shopify order sync; Admin credentials stay out of the storefront and Meta CAPI worker. One page of at most 25 orders per worker pass, bounded HTTP timeout, persisted incremental cursor, a five-minute overlap and 15-minute completed-scan interval; failures back off and remain distinct from CAPI delivery. Initial window and evidence retention are bounded to 30 days. Only matching orders are persisted. Without Admin credentials, the rest of the application continues working and evidence states unavailable rather than zero sales. Duplicate order reads upsert by Shopify ID; money is grouped by currency, tests and cancellations remain explicit.
+
+Keep legacy InitiateCheckout rows as historical evidence. New CheckoutReady and legacy checkout ingestion must never call/queue Meta IC; stale queued jobs become suppressed. Deployment stops the old Meta worker before cutover, then restarts it with the new image; old open browser tabs may still emit their old browser event until navigation/reload, so the cutover is documented rather than forcing shopper reloads.
+
+# Admin interaction
+
+Retain the existing OFFY grayscale workspace, typography, labels and 44px controls. Scope/filter first (Asia/Shanghai date range, source/ad ID, include-tests off), then compact observation counts and sync status, then expandable journey/order evidence. Distinguish browser observations, CAPI receipts, Shopify order facts and Meta attribution in both copy and layout. Use native details and ordinary links, readable wrapping for IDs; no auto polling, no invented funnel percentages, no global refresh. Keep the link parameter helper collapsed by default. Validate at 360/375, 768, 1440 and 1920 widths.

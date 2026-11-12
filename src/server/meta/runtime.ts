@@ -9,7 +9,17 @@ import { metaConfig } from "./config";
 import { claimJobs, finishJob } from "./store";
 import { deliver } from "./transport";
 import { z } from "zod";
+import { checkoutReference } from "./reference";
 export const getMetaDb = getLinkObservationDb;
+export function marketingCheckoutReference(attemptId?: string) {
+  try {
+    return metaConfig().enabled && attemptId
+      ? checkoutReference(attemptId, diagnosticKey())
+      : undefined;
+  } catch {
+    return;
+  }
+}
 export function checkoutMetaReceipt(attemptId?: string) {
   try {
     return metaConfig().enabled && attemptId

@@ -172,10 +172,12 @@ export async function cartCreate(
   returnUrl?: string,
   referralReference?: string,
   observer?: CheckoutObserver,
-  collabs?: { context: ShopifyRequestContext; discountCode?: string },
+  collabs?: { context: ShopifyRequestContext; discountCode?: string; checkoutReference?: string },
 ): Promise<ShopifyCart> {
   const attributes = returnUrl ? [{ key: "return_url", value: returnUrl }] : [];
   if (referralReference) attributes.push({ key: "offy_ref", value: referralReference });
+  if (collabs?.checkoutReference)
+    attributes.push({ key: "offy_checkout_ref", value: collabs.checkoutReference });
   const normalized = normalizeCountry(country);
   observeCheckout(observer, {
     type: "shopify_request",

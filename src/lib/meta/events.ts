@@ -1,7 +1,19 @@
 import { z } from "zod";
 
-export const eventNames = ["PageView", "ViewContent", "AddToCart", "InitiateCheckout"] as const;
+// InitiateCheckout is retained for old clients/history; Shopify owns Meta delivery.
+export const eventNames = [
+  "PageView",
+  "ViewContent",
+  "AddToCart",
+  "CheckoutReady",
+  "InitiateCheckout",
+] as const;
 export type MetaName = (typeof eventNames)[number];
+export const browserMetaEvent = (name: MetaName) =>
+  ["PageView", "ViewContent", "AddToCart"].includes(name);
+export const capiMetaEvent = (name: string) => name === "AddToCart";
+export const checkoutObservation = (name: string) =>
+  name === "CheckoutReady" || name === "InitiateCheckout";
 const label = z
   .string()
   .max(120)
@@ -59,6 +71,9 @@ export const eventSchema = z
   })
   .strict();
 export type MetaEvent = z.infer<typeof eventSchema>;
+export const checkoutContextSchema = eventSchema
+  .pick({ visitorId: true, pagePath: true, source: true, data: true, fbp: true, fbc: true })
+  .strict();
 export interface Privacy {
   analyticsProcessingAllowed?: () => boolean;
   marketingAllowed?: () => boolean;

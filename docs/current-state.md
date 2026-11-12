@@ -1,5 +1,7 @@
 # 当前实现与验证基线
 
+> 2026-11-12 广告追溯：新增默认排除内部测试的日期/广告ID筛选、同浏览器→结账→Shopify订单证据及动态参数助手。只读订单由后台 worker 处理，不改支付。真实广告成交验收单列，见 [本轮记录](meta-order-trace-validation.md)。
+
 > 2026-11-11：手机侧栏 Help & Support 移除 Shipping & returns，仅保留 FAQ、Contact Us；国家选择、页脚和政策页面保留。属于本地预览更新，尚未发布生产；见 [侧栏验收](design/mobile-help-links/validation.md)。
 
 > 2026-11-11 后续界面调整：NEWS 的 View Details 已增加桌面响应式尺寸，手机保留原样。本轮为本地预览，尚未发布生产；见 [桌面按钮验收](design/desktop-news-cta/validation.md)。
@@ -8,7 +10,7 @@
 
 > 2026-11-09：已按所有者确认更新顶部运费公告、购物袋侧栏两行提示及 Shipping FAQ 首条，FAQ 共 11 条；其余原问答保持不变。该轮代码/本地验收与实际 Shopify 运费配置、生产部署分开记录，见 [运费文案验收](shipping-copy-validation.md)。
 
-> 2026-11-09：可选 [Meta 站内漏斗与关键事件 CAPI](meta-technical-plan.md) 已在生产开启，后台 `/admin/meta` 可查看接收状态；源码默认开关仍为关闭。预构建镜像已分别发布主站及后台，独立 worker 运行，实际加购和结账准备 CAPI 均被 Meta 接收。见 [生产验收](meta-production-validation.md) 与 [SOP](meta-ads-sop.md)。真实 Shopify Purchase、广告购买归因及目录匹配仍待单独验收。
+> 2026-11-12：可选 [Meta 站内漏斗与关键事件 CAPI](meta-technical-plan.md) 已在生产开启，后台 `/admin/meta` 可查看接收状态；源码默认开关仍为关闭。预构建镜像已分别发布主站及后台，独立 worker 运行，实际加购 CAPI 已被 Meta 接收；2026-11-12 改为 Shopify 独占 IC/Purchase，Offy CheckoutReady 仅本地。见 [生产验收](meta-production-validation.md) 与 [SOP](meta-ads-sop.md)。真实 Shopify Purchase、广告购买归因及目录匹配仍待单独验收。
 
 > 2026-11-08：已实现并分步部署[dt_id落地PV与匿名浏览器UV](collabs-traffic-proposal.md)，与短链请求、官方Visits和财务报告分开。KOL对外合作邮箱改为contact@whimcoreofficial.com；管理员登录不变。生产发布与原生邮箱验证边界见[本轮验收记录](collabs-landing-validation.md)。
 

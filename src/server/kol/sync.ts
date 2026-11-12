@@ -2,6 +2,8 @@ import { collabsMode } from "../collabs/mode";
 import { refreshAttributions } from "../collabs/events";
 import { pruneLandingData } from "../collabs/landing";
 import { lookupOrder } from "../collabs/shopify";
+import { syncOrderEvidence, fetchMarketingOrders } from "../meta/orders";
+import { diagnosticKey } from "../checkout-diagnostics/crypto";
 import { createHmac } from "node:crypto";
 import { and, eq, inArray, lte, lt } from "drizzle-orm";
 import { z } from "zod";
@@ -148,6 +150,15 @@ export async function runWorker(db: Db, now = Date.now()) {
     if (shopify === "configured" && collabsMode())
       await refreshAttributions(db, (id) => lookupOrder({ orderId: id, orderName: null }), now);
     // Keep pending remote work and scan progress intact until credentials exist.
+    // Admin credentials stay in the admin container. Order-read failure must not
+    // change Collabs bookkeeping or the independently running CAPI worker.
+    if (shopify === "configured" && env.META_TRACKING_ENABLED === "true") {
+      try {
+        await syncOrderEvidence(db, fetchMarketingOrders, diagnosticKey(), now);
+      } catch {
+        console.warn("marketing_order_observation_unavailable");
+      }
+    }
     if (shopify === "configured" && !collabsMode()) {
       await drainInbox(db, (id) => reconcileOrder(db, id), now);
       const jobs = db

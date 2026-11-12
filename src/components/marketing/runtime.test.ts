@@ -1,10 +1,17 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import { configureMeta, observeMeta, checkMetaConsent, registerMetaProducts } from "./runtime";
+import {
+  configureMeta,
+  observeMeta,
+  checkMetaConsent,
+  registerMetaProducts,
+  checkoutMarketingContext,
+} from "./runtime";
 describe("consented browser tracking", () => {
   let allow = true;
   beforeEach(() => {
     allow = true;
     localStorage.clear();
+    history.replaceState({}, "", "/products/a");
     document.querySelectorAll("#offy-meta-pixel").forEach((n) => n.remove());
     Object.assign(window, {
       Shopify: {
@@ -22,6 +29,41 @@ describe("consented browser tracking", () => {
       pixelId: "1120625754196383",
       catalogIds: { a: "real-catalog-id" },
     });
+  });
+  it("keeps checkout preparation local and never emits a Meta checkout event", () => {
+    vi.mocked(window.fbq!).mockClear();
+    observeMeta("CheckoutReady", {}, "receipt");
+    observeMeta("InitiateCheckout", {}, "legacy-receipt");
+    expect(window.fbq).not.toHaveBeenCalledWith(
+      "trackSingle",
+      expect.anything(),
+      expect.anything(),
+      expect.anything(),
+      expect.anything(),
+    );
+    expect(JSON.parse(vi.mocked(fetch).mock.calls.at(-1)![1]!.body as string).checkoutReceipt).toBe(
+      "legacy-receipt",
+    );
+  });
+  it("replaces source tags as a unit without resetting a genuine previous Meta click timestamp", () => {
+    history.replaceState(
+      {},
+      "",
+      "/products/a?campaign_id=120123456&adset_id=120234567&ad_id=120345678&fbclid=real-click",
+    );
+    observeMeta("PageView", {});
+    history.replaceState({}, "", "/products/a?utm_source=newsletter&utm_medium=email");
+    observeMeta("AddToCart", {});
+    const body = JSON.parse(vi.mocked(fetch).mock.calls.at(-1)![1]!.body as string);
+    expect(body.source).toEqual({ utm_source: "newsletter", utm_medium: "email" });
+    expect(body.fbc).toMatch(/\.real-click$/);
+  });
+  it("does not carry a click cookie beyond the 30-day observation window", () => {
+    document.cookie = `_fbc=fb.1.${Date.now() - 31 * 86400000}.expired-click; Path=/`;
+    observeMeta("AddToCart", {});
+    const body = JSON.parse(vi.mocked(fetch).mock.calls.at(-1)![1]!.body as string);
+    expect(body.fbc).toBeUndefined();
+    document.cookie = "_fbc=; Max-Age=0; Path=/";
   });
   it("sends the same event ID to browser Pixel and observation endpoint", () => {
     const id = observeMeta("AddToCart", { value: 49.9, currency: "USD", num_items: 1 });
@@ -45,6 +87,16 @@ describe("consented browser tracking", () => {
     expect(observeMeta("AddToCart", {})).toBeUndefined();
     expect(fetch).not.toHaveBeenCalled();
     expect(localStorage.getItem("offy.meta.v1")).toBeNull();
+  });
+  it("checkout context stays optional even when catalog metadata throws", () => {
+    expect(
+      checkoutMarketingContext(() => {
+        throw new Error("invalid metadata");
+      }),
+    ).toBeUndefined();
+    allow = false;
+    checkMetaConsent();
+    expect(checkoutMarketingContext({})).toBeUndefined();
   });
   it("tracking exceptions never escape into shopping", () => {
     Object.assign(window, {

@@ -1,6 +1,8 @@
 "use client";
 import {
   cleanSource,
+  browserMetaEvent,
+  checkoutObservation,
   dataSchema,
   eventSchema,
   marketingAllowed,
@@ -70,8 +72,10 @@ function context() {
     click = query.get("fbclid");
   if (click && /^[A-Za-z0-9_-]{1,400}$/.test(click)) {
     // Keep the original capture time when client navigation preserves this query.
-    if (!value.fbc?.endsWith("." + click)) value.fbc = `fb.1.${Date.now()}.${click}`;
-    value.source = source;
+    if (!value.fbc?.endsWith("." + click)) {
+      value.fbc = `fb.1.${Date.now()}.${click}`;
+      value.source = source;
+    } else if (Object.keys(source).length) value.source = source;
   } else if (Object.keys(source).length) value.source = source;
   try {
     localStorage.setItem(STORAGE, JSON.stringify(value));
@@ -192,6 +196,27 @@ export function metaCartData(items: { code: string; quantity: number }[]) {
     config.catalogIds,
   );
 }
+/** Passed with the existing checkout request so departure cannot drop the local observation. */
+export function checkoutMarketingContext(
+  data: z.infer<typeof dataSchema> | (() => z.infer<typeof dataSchema>),
+) {
+  try {
+    if (!metaAllowed()) return;
+    const saved = context();
+    const fbc = saved.fbc ?? cookie("_fbc"),
+      at = Number(fbc?.split(".")[2]);
+    return {
+      visitorId: saved.id,
+      source: saved.source,
+      pagePath: location.pathname,
+      data: typeof data === "function" ? data() : data,
+      fbp: cookie("_fbp"),
+      fbc: at >= Date.now() - 30 * 86400000 && at <= Date.now() + 300000 ? fbc : undefined,
+    };
+  } catch {
+    return;
+  }
+}
 export function observeMeta(
   name: MetaName,
   data: z.infer<typeof dataSchema>,
@@ -201,20 +226,24 @@ export function observeMeta(
     if (
       !checkMetaConsent() ||
       (/^\/(?:admin|api|checkout)(?:\/|$)/.test(location.pathname) &&
-        !(name === "InitiateCheckout" && location.pathname === "/checkout"))
+        !(checkoutObservation(name) && location.pathname === "/checkout"))
     )
       return;
     const saved = context(),
       eventId = crypto.randomUUID();
     let attempted = false;
     try {
-      window.fbq?.("trackSingle", config.pixelId, name, data, { eventID: eventId });
-      attempted = !!window.fbq;
+      if (browserMetaEvent(name)) {
+        window.fbq?.("trackSingle", config.pixelId, name, data, { eventID: eventId });
+        attempted = !!window.fbq;
+      }
     } catch {
       /* blocked script */
     }
     const matchCookie = (value?: string) =>
       value && /^fb\.\d+\.\d+\.[A-Za-z0-9_-]+$/.test(value) ? value : undefined;
+    const fbc = matchCookie(saved.fbc ?? cookie("_fbc"));
+    const clickAt = Number(fbc?.split(".")[2]);
     const input = eventSchema.parse({
       eventId,
       visitorId: saved.id,
@@ -225,7 +254,8 @@ export function observeMeta(
       data,
       consent: true,
       fbp: matchCookie(cookie("_fbp")),
-      fbc: matchCookie(saved.fbc ?? cookie("_fbc")),
+      fbc:
+        clickAt >= Date.now() - 30 * 86400000 && clickAt <= Date.now() + 300000 ? fbc : undefined,
       checkoutReceipt,
       pixelAttempted: attempted,
     });

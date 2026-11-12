@@ -155,10 +155,10 @@ it("carries Collabs discount and Shopify tracking context into the same country 
     transport,
     "en",
     "GB",
+    "https://isoffy.com/checkout/return?source=buy-now",
     undefined,
     undefined,
-    undefined,
-    { context, discountCode: "MAYA" },
+    { context, discountCode: "MAYA", checkoutReference: "v1.test.signature" },
   );
   const init = transport.mock.calls[0][1] as RequestInit;
   const headers = new Headers(init.headers);
@@ -167,5 +167,10 @@ it("carries Collabs discount and Shopify tracking context into the same country 
   const body = JSON.parse(String(init.body));
   expect(body.query).toContain("buyerIdentity: { countryCode: GB }");
   expect(body.variables.discountCodes).toEqual(["MAYA"]);
+  expect(body.variables.attributes).toContainEqual({
+    key: "offy_checkout_ref",
+    value: "v1.test.signature",
+  });
+  expect(body.variables.attributes).toContainEqual(expect.objectContaining({ key: "return_url" }));
   expect(body.query).toContain("discountCodes: $discountCodes");
 });

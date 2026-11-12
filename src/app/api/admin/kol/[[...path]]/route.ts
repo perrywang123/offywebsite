@@ -4,9 +4,7 @@ import { NextResponse } from "next/server";
 import { z } from "zod";
 import { eq } from "drizzle-orm";
 import { env } from "@/lib/env";
-import { listMetaEvents } from "@/server/meta/store";
-import { getMetaDb } from "@/server/meta/runtime";
-import { metaConfig } from "@/server/meta/config";
+import { metaAdminGet } from "@/server/meta/admin";
 import { diagnosticAdminGet, diagnosticAdminPost } from "@/server/checkout-diagnostics/admin";
 import { getKolDb } from "@/server/kol/database";
 import { kolShopOrders } from "@/server/db/schema";
@@ -77,29 +75,7 @@ export async function GET(request: Request, context: Context) {
     if (path[0] === "checkouts") return diagnosticAdminGet(request, path);
     const db = getKolDb(),
       admin = requireAdmin(db, request.headers);
-    if (path.length === 1 && path[0] === "meta") {
-      const filter = z
-        .object({
-          name: z.enum(["PageView", "ViewContent", "AddToCart", "InitiateCheckout"]).optional(),
-          status: z
-            .enum(["observed", "unconfigured", "pending", "sending", "sent", "failed"])
-            .optional(),
-          page: z.coerce.number().int().min(1).max(10000).optional(),
-        })
-        .parse(Object.fromEntries(new URL(request.url).searchParams));
-      const config = metaConfig();
-      return json({
-        ...listMetaEvents(getMetaDb(), filter),
-        config: {
-          enabled: config.enabled,
-          pixelId: config.pixelId,
-          capi: config.capi,
-          catalogCount: Object.keys(config.catalogIds).length,
-          testMode: !!env.META_CAPI_TEST_EVENT_CODE,
-          simulation: !!env.META_TEST_ORIGIN,
-        },
-      });
-    }
+    if (path[0] === "meta") return metaAdminGet(request, path);
     if (path[0] === "collabs") return collabsGet(db, path, request);
     if (path[0] === "state")
       return json({

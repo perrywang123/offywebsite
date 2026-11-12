@@ -5,7 +5,7 @@ import { checkoutRedirectUrl } from "@/lib/checkout-redirect";
 import { useOptionalMarket } from "@/components/market/MarketProvider";
 import { useLocale } from "next-intl";
 import { beginCheckoutAttempt, reportCheckoutObservation } from "./checkout-diagnostics-client";
-import { metaAllowed, observeMeta, metaCartData } from "@/components/marketing/runtime";
+import { checkoutMarketingContext, metaCartData } from "@/components/marketing/runtime";
 import { rememberCheckoutIntent, type CheckoutIntent } from "@/lib/checkout-intent";
 export interface CheckoutItemInput {
   code: string;
@@ -51,6 +51,7 @@ export function useCheckoutRedirect(
           observedFailure = true;
           throw new Error("catalog_unavailable");
         }
+        const metaContext = checkoutMarketingContext(() => metaCartData(items));
         const res = await fetch("/api/payments/checkout", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
@@ -64,18 +65,13 @@ export function useCheckoutRedirect(
             locale,
             referralTicket: referralTicket(),
             diagnosticReceipt: receipt,
-            ...(metaAllowed() ? { metaTracking: true } : {}),
+            ...(metaContext ? { metaTracking: true, metaContext } : {}),
           }),
         });
         const data = await res.json().catch(() => null);
         if (res.ok) {
           const target = checkoutRedirectUrl(data?.redirect);
           if (target) {
-            try {
-              observeMeta("InitiateCheckout", metaCartData(items), data?.metaReceipt);
-            } catch {
-              /* redirect always wins */
-            }
             reportCheckoutObservation(receipt, "redirect_requested");
             rememberCheckoutIntent(intent);
             window.location.assign(target);

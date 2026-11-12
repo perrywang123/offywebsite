@@ -196,6 +196,14 @@ async function main() {
       }
       if (meta && url.pathname === "/test/meta-state")
         return send(res, { metaReceived, pixelReceived });
+      if (meta && url.pathname === "/test/meta-sync" && req.method === "POST") {
+        sqlite.prepare("UPDATE meta_order_sync SET next_at=0,lease_until=0 WHERE id=1").run();
+        const result = await fetch(`http://localhost:${appPort}/api/kol/worker`, {
+          method: "POST",
+          headers: { authorization: `Bearer ${worker}` },
+        });
+        return send(res, { status: result.status });
+      }
       if (url.pathname === "/test/admin-auth") {
         if (req.method === "POST")
           rejectNextAdmin = Boolean(JSON.parse(await body(req)).rejectNext);
@@ -347,7 +355,12 @@ async function main() {
         };
         orders.set(id, o);
         await notify(o);
-        res.writeHead(303, { Location: `${site}/checkout/return?provider=shopify` });
+        const requestedReturn = cart.attributes.find((a) => a.key === "return_url")?.value;
+        res.writeHead(303, {
+          Location: requestedReturn?.startsWith(`${site}/checkout/return`)
+            ? requestedReturn
+            : `${site}/checkout/return?provider=shopify`,
+        });
         res.end();
         return;
       }
@@ -392,6 +405,20 @@ async function main() {
             done: j.polls >= 2,
             failedCount: 0,
             codes: { nodes: j.polls >= 2 ? [{ code: j.code, errors: [] }] : [] },
+          },
+        };
+      } else if (q.includes("OffyMarketingOrders")) {
+        data = {
+          orders: {
+            nodes: [...orders.values()].map((o) => ({
+              ...o,
+              createdAt: o.transactions[0].processedAt,
+              updatedAt: new Date().toISOString(),
+              test: false,
+              currentTotalPriceSet: o.totalPriceSet,
+              totalRefundedSet: bag(o.refunds.length ? "30.00" : "0.00"),
+            })),
+            pageInfo,
           },
         };
       } else if (q.includes("OffyOrders"))
@@ -695,6 +722,11 @@ async function main() {
       method: "POST",
       headers: { authorization: `Bearer ${worker}` },
     }).catch(() => {});
+    if (meta)
+      void fetch(`http://localhost:${appPort}/api/kol/worker`, {
+        method: "POST",
+        headers: { authorization: `Bearer ${worker}` },
+      }).catch(() => {});
   }, 5000);
   console.log(
     JSON.stringify(

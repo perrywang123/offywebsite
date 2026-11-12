@@ -1,6 +1,6 @@
 import { index, integer, primaryKey, sqliteTable, text } from "drizzle-orm/sqlite-core";
 
-/** Marketing observations, never orders or proof of Meta attribution. */
+/** Marketing observations, never proof of Meta attribution. */
 export const metaEvents = sqliteTable(
   "meta_events",
   {
@@ -30,6 +30,41 @@ export const metaEvents = sqliteTable(
     index("meta_created_idx").on(t.createdAt),
   ],
 );
+
+/** Minimal read-only Shopify facts linked to consented checkout observations. */
+export const metaOrderEvidence = sqliteTable(
+  "meta_order_evidence",
+  {
+    orderId: text("order_id").primaryKey(),
+    orderName: text("order_name").notNull(),
+    attemptId: text("attempt_id").notNull(),
+    createdAt: integer("created_at").notNull(),
+    updatedAt: integer("updated_at").notNull(),
+    checkedAt: integer("checked_at").notNull(),
+    financialStatus: text("financial_status").notNull(),
+    canceled: integer("canceled", { mode: "boolean" }).notNull(),
+    test: integer("test", { mode: "boolean" }).notNull(),
+    currency: text("currency").notNull(),
+    totalMinor: integer("total_minor").notNull(),
+    currentMinor: integer("current_minor").notNull(),
+    refundedMinor: integer("refunded_minor").notNull(),
+  },
+  (t) => [
+    index("meta_order_attempt_idx").on(t.attemptId),
+    index("meta_order_created_idx").on(t.createdAt),
+  ],
+);
+
+export const metaOrderSync = sqliteTable("meta_order_sync", {
+  id: integer("id").primaryKey(),
+  since: text("since_at").notNull(),
+  cursor: text("cursor"),
+  startedAt: integer("started_at").notNull(),
+  nextAt: integer("next_at").notNull(),
+  leaseUntil: integer("lease_until").notNull().default(0),
+  lastSuccess: integer("last_success"),
+  lastError: text("last_error"),
+});
 
 /**
  * Newsletter subscribers — brand marketing capture.
