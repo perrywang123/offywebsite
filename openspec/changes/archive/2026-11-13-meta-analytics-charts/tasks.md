@@ -3,6 +3,6 @@
 - [x] GREEN: bounded read-only analytics and stage drill-down.
 - [x] GREEN: responsive trends, cohort funnel, source/health panels and scoped evidence.
 - [x] Validate UI interactions, empty/unknown/error states and mobile/tablet/desktop layouts in isolation.
-- [ ] Full tests, typecheck, lint, build and Git/CI.
-- [ ] Prebuilt admin-only production release; verify image provenance, runtime health and unchanged storefront/Meta worker.
-- [ ] Verify deployed charts/read-only evidence; update SOP/state and archive the specification.
+- [x] Full tests, typecheck, lint, build and Git/CI.
+- [x] Prebuilt admin-only production release; verify image provenance, runtime health and unchanged storefront/Meta worker.
+- [x] Verify deployed charts/read-only evidence; update SOP/state and archive the specification.
