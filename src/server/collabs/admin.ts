@@ -20,13 +20,22 @@ import { collabsMode } from "./mode";
 import { linkMetrics } from "./links";
 import { landingMetrics } from "./landing";
 import { attributionState, bindFlowCreator } from "./events";
+import { archiveCreator, restoreCreator, listArchivedCreators } from "./archive";
 const headers = { "Cache-Control": "no-store, private", "X-Robots-Tag": "noindex, nofollow" };
 export function collabsGet(db: Db, path: string[], request?: Request) {
+  const includeArchived = request
+    ? new URL(request.url).searchParams.get("includeArchived") === "1"
+    : false;
   if (path[1] === "reports" && path[2])
     return Response.json(reportDetail(db, path[2]), { headers });
   if (path[1] === "links")
     return Response.json(
-      linkMetrics(db, Number(request ? (new URL(request.url).searchParams.get("days") ?? 30) : 30)),
+      linkMetrics(
+        db,
+        Number(request ? (new URL(request.url).searchParams.get("days") ?? 30) : 30),
+        Date.now(),
+        includeArchived,
+      ),
       { headers },
     );
   if (path[1] === "traffic")
@@ -34,6 +43,8 @@ export function collabsGet(db: Db, path: string[], request?: Request) {
       landingMetrics(
         db,
         Number(request ? (new URL(request.url).searchParams.get("days") ?? 30) : 30),
+        Date.now(),
+        includeArchived,
       ),
       { headers },
     );
@@ -41,9 +52,10 @@ export function collabsGet(db: Db, path: string[], request?: Request) {
     {
       mode: env.KOL_ACCOUNTING_MODE,
       creators: listCreators(db),
+      archivedCreators: listArchivedCreators(db),
       reports: listReports(db),
-      linkMetrics: linkMetrics(db),
-      landingMetrics: landingMetrics(db),
+      linkMetrics: linkMetrics(db, 30, Date.now(), includeArchived),
+      landingMetrics: landingMetrics(db, 30, Date.now(), includeArchived),
       attribution: attributionState(db),
       officialAdmin: `https://admin.shopify.com/store/${env.SHOPIFY_STORE_DOMAIN?.split(".")[0]}/apps/collabs`,
       creatorPortal: "https://collabs.shopify.com/",
@@ -65,7 +77,11 @@ export async function collabsPost(db: Db, path: string[], actor: string, request
   if (new TextEncoder().encode(text).length > 4_500_000) throw new Error("report_too_large");
   const raw = JSON.parse(text);
   let result: unknown;
-  if (path[1] === "creators") {
+  if (path[1] === "archive") result = archiveCreator(db, raw, actor);
+  else if (path[1] === "restore") {
+    const input = z.object({ id: z.string().uuid() }).strict().parse(raw);
+    result = restoreCreator(db, input.id, actor);
+  } else if (path[1] === "creators") {
     const input = creatorSchema.parse(raw),
       sourceLink = input.officialLink;
     input.officialLink = await resolveOfficialLink(

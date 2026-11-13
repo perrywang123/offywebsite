@@ -1,4 +1,4 @@
-import { render, screen } from "@testing-library/react";
+import { act, render, screen, within } from "@testing-library/react";
 import { afterEach, expect, it, vi } from "vitest";
 import { CollabsWorkspace } from "./CollabsWorkspace";
 import userEvent from "@testing-library/user-event";
@@ -46,6 +46,136 @@ const unboundCreator = {
   createdAt: 1,
   updatedAt: 1,
 };
+it("requires explicit archival confirmation, removes a record and restores it without enabling its link", async () => {
+  const user = userEvent.setup();
+  let archived = false;
+  const posts: Array<{ url: string; body: Record<string, unknown> }> = [];
+  vi.stubGlobal(
+    "fetch",
+    vi.fn(async (url: string, options?: RequestInit) => {
+      if (options?.method === "POST") {
+        posts.push({ url, body: JSON.parse(String(options.body)) });
+        archived = url.endsWith("/archive");
+      }
+      return Response.json({
+        creators: archived ? [] : [{ ...unboundCreator, enabled: posts.length ? false : true }],
+        archivedCreators: archived
+          ? [
+              {
+                ...unboundCreator,
+                enabled: false,
+                archivedAt: 1,
+                archiveReason: "test",
+                archiveNote: "",
+                archivedBy: "owner",
+              },
+            ]
+          : [],
+        reports: [],
+      });
+    }),
+  );
+  render(<CollabsWorkspace siteUrl="https://isoffy.com" />);
+  await user.click(await screen.findByRole("button", { name: "归档合作" }));
+  expect(screen.getByRole("heading", { name: "归档 Maya" })).toBeInTheDocument();
+  expect(screen.getByText(/不会终止 Collabs 合作/)).toBeInTheDocument();
+  expect(screen.getByRole("button", { name: "确认归档" })).toBeDisabled();
+  await user.selectOptions(screen.getByLabelText("归档原因"), "test");
+  await user.click(screen.getByLabelText(/已确认归档对象/));
+  await user.click(screen.getByRole("button", { name: "确认归档" }));
+  expect(await screen.findByText("尚未关联 Collabs 合作链接")).toBeInTheDocument();
+  expect(posts[0]).toMatchObject({
+    url: "/api/admin/kol/collabs/archive",
+    body: { id: unboundCreator.id, reason: "test", confirmed: true },
+  });
+  await user.click(screen.getByText(/已归档合作（1）/));
+  await user.click(screen.getByRole("button", { name: "恢复到合作列表" }));
+  expect(await screen.findByText(/短链已停用/)).toBeInTheDocument();
+  expect(posts[1]).toMatchObject({
+    url: "/api/admin/kol/collabs/restore",
+    body: { id: unboundCreator.id },
+  });
+});
+it("keeps the observation archive scope when changing periods and after refreshing", async () => {
+  const user = userEvent.setup();
+  const mock = vi.fn<typeof fetch>(async () =>
+    Response.json({ creators: [], archivedCreators: [], reports: [] }),
+  );
+  vi.stubGlobal("fetch", mock);
+  render(<CollabsWorkspace siteUrl="https://isoffy.com" />);
+  await user.click(await screen.findByLabelText("包含已归档的访问统计"));
+  expect(mock).toHaveBeenCalledWith("/api/admin/kol/collabs?includeArchived=1", expect.anything());
+  await user.click(screen.getByRole("button", { name: "刷新数据" }));
+  expect(mock.mock.calls.at(-1)?.[0]).toBe("/api/admin/kol/collabs?includeArchived=1");
+});
+it("cannot resurrect archived observations when an older period request finishes late", async () => {
+  const user = userEvent.setup();
+  let archived = false;
+  let finishLate: (() => void) | undefined;
+  const metrics = {
+    days: 30,
+    from: "2026-10-16",
+    to: "2026-11-14",
+    timezone: "UTC",
+    links: [
+      {
+        id: unboundCreator.id,
+        name: "Maya",
+        alias: "maya",
+        enabled: true,
+        total: 1,
+        periodTotal: 1,
+        firstAt: 1,
+        lastAt: 1,
+        daily: [{ day: "2026-11-14", count: 1 }],
+      },
+    ],
+  };
+  vi.stubGlobal(
+    "fetch",
+    vi.fn(async (url: string, options?: RequestInit) => {
+      if (url.includes("/links?"))
+        return new Promise<Response>((resolve) => {
+          finishLate = () => resolve(Response.json({ ...metrics, days: 7 }));
+        });
+      if (options?.method === "POST") archived = true;
+      return Response.json({
+        creators: archived ? [] : [unboundCreator],
+        archivedCreators: archived
+          ? [
+              {
+                ...unboundCreator,
+                enabled: false,
+                archivedAt: 1,
+                archiveReason: "test",
+                archiveNote: "",
+                archivedBy: "owner",
+              },
+            ]
+          : [],
+        reports: [],
+        linkMetrics: { ...metrics, links: archived ? [] : metrics.links },
+      });
+    }),
+  );
+  render(<CollabsWorkspace siteUrl="https://isoffy.com" />);
+  const region = await screen.findByRole("region", { name: "Offy 短链统计" });
+  await user.selectOptions(within(region).getByRole("combobox"), "7");
+  await user.click(screen.getByRole("button", { name: "归档合作" }));
+  await user.selectOptions(screen.getByLabelText("归档原因"), "test");
+  await user.click(screen.getByLabelText(/已确认归档对象/));
+  await user.click(screen.getByRole("button", { name: "确认归档" }));
+  await screen.findByText("尚未关联 Collabs 合作链接");
+  expect(finishLate).toBeDefined();
+  await act(async () => {
+    finishLate?.();
+  });
+  expect(
+    within(screen.getByRole("region", { name: "Offy 短链统计" })).queryByRole("button", {
+      name: /Maya/,
+    }),
+  ).not.toBeInTheDocument();
+});
 it("creates a short link without a report identity and discloses pending matching", async () => {
   const user = userEvent.setup();
   const posted: Record<string, unknown>[] = [];

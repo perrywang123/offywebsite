@@ -5,6 +5,7 @@ import { collabsAttributions, collabsCreators, collabsFlowCreators } from "../db
 import type { Db } from "../kol/db";
 import { audit } from "../kol/core";
 import type { OrderEvidence } from "./service";
+import { archivedCreatorIds } from "./archive";
 const count = z.number().int().min(0).max(Number.MAX_SAFE_INTEGER).nullable();
 const cents = z.number().min(0).max(Number.MAX_SAFE_INTEGER).nullable();
 const text = z.string().max(200).nullable();
@@ -129,6 +130,7 @@ export function bindFlowCreator(db: Db, nativeId: string, creatorId: string, act
     if (source.creatorId && source.creatorId !== creatorId)
       throw new Error("flow_identity_immutable");
     if (source.creatorId === creatorId) return;
+    if (archivedCreatorIds(tx).has(creatorId)) throw new Error("creator_archived");
     tx.update(collabsFlowCreators)
       .set({ creatorId })
       .where(eq(collabsFlowCreators.nativeId, nativeId))

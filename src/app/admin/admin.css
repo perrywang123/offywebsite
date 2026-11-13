@@ -1711,6 +1711,34 @@ pre {
   color: #67625e;
   font-weight: 400;
 }
+.collabs-checkbox {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  min-height: 44px;
+  padding-block: 10px;
+}
+.collabs-checkbox input {
+  flex: 0 0 auto;
+  margin-top: 4px;
+}
+.collabs-archive-history {
+  border-top: 1px solid var(--line, #e3e3e3);
+  padding-top: 20px;
+}
+.collabs-archive-history > summary {
+  cursor: pointer;
+  font-weight: 600;
+  padding-block: 12px;
+  min-height: 44px;
+}
+.collabs-archive-history > p {
+  margin-block: 12px 20px;
+}
+.collabs-creator-card > .collabs-form {
+  margin-top: 16px;
+  padding: 16px;
+}
 .collabs-form,
 .collabs-detail {
   display: grid;

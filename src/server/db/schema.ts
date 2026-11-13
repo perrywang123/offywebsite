@@ -377,6 +377,16 @@ export const collabsCreators = sqliteTable("collabs_creators", {
   createdAt: integer("created_at").notNull(),
   updatedAt: integer("updated_at").notNull(),
 });
+/** Recoverable local cleanup; official identities and financial evidence remain reserved. */
+export const collabsCreatorArchives = sqliteTable("collabs_creator_archives", {
+  creatorId: text("creator_id")
+    .primaryKey()
+    .references(() => collabsCreators.id),
+  archivedAt: integer("archived_at").notNull(),
+  archivedBy: text("archived_by").notNull(),
+  reason: text("reason").notNull(),
+  note: text("note").notNull().default(""),
+});
 /** Offy request aggregates only: no visitor cookie, IP or raw user agent. */
 export const collabsLinkDaily = sqliteTable(
   "collabs_link_daily",

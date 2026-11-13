@@ -1,6 +1,7 @@
 import { and, gte, lte, sql } from "drizzle-orm";
 import { collabsCreators, collabsLinkDaily } from "../db/schema";
 import type { Db } from "../kol/db";
+import { archivedCreatorIds } from "./archive";
 const DAY = 86400000;
 const day = (at: number) => new Date(at).toISOString().slice(0, 10);
 
@@ -18,7 +19,7 @@ export function recordLinkOpen(db: Db, creatorId: string, now = Date.now()) {
     })
     .run();
 }
-export function linkMetrics(db: Db, days = 30, now = Date.now()) {
+export function linkMetrics(db: Db, days = 30, now = Date.now(), includeArchived = false) {
   if (![7, 30, 90].includes(days)) throw new Error("invalid_metrics_period");
   const to = day(now),
     from = day(now - (days - 1) * DAY);
@@ -38,10 +39,12 @@ export function linkMetrics(db: Db, days = 30, now = Date.now()) {
     .where(and(gte(collabsLinkDaily.day, from), lte(collabsLinkDaily.day, to)))
     .all();
   const counts = new Map(daily.map((d) => [`${d.creatorId}:${d.day}`, d.opens]));
+  const archived = includeArchived ? new Set<string>() : archivedCreatorIds(db);
   const links = db
     .select()
     .from(collabsCreators)
     .all()
+    .filter((c) => !archived.has(c.id))
     .map((c) => {
       const total = totals.find((t) => t.id === c.id);
       const series = Array.from({ length: days }, (_, i) => {

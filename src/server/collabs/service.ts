@@ -3,6 +3,7 @@ import { and, desc, eq, lte, gte } from "drizzle-orm";
 import { z } from "zod";
 import { officialLink } from "@/lib/collabs/links";
 import { officialBindingKeys } from "@/lib/collabs/bindings";
+import { archivedCreatorIds } from "./archive";
 import {
   previewReport,
   reportFields,
@@ -34,8 +35,11 @@ export const creatorSchema = z.object({
   officialLink: z.string().max(2000),
   enabled: z.boolean(),
 });
-export function listCreators(db: Db) {
-  return db.select().from(collabsCreators).orderBy(desc(collabsCreators.createdAt)).all();
+export function listCreators(db: Db, includeArchived = false) {
+  const rows = db.select().from(collabsCreators).orderBy(desc(collabsCreators.createdAt)).all();
+  if (includeArchived) return rows;
+  const archived = archivedCreatorIds(db);
+  return rows.filter((c) => !archived.has(c.id));
 }
 export function saveCreator(
   db: Db,
@@ -53,6 +57,7 @@ export function saveCreator(
         ? tx.select().from(collabsCreators).where(eq(collabsCreators.id, input.id)).get()
         : undefined;
       if (input.id && !old) throw new Error("creator_missing");
+      if (old && archivedCreatorIds(tx).has(old.id)) throw new Error("creator_archived");
       if (
         old &&
         (old.alias !== input.alias ||
@@ -266,7 +271,7 @@ export async function reconcileReport(
   chunk?: { offset: number; previousId?: string },
 ) {
   const batch = reportDetail(db, id),
-    creators = listCreators(db),
+    creators = listCreators(db, true),
     findings: Finding[] = [];
   const offset = chunk?.offset ?? 0,
     end = chunk ? Math.min(offset + 5, batch.rows.length) : batch.rows.length;
@@ -282,7 +287,10 @@ export async function reconcileReport(
   }
   const add = (code: string, row: number | null, detail: string) =>
     findings.push({ key: `${row ?? "all"}:${code}`, row, code, detail });
-  const pendingIdentities = creators.filter((c) => c.creatorKey === null).length;
+  const archived = archivedCreatorIds(db);
+  const pendingIdentities = creators.filter(
+    (c) => c.creatorKey === null && !archived.has(c.id),
+  ).length;
   if (!offset && pendingIdentities)
     add(
       "creator_identity_pending",

@@ -22,10 +22,11 @@ export function CollabsAttribution({
   bind,
 }: {
   data: State;
-  links: ReturnType<typeof listCreators>;
+  links: Array<ReturnType<typeof listCreators>[number] & { archivedAt?: number }>;
   busy: boolean;
   bind: (nativeId: string, creatorId: string) => Promise<void>;
 }) {
+  const availableLinks = links.filter((l) => !l.archivedAt);
   return (
     <section className="collabs-observation" aria-label="官方归属自动同步">
       <div className="collabs-section-head">
@@ -93,7 +94,10 @@ export function CollabsAttribution({
                     </p>
                   </details>
                   {link ? (
-                    <p>已关联 /r/{link.alias}</p>
+                    <p>
+                      已关联 /r/{link.alias}
+                      {link.archivedAt ? "（已归档，历史归属保留）" : ""}
+                    </p>
                   ) : (
                     <div className="collabs-flow-binding">
                       <p className="message">待关联 Offy 合作记录</p>
@@ -101,7 +105,7 @@ export function CollabsAttribution({
                         先在 Collabs 核对该编号对应的创作者，再关联一次。不会按名称、邮箱或 dt_id
                         猜测。
                       </p>
-                      {links.length > 0 && (
+                      {availableLinks.length > 0 && (
                         <form
                           onSubmit={(e) => {
                             e.preventDefault();
@@ -115,7 +119,7 @@ export function CollabsAttribution({
                               <option value="" disabled>
                                 选择已核实的合作记录
                               </option>
-                              {links.map((l) => (
+                              {availableLinks.map((l) => (
                                 <option key={l.id} value={l.id}>
                                   {l.name} · /r/{l.alias}
                                 </option>

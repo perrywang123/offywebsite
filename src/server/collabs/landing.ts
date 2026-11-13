@@ -8,6 +8,7 @@ import {
 import { officialBindingKeys } from "@/lib/collabs/bindings";
 import { LANDING_RETENTION_DAYS, landingSchema, type LandingInput } from "@/lib/collabs/landing";
 import type { Db } from "../kol/db";
+import { archivedCreatorIds } from "./archive";
 const DAY = 86400000,
   day = (at: number) => new Date(at).toISOString().slice(0, 10);
 function trackingId(link: string) {
@@ -83,11 +84,20 @@ export function pruneLandingData(db: Db, now = Date.now()) {
       .run();
   });
 }
-export function landingMetrics(db: Db, days = 30, now = Date.now()) {
+export function landingMetrics(db: Db, days = 30, now = Date.now(), includeArchived = false) {
   if (![7, 30, 90].includes(days)) throw new Error("invalid_metrics_period");
   const to = day(now),
     from = day(now - (days - 1) * DAY);
-  const indexed = db.select().from(collabsCreators).all();
+  const all = db.select().from(collabsCreators).all();
+  const archived = includeArchived ? new Set<string>() : archivedCreatorIds(db);
+  const indexed = all.filter((c) => !archived.has(c.id));
+  const activeTracking = new Set(indexed.map((c) => trackingId(c.officialLink)));
+  const hiddenTracking = new Set(
+    all
+      .filter((c) => archived.has(c.id))
+      .map((c) => trackingId(c.officialLink))
+      .filter((id) => !activeTracking.has(id)),
+  );
   const totals = db
     .select({
       dtId: collabsLandingDaily.dtId,
@@ -130,34 +140,37 @@ export function landingMetrics(db: Db, days = 30, now = Date.now()) {
   const membersByKey = new Map(members.map((row) => [`${row.dtId}:${row.day}`, row.uv]));
   const periodsById = new Map(periods.map((row) => [row.dtId, row.uv]));
   const totalsById = new Map(totals.map((row) => [row.dtId, row]));
-  const groups = [...ids].sort().map((dtId) => {
-    const records = indexed.filter((c) => trackingId(c.officialLink) === dtId),
-      total = totalsById.get(dtId);
-    const series = Array.from({ length: days }, (_, i) => {
-      const date = day(now - (days - i - 1) * DAY),
-        row = dailyByKey.get(`${dtId}:${date}`);
-      const unknown = !total || date < day(total.firstAt);
+  const groups = [...ids]
+    .filter((id) => !hiddenTracking.has(id))
+    .sort()
+    .map((dtId) => {
+      const records = indexed.filter((c) => trackingId(c.officialLink) === dtId),
+        total = totalsById.get(dtId);
+      const series = Array.from({ length: days }, (_, i) => {
+        const date = day(now - (days - i - 1) * DAY),
+          row = dailyByKey.get(`${dtId}:${date}`);
+        const unknown = !total || date < day(total.firstAt);
+        return {
+          day: date,
+          pv: unknown ? null : (row?.pv ?? 0),
+          uv: unknown ? null : (membersByKey.get(`${dtId}:${date}`) ?? 0),
+        };
+      });
       return {
-        day: date,
-        pv: unknown ? null : (row?.pv ?? 0),
-        uv: unknown ? null : (membersByKey.get(`${dtId}:${date}`) ?? 0),
+        dtId,
+        aliases: records.map((c) => c.alias).sort(),
+        names: [...new Set(records.map((c) => c.name))],
+        enabled: records.some((c) => c.enabled),
+        totalPv: total?.pv ?? 0,
+        firstAt: total?.firstAt ?? null,
+        lastAt: total?.lastAt ?? null,
+        periodPv: series.reduce((n, d) => n + (d.pv ?? 0), 0),
+        periodUv: periodsById.get(dtId) ?? 0,
+        todayPv: series.at(-1)?.pv ?? 0,
+        todayUv: series.at(-1)?.uv ?? 0,
+        daily: series,
       };
     });
-    return {
-      dtId,
-      aliases: records.map((c) => c.alias).sort(),
-      names: [...new Set(records.map((c) => c.name))],
-      enabled: records.some((c) => c.enabled),
-      totalPv: total?.pv ?? 0,
-      firstAt: total?.firstAt ?? null,
-      lastAt: total?.lastAt ?? null,
-      periodPv: series.reduce((n, d) => n + (d.pv ?? 0), 0),
-      periodUv: periodsById.get(dtId) ?? 0,
-      todayPv: series.at(-1)?.pv ?? 0,
-      todayUv: series.at(-1)?.uv ?? 0,
-      daily: series,
-    };
-  });
   return {
     days,
     from,

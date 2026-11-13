@@ -249,6 +249,41 @@ const detail = await call(`collabs/reports/${batch.id}`);
 assert.equal(detail.rows[0].commission, 900);
 assert.equal(detail.reviews.length, 1);
 assert.equal(detail.checks.length, 2);
+// Recoverable cleanup: local history stays readable and official mapping is not removed.
+await call("collabs/archive", { id: indexed.id, reason: "test", confirmed: false }, 400);
+await call("collabs/archive", { id: indexed.id, reason: "test", confirmed: true });
+const afterArchive = await call("collabs");
+assert.equal(
+  afterArchive.creators.some((c) => c.id === indexed.id),
+  false,
+);
+assert.equal(
+  afterArchive.archivedCreators.some((c) => c.id === indexed.id),
+  true,
+);
+assert.equal(afterArchive.attribution.creators[0].creatorId, indexed.id);
+assert.equal(
+  (await call("collabs/links?days=7")).links.some((l) => l.id === indexed.id),
+  false,
+);
+assert.equal(
+  (await call("collabs/links?days=7&includeArchived=1")).links.find((l) => l.id === indexed.id)
+    .total,
+  1,
+);
+assert.equal((await fetch(site + "/r/qa-collabs", { redirect: "manual" })).status, 410);
+await call("collabs/creators", { ...indexed, enabled: true }, 409);
+const archivedReportCheck = await call("collabs/reconcile", { id: batch.id });
+assert.equal(
+  archivedReportCheck.findings.some((f) => f.code === "creator_unmapped"),
+  false,
+);
+await call("collabs/restore", { id: indexed.id });
+assert.equal((await call("collabs")).creators.find((c) => c.id === indexed.id).enabled, false);
+assert.equal((await fetch(site + "/r/qa-collabs", { redirect: "manual" })).status, 410);
+await call("collabs/creators", { ...indexed, enabled: true });
+assert.equal((await fetch(site + "/r/qa-collabs", { redirect: "manual" })).status, 303);
+checks += 3;
 await call("logout", {});
 console.log(
   JSON.stringify({

@@ -4,10 +4,12 @@ import { duplicateOfficialBindings } from "@/lib/collabs/bindings";
 import { CollabsLinkMetrics } from "./CollabsLinkMetrics";
 import { CollabsLandingMetrics } from "./CollabsLandingMetrics";
 import { CollabsAttribution } from "./CollabsAttribution";
+import { CollabsCreatorArchiveForm, archiveReasons } from "./CollabsCreatorArchiveForm";
+import type { listArchivedCreators } from "@/server/collabs/archive";
 import type { attributionState } from "@/server/collabs/events";
 import type { linkMetrics } from "@/server/collabs/links";
 import type { landingMetrics } from "@/server/collabs/landing";
-import { useCallback, useEffect, useState, type FormEvent } from "react";
+import { useCallback, useEffect, useRef, useState, type FormEvent } from "react";
 import { parseCsv, reportFields, type ReportInput, type ReportField } from "@/lib/collabs/reports";
 import { decimal } from "@/server/kol/money";
 import type { listCreators, listReports, reportDetail } from "@/server/collabs/service";
@@ -16,6 +18,7 @@ type Batch = ReturnType<typeof listReports>[number];
 type Detail = ReturnType<typeof reportDetail>;
 type State = {
   creators: Creator[];
+  archivedCreators?: ReturnType<typeof listArchivedCreators>;
   reports: Batch[];
   officialAdmin: string;
   creatorPortal: string;
@@ -54,6 +57,8 @@ const errors: Record<string, string> = {
   creator_identity_immutable: "已建档的别名和来源标识不能转给他人",
   flow_identity_immutable: "已关联的官方创作者编号不能转给其他合作记录",
   flow_identity_missing: "尚未收到此官方创作者编号，请重新读取后再试",
+  creator_missing: "合作记录已不存在，请重新读取后再试",
+  creator_archived: "该合作已归档，请先恢复到合作列表；恢复不会自动启用短链",
   already_reserved: "别名或来源标识已被占用",
   invalid_superseded_report: "被替代报告必须是同类型、时间有重叠的有效报告",
   invalid_official_link: "请粘贴本店 Offy 或本店 myshopify.com 的 Collabs 官方链接",
@@ -101,16 +106,25 @@ export function CollabsWorkspace({ siteUrl }: { siteUrl: string }) {
     [busy, setBusy] = useState(false),
     [panel, setPanel] = useState<"import" | "creator" | null>(null),
     [creator, setCreator] = useState<Creator | null>(null),
+    [archiveTarget, setArchiveTarget] = useState<string | null>(null),
+    [includeArchived, setIncludeArchived] = useState(false),
     [detail, setDetail] = useState<Detail | null>(null);
+  const loadVersion = useRef(0);
   const load = useCallback(async () => {
+    const version = ++loadVersion.current;
     try {
-      setState(await api());
+      const next = await api(includeArchived ? "?includeArchived=1" : "");
+      if (version === loadVersion.current) setState(next);
     } catch {
-      setError("暂时无法读取 Collabs 记录，请重试。");
+      if (version === loadVersion.current) setError("暂时无法读取 Collabs 记录，请重试。");
     }
-  }, []);
+  }, [includeArchived]);
   useEffect(() => {
+    const counter = loadVersion;
     void load();
+    return () => {
+      ++counter.current;
+    };
   }, [load]);
   async function run(action: () => Promise<void>) {
     setError("");
@@ -127,6 +141,10 @@ export function CollabsWorkspace({ siteUrl }: { siteUrl: string }) {
     await run(async () => setDetail(await api(`/reports/${id}`)));
   }
   const check = detail?.checks[0];
+  const observationScope = `${includeArchived}:${(state?.archivedCreators ?? [])
+    .map((c) => c.id)
+    .sort()
+    .join(",")}`;
   return (
     <section className="collabs-workspace" aria-label="Collabs 核对工作台">
       <div className="collabs-policy">
@@ -173,27 +191,42 @@ export function CollabsWorkspace({ siteUrl }: { siteUrl: string }) {
       {state && (
         <>
           <div className="collabs-section-head">
-            <p className="muted">手动重新读取已接收的数据，不会重新计佣或触发付款。</p>
+            <div>
+              <p className="muted">手动重新读取已接收的数据，不会重新计佣或触发付款。</p>
+              <label className="collabs-checkbox">
+                <input
+                  type="checkbox"
+                  checked={includeArchived}
+                  disabled={busy}
+                  onChange={(e) => setIncludeArchived(e.target.checked)}
+                />
+                包含已归档的访问统计
+              </label>
+            </div>
             <button disabled={busy} onClick={() => void run(load)}>
               刷新数据
             </button>
           </div>
           {state.landingMetrics && (
             <CollabsLandingMetrics
+              key={`landing-${observationScope}`}
               initial={state.landingMetrics}
-              load={(days) => api(`/traffic?days=${days}`)}
+              load={(days) =>
+                api(`/traffic?days=${days}&includeArchived=${includeArchived ? 1 : 0}`)
+              }
             />
           )}
           {state.linkMetrics && (
             <CollabsLinkMetrics
+              key={`links-${observationScope}`}
               initial={state.linkMetrics}
-              load={(days) => api(`/links?days=${days}`)}
+              load={(days) => api(`/links?days=${days}&includeArchived=${includeArchived ? 1 : 0}`)}
             />
           )}
           {state.attribution && (
             <CollabsAttribution
               data={state.attribution}
-              links={state.creators}
+              links={[...state.creators, ...(state.archivedCreators ?? [])]}
               busy={busy}
               bind={async (nativeId, creatorId) => {
                 await run(async () => {
@@ -566,17 +599,72 @@ export function CollabsWorkspace({ siteUrl }: { siteUrl: string }) {
                     官方推广链接 ↗
                   </a>
                   <button
+                    disabled={busy}
                     onClick={() => {
                       setCreator(c);
                       setPanel("creator");
+                      setArchiveTarget(null);
                     }}
                   >
                     编辑链接
                   </button>
+                  <button
+                    disabled={busy}
+                    onClick={() => {
+                      setArchiveTarget(c.id);
+                      setPanel(null);
+                      setError("");
+                    }}
+                  >
+                    归档合作
+                  </button>
+                  {archiveTarget === c.id && (
+                    <CollabsCreatorArchiveForm
+                      creator={c}
+                      busy={busy}
+                      cancel={() => setArchiveTarget(null)}
+                      confirm={async (body) => {
+                        await run(async () => {
+                          await api("/archive", body);
+                          setArchiveTarget(null);
+                          await load();
+                        });
+                      }}
+                    />
+                  )}
                 </article>
               ))}
             </div>
           )}
+          <details className="collabs-archive-history">
+            <summary>已归档合作（{state.archivedCreators?.length ?? 0}）</summary>
+            <p className="muted">
+              归档可恢复，原别名和追踪标识仍保留；恢复到列表后短链保持停用。官方订单和财务证据始终保留。
+            </p>
+            <div className="collabs-report-list">
+              {(state.archivedCreators ?? []).map((c) => (
+                <article className="collabs-creator-card" key={c.id}>
+                  <strong>{c.name}</strong>
+                  <p>/r/{c.alias} · 已归档 · 短链已停用</p>
+                  <p className="muted">
+                    {archiveReasons[c.archiveReason] ?? c.archiveReason} · {date(c.archivedAt)}
+                  </p>
+                  {c.archiveNote && <p className="muted">{c.archiveNote}</p>}
+                  <button
+                    disabled={busy}
+                    onClick={() =>
+                      void run(async () => {
+                        await api("/restore", { id: c.id });
+                        await load();
+                      })
+                    }
+                  >
+                    恢复到合作列表
+                  </button>
+                </article>
+              ))}
+            </div>
+          </details>
         </>
       )}
     </section>
