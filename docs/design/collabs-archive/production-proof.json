@@ -1,0 +1,148 @@
+{
+  "releaseExit": 0,
+  "unchangedServices": {
+    "/offywebsite-app-1": true,
+    "/offywebsite-meta-worker-1": true,
+    "/offywebsite-geoipupdate-1": true
+  },
+  "envUnchanged": true,
+  "nginxUnchanged": true,
+  "containers": [
+    {
+      "name": "/offywebsite-app-1",
+      "revision": "f783b2c9ef68b4c76336238d7cb33cf5b5e6ae8b",
+      "image": "sha256:cd2b24f1046b59af12af40db114578eff383a14aa5e66b6358dee3fe265db845",
+      "running": true,
+      "health": "healthy",
+      "restarts": 0
+    },
+    {
+      "name": "/offywebsite-admin-1",
+      "revision": "2082f2c2d2d4b5e5d9ab0cf1bade0d88f6307401",
+      "image": "sha256:972246d2c5da745fd02f04dd001713e6b76529a4ecaa630ed63250fd10fb8ba2",
+      "running": true,
+      "health": "healthy",
+      "restarts": 0
+    },
+    {
+      "name": "/offywebsite-meta-worker-1",
+      "revision": "f783b2c9ef68b4c76336238d7cb33cf5b5e6ae8b",
+      "image": "sha256:cd2b24f1046b59af12af40db114578eff383a14aa5e66b6358dee3fe265db845",
+      "running": true,
+      "health": null,
+      "restarts": 0
+    },
+    {
+      "name": "/offywebsite-kol-worker-1",
+      "revision": "2082f2c2d2d4b5e5d9ab0cf1bade0d88f6307401",
+      "image": "sha256:972246d2c5da745fd02f04dd001713e6b76529a4ecaa630ed63250fd10fb8ba2",
+      "running": true,
+      "health": null,
+      "restarts": 0
+    },
+    {
+      "name": "/offywebsite-geoipupdate-1",
+      "revision": null,
+      "image": "sha256:51e70dd6f16cd3e4d845ac02d09940b10772a75b9d741427d235a78570923c1d",
+      "running": true,
+      "health": "healthy",
+      "restarts": 0
+    }
+  ],
+  "http": [
+    {
+      "url": "https://isoffy.com/",
+      "status": 200
+    },
+    {
+      "url": "https://isoffy.com/api/health",
+      "status": 200
+    },
+    {
+      "url": "https://isoffy.com:8443/admin/collabs",
+      "status": 200
+    }
+  ],
+  "checkedAt": "2026-11-13T20:39:51.051982+00:00",
+  "finalPublicHttp": [
+    {
+      "path": "/",
+      "status": 200
+    },
+    {
+      "path": "/api/health",
+      "status": 200
+    },
+    {
+      "path": "/r/perry6",
+      "status": 410
+    },
+    {
+      "path": "/r/peiyu",
+      "status": 410
+    },
+    {
+      "path": "/r/perry-test",
+      "status": 410
+    }
+  ],
+  "temporaryImageArchiveRemoved": true,
+  "rollbackImageRetained": true,
+  "database": {
+    "creatorCount": 6,
+    "archivedCount": 3,
+    "expectedArchives": true,
+    "allIdentitiesPreserved": true,
+    "realCreatorRowsUnchanged": true,
+    "ownerUnchanged": true,
+    "officialIdentityUnchanged": true,
+    "reportsUnchanged": true,
+    "countsBefore": {
+      "collabs_creators": 6,
+      "collabs_attributions": 1,
+      "collabs_flow_creators": 1,
+      "collabs_reports": 0,
+      "collabs_report_rows": 0,
+      "collabs_link_daily": 4,
+      "collabs_landing_daily": 3,
+      "kol_admins": 1,
+      "kol_ledger": 0
+    },
+    "countsAfter": {
+      "collabs_creators": 6,
+      "collabs_attributions": 1,
+      "collabs_flow_creators": 1,
+      "collabs_reports": 0,
+      "collabs_report_rows": 0,
+      "collabs_link_daily": 4,
+      "collabs_landing_daily": 3,
+      "kol_admins": 1,
+      "kol_ledger": 0
+    },
+    "quickCheck": "ok",
+    "foreignKeyViolations": 0,
+    "workerError": null,
+    "workerFresh": true
+  },
+  "sourceRevision": "2082f2c2d2d4b5e5d9ab0cf1bade0d88f6307401",
+  "checks": {
+    "tests": 993,
+    "testFiles": 162,
+    "isolatedHttpWorkflow": 53,
+    "productionMobile": {
+      "clientWidth": 375,
+      "scrollWidth": 375,
+      "restoreButtonHeight": 44
+    },
+    "productionDesktopVerified": true,
+    "defaultActiveLinks": 3,
+    "archivedLinks": 3,
+    "includeArchivedLinks": 6,
+    "defaultDtGroups": 3,
+    "includeArchivedDtGroups": 4
+  },
+  "ci": "https://github.com/perrywang123/offywebsite/actions/runs/43501008820",
+  "imageBuild": "https://github.com/perrywang123/offywebsite/actions/runs/43501079873",
+  "archiveSha256": "9affc7e3feb76c3434d6c74805efa6cc330d6866b7ec905f897c2c7b2450b948",
+  "backup": "/data/deploy-backups/offy-2026-11-13T20-30-19-292Z-40bc5217.db"
+}
