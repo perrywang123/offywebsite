@@ -30,6 +30,31 @@ export const sourceSchema = z
     ad_id: label.optional(),
   })
   .strict();
+export type MetaSource = z.infer<typeof sourceSchema>;
+/** The documented Meta URL template, not arbitrary numeric UTM labels. */
+export function normalizeMetaSource(source: MetaSource): MetaSource {
+  const result = { ...source };
+  if (
+    source.utm_source?.toLowerCase() === "meta" &&
+    source.utm_medium?.toLowerCase() === "paid_social"
+  ) {
+    for (const [id, utm] of [
+      ["campaign_id", "utm_campaign"],
+      ["ad_id", "utm_content"],
+      ["adset_id", "utm_term"],
+    ] as const) {
+      const value = source[utm];
+      if (!result[id] && value && /^\d{1,30}$/.test(value)) result[id] = value;
+    }
+  }
+  return result;
+}
+export function internalMetaSource(source: MetaSource) {
+  return (
+    source.utm_source?.toLowerCase() === "offy_validation" ||
+    source.utm_medium?.toLowerCase() === "internal_test"
+  );
+}
 export const dataSchema = z
   .object({
     content_name: z.string().max(200).optional(),
@@ -98,7 +123,7 @@ export function cleanSource(search: string): z.infer<typeof sourceSchema> {
     const value = params.get(key);
     if (value && label.safeParse(value).success) output[key] = value;
   }
-  return output;
+  return normalizeMetaSource(output);
 }
 export interface MetaProduct {
   code: string;

@@ -348,7 +348,11 @@ export function MetaDiagnostics() {
       <div className="section-line">
         <div>
           <h2>广告来源与订单核对</h2>
-          <p className="muted">站内趋势、观察漏斗与 Shopify 订单证据；不代表广告归因或佣金。</p>
+          <p className="muted">
+            站内趋势、观察漏斗与 Shopify
+            订单证据。来源为最后记录的有效标签，不能证明后续点击属于该广告；不代表 Meta
+            最终归因或佣金。
+          </p>
         </div>
         <button onClick={() => void load()} disabled={loading}>
           {loading ? "读取中…" : "刷新数据"}

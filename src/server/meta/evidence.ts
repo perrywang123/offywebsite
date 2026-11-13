@@ -1,7 +1,14 @@
 import { and, count, desc, eq, gte, inArray, lt, sql, isNotNull } from "drizzle-orm";
 import type { Db } from "../kol/db";
 import { metaEvents, metaOrderEvidence, metaOrderSync, checkoutAttempts } from "../db/schema";
-import { evidenceRange, evidenceWhere, labelledTest, type EvidenceFilter } from "./filters";
+import {
+  evidenceRange,
+  evidenceWhere,
+  labelledTest,
+  recordedAdId,
+  type EvidenceFilter,
+} from "./filters";
+import { normalizeMetaSource } from "@/lib/meta/events";
 export function evidenceOverview(db: Db, filter: EvidenceFilter, now = Date.now()) {
   const where = evidenceWhere(filter, now);
   const events = db
@@ -9,7 +16,7 @@ export function evidenceOverview(db: Db, filter: EvidenceFilter, now = Date.now(
       name: metaEvents.name,
       count: count(),
       browsers: sql<number>`count(distinct ${metaEvents.visitorHash})`,
-      withAdId: sql<number>`sum(case when json_extract(${metaEvents.sourceJson}, '$.ad_id') IS NOT NULL then 1 else 0 end)`,
+      withAdId: sql<number>`sum(case when ${recordedAdId} IS NOT NULL then 1 else 0 end)`,
       withFbc: sql<number>`sum(${metaEvents.hasFbc})`,
       withoutCatalogId: sql<number>`sum(case when coalesce(json_array_length(json_extract(${metaEvents.dataJson}, '$.content_ids')), 0) = 0 then 1 else 0 end)`,
     })
@@ -122,7 +129,7 @@ export function traceEvidence(
     .reverse()
     .map(({ sourceJson, ...r }) => ({
       ...r,
-      source: JSON.parse(sourceJson) as Record<string, string>,
+      source: normalizeMetaSource(JSON.parse(sourceJson)),
     }));
   const ids = events.flatMap((e) => (e.attemptId ? [e.attemptId] : []));
   return {

@@ -18,6 +18,8 @@ async function main() {
   const meta = process.env.OFFY_TEST_META === "true";
   const metaReceived: unknown[] = [],
     pixelReceived: unknown[] = [];
+  let metaObservationFailures = 0;
+  const failedMetaEventIds: string[] = [];
   const automaticAdmin = process.env.OFFY_TEST_ADMIN_AUTH === "automatic";
   let adminGrants = 0,
     adminRequests = 0,
@@ -196,6 +198,15 @@ async function main() {
       }
       if (meta && url.pathname === "/test/meta-state")
         return send(res, { metaReceived, pixelReceived });
+      if (meta && url.pathname === "/test/meta-ingestion") {
+        if (req.method === "POST") {
+          const { failures } = JSON.parse(await body(req));
+          if (!Number.isInteger(failures) || failures < 0 || failures > 3)
+            return send(res, { error: "invalid_failures" }, 400);
+          metaObservationFailures = failures;
+        }
+        return send(res, { remainingFailures: metaObservationFailures, failedMetaEventIds });
+      }
       if (meta && url.pathname === "/test/meta-sync" && req.method === "POST") {
         sqlite.prepare("UPDATE meta_order_sync SET next_at=0,lease_until=0 WHERE id=1").run();
         const result = await fetch(`http://localhost:${appPort}/api/kol/worker`, {
@@ -542,12 +553,25 @@ async function main() {
     }
   });
   function proxy(isAdmin: boolean) {
-    return createServer((req, res) => {
+    return createServer(async (req, res) => {
       if (req.headers.host !== `127.0.0.1:${isAdmin ? adminPort : publicPort}`) {
         res.writeHead(404).end();
         return;
       }
       const path = new URL(req.url ?? "/", site).pathname;
+      if (
+        !isAdmin &&
+        meta &&
+        path === "/api/meta/events" &&
+        req.method === "POST" &&
+        metaObservationFailures > 0
+      ) {
+        // Loopback-only fault injection verifies actual browser retry without Meta traffic.
+        metaObservationFailures--;
+        const event = JSON.parse(await body(req));
+        failedMetaEventIds.push(String(event.eventId));
+        return send(res, { error: "isolated_ingestion_failure" }, 503);
+      }
       if (!isAdmin && (collabs || meta) && path === "/__test/landing-consent.js") {
         res.writeHead(200, {
           "Content-Type": "application/javascript",

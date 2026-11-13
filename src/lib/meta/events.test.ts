@@ -29,6 +29,22 @@ describe("Meta event boundaries", () => {
     expect(productData([item], {})).not.toHaveProperty("content_ids");
     expect(productData([item, { ...item, currency: "USD" }], {})).not.toHaveProperty("value");
   });
+  it("normalizes only the controlled Meta paid-social numeric UTM template", () => {
+    expect(
+      cleanSource(
+        "?utm_source=meta&utm_medium=paid_social&utm_campaign=222&utm_content=111&utm_term=333",
+      ),
+    ).toMatchObject({ campaign_id: "222", ad_id: "111", adset_id: "333" });
+    expect(cleanSource("?utm_source=ig&utm_medium=social&utm_content=111")).not.toHaveProperty(
+      "ad_id",
+    );
+    expect(
+      cleanSource("?utm_source=meta&utm_medium=paid_social&utm_content=creative-111"),
+    ).not.toHaveProperty("ad_id");
+    expect(
+      cleanSource("?utm_source=meta&utm_medium=paid_social&utm_content=111&ad_id=444").ad_id,
+    ).toBe("444");
+  });
   it("does not allow fake purchase, email or arbitrary event fields", () => {
     const event = {
       eventId: crypto.randomUUID(),

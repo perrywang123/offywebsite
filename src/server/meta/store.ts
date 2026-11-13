@@ -2,9 +2,14 @@ import { createHmac, randomUUID } from "node:crypto";
 import { and, asc, count, desc, eq, gte, inArray, lt, lte, or, sql } from "drizzle-orm";
 import type { Db } from "../kol/db";
 import { metaEvents, metaOrderEvidence } from "../db/schema";
-import { capiMetaEvent, type MetaEvent } from "@/lib/meta/events";
+import {
+  capiMetaEvent,
+  internalMetaSource,
+  normalizeMetaSource,
+  type MetaEvent,
+} from "@/lib/meta/events";
 import { encryptDiagnostic } from "../checkout-diagnostics/crypto";
-import { evidenceWhere, type EvidenceFilter } from "./filters";
+import { evidenceWhere, labelledTest, type EvidenceFilter } from "./filters";
 import { pruneOrderEvidence } from "./retention";
 const DAY = 86400000;
 export const visitorHash = (id: string, key: Buffer) =>
@@ -26,8 +31,10 @@ export function acceptEvent(
   const now = options.now ?? Date.now();
   if (Math.abs(now - input.occurredAt) > 5 * 60000) throw new Error("event_expired");
   const critical = capiMetaEvent(input.name);
+  const source = normalizeMetaSource(input.source);
+  const internal = internalMetaSource(source);
   const payload =
-    critical && options.capi
+    critical && options.capi && !internal
       ? encryptDiagnostic(
           {
             event_name: input.name,
@@ -85,13 +92,20 @@ export function acceptEvent(
         name: input.name,
         createdAt: input.occurredAt,
         pagePath: input.pagePath,
-        sourceJson: JSON.stringify(input.source),
+        sourceJson: JSON.stringify(source),
         dataJson: JSON.stringify(input.data),
         attemptId: options.attemptId,
         hasFbc: !!input.fbc,
         hasFbp: !!input.fbp,
         pixelAttempted: !!input.pixelAttempted,
-        status: !critical ? "observed" : options.capi ? "pending" : "unconfigured",
+        status: !critical
+          ? "observed"
+          : internal
+            ? "suppressed"
+            : options.capi
+              ? "pending"
+              : "unconfigured",
+        lastError: critical && internal ? "internal_test" : null,
         payload,
         dueAt: now,
       })
@@ -102,6 +116,16 @@ export function acceptEvent(
 export function claimJobs(db: Db, now = Date.now()) {
   return db.transaction((tx) => {
     pruneOrderEvidence(tx, now);
+    tx.update(metaEvents)
+      .set({
+        status: "suppressed",
+        payload: null,
+        lastError: "internal_test",
+        leaseUntil: 0,
+        leaseToken: null,
+      })
+      .where(and(labelledTest, inArray(metaEvents.status, ["pending", "sending"])))
+      .run();
     tx.update(metaEvents)
       .set({
         status: "suppressed",
@@ -242,7 +266,7 @@ export function listMetaEvents(
     total: db.select({ n: count() }).from(metaEvents).where(where).get()!.n,
     rows: rows.map(({ sourceJson, dataJson, ...row }) => ({
       ...row,
-      source: JSON.parse(sourceJson),
+      source: normalizeMetaSource(JSON.parse(sourceJson)),
       data: JSON.parse(dataJson),
     })),
   };

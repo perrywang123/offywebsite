@@ -1,6 +1,7 @@
 "use client";
 import {
   cleanSource,
+  internalMetaSource,
   browserMetaEvent,
   checkoutObservation,
   dataSchema,
@@ -11,6 +12,7 @@ import {
   type MetaProduct,
 } from "@/lib/meta/events";
 import type { z } from "zod";
+import { createObservationDelivery } from "./delivery";
 export interface MetaPublicConfig {
   enabled: boolean;
   pixelId: string;
@@ -32,7 +34,8 @@ declare global {
 }
 let config: MetaPublicConfig = { enabled: false, pixelId: "", catalogIds: {} };
 let initialized = "",
-  wasAllowed = false;
+  wasAllowed = false,
+  pixelSuppressed = false;
 const knownProducts = new Map<string, MetaProduct>();
 const STORAGE = "offy.meta.v1";
 type StoredContext = {
@@ -57,7 +60,7 @@ export function metaAllowed() {
     return false;
   }
 }
-function context() {
+function readContext() {
   let value: StoredContext | undefined;
   try {
     value = JSON.parse(localStorage.getItem(STORAGE) ?? "null");
@@ -65,18 +68,33 @@ function context() {
   } catch {
     value = memoryContext;
   }
-  if (!value || value.expires < Date.now() || !/^[a-f0-9-]{36}$/i.test(value.id))
-    value = { id: crypto.randomUUID(), expires: Date.now() + 30 * 86400000, source: {} };
-  const query = new URLSearchParams(location.search),
-    source = cleanSource(location.search),
+  return value &&
+    Number.isFinite(value.expires) &&
+    value.expires >= Date.now() &&
+    /^[a-f0-9-]{36}$/i.test(value.id)
+    ? value
+    : undefined;
+}
+const observationDelivery = createObservationDelivery(
+  (id) => metaAllowed() && readContext()?.id === id,
+);
+function context(search = location.search) {
+  const value = readContext() ?? {
+    id: crypto.randomUUID(),
+    expires: Date.now() + 30 * 86400000,
+    source: {},
+  };
+  const query = new URLSearchParams(search),
+    source = cleanSource(search),
     click = query.get("fbclid");
   if (click && /^[A-Za-z0-9_-]{1,400}$/.test(click)) {
     // Keep the original capture time when client navigation preserves this query.
     if (!value.fbc?.endsWith("." + click)) {
       value.fbc = `fb.1.${Date.now()}.${click}`;
-      value.source = source;
-    } else if (Object.keys(source).length) value.source = source;
-  } else if (Object.keys(source).length) value.source = source;
+    }
+  }
+  // These are the last recorded labels, not proof of which ad owns a later click.
+  if (Object.keys(source).length) value.source = source;
   try {
     localStorage.setItem(STORAGE, JSON.stringify(value));
     storageUnavailable = false;
@@ -118,8 +136,9 @@ function loadPixel() {
   }
   initialized = config.pixelId;
 }
-export function checkMetaConsent() {
+export function checkMetaConsent(search?: string) {
   const allowed = metaAllowed();
+  if (!allowed) observationDelivery.cancel();
   let deniedWithStoredIdentity = false;
   try {
     const privacy = window.Shopify?.customerPrivacy;
@@ -174,8 +193,14 @@ export function checkMetaConsent() {
   wasAllowed = allowed;
   if (allowed) {
     try {
-      loadPixel();
-      if (newlyAllowed) window.fbq?.("consent", "grant");
+      if (internalMetaSource(context(search).source)) {
+        if (!pixelSuppressed) window.fbq?.("consent", "revoke");
+        pixelSuppressed = true;
+      } else {
+        loadPixel();
+        if (newlyAllowed || pixelSuppressed) window.fbq?.("consent", "grant");
+        pixelSuppressed = false;
+      }
     } catch {
       /* observation still works */
     }
@@ -183,9 +208,9 @@ export function checkMetaConsent() {
   if (newlyAllowed) document.dispatchEvent(new Event("offy:meta-ready"));
   return allowed;
 }
-export function configureMeta(value: MetaPublicConfig) {
+export function configureMeta(value: MetaPublicConfig, search?: string) {
   config = value;
-  checkMetaConsent();
+  checkMetaConsent(search);
 }
 export function registerMetaProducts(items: MetaProduct[]) {
   for (const item of items) knownProducts.set(item.code, item);
@@ -233,7 +258,7 @@ export function observeMeta(
       eventId = crypto.randomUUID();
     let attempted = false;
     try {
-      if (browserMetaEvent(name)) {
+      if (browserMetaEvent(name) && !internalMetaSource(saved.source)) {
         window.fbq?.("trackSingle", config.pixelId, name, data, { eventID: eventId });
         attempted = !!window.fbq;
       }
@@ -259,13 +284,7 @@ export function observeMeta(
       checkoutReceipt,
       pixelAttempted: attempted,
     });
-    void fetch("/api/meta/events", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(input),
-      keepalive: true,
-      signal: AbortSignal.timeout(4000),
-    }).catch(() => {});
+    observationDelivery.send(input);
     return eventId;
   } catch {
     return;

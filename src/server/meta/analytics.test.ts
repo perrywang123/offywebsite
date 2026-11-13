@@ -1,5 +1,6 @@
 // @vitest-environment node
 import { randomUUID } from "node:crypto";
+import { eq } from "drizzle-orm";
 import { describe, expect, it } from "vitest";
 import { testDb } from "../kol/test-db";
 import { metaEvents, metaOrderEvidence } from "../db/schema";
@@ -100,7 +101,7 @@ describe("read-only visual marketing analytics", () => {
     order(db, attempt, base + 40);
     event(db, "missing-page", "ViewContent");
     event(db, "missing-page", "CheckoutReady", base + 20, {}, "missing");
-    event(db, "reverse", "ViewContent", base - 1);
+    event(db, "reverse", "ViewContent", base - 2001);
     event(db, "reverse", "PageView");
     event(db, "cart-only", "PageView");
     event(db, "cart-only", "ViewContent", base + 1);
@@ -169,6 +170,45 @@ describe("read-only visual marketing analytics", () => {
       source: "ad",
       stage: "paid",
     });
+  });
+  it("tolerates only a bounded same-page initialization inversion and keeps payment evidence", () => {
+    const db = testDb();
+    for (const [visitor, gap, differentPath] of [
+      ["one-ms", 1, false],
+      ["two-seconds", 2000, false],
+      ["too-early", 2001, false],
+      ["other-page", 1, true],
+    ] as const) {
+      const attempt = randomUUID();
+      const viewId = event(db, visitor, "ViewContent", base - gap);
+      if (differentPath)
+        db.update(metaEvents).set({ pagePath: "/other" }).where(eq(metaEvents.id, viewId)).run();
+      event(db, visitor, "PageView", base);
+      event(db, visitor, "CheckoutReady", base + 20, {}, attempt);
+      order(db, attempt);
+    }
+    const result = readMetaAnalytics(db, scope, now);
+    expect(result.analytics.funnel).toMatchObject({ view: 4, content: 2, checkout: 2, paid: 2 });
+    expect(result.stageVisitors.paid).toEqual(expect.arrayContaining(["one-ms", "two-seconds"]));
+  });
+  it("finds historical UTM-only rows consistently in groups, filters and event evidence", () => {
+    const db = testDb();
+    const source = {
+      utm_source: "meta",
+      utm_medium: "paid_social",
+      utm_campaign: "222",
+      utm_content: "111",
+    };
+    journey(db, "utm-only", source);
+    const filter = { ...scope, source: "ad" as const, adId: "111", campaignId: "222" };
+    expect(readMetaAnalytics(db, filter, now).analytics.ads).toEqual([
+      expect.objectContaining({
+        adId: "111",
+        funnel: expect.objectContaining({ view: 1, content: 1, checkout: 1 }),
+      }),
+    ]);
+    expect(listMetaEvents(db, filter, now).rows).toHaveLength(3);
+    expect(listMetaEvents(db, filter, now).rows[0].source.ad_id).toBe("111");
   });
 
   it("requires an in-window order after its checkout and excludes canceled/unpaid/test orders", () => {

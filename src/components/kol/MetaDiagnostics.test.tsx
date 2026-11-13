@@ -20,7 +20,8 @@ it("distinguishes platform acceptance from purchase attribution and handles an e
   vi.stubGlobal("fetch", fetcher);
   render(<MetaDiagnostics />);
   expect(await screen.findByText("暂无匹配事件")).toBeVisible();
-  expect(screen.getByText(/不代表广告归因/)).toBeVisible();
+  expect(screen.getByText(/不代表 Meta 最终归因/)).toBeVisible();
+  expect(screen.getByText(/来源为最后记录的有效标签/)).toBeVisible();
   expect(screen.getByText(/Purchase 由 Shopify/)).toBeVisible();
   expect(fetcher).toHaveBeenCalledTimes(1);
 });

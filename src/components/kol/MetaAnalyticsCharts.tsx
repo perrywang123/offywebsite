@@ -327,7 +327,8 @@ export function MetaAnalyticsCharts({
             </p>
           )}
           <p className="meta-viz-footnote">
-            点击阶段查看同队列证据。漏斗仅包含所选窗口内完整的前置观测，商品浏览/结账未留前序记录时不补造。结账准备不等于已进入
+            点击阶段查看同队列证据。漏斗仅包含所选窗口内完整的前置观测；同路径首屏允许最多 2
+            秒初始化顺序偏差，缺失事件不补造。结账准备不等于已进入
             Shopify；付款记录含后续退款，排除取消{data.scope?.includeTests ? "" : "/测试"}
             ，不等于净成交或 Meta 归因。
           </p>

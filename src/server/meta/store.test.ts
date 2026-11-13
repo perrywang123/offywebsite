@@ -5,6 +5,7 @@ import { testDb } from "../kol/test-db";
 import { acceptEvent, claimJobs, finishJob, listMetaEvents, forgetVisitor } from "./store";
 import { decryptDiagnostic } from "../checkout-diagnostics/crypto";
 import { metaEvents } from "../db/schema";
+import { eq } from "drizzle-orm";
 describe("Meta durable outbox", () => {
   const key = randomBytes(32),
     now = Date.now();
@@ -105,5 +106,29 @@ describe("Meta durable outbox", () => {
     expect(claimJobs(db, now + 25 * 3600000)).toHaveLength(0);
     forgetVisitor(db, input.visitorId, key);
     expect(db.select().from(metaEvents).all()).toHaveLength(0);
+  });
+  it("stores internal tests without a CAPI payload and suppresses older pending internal jobs", () => {
+    const db = testDb();
+    const input = { ...event(), source: { utm_medium: "INTERNAL_TEST" } };
+    acceptEvent(db, input, { key, capi: true, origin: "https://isoffy.com", now });
+    expect(db.select().from(metaEvents).get()).toMatchObject({
+      status: "suppressed",
+      payload: null,
+      lastError: "internal_test",
+    });
+    const older = event();
+    acceptEvent(db, older, { key, capi: true, origin: "https://isoffy.com", now });
+    db.update(metaEvents)
+      .set({ sourceJson: '{"utm_source":"offy_validation"}' })
+      .where(eq(metaEvents.id, older.eventId))
+      .run();
+    expect(claimJobs(db, now)).toHaveLength(0);
+    expect(
+      db
+        .select()
+        .from(metaEvents)
+        .all()
+        .every((r) => r.status === "suppressed" && r.payload === null),
+    ).toBe(true);
   });
 });

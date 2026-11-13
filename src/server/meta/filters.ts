@@ -47,21 +47,29 @@ export function evidenceRange(filter: EvidenceFilter, now: number) {
   };
 }
 export const labelledTest = sql<boolean>`(lower(coalesce(json_extract(${metaEvents.sourceJson}, '$.utm_source'), '')) = 'offy_validation' OR lower(coalesce(json_extract(${metaEvents.sourceJson}, '$.utm_medium'), '')) = 'internal_test')`;
+/** SQL equivalent of normalizeMetaSource, including retained UTM-only records. */
+function recordedId(field: "ad_id" | "campaign_id", utm: "utm_content" | "utm_campaign") {
+  const explicit = sql`nullif(json_extract(${metaEvents.sourceJson}, ${"$." + field}), '')`;
+  const value = sql`json_extract(${metaEvents.sourceJson}, ${"$." + utm})`;
+  return sql<string | null>`coalesce(${explicit}, case
+    when lower(json_extract(${metaEvents.sourceJson}, '$.utm_source')) = 'meta'
+      and lower(json_extract(${metaEvents.sourceJson}, '$.utm_medium')) = 'paid_social'
+      and length(${value}) between 1 and 30 and ${value} not glob '*[^0-9]*'
+    then ${value} else null end)`;
+}
+export const recordedAdId = recordedId("ad_id", "utm_content");
+export const recordedCampaignId = recordedId("campaign_id", "utm_campaign");
 export function evidenceWhere(filter: EvidenceFilter, now: number) {
   const range = evidenceRange(filter, now);
   return and(
     filter.name ? eq(metaEvents.name, filter.name) : undefined,
     filter.status ? eq(metaEvents.status, filter.status) : undefined,
-    filter.campaignId
-      ? sql`json_extract(${metaEvents.sourceJson}, '$.campaign_id') = ${filter.campaignId}`
-      : undefined,
-    filter.adId
-      ? sql`json_extract(${metaEvents.sourceJson}, '$.ad_id') = ${filter.adId}`
-      : undefined,
+    filter.campaignId ? sql`${recordedCampaignId} = ${filter.campaignId}` : undefined,
+    filter.adId ? sql`${recordedAdId} = ${filter.adId}` : undefined,
     filter.source === "ad"
-      ? sql`coalesce(json_extract(${metaEvents.sourceJson}, '$.ad_id'), '') <> ''`
+      ? sql`coalesce(${recordedAdId}, '') <> ''`
       : filter.source === "unlabelled"
-        ? sql`coalesce(json_extract(${metaEvents.sourceJson}, '$.ad_id'), '') = ''`
+        ? sql`coalesce(${recordedAdId}, '') = ''`
         : undefined,
     filter.includeTests ? undefined : sql`NOT ${labelledTest}`,
     gte(metaEvents.createdAt, range.from),

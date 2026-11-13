@@ -1,6 +1,6 @@
 # Offy Meta 追踪与订单证据技术方案
 
-更新：2026-11-12。按 OpenSpec + TDD 实现；[操作简版](meta-ads-sop.md)、[详细版](meta-ads-sop-detailed.md)、[本轮验收](meta-order-trace-validation.md)。
+更新：2026-11-14。按 OpenSpec + TDD 实现；[操作简版](meta-ads-sop.md)、[详细版](meta-ads-sop-detailed.md)、[订单链路验收](meta-order-trace-validation.md)、[可靠性修复验收及上线状态](meta-reliability-validation.md)。
 
 ## 整条链路
 
@@ -28,6 +28,14 @@ flowchart LR
 Offy 浏览器只发 PageView、ViewContent、AddToCart；CAPI 只补 AddToCart。浏览器与服务器同一次加购共用 event ID，重试不换 ID、不改原时间。Shopify 官方独占 InitiateCheckout/Purchase，Offy 不另发购买事件；站内成功生成跳转链接只记 CheckoutReady。保留旧 InitiateCheckout 接收/明细兼容，但不再入 CAPI；旧待发/发送中结账任务改为 suppressed，保留历史。
 
 复用 Shopify Customer Privacy：analyticsProcessingAllowed、marketingAllowed、saleOfDataAllowed 全部允许且无 GPC 才处理营销数据。拒绝时购物继续；撤回删除营销观察及其关联订单证据，不删 Shopify 订单。URL 只留 pathname、白名单来源标签；不记录买家邮箱、地址、支付资料。真实 fbclid/_fbc 保留原时间，最多30天，不猜广告点击；新来源标签整体替换，不能混合上一次 ad_id。
+
+## 观察可靠性修复
+
+浏览器上报使用同页内存队列：最多50条、并发2、每条最多3次尝试、最长60秒，重试网络/4秒超时/429/5xx，保持原 event ID、时间和请求体，仅重试本地观察请求。许可撤回、身份过期或禁用时取消；购物与托管跳转不等待该队列，关闭页面不保证送达。
+
+出现任何新有效标签时整体替换旧来源，不混入旧 ad_id；URL 没有任何有效标签时保留原来源。fbc 的真实点击独立更新，不将保留标签解释为新点击的已知广告。受控 Meta paid_social 的纯数字 utm_campaign/content/term 可补缺失的 campaign/ad/adset ID，显式 ID 优先；写入、历史筛选和展示采用一致规则，不改写历史记录。
+
+内测标签在浏览器阻止 Pixel 初始化/发送，在服务端不创建 CAPI 载荷，并抑制历史 pending/sending 内测任务，历史 sent 结果保留。漏斗只对同路径首屏 ViewContent→PageView 的最多2秒倒序放宽，保留缺失事件、跨页面及结账/订单时间约束。未许可前的访问、Meta最终归因和已发历史测试无法由这些修复回补。
 
 ## 可选结账元数据
 

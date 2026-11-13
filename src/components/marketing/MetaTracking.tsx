@@ -19,8 +19,11 @@ function Tracking({ config }: { config: MetaPublicConfig }) {
     if (!config.enabled) return;
     const page = pathname + "?" + search.toString();
     const view = () => {
-      if (metaAllowed() && last.current !== page && observeMeta("PageView", {}))
+      if (metaAllowed() && last.current !== page) {
+        // Claim before emitting: consent readiness can synchronously re-enter view.
         last.current = page;
+        if (!observeMeta("PageView", {})) last.current = "";
+      }
     };
     const check = () => {
       checkMetaConsent();
@@ -29,7 +32,7 @@ function Tracking({ config }: { config: MetaPublicConfig }) {
     document.addEventListener("offy:meta-ready", view);
     document.addEventListener("visitorConsentCollected", check);
     document.addEventListener("shopifyCustomerPrivacyApiLoaded", check);
-    configureMeta(config);
+    configureMeta(config, search.toString());
     view();
     let tries = 0;
     const timer = setInterval(() => {
@@ -57,7 +60,10 @@ export function MetaProductView({ product }: { product: MetaProduct }) {
   useEffect(() => {
     registerMetaProducts([product]);
     const publish = () => {
-      if (!sent.current && observeMeta("ViewContent", metaCartData([product]))) sent.current = true;
+      if (!sent.current) {
+        sent.current = true;
+        if (!observeMeta("ViewContent", metaCartData([product]))) sent.current = false;
+      }
     };
     publish();
     document.addEventListener("offy:meta-ready", publish);

@@ -1,6 +1,6 @@
 # Offy 广告投放与看数：简练版
 
-更新：2026-11-13。给投放同事和品牌管理员使用。操作与排障细节见[详细版](meta-ads-sop-detailed.md)。
+更新：2026-11-14。给投放同事和品牌管理员使用。操作与排障细节见[详细版](meta-ads-sop-detailed.md)。本轮可靠性修复的本地验收与上线状态见[验收记录](meta-reliability-validation.md)。
 
 1. **投放设置**：进入 [Meta Ads Manager](https://adsmanager.facebook.com/adsmanager/manage/campaigns?act=1301113714798915&business_id=837128189448656)，确认广告账户 `1301113714798915`。购买广告用 Sales → Website → 数据集 `1120625754196383` → Purchase。预算、素材、国家及发布由投放负责人确认。
 2. **落地与参数**：网站地址可使用 `https://isoffy.com/`（首页）、`https://isoffy.com/products` 或真实商品页。在 Offy 后台 → 广告诊断 →「投放链接设置」复制 URL 参数，放入 Meta 广告的 **URL parameters** 栏，保留动态 ID。不要伪造 fbclid，不要将模板花括号作为真实访问测试。
@@ -10,16 +10,16 @@
 
 **口径**：Offy 的“结账准备”只在站内记录；Shopify 官方负责 Meta 的 InitiateCheckout 和 Purchase。Offy 的 CAPI 仅补 AddToCart，并与浏览器使用同一事件 ID。后台“CAPI 已接收”不等于广告成交；浏览器标识不是人数；订单证据不是 Meta 最终归因。过去的重复结账历史不会被删除或重算。
 
-**读图**：概览各阶段独立去重；漏斗只串联所选窗口内同一浏览器依次发生的访问、商品浏览、结账准备及对应订单，加购是可选路径。两者数量可能不同。0 表示没有匹配的保留记录；订单未接入、同步失败或过期显示“—”，先核对同步状态。付款历史包含后续退款，金额和退款在订单证据按币种核对；花费、CPA、ROAS 仍在 Meta 查看。
+**读图**：概览各阶段独立去重；漏斗串联同一浏览器在所选窗口内的访问、商品浏览、结账准备及对应订单，仅对同路径首屏容忍最多2秒初始化倒序，缺失事件不补造，加购为可选路径。来源是最后记录的有效标签，不能证明后续无标签点击属于该广告。0 表示没有匹配的保留记录；订单未接入、同步失败或过期显示“—”，先核对同步状态。付款历史包含后续退款，金额和退款按币种核对；花费、CPA、ROAS 仍在 Meta 查看。
 
 **投放前勾选**：
 
 - [ ] 主站、加购、立即购买与托管结账可用，价格和币种一致。
 - [ ] 数据集正确、URL 参数有动态广告 ID、未发布无关草稿。
-- [ ] 内部测试使用 `utm_source=offy_validation&utm_medium=internal_test`；后台默认不包含这些记录。
+- [ ] 内部测试使用 `utm_source=offy_validation&utm_medium=internal_test`；新版本仅在 Offy 留本地观察，不发 Pixel/CAPI，后台默认排除。上线前已发送的历史测试不会从 Meta 撤回。
 - [ ] 如使用动态商品广告，另查 Meta 目录的商品匹配、国家价格与落地链接；不要擅自新增商品。
 - [ ] 真实投放后，由投放负责人安排一次获授权的广告互动成交，核对 Shopify 订单与 Meta 购买归因/去重；不为测试反复付款。
 
-2026-11-12 只读检查所见广告为已完成/已关闭及草稿，尚未找到可用的在投网站购买广告。代码模拟链路通过，不能据此宣称真实广告购买归因已验收。当前状态及生产验证见[本轮记录](meta-order-trace-validation.md)。
+已确认存在网站购买广告；是否最终归因、去重成功仍需在 Meta 核对，不能用本地模拟或 Shopify 付款代替平台结论。既有上线证据见[订单链路记录](meta-order-trace-validation.md)。
 
 [既有飞书图文 SOP](https://my.feishu.cn/wiki/L0Ptw9zhHiVj7akJcG3cRwFenLy)。

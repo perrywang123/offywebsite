@@ -1,0 +1,22 @@
+{
+  "checkedAt": "2026-11-13T19:03:01.840Z",
+  "simulatorOnly": true,
+  "realOrdersCreated": 0,
+  "realMetaRequests": 0,
+  "checks": [
+    {
+      "name": "AddToCart",
+      "eventId": "c6267f7f-c98e-440c-8ac2-93f3160542fa",
+      "browserServerIdMatch": true,
+      "status": "sent",
+      "value": 100,
+      "currency": "USD",
+      "checkoutLinked": false
+    }
+  ],
+  "localCheckoutReady": 2,
+  "offyMetaCheckoutOrPurchase": 0,
+  "internalObservations": 5,
+  "internalPixelOrCapi": 0,
+  "recoveredIngestionFailures": 1
+}

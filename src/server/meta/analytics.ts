@@ -1,5 +1,6 @@
 import { and, asc, gte, inArray, lt } from "drizzle-orm";
 import { analyticsMetrics, type AnalyticsMetric, type AnalyticsStage } from "@/lib/meta/analytics";
+import { normalizeMetaSource } from "@/lib/meta/events";
 import type { Db } from "../kol/db";
 import { metaEvents, metaOrderEvidence } from "../db/schema";
 import { evidenceRange, evidenceWhere, type EvidenceFilter } from "./filters";
@@ -16,13 +17,14 @@ type Observation = {
   visitor: string;
   name: string;
   at: number;
+  pagePath: string;
   adJson: string;
   attemptId: string | null;
   status: string;
 };
 type Order = typeof metaOrderEvidence.$inferSelect;
 function adId(row: Observation): string | null {
-  const value = (JSON.parse(row.adJson) as { ad_id?: unknown }).ad_id;
+  const value = normalizeMetaSource(JSON.parse(row.adJson)).ad_id;
   return typeof value === "string" && value ? value : null;
 }
 
@@ -44,7 +46,13 @@ function cohort(rows: Observation[], orders: Map<string, Order[]>) {
     const view = events.find((e) => e.name === "PageView");
     if (!view) continue;
     stages.view.add(visitor);
-    const product = events.find((e) => e.name === "ViewContent" && e.at >= view.at);
+    // Component initialization can publish the product just before its own page.
+    // Only that same-path, bounded inversion qualifies; absent pages stay absent.
+    const product = events.find(
+      (e) =>
+        e.name === "ViewContent" &&
+        (e.at >= view.at || (e.pagePath === view.pagePath && view.at - e.at <= 2000)),
+    );
     if (!product) continue;
     stages.content.add(visitor);
     if (events.some((e) => e.name === "AddToCart" && e.at >= product.at)) stages.cart.add(visitor);
@@ -89,6 +97,7 @@ export function readMetaAnalytics(db: Db, filter: EvidenceFilter, now = Date.now
       visitor: metaEvents.visitorHash,
       name: metaEvents.name,
       at: metaEvents.createdAt,
+      pagePath: metaEvents.pagePath,
       adJson: metaEvents.sourceJson,
       attemptId: metaEvents.attemptId,
       status: metaEvents.status,
