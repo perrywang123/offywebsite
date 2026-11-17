@@ -1,0 +1,19 @@
+{
+  "canonical": "http://localhost:4319/products/royal-grey",
+  "offer": {
+    "@type": "Offer",
+    "availability": "https://schema.org/InStock",
+    "itemCondition": "https://schema.org/NewCondition",
+    "price": "33.90",
+    "priceCurrency": "GBP",
+    "seller": {
+      "@id": "http://localhost:4319/#organization"
+    },
+    "url": "http://localhost:4319/products/royal-grey"
+  },
+  "title": "LITTLE HEIRESS | is.offy",
+  "visiblePrices": [
+    "£33.90",
+    "£33.90"
+  ]
+}

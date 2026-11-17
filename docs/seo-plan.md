@@ -14,7 +14,7 @@ Product 增加稳定 URL/@id 和卖家实体关联，WebSite/Organization 增加
 
 `www.isoffy.com` 先前证书仅覆盖裸域；本轮独立扩展证书并设置保留 path/query 的 301 到 `https://isoffy.com`。操作脚本 [ensure-www-redirect.sh](../deploy/ensure-www-redirect.sh) 仅修改专用 www vhost、签发/续签证书和 reload Nginx，不构建、重启应用或修改 Shopify 域名/DNS。先备份，预检失败恢复旧 www 配置；证书已签发后保留同时覆盖裸域与 www 的有效证书。
 
-Search Console 采用用户明确授权的当前 Google 账号验证 `https://isoffy.com/`，公开验证标记进入 HTML head；验证与 sitemap 接收结果以实际平台证据为准。Google 自行决定何时抓取，以及是否使用提交的图标、标题和摘要，不能承诺立即替换或提升排名。
+Search Console 采用用户明确授权的当前 Google 账号验证 `https://isoffy.com/`，公开验证标记进入 HTML head；本轮已完成所有权验证，sitemap 显示“成功”，发现 58 个网页；这不等于 58 页都已收录。首页已确认收录，并已成功请求重新抓取一次。Google 自行决定何时抓取，以及是否使用提交的图标、标题和摘要，不能承诺立即替换或提升排名。
 
 Merchant Center 当前账号无可访问商家账户。用户选择稍后配置，本轮没有创建账户、feed、广告或商品。后续需核对真实商家国家、站点认领、美国价格/落地币种、配送/退货、赠品与区域商品资格；Headless 域名不能直接假设官方 Shopify 渠道会给出 isoffy.com 落地地址。先核对实际导出链接再选择官方同步或独立 feed。
 

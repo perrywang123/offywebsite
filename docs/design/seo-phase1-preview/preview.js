@@ -2,7 +2,7 @@
   const data = window.SEO_PREVIEW;
   const $ = (id) => document.getElementById(id);
   const state = { icon: "a", page: data.pages[0], device: "desktop" };
-  const asset = (icon) => `assets/icon-${icon === "a" ? "a-mascot" : "b-wordmark"}.png`;
+  const asset = (icon) => `assets/icon-${icon === "a" ? "approved" : "b-wordmark"}.png`;
   data.pages.forEach((page) => {
     const option = document.createElement("option");
     option.value = page.id;
@@ -44,7 +44,7 @@
     $("serp-url").textContent = `https://isoffy.com${page.path === "/" ? "" : page.path}`;
     $("serp-icon").src = asset(state.icon);
     $("icon-label").textContent =
-      `图标 ${state.icon.toUpperCase()} · ${state.device === "mobile" ? "手机" : "桌面"}`;
+      `${state.icon === "a" ? "用户黑白 Logo" : "历史方案 B"} · ${state.device === "mobile" ? "手机" : "桌面"}`;
     $("serp-canvas").classList.toggle("mobile", state.device === "mobile");
     $("current-title").textContent = page.current.title;
     $("current-description").textContent = page.current.description || "该页未读取到独立摘要。";

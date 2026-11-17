@@ -1,0 +1,64 @@
+[
+  {
+    "canonical": "https://isoffy.com",
+    "icon": "/icon?218c3aaa2fc49ad0",
+    "overflow": false,
+    "page": "home",
+    "title": "is.offy | Designer Plush Bag Charms & Art Toys",
+    "width": 390
+  },
+  {
+    "canonical": "https://isoffy.com/products",
+    "h1": "Plush Bag Charms",
+    "overflow": false,
+    "page": "products",
+    "title": "Plush Bag Charms – Shop All OFFY Styles | is.offy",
+    "width": 390
+  },
+  {
+    "overflow": false,
+    "page": "products",
+    "title": "Plush Bag Charms – Shop All OFFY Styles | is.offy",
+    "width": 1440
+  },
+  {
+    "buyButtons": [
+      {
+        "disabled": false,
+        "text": "Add to Bag"
+      },
+      {
+        "disabled": false,
+        "text": "Buy Now"
+      },
+      {
+        "disabled": false,
+        "text": "Add to Bag"
+      },
+      {
+        "disabled": false,
+        "text": "Buy Now"
+      }
+    ],
+    "canonical": "https://isoffy.com/products/royal-grey",
+    "offer": {
+      "@type": "Offer",
+      "availability": "https://schema.org/InStock",
+      "itemCondition": "https://schema.org/NewCondition",
+      "price": "45.90",
+      "priceCurrency": "USD",
+      "seller": {
+        "@id": "https://isoffy.com/#organization"
+      },
+      "url": "https://isoffy.com/products/royal-grey"
+    },
+    "overflow": false,
+    "page": "product",
+    "priceTexts": [
+      "$45.90",
+      "$45.90"
+    ],
+    "title": "LITTLE HEIRESS | is.offy",
+    "width": 390
+  }
+]

@@ -1,0 +1,224 @@
+{
+  "pages": [
+    {
+      "path": "/",
+      "status": 200,
+      "title": "is.offy | Designer Plush Bag Charms & Art Toys",
+      "description": "Discover OFFY plush bag charms with curly hair, statement glasses and a style all their own. Explore original designs and find your favorite look.",
+      "canonical": "https://isoffy.com",
+      "ogUrl": "https://isoffy.com",
+      "englishAlternate": "https://isoffy.com",
+      "footerSnippetExcluded": true,
+      "jsonLdTypes": [
+        "Organization",
+        "WebSite"
+      ],
+      "productOffer": null
+    },
+    {
+      "path": "/products",
+      "status": 200,
+      "title": "Plush Bag Charms – Shop All OFFY Styles | is.offy",
+      "description": "Explore OFFY plush bag charms across Princess, Streetwear and Dress-up styles. Find the curly-haired companion that feels like you.",
+      "canonical": "https://isoffy.com/products",
+      "ogUrl": "https://isoffy.com/products",
+      "englishAlternate": "https://isoffy.com/products",
+      "footerSnippetExcluded": true,
+      "jsonLdTypes": [
+        "Organization",
+        "WebSite"
+      ],
+      "productOffer": null
+    },
+    {
+      "path": "/collections",
+      "status": 200,
+      "title": "OFFY Plush Doll Collections & Series | is.offy",
+      "description": "Explore Princess, Streetwear and Dress-up: three sides of OFFY, with curly hair, statement glasses and a style to match your mood.",
+      "canonical": "https://isoffy.com/collections",
+      "ogUrl": "https://isoffy.com/collections",
+      "englishAlternate": "https://isoffy.com/collections",
+      "footerSnippetExcluded": true,
+      "jsonLdTypes": [
+        "Organization",
+        "WebSite"
+      ],
+      "productOffer": null
+    },
+    {
+      "path": "/collections/princess-lady",
+      "status": 200,
+      "title": "Princess Series Plush Bag Charms | is.offy",
+      "description": "Discover the softer side of OFFY. Explore the Princess Series of plush bag charms, from delicate dresses to quietly confident everyday looks.",
+      "canonical": "https://isoffy.com/collections/princess-lady",
+      "ogUrl": "https://isoffy.com/collections/princess-lady",
+      "englishAlternate": "https://isoffy.com/collections/princess-lady",
+      "footerSnippetExcluded": true,
+      "jsonLdTypes": [
+        "Organization",
+        "WebSite",
+        "BreadcrumbList"
+      ],
+      "productOffer": null
+    },
+    {
+      "path": "/collections/outdoor-sporty",
+      "status": 200,
+      "title": "Streetwear Series Plush Bag Charms | is.offy",
+      "description": "Bring OFFY along for the everyday. Explore streetwear-inspired plush bag charms with expressive outfits, curly hair and statement glasses.",
+      "canonical": "https://isoffy.com/collections/outdoor-sporty",
+      "ogUrl": "https://isoffy.com/collections/outdoor-sporty",
+      "englishAlternate": "https://isoffy.com/collections/outdoor-sporty",
+      "footerSnippetExcluded": true,
+      "jsonLdTypes": [
+        "Organization",
+        "WebSite",
+        "BreadcrumbList"
+      ],
+      "productOffer": null
+    },
+    {
+      "path": "/collections/playful-life",
+      "status": 200,
+      "title": "Dress-up Series Plush Bag Charms | is.offy",
+      "description": "Meet OFFY in a new look. Explore Dress-up Series plush bag charms with characterful outfits, signature curls and statement glasses.",
+      "canonical": "https://isoffy.com/collections/playful-life",
+      "ogUrl": "https://isoffy.com/collections/playful-life",
+      "englishAlternate": "https://isoffy.com/collections/playful-life",
+      "footerSnippetExcluded": true,
+      "jsonLdTypes": [
+        "Organization",
+        "WebSite",
+        "BreadcrumbList"
+      ],
+      "productOffer": null
+    },
+    {
+      "path": "/about",
+      "status": 200,
+      "title": "About is.offy – Original Plush Art Toys",
+      "description": "Get to know OFFY, the original character by WHIMCORE. Discover the idea behind the curls, the many looks and a little world made for self-expression.",
+      "canonical": "https://isoffy.com/about",
+      "ogUrl": "https://isoffy.com/about",
+      "englishAlternate": "https://isoffy.com/about",
+      "footerSnippetExcluded": true,
+      "jsonLdTypes": [
+        "Organization",
+        "WebSite"
+      ],
+      "productOffer": null
+    },
+    {
+      "path": "/our-story",
+      "status": 200,
+      "title": "The Story of OFFY & Creator Gia | is.offy",
+      "description": "Meet Gia, OFFY's creator, and explore Briar Island, the original sketches and the many versions of one sleepy-eyed girl.",
+      "canonical": "https://isoffy.com/our-story",
+      "ogUrl": "https://isoffy.com/our-story",
+      "englishAlternate": "https://isoffy.com/our-story",
+      "footerSnippetExcluded": true,
+      "jsonLdTypes": [
+        "Organization",
+        "WebSite"
+      ],
+      "productOffer": null
+    },
+    {
+      "path": "/bag-charm",
+      "status": 200,
+      "title": "Upcoming OFFY Bag Charm Collection | is.offy",
+      "description": "A first look at OFFY's upcoming bag charm collection. Explore the character previews and follow is.offy for future release updates.",
+      "canonical": "https://isoffy.com/bag-charm",
+      "ogUrl": "https://isoffy.com/bag-charm",
+      "englishAlternate": "https://isoffy.com/bag-charm",
+      "footerSnippetExcluded": true,
+      "jsonLdTypes": [
+        "Organization",
+        "WebSite"
+      ],
+      "productOffer": null
+    },
+    {
+      "path": "/faq",
+      "status": 200,
+      "title": "OFFY FAQs – Orders, Shipping & Returns | is.offy",
+      "description": "Find answers to common questions about OFFY orders, shipping, returns and product details. Read our FAQs before placing an order.",
+      "canonical": "https://isoffy.com/faq",
+      "ogUrl": "https://isoffy.com/faq",
+      "englishAlternate": "https://isoffy.com/faq",
+      "footerSnippetExcluded": true,
+      "jsonLdTypes": [
+        "Organization",
+        "WebSite",
+        "FAQPage"
+      ],
+      "productOffer": null
+    },
+    {
+      "path": "/products/royal-grey",
+      "status": 200,
+      "title": "LITTLE HEIRESS | is.offy",
+      "description": "Born into elegance, with nothing to prove. Dressed in a soft grey knit with a crisp white collar and a black pleated skirt, finished with a tiny…",
+      "canonical": "https://isoffy.com/products/royal-grey",
+      "ogUrl": "https://isoffy.com/products/royal-grey",
+      "englishAlternate": "https://isoffy.com/products/royal-grey",
+      "footerSnippetExcluded": true,
+      "jsonLdTypes": [
+        "Organization",
+        "WebSite",
+        "Product",
+        "BreadcrumbList"
+      ],
+      "productOffer": {
+        "@type": "Offer",
+        "url": "https://isoffy.com/products/royal-grey",
+        "price": "55.90",
+        "priceCurrency": "SGD",
+        "availability": "https://schema.org/InStock",
+        "itemCondition": "https://schema.org/NewCondition",
+        "seller": {
+          "@id": "https://isoffy.com/#organization"
+        }
+      }
+    },
+    {
+      "path": "/products/wild-sweetie",
+      "status": 200,
+      "title": "WILD SWEETIE | is.offy",
+      "description": "Good taste leaves room for a little mischief. Round rose-gold glasses lend a thoughtful touch to leopard corduroy and a matching bow. She’s curious,…",
+      "canonical": "https://isoffy.com/products/wild-sweetie",
+      "ogUrl": "https://isoffy.com/products/wild-sweetie",
+      "englishAlternate": "https://isoffy.com/products/wild-sweetie",
+      "footerSnippetExcluded": true,
+      "jsonLdTypes": [
+        "Organization",
+        "WebSite",
+        "Product",
+        "BreadcrumbList"
+      ],
+      "productOffer": {
+        "@type": "Offer",
+        "url": "https://isoffy.com/products/wild-sweetie",
+        "price": "55.90",
+        "priceCurrency": "SGD",
+        "availability": "https://schema.org/InStock",
+        "itemCondition": "https://schema.org/NewCondition",
+        "seller": {
+          "@id": "https://isoffy.com/#organization"
+        }
+      }
+    }
+  ],
+  "favicon": {
+    "url": "/icon?218c3aaa2fc49ad0",
+    "size": [
+      96,
+      96
+    ],
+    "sha256": "f5b2aa6067d93fcb5d96562abc741ce99bc54761b18053d23a233e9fbca41c7d"
+  },
+  "sitemap": {
+    "status": 200,
+    "urlCount": 58
+  }
+}

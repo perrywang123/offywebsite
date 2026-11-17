@@ -1,6 +1,6 @@
 # 搜索展示优化验收（第一、二批）
 
-2026-11-17。范围见 [规范变更](../openspec/changes/search-visibility-batches-1-2/proposal.md)。本文件随执行更新；没有记录为通过的外部步骤不能视为完成。
+2026-11-17。范围见 [规范变更](../openspec/changes/archive/2026-11-17-search-visibility-batches-1-2/proposal.md)。本文件随执行更新；没有记录为通过的外部步骤不能视为完成。
 
 ## 本地
 
@@ -21,7 +21,12 @@
 
 ## 发布与外部平台
 
-- Git / CI / 外部镜像 / storefront 单独部署：待本轮完成后记录精确 revision。
-- Search Console：用户已授权当前 Google 账号；待公开验证标记部署后验证并提交 sitemap。
+- 运行时代码 / OCI revision：`e88a5cc3293efdf38a6b05fe83b2d49196c4e441`。CI [44054114025](https://github.com/perrywang123/offywebsite/actions/runs/44054114025) 与镜像 [44054115655](https://github.com/perrywang123/offywebsite/actions/runs/44054115655) 均 success；只在 GitHub 构建，生产未编译。
+- 镜像 `sha256:7684c6609a7c956b26304c9a053a77d417acd1a9dde3c47eecd7c08d559f32e9`；artifact ZIP 与 tar SHA256 均校验通过。
+- 主站容器 healthy，环境哈希/卷/端口保持；admin、KOL worker、Meta worker、GeoIP 容器 ID/镜像/启动时间不变，admin 镜像标签已恢复。`.env` 未改；本次 app 发布期间 Nginx 没有再次改变。
+- 线上首页/商品页/health/8443 后台均 200；公网主站 `/admin` 仍 404。12 个主要页面 title/description/OG/self-canonical/英文 alternate/页脚摘要排除通过，favicon 为 96×96 PNG，sitemap 200，包含 58 个 URL。
+- 手机 390px：首页、列表、详情无横向溢出；桌面 1440px 列表和商品页正常。LITTLE HEIRESS 显示 USD 45.90，结构化 Offer 同为 USD 45.90，Add to Bag / Buy Now 可用。没有在生产下单、付款或改动购物袋。
+- 另外，本地正确 origin 的浏览器实测 GBP：LITTLE HEIRESS 可见 £33.90，Offer 为 33.90 GBP。最初自定义端口与 SITE_URL 不同导致的本地 origin 校验问题通过启动参数修正，未修改市场代码。
+- Search Console：当前 Google 账号已完成 HTML 标记所有权验证；`sitemap.xml` 已提交并显示“成功 / 已发现网页 58”。这代表站点地图读取成功，不代表 58 页均已收录；概览仍提示初始数据处理中。首页既有索引已确认，并已成功提交一次重新编入索引请求；页面显示已加入优先抓取队列，没有重复提交。
 - Merchant Center：当前账号无权限访问商家账户，用户明确暂缓；未注册、接 feed 或启用广告。
 - Shopify 商品 SEO 示例写入：页面加载受阻，应用缺少商品编辑权限，等待可用的商品编辑页。代码只读接入已完成。
