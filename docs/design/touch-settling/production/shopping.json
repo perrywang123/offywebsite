@@ -1,0 +1,10 @@
+{
+  "before": "empty",
+  "check": {
+    "subtotal": "BAG (1)\n✕\n\nLITTLE HEIRESS\n\n$45.90\n\n−\n1\n+\nRemove\nShip to US · USD\n⌄\nSubtotal\n$45.90\n\nWorldwide shipping: $15 USD per order.\n\nFor US orders of 3+ OFFYs, shipping is $20 USD.\n\nCheckout",
+    "checkoutEnabled": true
+  },
+  "after": "removed only the test-added LITTLE HEIRESS",
+  "checkoutClicked": false,
+  "orderCreated": false
+}

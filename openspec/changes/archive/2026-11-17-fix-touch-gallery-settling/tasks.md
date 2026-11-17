@@ -1,6 +1,6 @@
 - [x] Reproduce touch completion and create failing regressions before changing implementation.
 - [x] Fix input ownership and verify touch release distance/velocity and cancellation.
 - [x] Validate both rendered galleries with browser touch input and desktop pointer input.
-- [ ] Run full tests, lint, typecheck and production build; archive spec and push source.
-- [ ] Build Linux image outside production and deploy storefront only with backup/rollback preserved.
-- [ ] Verify live touch behavior, health and unchanged services; publish evidence.
+- [x] Run full tests, lint, typecheck and production build; archive spec and push source.
+- [x] Build Linux image outside production and deploy storefront only with backup/rollback preserved.
+- [x] Verify live touch behavior, health and unchanged services; publish evidence.

@@ -22,4 +22,16 @@
 
 ## 发布状态
 
-本地验证通过，待 Git 推送、外部 Linux 镜像构建及独立主站发布后补充线上证据。后台、worker、Nginx 和私密环境配置保持现状；保留当前镜像及一致性数据库备份以便回滚。
+2026-11-17 上海时间 15:21 已完成独立主站发布。运行源码为 `6168d358c2e8dfe3a01559655ca044cc064901a9`，镜像为 `sha256:2d6889d6278e2f54280cf99a8f6419fe78b9f48735ae6e046ebfc7090be01d60`。[质量 CI](https://github.com/perrywang123/offywebsite/actions/runs/44037165919) 与 [Linux 镜像 CI](https://github.com/perrywang123/offywebsite/actions/runs/44037166061) 均成功。
+
+服务器从原 Git checkout fast-forward 拉取，校验 Git revision、制品 ZIP 校验和、镜像压缩包校验和、Linux amd64 架构和镜像 OCI revision 后，以 `bash deploy/update-storefront.sh --kol --prebuilt --skip-pull` 仅替换 app。生产没有编译；制品的 admin 标签导入后恢复为原镜像。见 [发布对照](design/touch-settling/production/deployment.json)：后台、KOL worker、Meta worker、GeoIP 的容器 ID/镜像/启动时间保持；主站环境哈希、数据挂载、3000 绑定、私密 .env 和 Nginx 均保持。
+
+上线后用同一 Chrome iPhone 16 原生触摸模拟重新验收：首页 393px 视口从索引 0→1、2→3，精确吸附为 -393、-1179px，期间自动轮播仍可运作；详情图从 0→1→2，345px 图区精确吸附为 -345、-690px。两张优化图片加载正常，Add to Bag / Buy Now 可用。桌面 1489px 从 0→1，位移约 -705.016px，等于一张图片宽度；两种视口无页面横向溢出。见 [首页采样](design/touch-settling/production/home-touch.json)、[详情采样](design/touch-settling/production/pdp-touch.json)、[桌面采样](design/touch-settling/production/desktop.json)。浏览器设备模拟已关闭，本次验收标签已关闭。
+
+线上购物袋原为空袋，加入 LITTLE HEIRESS 一件后显示 USD 45.90、Checkout 可用，再移除本次新增商品恢复空袋。使用 `offy_validation / internal_test` 来源标记；没有点击 Checkout 或 Buy Now，没有创建订单或执行付款。见 [购物回归](design/touch-settling/production/shopping.json)。购物与支付实现未修改；本次不冒称完成新的支付到账测试。
+
+主站及后台 healthy；首页、详情、health、8443 后台入口均为 200，主站 /admin 仍为 404。只读 SQLite quick_check=ok，迁移数仍为 16。
+
+回滚镜像 `offy-app:before-touch-settling-20261117` 和一致性数据库备份 `/data/deploy-backups/offy-2026-11-17T07-21-24-808Z-d0541502.db` 已保留。服务器 `.deploy-backups/touch-settling-20261117/` 保留前后对照、发布日志及校验文件；仅清理本轮临时下载 ZIP/镜像压缩包。
+
+线上截图：[首页手机](design/touch-settling/production/home-mobile.jpg)、[详情手机](design/touch-settling/production/pdp-mobile.jpg)、[详情桌面](design/touch-settling/production/pdp-desktop.jpg)、[购物袋](design/touch-settling/production/bag-check.jpg)。

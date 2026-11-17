@@ -1,0 +1,21 @@
+[
+  {
+    "before": 0,
+    "after": {
+      "active": 1,
+      "actual": "matrix(1, 0, 0, 1, -393, 0)",
+      "overflow": false,
+      "target": "translateX(calc(-100% + 0px))",
+      "width": 393
+    }
+  },
+  {
+    "before": 2,
+    "after": {
+      "active": 3,
+      "actual": "matrix(1, 0, 0, 1, -1179, 0)",
+      "target": "translateX(calc(-300% + 0px))",
+      "width": 393
+    }
+  }
+]

@@ -1,0 +1,37 @@
+[
+  {
+    "before": 0,
+    "after": {
+      "active": 1,
+      "actual": "matrix(1, 0, 0, 1, -345, 0)",
+      "buttons": [
+        {
+          "enabled": true,
+          "name": "Add to Bag"
+        },
+        {
+          "enabled": true,
+          "name": "Buy Now"
+        },
+        {
+          "enabled": true,
+          "name": "Add to Bag"
+        },
+        {
+          "enabled": true,
+          "name": "Buy Now"
+        }
+      ],
+      "imagesLoaded": true,
+      "width": 345
+    }
+  },
+  {
+    "gesture": "repeat-next",
+    "after": {
+      "active": 2,
+      "actual": "matrix(1, 0, 0, 1, -690, 0)",
+      "width": 345
+    }
+  }
+]
