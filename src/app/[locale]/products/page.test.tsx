@@ -75,25 +75,20 @@ describe("/products metadata · self-canonical", () => {
     expect(result.alternates?.canonical).not.toBe("/en/products");
   });
 
-  it("title 是 All Looks(模板补 | is.offy),不继承首页默认标题", async () => {
+  it("uses the approved buying-intent title and page-specific sharing URL", async () => {
     const result = await meta();
-    expect(result.title).toBe(en.catalog.title);
-    expect(result.title).toBe("All Looks");
+    expect(result.title).toEqual({ absolute: "Plush Bag Charms – Shop All OFFY Styles | is.offy" });
+    expect(result.openGraph).toMatchObject({
+      url: "/products",
+      title: "Plush Bag Charms – Shop All OFFY Styles | is.offy",
+    });
+    expect(result.alternates?.languages).toEqual({ en: "/products" });
   });
-
-  it("description 写实:用当前真实商品数,而不是复制首页那句 tagline", async () => {
-    mockState.count = 30;
-    const result = await meta();
-    expect(result.description).toBe(
-      "All 30 OFFY looks across three series — princess, streetwear and dress-up.",
-    );
-    expect(result.description).not.toBe(en.common.tagline);
-  });
-
-  it("description 的数量跟着实时数据走(不是写死的 30)", async () => {
+  it("describes live bag charm styles without publishing a stale fixed count", async () => {
     mockState.count = 37;
-    const result = await meta();
-    expect(result.description).toContain("All 37 OFFY looks");
-    mockState.count = 30; // 复位,避免影响其它用例
+    expect((await meta()).description).toBe(
+      "Explore OFFY plush bag charms across Princess, Streetwear and Dress-up styles. Find the curly-haired companion that feels like you.",
+    );
+    mockState.count = 30;
   });
 });

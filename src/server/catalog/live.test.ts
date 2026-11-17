@@ -42,6 +42,31 @@ beforeEach(() => {
   mockedOutsideCollections.mockResolvedValue([]);
 });
 
+it("passes product SEO through without replacing the real name or commerce", async () => {
+  mockedProductData.mockResolvedValue({
+    title: "Real product",
+    description: "Real description",
+    descriptionBlocks: [],
+    images: [],
+    priceCents: 3790,
+    currency: "GBP",
+    variantId: "actual-variant",
+    available: true,
+    collectionHandles: ["frontpage"],
+    sku: "ACTUAL-SKU",
+    seo: { title: "Search title", description: "Search summary" },
+  });
+  const result = await getLiveProductByCode("real", "GB");
+  expect(result?.seo).toEqual({ title: "Search title", description: "Search summary" });
+  expect(result).toMatchObject({
+    name: { en: "Real product" },
+    priceCents: 3790,
+    currency: "GBP",
+    shopifyVariantId: "actual-variant",
+    skuCode: "ACTUAL-SKU",
+  });
+});
+
 /** 线上实测的两款周边(贴纸/帆布包):不属于任何 collection,按 createdAt 降序。 */
 const TOTE = {
   handle: "offy-tote-bag",

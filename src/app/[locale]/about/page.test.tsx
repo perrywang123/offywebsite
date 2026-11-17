@@ -52,8 +52,11 @@ describe("PSD About invitation", () => {
 
   it("advertises its own canonical and About metadata", async () => {
     const meta = await generateMetadata({ params });
-    expect(meta.title).toBe("About Us");
+    expect(meta.title).toEqual({ absolute: "About is.offy – Original Plush Art Toys" });
     expect(meta.alternates?.canonical).toBe("/about");
-    expect(meta.openGraph).toMatchObject({ title: "About Us", url: "/about" });
+    expect(meta.openGraph).toMatchObject({
+      title: "About is.offy – Original Plush Art Toys",
+      url: "/about",
+    });
   });
 });

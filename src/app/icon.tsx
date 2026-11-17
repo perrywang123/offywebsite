@@ -2,13 +2,13 @@ import { readFile } from "node:fs/promises";
 import { join } from "node:path";
 import { ImageResponse } from "next/og";
 
-export const size = { width: 64, height: 64 };
+export const size = { width: 96, height: 96 };
 export const contentType = "image/png";
 export const dynamic = "force-static";
 
-/** Square browser canvas; the existing wide logo retains its original ratio. */
+/** Owner-supplied square artwork; no stretching and no change to the Header wordmark. */
 export default async function Icon() {
-  const logo = await readFile(join(process.cwd(), "public/assets/brand/is-offy-logo.png"));
+  const logo = await readFile(join(process.cwd(), "public/assets/brand/offy-search-logo.png"));
   return new ImageResponse(
     <div
       style={{
@@ -18,14 +18,13 @@ export default async function Icon() {
         alignItems: "center",
         justifyContent: "center",
         background: "white",
-        borderRadius: 10,
       }}
     >
       <img
         alt="is.offy"
         src={`data:image/png;base64,${logo.toString("base64")}`}
-        width={58}
-        height={(58 * 408) / 1084}
+        width={96}
+        height={96}
       />
     </div>,
     size,

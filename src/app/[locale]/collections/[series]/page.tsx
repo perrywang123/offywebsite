@@ -2,6 +2,7 @@ import { CommerceUnavailable } from "@/components/CommerceUnavailable";
 import { catalogResult } from "@/server/catalog/result";
 import { seriesMap } from "@/lib/catalog/series";
 import type { Metadata } from "next";
+import { pageMetadata, seriesSearchCopy } from "@/lib/seo/metadata";
 import Image from "next/image";
 import { headers } from "next/headers";
 import { notFound } from "next/navigation";
@@ -35,26 +36,26 @@ export async function generateMetadata({
   const result = await catalogResult(getLiveSeriesList());
   if (result.status === "unavailable")
     return {
-      title: "Series",
+      ...pageMetadata(locale, `/collections/${slug}`, {
+        title: "Series | is.offy",
+        description: "Explore OFFY series.",
+      }),
       robots: { index: false, follow: true },
-      alternates: { canonical: publicPath(locale, `/collections/${slug}`) },
     };
   const series = result.data.find((s) => s.slug === slug);
   const country = pickCountry(await headers());
   const productsResult = series
     ? await catalogResult(getLiveProductsBySeries(series.slug, country))
     : null;
-  const isZh = locale === "zh";
-
   return {
+    ...pageMetadata(
+      locale,
+      `/collections/${slug}`,
+      series
+        ? seriesSearchCopy(series)
+        : { title: "Series | is.offy", description: "Explore OFFY series." },
+    ),
     ...(productsResult?.status === "unavailable" ? { robots: { index: false, follow: true } } : {}),
-    title: series ? (isZh ? series.name.zh : series.name.en) : "Series",
-    description: series
-      ? isZh
-        ? series.tagline.zh
-        : series.tagline.en
-      : "Three OFFY series: princess, streetwear and dress-up.",
-    alternates: { canonical: publicPath(locale, `/collections/${slug}`) },
   };
 }
 

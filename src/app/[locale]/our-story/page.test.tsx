@@ -54,7 +54,10 @@ describe("complete PSD OFFY story", () => {
   it("defines story-specific canonical and sharing metadata", async () => {
     const meta = await generateMetadata({ params });
     expect(meta.alternates?.canonical).toBe("/our-story");
-    expect(meta.title).toBe("The Story of OFFY");
-    expect(meta.openGraph).toMatchObject({ title: "The Story of OFFY", url: "/our-story" });
+    expect(meta.title).toEqual({ absolute: "The Story of OFFY & Creator Gia | is.offy" });
+    expect(meta.openGraph).toMatchObject({
+      title: "The Story of OFFY & Creator Gia | is.offy",
+      url: "/our-story",
+    });
   });
 });

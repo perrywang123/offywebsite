@@ -40,6 +40,17 @@ const PRODUCT: Product = {
 const offersOf = (ld: Record<string, unknown>) => ld.offers as Record<string, unknown>;
 
 describe("productJsonLd", () => {
+  it("links a stable product URL and seller without inventing reviews or policy facts", () => {
+    const ld = productJsonLd({ product: PRODUCT, locale: "en", siteUrl: SITE });
+    expect(ld).toMatchObject({
+      "@id": `${SITE}/products/black-pearl#product`,
+      url: `${SITE}/products/black-pearl`,
+    });
+    expect(offersOf(ld).seller).toEqual({ "@id": `${SITE}/#organization` });
+    expect(ld).not.toHaveProperty("aggregateRating");
+    expect(ld).not.toHaveProperty("gtin");
+    expect(offersOf(ld)).not.toHaveProperty("shippingDetails");
+  });
   it("emits the Product + Offer shape Google expects", () => {
     const ld = productJsonLd({ product: PRODUCT, locale: "en", siteUrl: SITE });
 
@@ -183,13 +194,15 @@ describe("breadcrumbJsonLd", () => {
 
 describe("organizationJsonLd / websiteJsonLd", () => {
   it("Organization carries the brand, real logo path and Instagram profile", () => {
-    expect(organizationJsonLd(SITE)).toEqual({
+    expect(organizationJsonLd(SITE)).toMatchObject({
       "@context": "https://schema.org",
       "@type": "Organization",
       name: "is.offy",
       url: "https://isoffy.com",
       logo: "https://isoffy.com/assets/brand/is-offy-logo.png",
       sameAs: ["https://www.instagram.com/is.offy"],
+      "@id": `${SITE}/#organization`,
+      alternateName: ["OFFY", "isoffy"],
     });
     expect(ORGANIZATION_SAME_AS).toEqual(["https://www.instagram.com/is.offy"]);
   });
@@ -205,6 +218,9 @@ describe("organizationJsonLd / websiteJsonLd", () => {
       "@type": "WebSite",
       name: "is.offy",
       url: "https://isoffy.com",
+      "@id": `${SITE}/#website`,
+      alternateName: ["OFFY", "isoffy"],
+      publisher: { "@id": `${SITE}/#organization` },
     });
   });
 });

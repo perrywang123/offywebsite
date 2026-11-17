@@ -1,4 +1,5 @@
 import { CommerceUnavailable } from "@/components/CommerceUnavailable";
+import { pageMetadata, productSearchCopy } from "@/lib/seo/metadata";
 import { catalogResult } from "@/server/catalog/result";
 import Image from "next/image";
 import { headers } from "next/headers";
@@ -42,16 +43,15 @@ export async function generateMetadata({
     };
   const product = result.data;
   if (!product) return {};
+  const metadata = pageMetadata(
+    locale,
+    `/products/${product.code}`,
+    productSearchCopy(product, locale),
+  );
   const name = locale === "zh" ? product.name.zh : product.name.en;
   return {
-    title: name,
-    description: product.description.en || name,
-    alternates: { canonical: publicPath(locale, `/products/${product.code}`) },
-    openGraph: {
-      title: name,
-      description: product.description.en || name,
-      images: product.images.map((url) => ({ url, alt: name })),
-    },
+    ...metadata,
+    openGraph: { ...metadata.openGraph, images: product.images.map((url) => ({ url, alt: name })) },
   };
 }
 

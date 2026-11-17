@@ -25,6 +25,38 @@ function mockFetch(json: unknown, ok = true): typeof fetch {
 }
 
 describe("fetchProductData", () => {
+  it.each([
+    { title: "SEO title", description: "SEO summary" },
+    { title: null, description: null },
+  ])("reads Shopify SEO independently of the commercial facts: %j", async (seo) => {
+    const f = mockFetch({
+      data: {
+        product: {
+          title: "REAL TITLE",
+          description: "Real description",
+          seo,
+          availableForSale: true,
+          images: { nodes: [] },
+          collections: { nodes: [] },
+          variants: {
+            nodes: [{ id: "live-variant", price: { amount: "37.90", currencyCode: "GBP" } }],
+          },
+        },
+      },
+    });
+    const data = await fetchProductData("real", f, "GB");
+    expect(data?.seo).toEqual(seo);
+    expect(data).toMatchObject({
+      title: "REAL TITLE",
+      priceCents: 3790,
+      currency: "GBP",
+      variantId: "live-variant",
+      available: true,
+    });
+    expect(JSON.parse(vi.mocked(f).mock.calls[0][1]!.body as string).query).toMatch(
+      /seo\s*\{\s*title\s+description\s*\}/,
+    );
+  });
   it("parses title/description/images/price/variantId/available/collections from the product(handle) response", async () => {
     const f = mockFetch({
       data: {

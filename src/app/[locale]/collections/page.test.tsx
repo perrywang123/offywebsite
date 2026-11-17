@@ -67,8 +67,8 @@ describe("/collections metadata · self-canonical", () => {
 
   it("title 是 Series,description 写实描述三个系列", async () => {
     const result = await meta();
-    expect(result.title).toBe("Series");
-    expect(result.description).toBe("Three OFFY series: princess, streetwear and dress-up.");
+    expect(result.title).toEqual({ absolute: "OFFY Plush Doll Collections & Series | is.offy" });
+    expect(result.description).toContain("three sides of OFFY");
     expect(result.description).not.toBe(en.common.tagline);
   });
 });

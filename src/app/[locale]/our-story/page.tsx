@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { pageMetadata, searchCopy } from "@/lib/seo/metadata";
 import { publicPath } from "@/i18n/routing";
 import { OffyStory } from "@/components/about/AboutStory";
 
@@ -8,19 +9,11 @@ export async function generateMetadata({
   params: Promise<{ locale: string }>;
 }): Promise<Metadata> {
   const { locale } = await params;
-  const path = publicPath(locale, "/our-story");
-  const title = "The Story of OFFY";
-  const description =
-    "Meet Gia, the creator of OFFY, and discover Briar Island, the original character sketches and the many different versions of the same sleepy-eyed girl.";
+  const metadata = pageMetadata(locale, "/our-story", searchCopy["/our-story"]);
   return {
-    title,
-    description,
-    alternates: { canonical: path, languages: { en: "/our-story" } },
+    ...metadata,
     openGraph: {
-      title,
-      description,
-      url: path,
-      type: "website",
+      ...metadata.openGraph,
       images: [
         {
           url: "/assets/about/story-banner.webp",

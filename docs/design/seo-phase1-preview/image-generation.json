@@ -1,0 +1,18 @@
+{
+  "mode": "built-in image_gen; concept-only; no CLI/API credentials used",
+  "a": {
+    "asset": "assets/icon-a-mascot.png",
+    "prompt": "Use case: logo-brand. Create ONE square favicon concept for the is.offy (OFFY) original plush art toy brand. Image 1 is the actual OFFY product identity reference, Image 2 is the official OFFY drawing style reference. These are references, not edit targets. Design a bold, extremely simplified head-only mascot icon, front-facing: recognizable dark brown curly hair with two soft tufts, warm brown face, thick cream round statement glasses, sleepy half-lidded eyes. Preserve the distinctive OFFY mood, do not make an unrelated generic teddy bear. Flat graphic shapes, strong silhouette, only dark espresso brown, warm brown, ivory, tiny muted pink. No fine hair texture, no freckles, no bow, no wings, no body, no lettering, no watermark, no border or drop shadow. White background. The head fills about 84% of the square canvas with safe margin, centered. Design for recognition at 16 to 32 pixels, so very few large shapes and bold glasses. Deliver one clean icon, not a mockup sheet.",
+    "references": [
+      "public/assets/products/wcoffy-cpl04.jpg",
+      "public/assets/about/offy-illustration.webp"
+    ],
+    "transparent_background": false
+  },
+  "b": {
+    "asset": "assets/icon-b-wordmark.png",
+    "prompt": "Use case: logo-brand. Create ONE square favicon concept for the existing is.offy (OFFY) brand. Image 1 is the official handwritten wordmark reference with transparency. Image 2 is how that existing mark currently looks when squeezed into a small white favicon; this is the readability problem to solve. Design a compact typography-only alternative retaining the hand-drawn irregular bold OFFY personality. Exact text, all lowercase: top line \"is.\" smaller, bottom line \"offy\" much larger, dominant. Spell i s dot and o f f y exactly; NO other text and no TM symbol. Arrange tightly into a balanced square, black/espresso ink lettering on a solid warm ivory-white background. Thick rounded handmade letter strokes, highly legible open counters, simple forms. No face, no additional icon, no gradients, no shadows, no frame, no 3D, no app mockup, no extra shapes or badges. Use the square efficiently, about 84% icon occupancy, with safe outer margin. The design must be legible at 16 to 32px. Deliver a single flat square icon.",
+    "references": ["public/assets/brand/is-offy-logo.png", "assets/icon-current.png"],
+    "transparent_background": false
+  }
+}

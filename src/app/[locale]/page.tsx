@@ -1,4 +1,5 @@
 import { CommerceUnavailable } from "@/components/CommerceUnavailable";
+import { pageMetadata, searchCopy } from "@/lib/seo/metadata";
 import { catalogResult } from "@/server/catalog/result";
 import Image from "next/image";
 import { getTranslations } from "next-intl/server";
@@ -23,7 +24,10 @@ export async function generateMetadata(): Promise<import("next").Metadata> {
   const result = await catalogResult(
     Promise.all([getHomeLooks(country), getLiveProducts(country)]),
   );
-  return result.status === "unavailable" ? { robots: { index: false, follow: true } } : {};
+  return {
+    ...pageMetadata("en", "/", searchCopy["/"]),
+    ...(result.status === "unavailable" ? { robots: { index: false, follow: true } } : {}),
+  };
 }
 
 export default async function HomePage({ params }: { params: Promise<{ locale: string }> }) {

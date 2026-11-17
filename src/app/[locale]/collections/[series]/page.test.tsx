@@ -10,7 +10,10 @@ import { env } from "@/lib/env";
  *   · title 用 **getLiveSeriesList() 查到的真实系列名**(不是写死字符串);
  *   · description 用该系列的 tagline(数据源 `lib/catalog/series.ts`)。
  */
-const mockState = vi.hoisted(() => ({ liveName: null as string | null }));
+const mockState = vi.hoisted(() => ({
+  liveName: null as string | null,
+  seoTitle: null as string | null,
+}));
 
 // 其它模块的 import 与页面共用同一份 mock(metadata 不渲染组件)。
 vi.mock("next-intl/server", async () => {
@@ -47,6 +50,7 @@ vi.mock("@/server/catalog/live", async () => {
     getLiveSeriesList: async () =>
       seriesList.map((s) => ({
         ...s,
+        seo: { title: mockState.seoTitle },
         name: {
           en:
             s.slug === "outdoor-sporty"
@@ -95,28 +99,20 @@ describe("/collections/<series> metadata · self-canonical", () => {
     expect((await meta("playful-life")).alternates?.canonical).toBe("/collections/playful-life");
   });
 
-  it("title = 真实系列名,description = 该系列 tagline", async () => {
+  it("uses the reviewed series search copy while keeping the visible Shopify title intact", async () => {
     const result = await meta("outdoor-sporty");
-    expect(result.title).toBe("Fashion Lifestyle");
-    expect(result.description).toBe("Weekend in motion");
+    expect(result.title).toEqual({ absolute: "Streetwear Series Plush Bag Charms | is.offy" });
+    expect(result.description).toContain("streetwear-inspired plush bag charms");
   });
-
-  it("不同系列各用自己的名字/tagline(不是一份写死的文案)", async () => {
-    const result = await meta("playful-life");
-    expect(result.title).toBe("Playful Life");
-    expect(result.description).toBe("Too cute to dress normal");
-  });
-
-  it("系列名来自 getLiveSeriesList 的实时值,商家在 Shopify 改名后 metadata 跟着变", async () => {
-    mockState.liveName = "Streetwear Series";
+  it("honors a merchant's Shopify SEO override", async () => {
+    mockState.seoTitle = "My new search title";
     const result = await meta("outdoor-sporty");
-    expect(result.title).toBe("Streetwear Series");
-    mockState.liveName = null;
+    expect(result.title).toEqual({ absolute: "My new search title | is.offy" });
+    mockState.seoTitle = null;
   });
-
   it("查不到的 slug 退回 Series,canonical 仍指该路径(页面本身会 404)", async () => {
     const result = await meta("does-not-exist");
-    expect(result.title).toBe("Series");
+    expect(result.title).toEqual({ absolute: "Series | is.offy" });
     expect(result.alternates?.canonical).toBe("/collections/does-not-exist");
   });
 });

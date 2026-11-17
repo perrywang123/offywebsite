@@ -34,7 +34,10 @@ export async function Footer({ series, locale }: { series: Series[]; locale: str
       {/* 链接列。768–1023px 用两列而不是四列:container-site 在该区间约 707px,
           四列每列仅 ~150px,而品牌简介自带 max-w-xs(320px),说明原设计预期
           该列 ≥320px。 */}
-      <div className="container-site grid gap-10 py-16 md:grid-cols-2 md:gap-8 lg:grid-cols-4">
+      <div
+        data-nosnippet
+        className="container-site grid gap-10 py-16 md:grid-cols-2 md:gap-8 lg:grid-cols-4"
+      >
         <div>
           {/* whitespace-pre-line:`blurb` 是两行(声明一行、版权一行),不这样处理
               `\n` 会被 HTML 折叠成空格,两行挤在一起。 */}
@@ -105,7 +108,7 @@ export async function Footer({ series, locale }: { series: Series[]; locale: str
       </div>
 
       {/* 版权细条 */}
-      <div className="border-cream/10 border-t py-6">
+      <div data-nosnippet className="border-cream/10 border-t py-6">
         <div className="container-site text-cream/50 flex flex-wrap items-center justify-between gap-4 text-xs">
           {/* © 行已并入上面的法律声明块(Excel 第 20 行),这里不再重复;
               右侧保留品牌 slogan。 */}

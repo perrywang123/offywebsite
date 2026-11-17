@@ -38,7 +38,14 @@ export interface Dimensions {
   legCm: number;
 }
 
+/** Search-only fields from Shopify. They never replace visible commercial facts. */
+export interface SearchSeo {
+  title?: string | null;
+  description?: string | null;
+}
+
 export interface Product {
+  seo?: SearchSeo;
   code: string;
   slug: string;
   /** 归属系列;`"merch"` = 不属于任何系列 Collection 的周边(贴纸/帆布包等)。 */
@@ -70,6 +77,7 @@ export interface Product {
 }
 
 export interface Series {
+  seo?: SearchSeo;
   slug: SeriesSlug;
   name: LocalizedString;
   tagline: LocalizedString;

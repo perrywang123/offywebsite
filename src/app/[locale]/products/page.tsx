@@ -3,7 +3,7 @@ import { catalogResult } from "@/server/catalog/result";
 import type { Metadata } from "next";
 import { getTranslations } from "next-intl/server";
 import { headers } from "next/headers";
-import { publicPath } from "@/i18n/routing";
+import { pageMetadata, searchCopy } from "@/lib/seo/metadata";
 import { pickCountry } from "@/lib/geo";
 import { getLiveProducts, getLiveSeriesList } from "@/server/catalog/live";
 import { ProductGrid } from "@/components/product/ProductGrid";
@@ -31,22 +31,11 @@ export async function generateMetadata({
   params: Promise<{ locale: string }>;
 }): Promise<Metadata> {
   const { locale } = await params;
-  const t = await getTranslations("catalog");
   const country = pickCountry(await headers());
   const result = await catalogResult(resolveProducts(country));
-  if (result.status === "unavailable")
-    return {
-      title: t("title"),
-      robots: { index: false, follow: true },
-      alternates: { canonical: publicPath(locale, "/products") },
-    };
-  const products = result.data;
-
   return {
-    title: t("title"),
-    // 数量用当前市场实时拉到的商品数(与页面 kicker 的 count 同源),不写死。
-    description: `All ${products.length} OFFY looks across three series — princess, streetwear and dress-up.`,
-    alternates: { canonical: publicPath(locale, "/products") },
+    ...pageMetadata(locale, "/products", searchCopy["/products"]),
+    ...(result.status === "unavailable" ? { robots: { index: false, follow: true } } : {}),
   };
 }
 
@@ -76,9 +65,9 @@ export default async function ProductsPage({ params }: { params: Promise<{ local
         <header className="mb-10">
           <p className="kicker mb-3">{t("kicker", { count: products.length })}</p>
           <h1 className="font-display text-4xl font-semibold tracking-tight uppercase md:text-6xl">
-            {t("title")}
+            Plush Bag Charms
           </h1>
-          <p className="text-ink-soft mt-2">{t("subtitle")}</p>
+          <p className="text-ink-soft mt-2 max-w-[65ch]">{searchCopy["/products"].description}</p>
         </header>
 
         <ProductGrid products={products} locale={locale} />

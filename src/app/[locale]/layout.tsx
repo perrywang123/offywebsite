@@ -6,8 +6,8 @@ import { collabsMode } from "@/server/collabs/mode";
 import { notFound } from "next/navigation";
 import type { Metadata, Viewport } from "next";
 import { hasLocale, NextIntlClientProvider } from "next-intl";
-import { getTranslations, setRequestLocale } from "next-intl/server";
-import { routing, publicPath } from "@/i18n/routing";
+import { setRequestLocale } from "next-intl/server";
+import { routing } from "@/i18n/routing";
 import { env, kolEnabled } from "@/lib/env";
 import { getLiveSeriesList } from "@/server/catalog/live";
 import { ReferralBridge } from "@/components/kol/ReferralBridge";
@@ -19,6 +19,7 @@ import { getMarketCountries } from "@/server/shopify/localization";
 import { Footer } from "@/components/layout/Footer";
 import { SiteJsonLd } from "@/components/seo/SiteJsonLd";
 import { MetaTracking } from "@/components/marketing/MetaTracking";
+import { pageMetadata, searchCopy } from "@/lib/seo/metadata";
 import { metaConfig } from "@/server/meta/config";
 import { metaTestOrigin } from "@/server/meta/runtime";
 import "../globals.css";
@@ -41,29 +42,12 @@ export async function generateMetadata({
   params: Promise<{ locale: string }>;
 }): Promise<Metadata> {
   const { locale } = await params;
-  const t = await getTranslations({ locale, namespace: "common" });
   return {
     metadataBase: new URL(env.SITE_URL),
-    title: {
-      default: `${t("brand")} — ${t("tagline")}`,
-      template: `%s | ${t("brand")}`,
-    },
-    description: t("tagline"),
-    alternates: {
-      // 英文站无前缀:canonical 是 `/` 而不是 `/en`(后者现在只做 308 跳转)。
-      canonical: publicPath(locale),
-      // hreflang 只列 `routing.locales` 里真实存在的语言。中文已从路由表移除,
-      // 这里若还挂着 `zh: "/zh"` 会把爬虫指向一个已不存在的地址。
-      languages: Object.fromEntries(routing.locales.map((l) => [l, publicPath(l)])),
-    },
-    openGraph: {
-      siteName: "is.offy",
-      title: `${t("brand")} — ${t("tagline")}`,
-      description: t("tagline"),
-      type: "website",
-      locale: locale === "zh" ? "zh_CN" : "en_US",
-      images: [{ url: "/assets/hero/hero-brand.jpg", width: 3250, height: 2041, alt: "is.offy" }],
-    },
+    ...pageMetadata(locale, "/", searchCopy["/"]),
+    title: { default: searchCopy["/"].title, template: "%s | is.offy" },
+    // Public ownership marker, explicitly authorized for the current Google account.
+    verification: { google: "yIjh1jQKaDeK8uDL7JxA-C1X4cR7MkiriIs0TfX95PI" },
   };
 }
 

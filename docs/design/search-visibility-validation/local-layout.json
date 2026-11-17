@@ -1,0 +1,38 @@
+[
+  {
+    "width": 360,
+    "height": 800,
+    "canonical": "http://localhost:3000/products",
+    "h1": "Plush Bag Charms",
+    "ogUrl": "http://localhost:3000/products",
+    "overflow": false,
+    "title": "Plush Bag Charms – Shop All OFFY Styles | is.offy"
+  },
+  {
+    "width": 768,
+    "height": 1024,
+    "canonical": "http://localhost:3000/products",
+    "h1": "Plush Bag Charms",
+    "ogUrl": "http://localhost:3000/products",
+    "overflow": false,
+    "title": "Plush Bag Charms – Shop All OFFY Styles | is.offy"
+  },
+  {
+    "width": 1440,
+    "height": 900,
+    "canonical": "http://localhost:3000/products",
+    "h1": "Plush Bag Charms",
+    "ogUrl": "http://localhost:3000/products",
+    "overflow": false,
+    "title": "Plush Bag Charms – Shop All OFFY Styles | is.offy"
+  },
+  {
+    "width": 1920,
+    "height": 1080,
+    "canonical": "http://localhost:3000/products",
+    "h1": "Plush Bag Charms",
+    "ogUrl": "http://localhost:3000/products",
+    "overflow": false,
+    "title": "Plush Bag Charms – Shop All OFFY Styles | is.offy"
+  }
+]

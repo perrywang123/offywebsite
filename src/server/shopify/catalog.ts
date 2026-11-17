@@ -1,4 +1,5 @@
 import { z } from "zod";
+import type { SearchSeo } from "../../lib/catalog/types";
 import {
   CatalogUnavailableError,
   membershipSchema,
@@ -18,6 +19,7 @@ export interface ShopifyListItem {
   available: boolean;
 }
 export interface ShopifyCollectionSummary {
+  seo?: SearchSeo;
   handle: string;
   title: string;
   description: string;
@@ -127,16 +129,21 @@ export async function fetchShopifyCollections(
     handle: z.string().min(1),
     title: z.string().min(1),
     description: z.string().optional(),
+    seo: z.object({ title: z.string().nullish(), description: z.string().nullish() }).nullish(),
   });
   const nodes = await connection(
     schema,
     "collections-list",
-    `query Collections($after:String) @inContext(country:${normalizeCountry()}) { collections(first:250,after:$after) { nodes { handle title description } ${pagination} } }`,
+    `query Collections($after:String) @inContext(country:${normalizeCountry()}) { collections(first:250,after:$after) { nodes { handle title description seo { title description } } ${pagination} } }`,
     {},
     (d) => field(d, "collections"),
     fetchImpl,
   );
-  return nodes.map((n) => ({ ...n, description: n.description ?? "" }));
+  return nodes.map(({ seo, ...n }) => ({
+    ...n,
+    description: n.description ?? "",
+    ...(seo ? { seo } : {}),
+  }));
 }
 export async function fetchShopifyCollectionProducts(
   collectionHandle: string,

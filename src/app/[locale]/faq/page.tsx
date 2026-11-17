@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { publicPath } from "@/i18n/routing";
+import { pageMetadata, searchCopy } from "@/lib/seo/metadata";
 import { Fragment } from "react";
 import { getTranslations } from "next-intl/server";
 import { Link } from "@/i18n/navigation";
@@ -34,11 +34,7 @@ export async function generateMetadata({
   params: Promise<{ locale: string }>;
 }): Promise<Metadata> {
   const { locale } = await params;
-  return {
-    title: "FAQ",
-    description: "Shipping, returns, payment and privacy questions about OFFY orders.",
-    alternates: { canonical: publicPath(locale, "/faq") },
-  };
+  return pageMetadata(locale, "/faq", searchCopy["/faq"]);
 }
 
 export default async function FaqPage({ params }: { params: Promise<{ locale: string }> }) {

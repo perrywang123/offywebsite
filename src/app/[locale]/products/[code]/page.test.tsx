@@ -160,7 +160,7 @@ vi.mock("@/lib/geo", () => ({
   pickCountry: () => "US",
 }));
 
-import ProductDetailPage from "./page";
+import ProductDetailPage, { generateMetadata } from "./page";
 
 beforeEach(() => {
   pdpState.requestedSeries = [];
@@ -355,6 +355,7 @@ describe("PDP · JSON-LD(Product + BreadcrumbList)", () => {
       priceCurrency: "USD",
       availability: "https://schema.org/InStock",
       itemCondition: "https://schema.org/NewCondition",
+      seller: { "@id": `${SITE_URL}/#organization` },
     });
   });
 
@@ -422,5 +423,31 @@ describe("PDP · JSON-LD(Product + BreadcrumbList)", () => {
     ]);
     expect(elements.map((element) => element.position)).toEqual([1, 2, 3]);
     expect(JSON.stringify(elements)).not.toContain("/collections/merch");
+  });
+});
+
+describe("PDP Shopify SEO metadata", () => {
+  it("uses merchant SEO for head/OG while the visible product and offer remain live", async () => {
+    pdpState.product = {
+      ...CURRENT,
+      seo: { title: "Editorial SEO | is.offy", description: "Search summary" },
+    };
+    const meta = await generateMetadata({
+      params: Promise.resolve({ locale: "en", code: CURRENT.code }),
+    });
+    expect(meta.title).toEqual({ absolute: "Editorial SEO | is.offy" });
+    expect(meta.description).toBe("Search summary");
+    expect(meta.openGraph).toMatchObject({
+      title: "Editorial SEO | is.offy",
+      url: `/products/${CURRENT.code}`,
+    });
+    const { container } = render(
+      await ProductDetailPage({ params: Promise.resolve({ locale: "en", code: CURRENT.code }) }),
+    );
+    const product = [...container.querySelectorAll('script[type="application/ld+json"]')]
+      .map((x) => JSON.parse(x.textContent!))
+      .find((x) => x["@type"] === "Product");
+    expect(product.name).toBe(CURRENT.name.en);
+    expect(product.offers).toMatchObject({ price: "49.90", priceCurrency: "USD" });
   });
 });

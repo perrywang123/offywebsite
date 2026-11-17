@@ -1,4 +1,5 @@
 import { z } from "zod";
+import type { SearchSeo } from "../../lib/catalog/types";
 import { parseDescriptionHtml, type DescriptionBlock } from "../../lib/description-html";
 import {
   membershipSchema,
@@ -10,6 +11,7 @@ import {
 } from "./storefront";
 
 export interface ShopifyProductData {
+  seo?: SearchSeo;
   title: string;
   description: string;
   descriptionBlocks: DescriptionBlock[];
@@ -25,6 +27,7 @@ const productSchema = z.object({
   product: z
     .object({
       title: z.string().min(1),
+      seo: z.object({ title: z.string().nullish(), description: z.string().nullish() }).nullish(),
       description: z.string().optional(),
       descriptionHtml: z.string().optional(),
       availableForSale: z.boolean(),
@@ -60,7 +63,7 @@ export async function fetchProductData(
       `
     query ProductEnrich($handle:String!) @inContext(country: ${cc}) {
       product(handle:$handle) {
-        title description descriptionHtml availableForSale
+        title description descriptionHtml availableForSale seo { title description }
         images(first:10) { nodes { url } }
         variants(first:1) { nodes { id sku availableForSale price { amount currencyCode } } }
         collections(first:250) { nodes { handle } pageInfo { hasNextPage endCursor } }
@@ -74,6 +77,7 @@ export async function fetchProductData(
   if (p === null) return null;
   const variant = p.variants.nodes[0];
   return {
+    ...(p.seo ? { seo: p.seo } : {}),
     title: p.title,
     description: p.description ?? "",
     descriptionBlocks: parseDescriptionHtml(p.descriptionHtml ?? ""),

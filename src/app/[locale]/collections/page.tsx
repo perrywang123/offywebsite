@@ -5,7 +5,7 @@ import Image from "next/image";
 import { headers } from "next/headers";
 import { getTranslations } from "next-intl/server";
 import { Link } from "@/i18n/navigation";
-import { publicPath } from "@/i18n/routing";
+import { pageMetadata, searchCopy } from "@/lib/seo/metadata";
 import { pickCountry } from "@/lib/geo";
 import { getLiveProductsBySeries, getLiveSeriesList } from "@/server/catalog/live";
 import { Reveal } from "@/components/Reveal";
@@ -48,8 +48,6 @@ export async function generateMetadata({
   params: Promise<{ locale: string }>;
 }): Promise<Metadata> {
   const { locale } = await params;
-  const t = await getTranslations("catalog");
-
   const country = pickCountry(await headers());
   const result = await catalogResult(
     (async () => {
@@ -60,9 +58,7 @@ export async function generateMetadata({
   );
   return {
     ...(result.status === "unavailable" ? { robots: { index: false, follow: true } } : {}),
-    title: t("seriesKicker"),
-    description: "Three OFFY series: princess, streetwear and dress-up.",
-    alternates: { canonical: publicPath(locale, "/collections") },
+    ...pageMetadata(locale, "/collections", searchCopy["/collections"]),
   };
 }
 

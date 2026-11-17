@@ -11,6 +11,6 @@ describe("OFFY browser icon", () => {
     expect(image.subarray(0, 8)).toEqual(Buffer.from([137, 80, 78, 71, 13, 10, 26, 10]));
     expect(image.readUInt32BE(16)).toBe(size.width);
     expect(image.readUInt32BE(20)).toBe(size.height);
-    expect(size).toEqual({ width: 64, height: 64 });
+    expect(size).toEqual({ width: 96, height: 96 });
   });
 });

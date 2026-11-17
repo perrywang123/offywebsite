@@ -100,6 +100,8 @@ export function productJsonLd({ product, locale, siteUrl }: ProductJsonLdOptions
   return {
     "@context": "https://schema.org",
     "@type": "Product",
+    "@id": `${url}#product`,
+    url,
     name,
     image: product.images
       .filter((image) => image.trim() !== "")
@@ -117,6 +119,7 @@ export function productJsonLd({ product, locale, siteUrl }: ProductJsonLdOptions
         ? "https://schema.org/InStock"
         : "https://schema.org/OutOfStock",
       itemCondition: "https://schema.org/NewCondition",
+      seller: { "@id": absoluteUrl(siteUrl, "/#organization") },
     },
   };
 }
@@ -143,7 +146,9 @@ export function organizationJsonLd(siteUrl: string): JsonLdObject {
   return {
     "@context": "https://schema.org",
     "@type": "Organization",
+    "@id": absoluteUrl(siteUrl, "/#organization"),
     name: BRAND_NAME,
+    alternateName: ["OFFY", "isoffy"],
     url: siteOrigin(siteUrl),
     logo: absoluteUrl(siteUrl, ORGANIZATION_LOGO_PATH),
     sameAs: [...ORGANIZATION_SAME_AS],
@@ -155,7 +160,10 @@ export function websiteJsonLd(siteUrl: string): JsonLdObject {
   return {
     "@context": "https://schema.org",
     "@type": "WebSite",
+    "@id": absoluteUrl(siteUrl, "/#website"),
     name: BRAND_NAME,
+    alternateName: ["OFFY", "isoffy"],
+    publisher: { "@id": absoluteUrl(siteUrl, "/#organization") },
     url: siteOrigin(siteUrl),
   };
 }

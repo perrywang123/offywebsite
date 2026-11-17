@@ -40,7 +40,6 @@ vi.mock("next/image", () => ({
   ),
 }));
 
-import { teaserSeries } from "@/lib/catalog";
 import { generateMetadata } from "./page";
 
 const meta = () => generateMetadata({ params: Promise.resolve({ locale: "en" }) });
@@ -51,12 +50,10 @@ describe("/bag-charm metadata · self-canonical", () => {
     expect(result.alternates?.canonical).toBe("/bag-charm");
   });
 
-  it("title 是 Bag Charms,description 写实(预告页的实际内容:6 款包挂)", async () => {
+  it("explicitly calls this an upcoming preview rather than live inventory", async () => {
     const result = await meta();
-    expect(result.title).toBe("Bag Charms");
-    expect(result.description).toBe(
-      `A first look at the OFFY bag charm collection — ${teaserSeries.items.length} charms, with more urban spirits on the way.`,
-    );
-    expect(result.description).toContain("6 charms");
+    expect(result.title).toEqual({ absolute: "Upcoming OFFY Bag Charm Collection | is.offy" });
+    expect(result.description).toContain("upcoming bag charm collection");
+    expect(result.openGraph).toMatchObject({ url: "/bag-charm" });
   });
 });

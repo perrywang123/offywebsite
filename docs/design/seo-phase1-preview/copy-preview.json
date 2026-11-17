@@ -1,0 +1,208 @@
+{
+  "status": "approved-copy-product-examples-pending-shopify",
+  "date": "2026-11-17",
+  "siteName": "is.offy",
+  "pages": [
+    {
+      "id": "home",
+      "label": "首页",
+      "path": "/",
+      "intent": "品牌与核心品类",
+      "title": "is.offy | Designer Plush Bag Charms & Art Toys",
+      "description": "Discover OFFY plush bag charms with curly hair, statement glasses and a style all their own. Explore original designs and find your favorite look.",
+      "note": "保留品牌口号在网页上的展示；这版只调整搜索标题和摘要。",
+      "current": {
+        "title": "is.offy — Imagine with Love. Create with Companion.",
+        "description": "Imagine with Love. Create with Companion."
+      },
+      "baselineSource": "2026-11-17 线上 HTML"
+    },
+    {
+      "id": "products",
+      "label": "全部商品",
+      "path": "/products",
+      "intent": "购买意图",
+      "title": "Plush Bag Charms – Shop All OFFY Styles | is.offy",
+      "description": "Explore OFFY plush bag charms across Princess, Streetwear and Dress-up styles. Find the curly-haired companion that feels like you.",
+      "note": "不写固定款数，不把周边、赠品统一改名为包挂；页面商品名称不变。",
+      "current": {
+        "title": "All Looks | is.offy",
+        "description": "All 41 OFFY looks across three series — princess, streetwear and dress-up."
+      },
+      "baselineSource": "2026-11-17 线上 HTML"
+    },
+    {
+      "id": "collections",
+      "label": "系列总览",
+      "path": "/collections",
+      "intent": "系列发现",
+      "title": "OFFY Plush Doll Collections & Series | is.offy",
+      "description": "Explore Princess, Streetwear and Dress-up: three sides of OFFY, with curly hair, statement glasses and a style to match your mood.",
+      "note": "原有三个系列、集合成员与顺序保持不变。",
+      "current": {
+        "title": "Series | is.offy",
+        "description": "Three OFFY series: princess, streetwear and dress-up."
+      },
+      "baselineSource": "2026-11-17 线上 HTML"
+    },
+    {
+      "id": "princess",
+      "label": "Princess Series",
+      "path": "/collections/princess-lady",
+      "intent": "系列购买",
+      "title": "Princess Series Plush Bag Charms | is.offy",
+      "description": "Discover the softer side of OFFY. Explore the Princess Series of plush bag charms, from delicate dresses to quietly confident everyday looks.",
+      "note": "保留系列页面现有名称与排版。",
+      "current": {
+        "title": "OFFY Princess Series | is.offy",
+        "description": "Romanticize the everyday"
+      },
+      "baselineSource": "2026-11-17 线上 HTML"
+    },
+    {
+      "id": "streetwear",
+      "label": "Streetwear Series",
+      "path": "/collections/outdoor-sporty",
+      "intent": "系列购买",
+      "title": "Streetwear Series Plush Bag Charms | is.offy",
+      "description": "Bring OFFY along for the everyday. Explore streetwear-inspired plush bag charms with expressive outfits, curly hair and statement glasses.",
+      "note": "不修改区域限定与市场可售规则。",
+      "current": {
+        "title": "OFFY Streetwear Series | is.offy",
+        "description": "Weekend in motion"
+      },
+      "baselineSource": "2026-11-17 线上 HTML"
+    },
+    {
+      "id": "dressup",
+      "label": "Dress-up Series",
+      "path": "/collections/playful-life",
+      "intent": "系列购买",
+      "title": "Dress-up Series Plush Bag Charms | is.offy",
+      "description": "Meet OFFY in a new look. Explore Dress-up Series plush bag charms with characterful outfits, signature curls and statement glasses.",
+      "note": "与 Princess、Streetwear 使用同一搜索标题结构。",
+      "current": {
+        "title": "OFFY Dress-up Series | is.offy",
+        "description": "Too cute to dress normal"
+      },
+      "baselineSource": "2026-11-17 线上 HTML"
+    },
+    {
+      "id": "about",
+      "label": "About Us",
+      "path": "/about",
+      "intent": "品牌了解",
+      "title": "About is.offy – Original Plush Art Toys",
+      "description": "Get to know OFFY, the original character by WHIMCORE. Discover the idea behind the curls, the many looks and a little world made for self-expression.",
+      "note": "不调整刚上线的 About Us 正文、图片或跳转。",
+      "current": {
+        "title": "About Us | is.offy",
+        "description": "Where OFFY came from. Disconnect, return to nature and meet the version of yourself you love — then explore the story of OFFY and her creator, Gia."
+      },
+      "baselineSource": "2026-11-17 线上 HTML"
+    },
+    {
+      "id": "story",
+      "label": "OFFY 故事",
+      "path": "/our-story",
+      "intent": "原创故事",
+      "title": "The Story of OFFY & Creator Gia | is.offy",
+      "description": "Meet Gia, OFFY's creator, and explore Briar Island, the original sketches and the many versions of one sleepy-eyed girl.",
+      "note": "作者和背景来自现有故事页；不添加未验证的手工、材质或产地声明。",
+      "current": {
+        "title": "The Story of OFFY | is.offy",
+        "description": "Meet Gia, the creator of OFFY, and discover Briar Island, the original character sketches and the many different versions of the same sleepy-eyed girl."
+      },
+      "baselineSource": "2026-11-17 线上 HTML"
+    },
+    {
+      "id": "bag",
+      "label": "包挂预告",
+      "path": "/bag-charm",
+      "intent": "新品预告",
+      "title": "Upcoming OFFY Bag Charm Collection | is.offy",
+      "description": "A first look at OFFY's upcoming bag charm collection. Explore the character previews and follow is.offy for future release updates.",
+      "note": "保留预告性质；本批不将它改为商城页，也不提前承诺发售日期。",
+      "current": {
+        "title": "Bag Charms | is.offy",
+        "description": "A first look at the OFFY bag charm collection — 6 charms, with more urban spirits on the way."
+      },
+      "baselineSource": "2026-11-17 线上 HTML"
+    },
+    {
+      "id": "faq",
+      "label": "FAQ",
+      "path": "/faq",
+      "intent": "购买疑问",
+      "title": "OFFY FAQs – Orders, Shipping & Returns | is.offy",
+      "description": "Find answers to common questions about OFFY orders, shipping, returns and product details. Read our FAQs before placing an order.",
+      "note": "不在摘要中写死运费、时效或优惠；以实际政策和 Shopify 结账为准。",
+      "current": {
+        "title": "FAQ | is.offy",
+        "description": "Shipping, returns, payment and privacy questions about OFFY orders."
+      },
+      "baselineSource": "2026-11-17 线上 HTML"
+    },
+    {
+      "id": "little",
+      "label": "商品 · LITTLE HEIRESS",
+      "path": "/products/royal-grey",
+      "intent": "普通商品示例",
+      "title": "LITTLE HEIRESS Plush Bag Charm | is.offy",
+      "description": "Meet LITTLE HEIRESS, an OFFY plush bag charm in a grey knit and pleated skirt, finished with statement glasses and a pearl-centered flower.",
+      "note": "为 Shopify SEO 字段的建议填法；页面展示名、价格、库存和 handle 均不变。",
+      "current": {
+        "title": "LITTLE HEIRESS | is.offy",
+        "description": "Born into elegance, with nothing to prove. Dressed in a soft grey knit with a crisp white collar and a black pleated skirt, finished with a tiny pearl-centered flower at her neck. Quietly confident and effortlessly poised, she carries the charm of a little heiress who never needs to announce her arrival."
+      },
+      "baselineSource": "2026-11-17 线上 HTML"
+    },
+    {
+      "id": "wild",
+      "label": "商品 · WILD SWEETIE",
+      "path": "/products/wild-sweetie",
+      "intent": "普通商品示例",
+      "title": "WILD SWEETIE Plush Bag Charm | is.offy",
+      "description": "Meet WILD SWEETIE, an OFFY plush bag charm with signature curls, statement glasses and a bold leopard-print look. Explore the product details.",
+      "note": "只对核实为包挂的普通商品使用这类标题，不批量套到所有 SKU。",
+      "current": {
+        "title": "WILD SWEETIE | is.offy",
+        "description": "Good taste leaves room for a little mischief. Round rose-gold glasses lend a thoughtful touch to leopard corduroy and a matching bow. She’s curious, quick-witted, and always up for something unexpected. A last-minute invitation. Leopard print on a Tuesday. Why save all the fun for a special occasion? *All outfits and glasses are securely attached and are not removable."
+      },
+      "baselineSource": "2026-11-17 线上 HTML"
+    },
+    {
+      "id": "swan",
+      "label": "赠品 · SWAN QUEEN",
+      "path": "/products/swan-princess",
+      "intent": "赠品边界示例",
+      "title": "SWAN QUEEN Limited-Edition Gift | is.offy",
+      "description": "Discover SWAN QUEEN, the limited-edition OFFY gift offered with qualifying orders. See the product page for the current offer and availability.",
+      "note": "单独待确认：仅展示搜索文案方向；不改赠品条件、占位价或 Product/Offer 结构化数据。",
+      "current": {
+        "title": "BUY 6 OFFY, GET A FREE LIMITED-EDITION SWAN QUEEN | is.offy",
+        "description": "Receive a complimentary SWAN QUEEN for every 6 OFFY dolls purchased This limited-edition doll is not sold separately; the displayed price is a placeholder. Simply add SWAN QUEEN to your cart when purchasing 6 or more OFFYs. Forgot to add her? No worries! We’ll include the correct number of gifts when packing your order. While supplies last."
+      },
+      "baselineSource": "2026-11-17 线上 HTML"
+    }
+  ],
+  "sources": [
+    {
+      "title": "Google：搜索图标规范",
+      "url": "https://developers.google.com/search/docs/appearance/favicon-in-search"
+    },
+    {
+      "title": "Google：标题链接",
+      "url": "https://developers.google.com/search/docs/appearance/title-link"
+    },
+    {
+      "title": "Google：摘要规则",
+      "url": "https://developers.google.com/search/docs/appearance/snippet"
+    },
+    {
+      "title": "Shopify SEO 字段",
+      "url": "https://shopify.dev/docs/api/storefront/latest/objects/SEO"
+    }
+  ],
+  "selectedIcon": "User-supplied monochrome OFFY artwork (2026-11-17), replacing generated option A"
+}

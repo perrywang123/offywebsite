@@ -61,7 +61,9 @@ export const getLiveSeriesList = cache(async (): Promise<Series[]> => {
   const remote = await fetchShopifyCollections();
   return seriesList.flatMap((config) => {
     const s = remote.find((c) => c.handle === SERIES_SHOPIFY_HANDLE[config.slug]);
-    return s ? [{ ...config, name: { en: s.title, zh: s.title } }] : [];
+    return s
+      ? [{ ...config, name: { en: s.title, zh: s.title }, ...(s.seo ? { seo: s.seo } : {}) }]
+      : [];
   });
 });
 const collectionItems = cache((slug: SeriesSlug, country: string) =>
@@ -119,6 +121,7 @@ export const getLiveProductByCode = cache(
       ...toLiveProduct({ ...data, handle: code, image: null }, series, 0),
       description: { en: data.description, zh: data.description },
       descriptionBlocks: { en: data.descriptionBlocks, zh: data.descriptionBlocks },
+      ...(data.seo ? { seo: data.seo } : {}),
     };
   },
 );

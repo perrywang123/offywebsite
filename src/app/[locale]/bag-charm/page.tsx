@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
+import { pageMetadata, searchCopy } from "@/lib/seo/metadata";
 import Image from "next/image";
 import { getTranslations } from "next-intl/server";
-import { publicPath } from "@/i18n/routing";
 import { teaserSeries } from "@/lib/catalog";
 import { Reveal } from "@/components/Reveal";
 import { TeaserProductGrid } from "./TeaserProductGrid";
@@ -20,11 +20,7 @@ export async function generateMetadata({
 }): Promise<Metadata> {
   const { locale } = await params;
 
-  return {
-    title: "Bag Charms",
-    description: `A first look at the OFFY bag charm collection — ${teaserSeries.items.length} charms, with more urban spirits on the way.`,
-    alternates: { canonical: publicPath(locale, "/bag-charm") },
-  };
+  return pageMetadata(locale, "/bag-charm", searchCopy["/bag-charm"]);
 }
 
 /**
