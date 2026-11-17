@@ -9,6 +9,6 @@
 
 - [x] Verify desktop/mobile rendering and actual drag behavior locally; record limitations of touch validation.
 - [x] Review shared logic and edge cases with experts; address issues.
-- [ ] Archive OpenSpec, commit and push implementation.
-- [ ] Build Linux image outside production; deploy storefront only with rollback/backups preserved.
-- [ ] Verify deployed pages, media interaction and existing commerce entry points; record revision/evidence.
+- [x] Archive OpenSpec, commit and push implementation.
+- [x] Build Linux image outside production; deploy storefront only with rollback/backups preserved.
+- [x] Verify deployed pages, media interaction and existing commerce entry points; record revision/evidence.

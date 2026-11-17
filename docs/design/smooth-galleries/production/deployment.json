@@ -1,0 +1,60 @@
+{
+  "revision": "4699ee608bf931a27752f0a1bcfbc216f583ee40",
+  "image": "sha256:8b63fd477c5a85b1067412d16daab7f9f1e62db3540362c635abbe1408c1f620",
+  "checks": {
+    "offywebsite-kol-worker-1_unchanged": true,
+    "offywebsite-admin-1_unchanged": true,
+    "offywebsite-meta-worker-1_unchanged": true,
+    "storefrontReplaced": true,
+    "storefrontRevision": true,
+    "storefront_envHash_unchanged": true,
+    "storefront_mounts_unchanged": true,
+    "storefront_ports_unchanged": true,
+    "offywebsite-geoipupdate-1_unchanged": true,
+    "envFileUnchanged": true,
+    "nginxUnchanged": true,
+    "adminImageTagUnchanged": true,
+    "http": true,
+    "appHealthy": true,
+    "adminHealthy": true
+  },
+  "http": {
+    "https://isoffy.com/": "200",
+    "https://isoffy.com/products/royal-grey": "200",
+    "https://isoffy.com/api/health": "200",
+    "https://isoffy.com/admin": "404",
+    "https://isoffy.com:8443/admin": "200"
+  },
+  "services": {
+    "offywebsite-app-1": {
+      "id": "d08db944d8b5c3c9288daa0bd903dc57a38f95c7030eac916a2de5182caf4169",
+      "image": "sha256:8b63fd477c5a85b1067412d16daab7f9f1e62db3540362c635abbe1408c1f620",
+      "startedAt": "2026-11-17T04:05:27.443311859Z",
+      "health": "healthy"
+    },
+    "offywebsite-kol-worker-1": {
+      "id": "8499e8864b426fa1e75c5c6f01b6c8a7cbd73fd536577d971a170a46853e104a",
+      "image": "sha256:972246d2c5da745fd02f04dd001713e6b76529a4ecaa630ed63250fd10fb8ba2",
+      "startedAt": "2026-11-13T20:30:23.816904497Z",
+      "health": null
+    },
+    "offywebsite-admin-1": {
+      "id": "283018b3f94e74e7acf6e74a9f4118f426aa3537385cbb2fe8f48f864cf06eb2",
+      "image": "sha256:972246d2c5da745fd02f04dd001713e6b76529a4ecaa630ed63250fd10fb8ba2",
+      "startedAt": "2026-11-13T20:30:19.900809481Z",
+      "health": "healthy"
+    },
+    "offywebsite-meta-worker-1": {
+      "id": "70b14099af6345c88859bf02f6c8cc6a76d03d92f610f4986646fe76bc83e3d3",
+      "image": "sha256:cd2b24f1046b59af12af40db114578eff383a14aa5e66b6358dee3fe265db845",
+      "startedAt": "2026-11-13T19:34:49.429229741Z",
+      "health": null
+    },
+    "offywebsite-geoipupdate-1": {
+      "id": "cf3585896d1fb6339655982a927b9b6f9866fd113f81844d4eca21b49f5a4a8a",
+      "image": "sha256:51e70dd6f16cd3e4d845ac02d09940b10772a75b9d741427d235a78570923c1d",
+      "startedAt": "2026-11-10T10:07:00.782425313Z",
+      "health": "healthy"
+    }
+  }
+}

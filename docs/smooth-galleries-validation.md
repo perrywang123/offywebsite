@@ -21,4 +21,18 @@
 
 ## 发布
 
-生产发布待执行。将通过 Git 提交的 Linux amd64 预构建镜像仅更新 storefront；不在生产编译，不部署管理后台或修改 Shopify 设置。运行 revision、回滚镜像、数据库备份和部署后验证将在完成后补记。
+2026-11-17 上海时间 12:05 完成主站独立发布。运行源码 `4699ee608bf931a27752f0a1bcfbc216f583ee40`；镜像 `sha256:8b63fd477c5a85b1067412d16daab7f9f1e62db3540362c635abbe1408c1f620`。这是源码发布后的验收记录，不改变运行代码。
+
+[质量 CI](https://github.com/perrywang123/offywebsite/actions/runs/44013866319) 与 [Linux 镜像 CI](https://github.com/perrywang123/offywebsite/actions/runs/44013866317) 均成功。服务器从原 Git checkout fast-forward 拉取；下载制品 ZIP、镜像压缩包、REVISION 与 OCI revision 均校验，架构为 linux/amd64。使用 `bash deploy/update-storefront.sh --kol --prebuilt --skip-pull`，生产没有编译。镜像制品自带 app/admin 标签，导入后已恢复原 admin 标签，未更新后台或 worker 容器。
+
+本次代码提交只改媒体组件、共享手势及测试/文档；运行镜像还包含此前已授权并发布后台的 Collabs 归档代码。其迁移在本次发布前已存在，前后迁移数均为 16，没有新增购物或支付改动。实际核对：[部署对照](design/smooth-galleries/production/deployment.json) 中主站环境哈希、挂载、3000 绑定、私密 .env、Nginx，以及后台/KOL worker/Meta worker/GeoIP 的容器 ID、镜像和启动时间全部保持。
+
+上线后再次实际拖动首页和 PDP：390px 和 1440px 无横向溢出；首页拖动中位移连续、释放吸附，桌面五屏共同高度 904.3125px；主图从第一张切到第二张、桌面再切到第三张，缩略图同步且 Shopify 优化图片正常加载。真实点击原 Hero 链接进入 `/collections/outdoor-sporty`。见 [线上采样](design/smooth-galleries/production/home-drag-samples.json)、[浏览器检查](design/smooth-galleries/production/browser-checks.json)。
+
+原线上浏览器为空袋；添加 LITTLE HEIRESS 一件后金额为 USD 45.90，Checkout 可用；移除新增商品后恢复为空袋。验证来源标记为 `offy_validation / internal_test`。没有点击结账或付款，没有创建订单；因此这是购物入口回归，不是新增一次支付到账验收。
+
+主站与后台 healthy，首页/商品页/health/8443 后台入口 200，主站 `/admin` 继续 404，共享 SQLite quick_check=ok。现场采样 app CPU 0%、内存约 399MiB；不是峰值性能承诺。
+
+回滚镜像为 `offy-app:before-smooth-galleries-20261117`；一致性数据库备份为 `/data/deploy-backups/offy-2026-11-17T04-05-26-483Z-91601044.db`。服务器 `.deploy-backups/smooth-galleries-20261117/` 保留发布日志及前后对照；仅清理本轮临时下载的 ZIP/镜像压缩包，不清理业务数据、旧镜像或回滚备份。
+
+线上截图：[首页手机](design/smooth-galleries/production/home-mobile.jpg)、[首页桌面](design/smooth-galleries/production/home-desktop.jpg)、[详情手机](design/smooth-galleries/production/pdp-mobile.jpg)、[详情桌面](design/smooth-galleries/production/pdp-desktop.jpg)、[购物袋](design/smooth-galleries/production/bag-check.jpg)。

@@ -1,0 +1,58 @@
+[
+  {
+    "active": "1",
+    "transform": "matrix(1, 0, 0, 1, -390, 0)"
+  },
+  {
+    "active": "1",
+    "transform": "matrix(1, 0, 0, 1, -421.25, 0)"
+  },
+  {
+    "active": "1",
+    "transform": "matrix(1, 0, 0, 1, -452.5, 0)"
+  },
+  {
+    "active": "1",
+    "transform": "matrix(1, 0, 0, 1, -483.75, 0)"
+  },
+  {
+    "active": "1",
+    "transform": "matrix(1, 0, 0, 1, -515, 0)"
+  },
+  {
+    "active": "1",
+    "transform": "matrix(1, 0, 0, 1, -546.25, 0)"
+  },
+  {
+    "active": "1",
+    "transform": "matrix(1, 0, 0, 1, -546.25, 0)"
+  },
+  {
+    "active": "1",
+    "transform": "matrix(1, 0, 0, 1, -577.5, 0)"
+  },
+  {
+    "active": "1",
+    "transform": "matrix(1, 0, 0, 1, -608.75, 0)"
+  },
+  {
+    "active": "1",
+    "transform": "matrix(1, 0, 0, 1, -608.75, 0)"
+  },
+  {
+    "active": "2",
+    "transform": "matrix(1, 0, 0, 1, -640, 0)"
+  },
+  {
+    "active": "2",
+    "transform": "matrix(1, 0, 0, 1, -640, 0)"
+  },
+  {
+    "active": "2",
+    "transform": "matrix(1, 0, 0, 1, -654.97, 0)"
+  },
+  {
+    "active": "2",
+    "transform": "matrix(1, 0, 0, 1, -735.136, 0)"
+  }
+]

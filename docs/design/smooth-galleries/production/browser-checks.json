@@ -1,0 +1,19 @@
+{
+  "mobileWidth": 390,
+  "desktopWidth": 1440,
+  "homeDrag": "continuous adjacent movement, release selects next",
+  "pdpDrag": "mobile image 1 to 2, desktop 2 to 3; thumbnails synchronized",
+  "desktopImagesLoaded": true,
+  "noHorizontalOverflow": true,
+  "commonHeroHeightDesktop": 904.3125,
+  "normalHeroLink": "/collections/outdoor-sporty",
+  "cart": {
+    "before": 0,
+    "added": "LITTLE HEIRESS × 1",
+    "subtotal": "USD 45.90",
+    "checkoutEnabled": true,
+    "after": 0
+  },
+  "paymentAttempted": false,
+  "physicalTouchHardwareTested": false
+}
