@@ -1,0 +1,82 @@
+[
+  {
+    "active": "1",
+    "style": "translateX(calc(-100% + 0px))",
+    "transform": "matrix(1, 0, 0, 1, -390, 0)"
+  },
+  {
+    "active": "1",
+    "style": "translateX(calc(-100% - 31.87px))",
+    "transform": "matrix(1, 0, 0, 1, -421.87, 0)"
+  },
+  {
+    "active": "1",
+    "style": "translateX(calc(-100% - 63.75px))",
+    "transform": "matrix(1, 0, 0, 1, -453.75, 0)"
+  },
+  {
+    "active": "1",
+    "style": "translateX(calc(-100% - 95.62px))",
+    "transform": "matrix(1, 0, 0, 1, -485.62, 0)"
+  },
+  {
+    "active": "1",
+    "style": "translateX(calc(-100% - 127.5px))",
+    "transform": "matrix(1, 0, 0, 1, -517.5, 0)"
+  },
+  {
+    "active": "1",
+    "style": "translateX(calc(-100% - 159.37px))",
+    "transform": "matrix(1, 0, 0, 1, -549.37, 0)"
+  },
+  {
+    "active": "1",
+    "style": "translateX(calc(-100% - 191.25px))",
+    "transform": "matrix(1, 0, 0, 1, -581.25, 0)"
+  },
+  {
+    "active": "1",
+    "style": "translateX(calc(-100% - 223.12px))",
+    "transform": "matrix(1, 0, 0, 1, -613.12, 0)"
+  },
+  {
+    "active": "1",
+    "style": "translateX(calc(-100% - 223.12px))",
+    "transform": "matrix(1, 0, 0, 1, -613.12, 0)"
+  },
+  {
+    "active": "2",
+    "style": "translateX(calc(-200% + 0px))",
+    "transform": "matrix(1, 0, 0, 1, -645, 0)"
+  },
+  {
+    "active": "2",
+    "style": "translateX(calc(-200% + 0px))",
+    "transform": "matrix(1, 0, 0, 1, -645, 0)"
+  },
+  {
+    "active": "2",
+    "style": "translateX(calc(-200% + 0px))",
+    "transform": "matrix(1, 0, 0, 1, -645, 0)"
+  },
+  {
+    "active": "2",
+    "style": "translateX(calc(-200% + 0px))",
+    "transform": "matrix(1, 0, 0, 1, -664.095, 0)"
+  },
+  {
+    "active": "2",
+    "style": "translateX(calc(-200% + 0px))",
+    "transform": "matrix(1, 0, 0, 1, -664.095, 0)"
+  },
+  {
+    "active": "2",
+    "style": "translateX(calc(-200% + 0px))",
+    "transform": "matrix(1, 0, 0, 1, -664.095, 0)"
+  },
+  {
+    "active": "2",
+    "style": "translateX(calc(-200% + 0px))",
+    "transform": "matrix(1, 0, 0, 1, -695.287, 0)"
+  }
+]

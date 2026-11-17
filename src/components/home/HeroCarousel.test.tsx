@@ -466,7 +466,7 @@ describe("HeroCarousel 拖拽跟手动画", () => {
 
   /** 轨道当前的内联位移(px)。实现里只会写 `translateX(<px>)`,没写 = 0。 */
   const shift = (container: HTMLElement) => {
-    const m = /translateX\((-?[\d.]+)px\)/.exec(track(container).style.transform);
+    const m = /\+ (-?[\d.]+)px/.exec(track(container).style.transform);
     return m ? Number(m[1]) : 0;
   };
 
@@ -588,7 +588,7 @@ describe("HeroCarousel 拖拽跟手动画", () => {
     fireEvent.pointerUp(region, { ...MOUSE, clientX: 400 });
   });
 
-  it("prefers-reduced-motion: reduce 下不跟手、也不做弹性过渡(直接切屏)", () => {
+  it("prefers-reduced-motion: reduce preserves direct manipulation but disables animated settling", () => {
     const restoreMatchMedia = stubReducedMotion(true);
     try {
       const { container } = render(<HeroCarousel slides={slides} locale="zh" intervalMs={60000} />);
@@ -597,13 +597,13 @@ describe("HeroCarousel 拖拽跟手动画", () => {
 
       fireEvent.pointerDown(region, { ...MOUSE, clientX: 300 });
       fireEvent.pointerMove(region, { ...MOUSE, clientX: 100 }); // dx = -200
-      expect(track(container).style.transform).toBe(""); // 不跟手
-      expect(track(container).style.transition).toBe(""); // 也不塞过渡
+      expect(track(container).style.transform).toBe("translateX(calc(0% + -200px))"); // contact-controlled only
+      expect(track(container).style.transition).toBe("none");
       fireEvent.pointerUp(region, { ...MOUSE, clientX: 100 });
       // 该切的屏照切(无障碍只砍动画,不砍功能)
       expect(dots[1]).toHaveAttribute("aria-selected", "true");
-      expect(track(container).style.transform).toBe("");
-      expect(track(container).style.transition).toBe("");
+      expect(track(container).style.transform).toBe("translateX(calc(-100% + 0px))");
+      expect(track(container).style.transition).toBe("none");
     } finally {
       restoreMatchMedia();
     }
@@ -649,5 +649,42 @@ describe("HeroCarousel 拖拽跟手动画", () => {
     }
     // 位移被 overflow-hidden 收在头图内:375px 下拖动不会顶出横向滚动条
     expect(region.className).toContain("overflow-hidden");
+  });
+});
+
+describe("HeroCarousel direction and cancellation safety", () => {
+  it("keeps vertical gestures as scrolling and cancel does not choose another slide", () => {
+    render(<HeroCarousel slides={slides} locale="en" intervalMs={60000} />);
+    const region = screen.getByRole("region");
+    fireEvent.touchStart(region, { touches: [{ clientX: 300, clientY: 100 }] });
+    fireEvent.touchMove(region, { touches: [{ clientX: 200, clientY: 400 }] });
+    fireEvent.touchEnd(region, { changedTouches: [{ clientX: 100, clientY: 500 }] });
+    expect(screen.getAllByRole("tab")[0]).toHaveAttribute("aria-selected", "true");
+    fireEvent.touchStart(region, { touches: [{ clientX: 300, clientY: 100 }] });
+    fireEvent.touchMove(region, { touches: [{ clientX: 100, clientY: 100 }] });
+    fireEvent.touchCancel(region);
+    expect(screen.getAllByRole("tab")[0]).toHaveAttribute("aria-selected", "true");
+  });
+  it("never wraps manual swipes past the first screen", () => {
+    render(<HeroCarousel slides={slides} locale="en" intervalMs={60000} />);
+    const region = screen.getByRole("region");
+    fireEvent.touchStart(region, { touches: [{ clientX: 100, clientY: 100 }] });
+    fireEvent.touchEnd(region, { changedTouches: [{ clientX: 300, clientY: 100 }] });
+    expect(screen.getAllByRole("tab")[0]).toHaveAttribute("aria-selected", "true");
+  });
+  it("a drag returned to the origin still cannot activate its landing link", () => {
+    const { container } = render(<HeroCarousel slides={slides} locale="en" intervalMs={60000} />);
+    const region = screen.getByRole("region");
+    fireEvent.touchStart(region, { touches: [{ clientX: 300, clientY: 100 }] });
+    fireEvent.touchMove(region, { touches: [{ clientX: 180, clientY: 100 }] });
+    fireEvent.touchMove(region, { touches: [{ clientX: 300, clientY: 100 }] });
+    fireEvent.touchEnd(region, { changedTouches: [{ clientX: 300, clientY: 100 }] });
+    const click = createEvent.click(container.querySelector("[data-hero-link]")!, {
+      detail: 1,
+      cancelable: true,
+      bubbles: true,
+    });
+    fireEvent(container.querySelector("[data-hero-link]")!, click);
+    expect(click.defaultPrevented).toBe(true);
   });
 });

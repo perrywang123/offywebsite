@@ -1,55 +1,98 @@
 "use client";
 
-import { useState } from "react";
 import Image from "next/image";
+import { useSwipeRail } from "@/hooks/useSwipeRail";
 
-/**
- * PDP 主图 + 自图集缩略图(方案 §2 E「PDP 其实只有一张图」)。
- *
- * 数据层早已取回最多 10 张图(Shopify `images(first: 10)`),但详情页此前只渲染
- * `images[0]`,下方那条横滑条其实是**同系列其它款**(别商品)。这里把主图做成
- * 可切换的自图集:只有一张图时行为与改动前逐字一致(单图,不出现缩略图条)。
- *
- * 缩略图是**按钮**而不是链接 —— 它切的是同一件商品的不同图,不是导航目标,
- * 用 Link 会污染 history 与 SEO。
- */
-export function ProductGallery({
-  images,
-  alt,
-  sizes,
-}: {
-  images: string[];
-  alt: string;
-  sizes: string;
-}) {
-  const [requested, setRequested] = useState(0);
-  const active = images[requested] ? requested : 0;
-  const current = images[active];
-  if (!current)
+type Props = { images: string[]; alt: string; sizes: string };
+
+/** A new image set mounts a fresh rail, without carrying a previous product's selection/gesture. */
+export function ProductGallery(props: Props) {
+  return <GalleryRail key={JSON.stringify([props.alt, props.images])} {...props} />;
+}
+
+function GalleryRail({ images, alt, sizes }: Props) {
+  const rail = useSwipeRail(images.length);
+  if (!images.length)
     return (
       <div className="bg-cream-deep text-ink-soft flex aspect-[4/5] items-center justify-center text-sm">
         Image coming soon
       </div>
     );
-
   return (
     <>
-      <div className="bg-cream-deep relative aspect-[4/5] overflow-hidden rounded-[calc(var(--radius-card)-8px)] md:aspect-[3/4]">
-        <Image src={current} alt={alt} fill priority sizes={sizes} className="object-contain" />
+      <div
+        ref={rail.viewportRef}
+        role="region"
+        aria-label={`${alt} images`}
+        aria-roledescription="carousel"
+        tabIndex={images.length > 1 ? 0 : undefined}
+        className="bg-cream-deep relative aspect-[4/5] overflow-hidden rounded-[calc(var(--radius-card)-8px)] focus-visible:outline-2 focus-visible:outline-offset-2 md:aspect-[3/4]"
+        style={{ touchAction: "pan-y pinch-zoom" }}
+        {...rail.handlers}
+        onKeyDown={(event) => {
+          if (
+            event.target !== event.currentTarget ||
+            event.altKey ||
+            event.ctrlKey ||
+            event.metaKey
+          )
+            return;
+          const target =
+            event.key === "ArrowRight"
+              ? rail.active + 1
+              : event.key === "ArrowLeft"
+                ? rail.active - 1
+                : event.key === "Home"
+                  ? 0
+                  : event.key === "End"
+                    ? images.length - 1
+                    : null;
+          if (target === null) return;
+          event.preventDefault();
+          rail.goTo(target);
+        }}
+      >
+        <div
+          data-testid="product-image-track"
+          ref={rail.trackRef}
+          style={{
+            ...rail.trackStyle,
+            display: "grid",
+            gridAutoFlow: "column",
+            gridAutoColumns: "100%",
+            width: "100%",
+            height: "100%",
+            willChange: "transform",
+          }}
+        >
+          {images.map((src, i) => (
+            <div
+              key={`${src}-${i}`}
+              aria-hidden={i !== rail.active}
+              inert={i !== rail.active}
+              className="relative min-w-0"
+            >
+              <Image
+                src={src}
+                alt={i === rail.active ? alt : ""}
+                fill
+                priority={i === 0}
+                sizes={sizes}
+                className="object-contain"
+                draggable={false}
+              />
+            </div>
+          ))}
+        </div>
       </div>
-
       {images.length > 1 && (
-        // `.hscroll`:吸附 + 隐藏滚动条 + 窄屏两端渐隐(方案 #15)
         <div className="hscroll mt-3 gap-2.5 pb-2">
           {images.map((src, i) => (
             <button
-              key={src}
+              key={`${src}-${i}`}
               type="button"
-              onClick={() => setRequested(i)}
-              // 当前浏览项的状态矩阵照抄 redesign-02 §4.5(默认 sand / 当前 brown-600
-              // + ring / 按下 brown-600)。`title` 对触屏无效,故用 aria-label 保证
-              // 每颗缩略图都有可访问名。
-              aria-current={i === active ? "true" : undefined}
+              onClick={() => rail.goTo(i)}
+              aria-current={i === rail.active ? "true" : undefined}
               aria-label={`${alt} ${i + 1}`}
               className="rounded-soft border-sand hover:border-brown-500 aria-[current=true]:border-brown-600 aria-[current=true]:ring-brown-100 active:border-brown-600 relative h-20 w-14 shrink-0 overflow-hidden border transition-colors aria-[current=true]:ring-2"
             >

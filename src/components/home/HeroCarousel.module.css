@@ -5,27 +5,20 @@
 }
 .track {
   display: grid;
+  grid-auto-flow: column;
+  grid-auto-columns: 100%;
+  align-items: stretch;
   min-height: calc(100cqw * 2041 / 3250);
+  will-change: transform;
 }
 .slide {
-  grid-area: 1 / 1;
   display: flex;
   min-width: 0;
   flex-direction: column;
-  opacity: 0;
-  visibility: hidden;
   pointer-events: none;
-  transition:
-    opacity 1s var(--ease-editorial),
-    visibility 0s linear 1s;
 }
 .slide[aria-hidden="false"] {
-  opacity: 1;
-  visibility: visible;
   pointer-events: auto;
-  transition:
-    opacity 1s var(--ease-editorial),
-    visibility 0s;
 }
 .slideLink {
   position: relative;

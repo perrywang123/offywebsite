@@ -1,0 +1,170 @@
+[
+  {
+    "height": 277.96875,
+    "scrollWidth": 360,
+    "slides": [
+      {
+        "copyBottom": 207.46875,
+        "copyTop": 116.25,
+        "height": 277.96875,
+        "photoBottom": 376.21875,
+        "slideBottom": 376.21875
+      },
+      {
+        "copyBottom": 315.6640625,
+        "copyTop": 231.1015625,
+        "height": 277.96875,
+        "photoBottom": 214.5546875,
+        "slideBottom": 376.21875
+      },
+      {
+        "copyBottom": 313.09375,
+        "copyTop": 262.4765625,
+        "height": 277.96875,
+        "photoBottom": 243.3515625,
+        "slideBottom": 376.21875
+      },
+      {
+        "copyBottom": 313.09375,
+        "copyTop": 262.4765625,
+        "height": 277.96875,
+        "photoBottom": 243.3515625,
+        "slideBottom": 376.21875
+      },
+      {
+        "copyBottom": 313.09375,
+        "copyTop": 262.4765625,
+        "height": 277.96875,
+        "photoBottom": 243.3515625,
+        "slideBottom": 376.21875
+      }
+    ],
+    "width": 360
+  },
+  {
+    "height": 296.8046875,
+    "scrollWidth": 390,
+    "slides": [
+      {
+        "copyBottom": 213.7421875,
+        "copyTop": 116.25,
+        "height": 296.8046875,
+        "photoBottom": 395.0546875,
+        "slideBottom": 395.0546875
+      },
+      {
+        "copyBottom": 332.34375,
+        "copyTop": 242.953125,
+        "height": 296.8046875,
+        "photoBottom": 224.25,
+        "slideBottom": 395.0546875
+      },
+      {
+        "copyBottom": 330.234375,
+        "copyTop": 276.2578125,
+        "height": 296.8046875,
+        "photoBottom": 255.4453125,
+        "slideBottom": 395.0546875
+      },
+      {
+        "copyBottom": 330.234375,
+        "copyTop": 276.2578125,
+        "height": 296.8046875,
+        "photoBottom": 255.4453125,
+        "slideBottom": 395.0546875
+      },
+      {
+        "copyBottom": 330.234375,
+        "copyTop": 276.2578125,
+        "height": 296.8046875,
+        "photoBottom": 255.4453125,
+        "slideBottom": 395.0546875
+      }
+    ],
+    "width": 390
+  },
+  {
+    "height": 503.4921875,
+    "scrollWidth": 768,
+    "slides": [
+      {
+        "copyBottom": 269.8828125,
+        "copyTop": 140,
+        "height": 503.4921875,
+        "photoBottom": 615.4921875,
+        "slideBottom": 615.4921875
+      },
+      {
+        "copyBottom": 542.140625,
+        "copyTop": 382.3125,
+        "height": 503.4921875,
+        "photoBottom": 360.1171875,
+        "slideBottom": 615.4921875
+      },
+      {
+        "copyBottom": 538.3984375,
+        "copyTop": 447.5,
+        "height": 503.4921875,
+        "photoBottom": 421.5625,
+        "slideBottom": 615.4921875
+      },
+      {
+        "copyBottom": 538.3984375,
+        "copyTop": 447.5,
+        "height": 503.4921875,
+        "photoBottom": 421.5625,
+        "slideBottom": 615.4921875
+      },
+      {
+        "copyBottom": 538.3984375,
+        "copyTop": 447.5,
+        "height": 503.4921875,
+        "photoBottom": 421.5625,
+        "slideBottom": 615.4921875
+      }
+    ],
+    "width": 768
+  },
+  {
+    "height": 904.3125,
+    "scrollWidth": 1440,
+    "slides": [
+      {
+        "copyBottom": 369.03125,
+        "copyTop": 160.25,
+        "height": 904.3125,
+        "photoBottom": 1016.3125,
+        "slideBottom": 1016.3125
+      },
+      {
+        "copyBottom": 898.0390625,
+        "copyTop": 606.6171875,
+        "height": 904.3125,
+        "photoBottom": 577.2265625,
+        "slideBottom": 1016.3125
+      },
+      {
+        "copyBottom": 895.15625,
+        "copyTop": 724.703125,
+        "height": 904.3125,
+        "photoBottom": 692.4296875,
+        "slideBottom": 1016.3125
+      },
+      {
+        "copyBottom": 895.15625,
+        "copyTop": 724.703125,
+        "height": 904.3125,
+        "photoBottom": 692.4296875,
+        "slideBottom": 1016.3125
+      },
+      {
+        "copyBottom": 895.15625,
+        "copyTop": 724.703125,
+        "height": 904.3125,
+        "photoBottom": 692.4296875,
+        "slideBottom": 1016.3125
+      }
+    ],
+    "width": 1440
+  }
+]
