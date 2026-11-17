@@ -75,7 +75,8 @@ export function useSwipeRail(count: number) {
   useEffect(() => {
     const abandon = () => cancel(true);
     const releaseOutside = (event: PointerEvent) => {
-      if (gesture.current?.pointerId === event.pointerId) abandon();
+      if (gesture.current?.pointerId != null && gesture.current.pointerId === event.pointerId)
+        abandon();
     };
     const visibility = () => {
       if (document.hidden) abandon();
@@ -193,10 +194,15 @@ export function useSwipeRail(count: number) {
         end(point(event));
     },
     onPointerCancel(event) {
-      if (event.pointerType !== "touch") cancel(true);
+      if (gesture.current?.pointerId != null && gesture.current.pointerId === event.pointerId)
+        cancel(true);
     },
-    onLostPointerCapture() {
-      cancel(true);
+    onLostPointerCapture(event) {
+      // Touch browsers implicitly capture on pointerdown and release before
+      // touchend. Only the mouse/pen owner can cancel through pointer capture;
+      // touchend/touchcancel must finish the independent touch stream.
+      if (gesture.current?.pointerId != null && gesture.current.pointerId === event.pointerId)
+        cancel(true);
     },
     onTouchStart(event) {
       if (event.touches.length !== 1) {

@@ -1,0 +1,10 @@
+{
+  "before": 1,
+  "after": {
+    "active": 1,
+    "actual": "matrix(1, 0, 0, 1, -393, 0)",
+    "target": "translateX(calc(-100% + 0px))"
+  },
+  "expectedDelta": 1,
+  "mode": "Chrome iPhone 16 native touch emulation"
+}

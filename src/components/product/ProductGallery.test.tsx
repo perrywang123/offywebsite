@@ -122,3 +122,17 @@ describe("ProductGallery horizontal gestures", () => {
     expect(screen.getByRole("button", { name: "NOIR 3" })).toHaveAttribute("aria-current", "true");
   });
 });
+
+it("settles product media after the browser releases implicit touch capture", () => {
+  render(<ProductGallery images={images} alt="NOIR" sizes="100vw" />);
+  const region = screen.getByRole("region", { name: "NOIR images" });
+  fireEvent.touchStart(region, { touches: [{ clientX: 300, clientY: 100 }] });
+  fireEvent.touchMove(region, { touches: [{ clientX: 180, clientY: 100 }] });
+  fireEvent.pointerUp(region, { pointerType: "touch", pointerId: 7 });
+  fireEvent.lostPointerCapture(region, { pointerType: "touch", pointerId: 7 });
+  fireEvent.touchEnd(region, { touches: [], changedTouches: [{ clientX: 180, clientY: 100 }] });
+  expect(screen.getByRole("button", { name: "NOIR 2" })).toHaveAttribute("aria-current", "true");
+  expect(screen.getByTestId("product-image-track")).toHaveStyle({
+    transform: "translateX(calc(-100% + 0px))",
+  });
+});

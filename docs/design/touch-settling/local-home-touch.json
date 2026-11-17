@@ -1,0 +1,32 @@
+[
+  {
+    "before": 0,
+    "expected": 1,
+    "after": {
+      "active": 1,
+      "actual": "matrix(1, 0, 0, 1, -393, 0)",
+      "target": "translateX(calc(-100% + 0px))",
+      "width": 393
+    }
+  },
+  {
+    "before": 1,
+    "expected": 2,
+    "after": {
+      "active": 2,
+      "actual": "matrix(1, 0, 0, 1, -786, 0)",
+      "target": "translateX(calc(-200% + 0px))",
+      "width": 393
+    }
+  },
+  {
+    "before": 2,
+    "expected": 3,
+    "after": {
+      "active": 3,
+      "actual": "matrix(1, 0, 0, 1, -1179, 0)",
+      "target": "translateX(calc(-300% + 0px))",
+      "width": 393
+    }
+  }
+]

@@ -1,0 +1,8 @@
+pointerdown pointer=touch id=2 touches=- x=296
+touchstart pointer=- id=- touches=1 x=296
+gotpointercapture pointer=touch id=2 touches=- x=63
+pointermove pointer=touch id=2 touches=- x=63
+touchmove pointer=- id=- touches=1 x=63
+pointerup pointer=touch id=2 touches=- x=63
+lostpointercapture pointer=touch id=2 touches=- x=63
+touchend pointer=- id=- touches=0 x=63

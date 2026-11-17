@@ -1,0 +1,20 @@
+[
+  {
+    "active": 3,
+    "actual": "matrix(1, 0, 0, 1, -1035, 0)",
+    "gesture": "next",
+    "width": 345
+  },
+  {
+    "active": 2,
+    "actual": "matrix(1, 0, 0, 1, -690, 0)",
+    "gesture": "previous",
+    "width": 345
+  },
+  {
+    "active": 2,
+    "actual": "matrix(1, 0, 0, 1, -690, 0)",
+    "gesture": "short-return",
+    "width": 345
+  }
+]

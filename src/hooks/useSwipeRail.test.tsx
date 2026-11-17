@@ -120,3 +120,72 @@ describe("useSwipeRail boundaries", () => {
     expect(keyboard.defaultPrevented).toBe(false);
   });
 });
+
+describe("touch and pointer event interleaving", () => {
+  const compatibilityPointer = { pointerType: "touch", pointerId: 7, isPrimary: true };
+  const finger = (x: number) => ({ identifier: 7, clientX: x, clientY: 100 });
+
+  it("keeps a touch gesture alive when implicit pointer capture is lost before touchend", () => {
+    let time = 0;
+    const clock = vi.spyOn(performance, "now").mockImplementation(() => time);
+    try {
+      render(<Rail />);
+      const viewport = screen.getByTestId("viewport");
+      vi.spyOn(viewport, "getBoundingClientRect").mockReturnValue({ width: 390 } as DOMRect);
+      fireEvent.pointerDown(viewport, { ...compatibilityPointer, clientX: 300, clientY: 100 });
+      fireEvent.touchStart(viewport, { touches: [finger(300)] });
+      time = 1000;
+      fireEvent.touchMove(viewport, { touches: [finger(180)] });
+      fireEvent.pointerUp(viewport, { ...compatibilityPointer, clientX: 180, clientY: 100 });
+      fireEvent.lostPointerCapture(viewport, compatibilityPointer);
+      expect(screen.getByRole("status")).toHaveTextContent("0:true");
+      time = 1300;
+      fireEvent.touchEnd(viewport, { touches: [], changedTouches: [finger(180)] });
+      expect(screen.getByRole("status")).toHaveTextContent("1:false");
+      expect(screen.getByTestId("rail")).toHaveStyle({
+        transform: "translateX(calc(-100% + 0px))",
+      });
+    } finally {
+      clock.mockRestore();
+    }
+  });
+
+  it("does not let a different pointer cancel the owning mouse/pen drag", () => {
+    render(<Rail />);
+    const viewport = screen.getByTestId("viewport");
+    fireEvent.pointerDown(viewport, { ...mouse, clientX: 300, clientY: 100 });
+    fireEvent.pointerMove(viewport, { ...mouse, clientX: 180, clientY: 100 });
+    fireEvent.lostPointerCapture(viewport, { ...mouse, pointerId: 99 });
+    fireEvent.pointerCancel(viewport, { ...mouse, pointerId: 99 });
+    expect(screen.getByRole("status")).toHaveTextContent("0:true");
+    fireEvent.pointerUp(viewport, { ...mouse, clientX: 180, clientY: 100 });
+    expect(screen.getByRole("status")).toHaveTextContent("1:false");
+  });
+
+  it("retains short fast touch velocity through pointer capture release and supports the next swipe", () => {
+    let time = 0;
+    const clock = vi.spyOn(performance, "now").mockImplementation(() => time);
+    try {
+      render(<Rail />);
+      const viewport = screen.getByTestId("viewport");
+      vi.spyOn(viewport, "getBoundingClientRect").mockReturnValue({ width: 390 } as DOMRect);
+      fireEvent.touchStart(viewport, { touches: [finger(300)] });
+      time = 30;
+      fireEvent.touchMove(viewport, { touches: [finger(270)] });
+      fireEvent.lostPointerCapture(viewport, compatibilityPointer);
+      time = 40;
+      fireEvent.touchEnd(viewport, { touches: [], changedTouches: [finger(270)] });
+      expect(screen.getByRole("status")).toHaveTextContent("1:false");
+      time = 1000;
+      fireEvent.touchStart(viewport, { touches: [finger(300)] });
+      time = 1500;
+      fireEvent.touchMove(viewport, { touches: [finger(170)] });
+      fireEvent.pointerUp(window, compatibilityPointer);
+      fireEvent.lostPointerCapture(viewport, compatibilityPointer);
+      fireEvent.touchEnd(viewport, { touches: [], changedTouches: [finger(170)] });
+      expect(screen.getByRole("status")).toHaveTextContent("2:false");
+    } finally {
+      clock.mockRestore();
+    }
+  });
+});

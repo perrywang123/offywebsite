@@ -688,3 +688,17 @@ describe("HeroCarousel direction and cancellation safety", () => {
     expect(click.defaultPrevented).toBe(true);
   });
 });
+
+it("settles Hero to the next full viewport after implicit touch capture is released", () => {
+  render(<HeroCarousel slides={slides} locale="en" intervalMs={60000} />);
+  const region = screen.getByRole("region");
+  fireEvent.touchStart(region, { touches: [{ clientX: 300, clientY: 100 }] });
+  fireEvent.touchMove(region, { touches: [{ clientX: 180, clientY: 100 }] });
+  fireEvent.pointerUp(region, { pointerType: "touch", pointerId: 7 });
+  fireEvent.lostPointerCapture(region, { pointerType: "touch", pointerId: 7 });
+  fireEvent.touchEnd(region, { touches: [], changedTouches: [{ clientX: 180, clientY: 100 }] });
+  expect(screen.getAllByRole("tab")[1]).toHaveAttribute("aria-selected", "true");
+  expect(screen.getByTestId("hero-track")).toHaveStyle({
+    transform: "translateX(calc(-100% + 0px))",
+  });
+});
