@@ -1,10 +1,10 @@
 # SEO：当前实现与后续工作
 
-更新：2026-11-17。本轮按用户确认的第一、二批范围实施；Merchant Center 用户已明确暂缓，不能视为已开通。生产发布证据记录在 [本轮验收](seo-search-visibility-validation.md)。
+更新：2026-11-18。本轮按用户确认的第一、二批范围实施；Merchant Center 用户已明确暂缓，不能视为已开通。生产发布及 Shopify SEO 补齐证据记录在 [本轮验收](seo-search-visibility-validation.md)。
 
 首页、商品列表、三个系列、About、故事、FAQ 和新品预告现在使用经确认的搜索文案；各页有自己的 canonical、英文 alternate 和 OG 标题/摘要/URL。站内商品名称、价格、图片、市场和结账逻辑不随搜索文案更改。新搜索图标采用用户提供的完整黑白 OFFY Logo，等比生成 96×96 PNG，Header 横版 Logo 保持原样。
 
-商品页和系列查询增加 Shopify `seo { title description }`。商品 metadata 分别优先采用非空 SEO 字段，空值使用当前 Shopify 商品名/描述；系列空值采用已确认的品牌系列文案。商品的 SEO 标题不会替换页面可见名称或 JSON-LD 商品事实，不对贴纸、赠品、包袋统一加“Plush Bag Charm”。LITTLE HEIRESS、WILD SWEETIE 的预览示例需实际保存到 Shopify SEO 后才生效；检查时两款 SEO 均为空，当前 Admin 应用没有商品编辑权限，浏览器商品页停在加载骨架。不会为此擅自扩大应用权限。
+商品页和系列查询增加 Shopify `seo { title description }`。商品 metadata 分别优先采用非空 SEO 字段，空值使用当前 Shopify 商品名/描述；系列空值采用已确认的品牌系列文案。商品的 SEO 标题不会替换页面可见名称或 JSON-LD 商品事实，不对贴纸、赠品、包袋统一加“Plush Bag Charm”。2026-11-18 网络恢复后，已在 Shopify 商品编辑页保存 LITTLE HEIRESS、WILD SWEETIE 两个已确认示例的搜索标题与摘要；Storefront API 和 Offy 线上 HTML 均已读到，原正文、图片、价格、变体、可售状态及系列归属保持。没有扩大 Admin 应用权限，也没有为此重新部署应用。
 
 可购买包挂搜索意图由现有 `/products` 承接：标题和简介明确品类，商品仍来自当前市场的完整 Shopify 清单；三个系列、成员、顺序、商品卡和购买按钮保持。`/bag-charm` 仍是 upcoming 新品预告，不当成已上架商品页面。
 
@@ -20,7 +20,7 @@ Merchant Center 当前账号无可访问商家账户。用户选择稍后配置�
 
 ## 仍需处理
 
-- 将已确认的两个普通商品示例 SEO 文案保存到 Shopify；其余商品由运营逐步维护。
+- 其余商品的 SEO 文案由运营在 Shopify 逐步维护；已完成两个普通商品示例，不批量套用。
 - SWAN QUEEN 等赠品的搜索展示：目前通用 Product/Offer 仍按 Shopify 当前可见价输出，不把占位价擅自改为零、不改购买条件。启用 Merchant Center 前应明确赠品排除/标记规则，经用户确认后处理。
 - Merchant Center 免费商品展示按用户决定暂缓。
 - Core Web Vitals、LCP 图片、长尾内容和外链属于后续性能/内容批次，本轮未给出测量分数或排名承诺。

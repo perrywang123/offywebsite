@@ -1,0 +1,143 @@
+{
+  "checkedAt": "2026-11-18T05:01:16.644154+00:00",
+  "scope": "Only approved Shopify SEO title and description for two existing products; no application deployment",
+  "storefrontBeforeAt": "2026-11-18T04:41:08.758Z",
+  "storefrontAfterAt": "2026-11-18T04:52:17.580Z",
+  "products": [
+    {
+      "handle": "royal-grey",
+      "title": "LITTLE HEIRESS",
+      "seoBefore": {
+        "title": null,
+        "description": null
+      },
+      "seoAfter": {
+        "title": "LITTLE HEIRESS Plush Bag Charm | is.offy",
+        "description": "Meet LITTLE HEIRESS, an OFFY plush bag charm in a grey knit and pleated skirt, finished with statement glasses and a pearl-centered flower."
+      },
+      "nonSeoFactsUnchanged": true,
+      "factsSha256": "4a32d1c147554dfef713b47ac3118812deed9f8e8bd85baf128bdc87df5871b4",
+      "currency": "USD",
+      "priceCents": 4590,
+      "variantId": "gid://shopify/ProductVariant/53547308122401",
+      "available": true,
+      "publicPage": {
+        "url": "https://isoffy.com/products/royal-grey",
+        "status": 200,
+        "title": "LITTLE HEIRESS Plush Bag Charm | is.offy",
+        "description": "Meet LITTLE HEIRESS, an OFFY plush bag charm in a grey knit and pleated skirt, finished with statement glasses and a pearl-centered flower.",
+        "ogTitle": "LITTLE HEIRESS Plush Bag Charm | is.offy",
+        "ogDescription": "Meet LITTLE HEIRESS, an OFFY plush bag charm in a grey knit and pleated skirt, finished with statement glasses and a pearl-centered flower.",
+        "canonical": "https://isoffy.com/products/royal-grey",
+        "jsonLdName": "LITTLE HEIRESS",
+        "offers": [
+          {
+            "@type": "Offer",
+            "url": "https://isoffy.com/products/royal-grey",
+            "price": "45.90",
+            "priceCurrency": "USD",
+            "availability": "https://schema.org/InStock",
+            "itemCondition": "https://schema.org/NewCondition",
+            "seller": {
+              "@id": "https://isoffy.com/#organization"
+            }
+          }
+        ]
+      }
+    },
+    {
+      "handle": "wild-sweetie",
+      "title": "WILD SWEETIE",
+      "seoBefore": {
+        "title": null,
+        "description": null
+      },
+      "seoAfter": {
+        "title": "WILD SWEETIE Plush Bag Charm | is.offy",
+        "description": "Meet WILD SWEETIE, an OFFY plush bag charm with signature curls, statement glasses and a bold leopard-print look. Explore the product details."
+      },
+      "nonSeoFactsUnchanged": true,
+      "factsSha256": "724126a37a3114568df2400ed56884b857c53991d315530a11070dc9ede5a551",
+      "currency": "USD",
+      "priceCents": 4590,
+      "variantId": "gid://shopify/ProductVariant/53546791665953",
+      "available": true,
+      "publicPage": {
+        "url": "https://isoffy.com/products/wild-sweetie",
+        "status": 200,
+        "title": "WILD SWEETIE Plush Bag Charm | is.offy",
+        "description": "Meet WILD SWEETIE, an OFFY plush bag charm with signature curls, statement glasses and a bold leopard-print look. Explore the product details.",
+        "ogTitle": "WILD SWEETIE Plush Bag Charm | is.offy",
+        "ogDescription": "Meet WILD SWEETIE, an OFFY plush bag charm with signature curls, statement glasses and a bold leopard-print look. Explore the product details.",
+        "canonical": "https://isoffy.com/products/wild-sweetie",
+        "jsonLdName": "WILD SWEETIE",
+        "offers": [
+          {
+            "@type": "Offer",
+            "url": "https://isoffy.com/products/wild-sweetie",
+            "price": "45.90",
+            "priceCurrency": "USD",
+            "availability": "https://schema.org/InStock",
+            "itemCondition": "https://schema.org/NewCondition",
+            "seller": {
+              "@id": "https://isoffy.com/#organization"
+            }
+          }
+        ]
+      }
+    }
+  ],
+  "browser": {
+    "checkedAt": "2026-11-18T04:55:01.069Z",
+    "wild": {
+      "buttons": [
+        {
+          "disabled": false,
+          "label": "Add to Bag"
+        },
+        {
+          "disabled": false,
+          "label": "Buy Now"
+        },
+        {
+          "disabled": false,
+          "label": "Add to Bag"
+        },
+        {
+          "disabled": false,
+          "label": "Buy Now"
+        }
+      ],
+      "canonical": "https://isoffy.com/products/wild-sweetie",
+      "description": "Meet WILD SWEETIE, an OFFY plush bag charm with signature curls, statement glasses and a bold leopard-print look. Explore the product details.",
+      "h1": "WILD SWEETIE",
+      "ogTitle": "WILD SWEETIE Plush Bag Charm | is.offy",
+      "title": "WILD SWEETIE Plush Bag Charm | is.offy"
+    },
+    "little": {
+      "buttons": [
+        {
+          "disabled": false,
+          "label": "Add to Bag"
+        },
+        {
+          "disabled": false,
+          "label": "Buy Now"
+        },
+        {
+          "disabled": false,
+          "label": "Add to Bag"
+        },
+        {
+          "disabled": false,
+          "label": "Buy Now"
+        }
+      ],
+      "canonical": "https://isoffy.com/products/royal-grey",
+      "description": "Meet LITTLE HEIRESS, an OFFY plush bag charm in a grey knit and pleated skirt, finished with statement glasses and a pearl-centered flower.",
+      "h1": "LITTLE HEIRESS",
+      "ogTitle": "LITTLE HEIRESS Plush Bag Charm | is.offy",
+      "title": "LITTLE HEIRESS Plush Bag Charm | is.offy"
+    }
+  }
+}

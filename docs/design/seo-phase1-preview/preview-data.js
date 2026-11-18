@@ -1,5 +1,5 @@
 window.SEO_PREVIEW = {
-  status: "approved-copy-product-examples-pending-shopify",
+  status: "approved-copy-and-two-product-examples-live",
   date: "2026-11-17",
   siteName: "is.offy",
   pages: [
@@ -164,7 +164,7 @@ window.SEO_PREVIEW = {
       title: "LITTLE HEIRESS Plush Bag Charm | is.offy",
       description:
         "Meet LITTLE HEIRESS, an OFFY plush bag charm in a grey knit and pleated skirt, finished with statement glasses and a pearl-centered flower.",
-      note: "为 Shopify SEO 字段的建议填法；页面展示名、价格、库存和 handle 均不变。",
+      note: "已于 2026-11-18 保存到 Shopify SEO 并验证线上读取；页面展示名、正文、价格、库存和 handle 均不变。",
       current: {
         title: "LITTLE HEIRESS | is.offy",
         description:
@@ -180,7 +180,7 @@ window.SEO_PREVIEW = {
       title: "WILD SWEETIE Plush Bag Charm | is.offy",
       description:
         "Meet WILD SWEETIE, an OFFY plush bag charm with signature curls, statement glasses and a bold leopard-print look. Explore the product details.",
-      note: "只对核实为包挂的普通商品使用这类标题，不批量套到所有 SKU。",
+      note: "已于 2026-11-18 保存到 Shopify SEO 并验证线上读取；仅此普通商品，不批量套用到其他 SKU。",
       current: {
         title: "WILD SWEETIE | is.offy",
         description:
@@ -224,4 +224,5 @@ window.SEO_PREVIEW = {
     },
   ],
   selectedIcon: "User-supplied monochrome OFFY artwork (2026-11-17), replacing generated option A",
+  lastVerifiedAt: "2026-11-18",
 };

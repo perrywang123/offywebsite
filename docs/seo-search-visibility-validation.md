@@ -29,4 +29,16 @@
 - 另外，本地正确 origin 的浏览器实测 GBP：LITTLE HEIRESS 可见 £33.90，Offer 为 33.90 GBP。最初自定义端口与 SITE_URL 不同导致的本地 origin 校验问题通过启动参数修正，未修改市场代码。
 - Search Console：当前 Google 账号已完成 HTML 标记所有权验证；`sitemap.xml` 已提交并显示“成功 / 已发现网页 58”。这代表站点地图读取成功，不代表 58 页均已收录；概览仍提示初始数据处理中。首页既有索引已确认，并已成功提交一次重新编入索引请求；页面显示已加入优先抓取队列，没有重复提交。
 - Merchant Center：当前账号无权限访问商家账户，用户明确暂缓；未注册、接 feed 或启用广告。
-- Shopify 商品 SEO 示例写入：页面加载受阻，应用缺少商品编辑权限，等待可用的商品编辑页。代码只读接入已完成。
+- Shopify 商品 SEO 示例写入（2026-11-17）：当时页面加载受阻，应用缺少商品编辑权限，未保存。后续完成情况见下节。
+
+## 2026-11-18：网络恢复后的 Shopify SEO 收尾
+
+- 在已登录的 Shopify 商品编辑页，仅保存 LITTLE HEIRESS（`royal-grey`）与 WILD SWEETIE（`wild-sweetie`）的搜索标题、元描述。两款原 SEO 均为空；采用已确认预览文案，URL 名称未改。保存完成后未保存提示消失，并保留截图。
+- Storefront API 保存前后对比：除 SEO 外，返回的商品名称、正文、描述块、图片、USD 45.90、币种、购买变体 ID、SKU、可售状态和系列成员全部一致。
+- 两款 Offy 线上页面均 200，HTML title/description、OG title/description、self-canonical 与已保存内容一致；JSON-LD 名称仍是原商品名，Offer 均为 USD 45.90。检查显式使用独立 US 市场 Cookie，未修改用户浏览器国家选择。
+- 实际浏览器读取两款线上页面，新搜索标题已生效；可见名称、正文和 USD 45.90 保持，Add to Bag / Buy Now 均可用。本次未创建购物车、订单或付款，没有测试业务记录需要清理。
+- 此次只有 Shopify SEO 数据及文档变化，不构建、不重启主站/后台/worker，不修改服务器配置、应用权限、Shopify 价格、库存或发布范围。Google 搜索结果仍需等待重新抓取，不将页面生效等同搜索结果已刷新。
+- Merchant Center 继续按用户要求暂缓；SWAN QUEEN 的搜索展示和 Product/Offer 未作单独修改。
+- 收尾检查：完整 Vitest 164 个文件、1,027 项通过；搜索规范校验、文档格式、本地证据链接及预览数据一致性检查通过。应用源码未变，本次未重复构建生产镜像。
+
+证据：[两款商品 API/HTML 对比](design/search-visibility-validation/shopify-seo-followup-20261118.json)、[LITTLE HEIRESS 保存结果](design/search-visibility-validation/shopify-little-heiress-seo-20261118.jpg)、[WILD SWEETIE 保存结果](design/search-visibility-validation/shopify-wild-sweetie-seo-20261118.jpg)、[LITTLE HEIRESS 线上页面](design/search-visibility-validation/little-heiress-public-seo-20261118.jpg)、[WILD SWEETIE 线上页面](design/search-visibility-validation/wild-sweetie-public-seo-20261118.jpg)。

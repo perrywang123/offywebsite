@@ -1,5 +1,7 @@
 # 当前实现与验证基线
 
+> 2026-11-18 SEO：第一、二批实现已于 11-17 以 `e88a5cc` 预构建镜像发布主站，Google Search Console 验证及 sitemap 提交成功。网络恢复后，LITTLE HEIRESS、WILD SWEETIE 的已确认 SEO 标题/摘要已保存到 Shopify，Storefront API 和线上页面验证通过；商品事实、购物/支付代码及后台/worker 保持，本次无需重新部署。Merchant Center 暂缓，赠品规则未改。见[当前方案](seo-plan.md)与[验收记录](seo-search-visibility-validation.md)。
+
 > 2026-11-14 Collabs 合作清理：后台新增可恢复归档、默认观察统计排除归档记录、显式历史统计开关；身份、报告和官方归属保留。`2082f2c` 已以预构建镜像仅发布后台与 KOL worker，三条指定测试合作已归档，主站容器及配置保持。993 项测试、53 项隔离 HTTP 检查和生产手机/桌面验收通过；官方身份待关联、官方 Sessions、财务报表与整站漏斗缺口仍单列。见[本轮核验](collabs-archive-validation.md)。
 
 > 2026-11-14 Meta 观察可靠性：首屏事件顺序、来源保留/受控 UTM 兼容、同 ID 有界重试及内测外发抑制已完成；982 项测试、CI 和构建通过。功能版本 `f783b2c` 已通过预构建镜像分别发布主站、后台及两个 worker；生产购物袋/立即购买至 Shopify 未付款验证通过，原袋恢复，业务配置与数据卷保留。Shopify 继续独占 IC/Purchase，真实广告最终归因另行验收。见[本轮记录](meta-reliability-validation.md)。
@@ -70,7 +72,7 @@ Shopify 是唯一商品事实来源。本地商品快照、旧 enrich 富化器�
 
 ## 尚未实现
 
-内容CMS、内容覆盖表、全站行为事件表、`/api/events`、产品缓存webhook、PostgreSQL、多规格选择、Shopify SEO字段读取。KOL最小访问与`/api/kol/webhook`已实现，不等同全站BI；主站之外的后台端口需按模板配置，没有在生产开启。旧文档中的相关代码示例不得当作现有接口调用。
+内容CMS、内容覆盖表、全站行为事件表、`/api/events`、产品缓存webhook、PostgreSQL、多规格选择。KOL最小访问与`/api/kol/webhook`已实现，不等同全站BI；主站之外的后台端口需按模板配置，没有在生产开启。旧文档中的相关代码示例不得当作现有接口调用。
 
 ## 规范维护
 
