@@ -7,6 +7,17 @@ import { minor } from "../kol/money";
 import { verifyCheckoutReference } from "./reference";
 import { pruneOrderEvidence } from "./retention";
 const DAY = 86400000;
+const transactionLimit = 20;
+const paymentStatuses = ["PAID", "PARTIALLY_REFUNDED", "REFUNDED"];
+const transactionSchema = z
+  .array(
+    z.object({
+      kind: z.string(),
+      status: z.string(),
+      processedAt: z.string().datetime({ offset: true }).nullish(),
+    }),
+  )
+  .max(transactionLimit - 1);
 const money = z.object({
   presentmentMoney: z.object({ amount: z.string(), currencyCode: z.string().regex(/^[A-Z]{3}$/) }),
 });
@@ -26,6 +37,7 @@ const orderSchema = z.object({
   totalPriceSet: money,
   currentTotalPriceSet: money,
   totalRefundedSet: money,
+  transactions: z.unknown().optional(),
 });
 export type OrderPage = {
   nodes: unknown[];
@@ -37,12 +49,25 @@ export const fetchMarketingOrders: OrderReader = async (since, cursor) => {
     `query OffyMarketingOrders($query:String!,$after:String){orders(first:25,sortKey:UPDATED_AT,query:$query,after:$after){nodes{
       id name createdAt updatedAt test cancelledAt displayFinancialStatus customAttributes{key value}
       totalPriceSet{presentmentMoney{amount currencyCode}} currentTotalPriceSet{presentmentMoney{amount currencyCode}} totalRefundedSet{presentmentMoney{amount currencyCode}}
+      transactions(first:${transactionLimit}){kind status processedAt}
     }pageInfo{hasNextPage endCursor}}}`,
     { query: `updated_at:>=${since}`, after: cursor },
     (input, init) => fetch(input, { ...init, signal: AbortSignal.timeout(8000) }),
   );
   return data.orders;
 };
+function paymentTime(order: z.infer<typeof orderSchema>, createdAt: number, now: number) {
+  if (!paymentStatuses.includes(order.displayFinancialStatus)) return null;
+  // At the query cap the result may be truncated, so the last capture is unknown.
+  const result = transactionSchema.safeParse(order.transactions);
+  if (!result.success) return null;
+  const times = result.data
+    .filter((t) => (t.kind === "SALE" || t.kind === "CAPTURE") && t.status === "SUCCESS")
+    .map((t) => Date.parse(t.processedAt ?? ""));
+  return times.length && times.every((at) => at >= createdAt - 300000 && at <= now)
+    ? Math.max(...times)
+    : null;
+}
 function recordOrder(db: Db, raw: unknown, key: Buffer, now: number) {
   // Ignore unrelated orders before validating fields used only for reconciliation.
   if (
@@ -95,6 +120,7 @@ function recordOrder(db: Db, raw: unknown, key: Buffer, now: number) {
     attemptId,
     createdAt,
     updatedAt,
+    paidAt: paymentTime(o, createdAt, now),
     checkedAt: now,
     financialStatus: o.displayFinancialStatus,
     canceled: !!o.cancelledAt,
@@ -114,18 +140,25 @@ function recordOrder(db: Db, raw: unknown, key: Buffer, now: number) {
     .run();
 }
 export async function syncOrderEvidence(db: Db, read: OrderReader, key: Buffer, now = Date.now()) {
+  const since = new Date(now - 30 * DAY).toISOString();
   const claimed = db.transaction((tx) => {
     tx.insert(metaOrderSync)
-      .values({ id: 1, since: new Date(now - 30 * DAY).toISOString(), startedAt: now, nextAt: now })
+      .values({ id: 1, since, startedAt: now, nextAt: now, paymentScanStarted: true })
       .onConflictDoNothing()
       .run();
     const state = tx.select().from(metaOrderSync).where(eq(metaOrderSync.id, 1)).get()!;
     if (state.nextAt > now || state.leaseUntil > now) return null;
-    tx.update(metaOrderSync)
-      .set({ leaseUntil: now + 60000 })
+    return tx
+      .update(metaOrderSync)
+      .set({
+        leaseUntil: now + 60000,
+        ...(state.paymentScanStarted
+          ? {}
+          : { since, cursor: null, startedAt: now, paymentScanStarted: true }),
+      })
       .where(eq(metaOrderSync.id, 1))
-      .run();
-    return state;
+      .returning()
+      .get();
   });
   if (!claimed) return { state: "waiting" as const };
   try {

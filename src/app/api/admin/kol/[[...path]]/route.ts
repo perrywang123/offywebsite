@@ -75,7 +75,7 @@ export async function GET(request: Request, context: Context) {
     if (path[0] === "checkouts") return diagnosticAdminGet(request, path);
     const db = getKolDb(),
       admin = requireAdmin(db, request.headers);
-    if (path[0] === "meta") return metaAdminGet(request, path);
+    if (path[0] === "meta") return await metaAdminGet(request, path);
     if (path[0] === "collabs") return collabsGet(db, path, request);
     if (path[0] === "state")
       return json({

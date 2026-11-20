@@ -1,12 +1,13 @@
 # Offy 广告投放与看数：简练版
 
-更新：2026-11-14。给投放同事和品牌管理员使用。操作与排障细节见[详细版](meta-ads-sop-detailed.md)。本轮可靠性修复的本地验收与上线状态见[验收记录](meta-reliability-validation.md)。
+更新于 2026-11-20。给投放同事和品牌管理员使用。操作与排障细节见[详细版](meta-ads-sop-detailed.md)。
 
 1. **投放设置**：进入 [Meta Ads Manager](https://adsmanager.facebook.com/adsmanager/manage/campaigns?act=1301113714798915&business_id=837128189448656)，确认广告账户 `1301113714798915`。购买广告用 Sales → Website → 数据集 `1120625754196383` → Purchase。预算、素材、国家及发布由投放负责人确认。
 2. **落地与参数**：网站地址可使用 `https://isoffy.com/`（首页）、`https://isoffy.com/products` 或真实商品页。在 Offy 后台 → 广告诊断 →「投放链接设置」复制 URL 参数，放入 Meta 广告的 **URL parameters** 栏，保留动态 ID。不要伪造 fbclid，不要将模板花括号作为真实访问测试。
 3. **确认跳转**：用实际广告预览打开，确认落在 Offy、商品/币种正确，地址中的 campaign_id/adset_id/ad_id 被替换为数字。预览只能验链接，不能证明购买归因。
 4. **日常看效果**：Ads Manager 选相同日期与归因窗口，列中加入花费、网站购买次数、购买成本、购买金额和购买 ROAS。事件接收/去重问题去 [Events Manager](https://eventsmanager.facebook.com/events_manager2/list/pixel/1120625754196383/overview?business_id=837128189448656)。
-5. **看变化、查链路**：[Offy 广告诊断](https://isoffy.com:8443/admin/meta) 选日期（上海时间）、流量范围及广告 ID →「应用筛选」→ 看每日趋势与站内漏斗。切换浏览器数/事件次数，点击漏斗阶段或广告行「查看链路」下钻，再打开事件证据。出现结账异常看「结账诊断」；订单扫描完成后每 15 分钟检查。
+5. **逐笔查订单**。在 Offy 广告诊断点击「查订单来源」，输入 Shopify 订单号。没有 Offy 广告证据时，后台会查看近 30 天内该 Shopify 订单的访问记录，也支持 Shop 渠道。复制有证据的广告 ID，在 Meta「广告」层查看素材与转化。Offy 结账订单列表可按结账或付款日期筛选，时间均为北京时间。 [Offy 广告诊断](https://isoffy.com:8443/admin/meta)
+6. **看趋势和漏斗**。在 Offy 广告诊断选日期、流量范围和广告 ID，点击「应用筛选」。点击漏斗阶段或广告行可打开事件证据。结账异常在「结账诊断」查看。
 
 **口径**：Offy 的“结账准备”只在站内记录；Shopify 官方负责 Meta 的 InitiateCheckout 和 Purchase。Offy 的 CAPI 仅补 AddToCart，并与浏览器使用同一事件 ID。后台“CAPI 已接收”不等于广告成交；浏览器标识不是人数；订单证据不是 Meta 最终归因。过去的重复结账历史不会被删除或重算。
 

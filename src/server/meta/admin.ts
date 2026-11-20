@@ -7,12 +7,19 @@ import { listMetaEvents } from "./store";
 import { getMetaDb } from "./runtime";
 import { shopifyAdminConfigured } from "../kol/shopify";
 import { readMetaAnalytics } from "./analytics";
+import { orderReconciliationFilter, readMetaOrderEvidence } from "./reconciliation";
 /** Caller has already required ingress + authenticated admin. Never mutate on GET. */
-export function metaAdminGet(request: Request, path: string[]) {
-  const filter = evidenceFilterSchema.parse(Object.fromEntries(new URL(request.url).searchParams));
+export async function metaAdminGet(request: Request, path: string[]) {
+  const query = Object.fromEntries(new URL(request.url).searchParams);
   const db = getMetaDb(),
     now = Date.now();
   const headers = { "Cache-Control": "no-store, private", "X-Robots-Tag": "noindex, nofollow" };
+  if (path.length === 2 && path[1] === "orders")
+    return Response.json(
+      await readMetaOrderEvidence(db, orderReconciliationFilter.parse(query), now),
+      { headers },
+    );
+  const filter = evidenceFilterSchema.parse(query);
   const scope = readMetaAnalytics(db, filter, now);
   const visitors = filter.stage ? scope.stageVisitors[filter.stage] : undefined;
   if (path.length === 3 && path[1] === "trace") {

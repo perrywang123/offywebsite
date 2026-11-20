@@ -5,6 +5,11 @@ import type { listMetaEvents } from "@/server/meta/store";
 import type { evidenceOverview, traceEvidence } from "@/server/meta/evidence";
 import { buildMetaLink, metaUrlParameters } from "@/lib/meta/links";
 import { MetaAnalyticsCharts } from "./MetaAnalyticsCharts";
+import {
+  MetaOrderReconciliation,
+  metaEvidenceTime as time,
+  orderStatusLabel,
+} from "./MetaOrderReconciliation";
 import type { MetaAnalyticsData } from "@/server/meta/analytics";
 import type { AnalyticsStage } from "@/lib/meta/analytics";
 import { decimal } from "@/server/kol/money";
@@ -39,7 +44,6 @@ const labels: Record<string, string> = {
   failed: "发送终止",
   suppressed: "已停止向 Meta 发送",
 };
-const time = (at: number) => new Date(at).toLocaleString("zh-CN", { timeZone: "Asia/Shanghai" });
 const day = (at: number) => new Date(at + 8 * 3600000).toISOString().slice(0, 10);
 const sourceText = (source: Record<string, string>) =>
   Object.entries(source)
@@ -56,18 +60,7 @@ function Orders({ orders }: { orders: Order[] }) {
             <span>
               {o.test ? "测试 · " : ""}
               {o.canceled ? "已取消 · " : ""}
-              {(
-                {
-                  PAID: "已付款",
-                  PARTIALLY_PAID: "部分付款",
-                  PARTIALLY_REFUNDED: "部分退款",
-                  REFUNDED: "已退款",
-                  PENDING: "待付款",
-                  AUTHORIZED: "已授权",
-                  VOIDED: "已作废",
-                  UNKNOWN: "状态未知",
-                } as Record<string, string>
-              )[o.financialStatus] ?? o.financialStatus}
+              {orderStatusLabel(o.financialStatus)}
             </span>
           </div>
           <p>
@@ -105,7 +98,7 @@ function SourceHelper({ origin }: { origin: string }) {
       <summary>投放链接设置 · 复制给投放同事</summary>
       <p>
         Meta 中设置 Sales → Website → 此数据集 → Purchase。网站地址填写 Offy
-        落地页；下列参数放在广告的“URL parameters”栏。不会创建或发布广告。
+        落地页。将下列参数复制到广告的「URL parameters」栏。
       </p>
       <label>
         Offy 落地地址
@@ -135,8 +128,8 @@ function SourceHelper({ origin }: { origin: string }) {
         </>
       )}
       <p className="muted">
-        双花括号由 Meta 在真实投放点击时替换。预览或手动打开模板不能证明广告归因；不要自行添加
-        fbclid。已有广告由投放负责人核对后修改。
+        Meta 会在广告点击时将双花括号替换为对应 ID。请保留 campaign_id、adset_id、ad_id，
+        用于按订单查询来源。已有广告的配置由投放负责人核对。
       </p>
       {message && <p role="status">{message}</p>}
     </details>
@@ -213,6 +206,8 @@ export function MetaDiagnostics() {
   const [traceError, setTraceError] = useState("");
   const [selected, setSelected] = useState<Evidence["rows"][number]>();
   const [tracing, setTracing] = useState(false);
+  const [ordersOpened, setOrdersOpened] = useState(false);
+  const [ordersRevision, setOrdersRevision] = useState(0);
   const requestId = useRef(0),
     traceRequest = useRef(0);
   const controller = useRef<AbortController | null>(null);
@@ -321,6 +316,14 @@ export function MetaDiagnostics() {
     setDraft(next);
     applyScope(next);
   }
+  function showOrders() {
+    const panel = ordersPanel.current;
+    if (!panel) return;
+    panel.open = true;
+    setOrdersOpened(true);
+    panel.querySelector("summary")?.focus({ preventScroll: true });
+    panel.scrollIntoView?.({ block: "start" });
+  }
   async function openTrace(row: Evidence["rows"][number]) {
     const seq = ++traceRequest.current;
     setSelected(row);
@@ -354,9 +357,21 @@ export function MetaDiagnostics() {
             最终归因或佣金。
           </p>
         </div>
-        <button onClick={() => void load()} disabled={loading}>
-          {loading ? "读取中…" : "刷新数据"}
-        </button>
+        <div className="toolbar-actions">
+          <button type="button" className="primary" onClick={showOrders}>
+            查订单来源
+          </button>
+          <button
+            type="button"
+            onClick={() => {
+              setOrdersRevision((value) => value + 1);
+              void load();
+            }}
+            disabled={loading}
+          >
+            {loading ? "读取中…" : "刷新数据"}
+          </button>
+        </div>
       </div>
       {error && (
         <p className="message error" role="alert">
@@ -542,55 +557,37 @@ export function MetaDiagnostics() {
           >
             查看事件明细 ↓
           </button>
-          <button
-            type="button"
-            onClick={() => {
-              if (ordersPanel.current) {
-                ordersPanel.current.open = true;
-                ordersPanel.current.scrollIntoView?.({ block: "start" });
-              }
-            }}
-          >
+          <button type="button" onClick={showOrders}>
             查看订单证据 ↓
           </button>
         </div>
       </div>
-      <details className="meta-evidence-section" ref={ordersPanel}>
-        <summary>Shopify 订单核对</summary>
+      <details
+        className="meta-evidence-section"
+        ref={ordersPanel}
+        onToggle={(event) => {
+          if (event.currentTarget.open) setOrdersOpened(true);
+        }}
+      >
+        <summary>Shopify 订单来源</summary>
         {overview && (
-          <section aria-label="Shopify 订单核对">
+          <section aria-label="Shopify 订单同步">
             <p>
               {!data?.config.ordersConfigured
                 ? "Shopify Admin 尚未配置，订单证据暂不可用。"
                 : overview.sync?.lastError
-                  ? "订单读取暂时失败，将自动重试；以下若有证据为上次读取结果。"
+                  ? "订单读取暂时失败，将自动重试。下方显示此前成功读取的记录。"
                   : overview.sync?.lastSuccess
                     ? `最近成功读取 ${time(overview.sync.lastSuccess)}${overview.sync.scanning ? " · 分页读取中" : " · 完成扫描后每 15 分钟检查"}`
-                    : "等待首次读取；没有证据不等于没有成交。"}
+                    : "等待首次读取 Shopify 订单。"}
             </p>
             <p className="muted">
-              关联本次上线后、许可内且带签名结账编号的订单。金额是 Shopify
-              订单总额（含运税），非广告归因金额；不同币种分开显示。下列按事件范围关联，可能包含漏斗前序不完整或范围外创建的订单，不能作为漏斗转化分子。
+              记录来自已授权且结账编号匹配的订单。金额为 Shopify 含运费和税费的订单总额， Meta
+              最终购买归因和广告收入请在广告管理工具查看。
             </p>
-            {overview.currencies.map((c) => (
-              <p key={c.currency}>
-                <strong>{c.currency}</strong> · {c.orders} 笔有付款历史且未取消的订单 · 总额{" "}
-                {decimal(c.totalMinor, c.currency)} · 已退款 {decimal(c.refundedMinor, c.currency)}
-              </p>
-            ))}
-            {overview.orders.length ? (
-              <>
-                <p className="muted">
-                  共 {overview.orderCount} 笔匹配订单，显示最近 {overview.orders.length}{" "}
-                  笔；汇总包含全部匹配订单。
-                </p>
-                <Orders orders={overview.orders} />
-              </>
-            ) : (
-              <p className="muted">尚无匹配订单证据；请同时查看 Shopify 订单与 Meta 报表。</p>
-            )}
           </section>
         )}
+        {ordersOpened && <MetaOrderReconciliation scope={scope} revision={ordersRevision} />}
       </details>
       {data && <SourceHelper origin={data.config.siteUrl ?? "https://isoffy.com"} />}
       <details className="meta-evidence-section" ref={detailsPanel} open>

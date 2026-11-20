@@ -138,6 +138,33 @@ async function main() {
     .all() as { remote_id: string; candidate: string }[])
     jobs.set(row.remote_id, { code: row.candidate, polls: 2 });
   const orders = new Map<string, MockOrder>();
+  const shopOrders = meta
+    ? [9010, 9011].map((number) => ({
+        id: `gid://shopify/Order/${number}`,
+        name: `#${number}`,
+        createdAt: new Date(Date.now() - 60000).toISOString(),
+        test: false,
+        cancelledAt: null,
+        displayFinancialStatus: "PAID",
+        channelInformation: { channelDefinition: { channelName: "Shop" }, displayName: "Shop" },
+        customerJourneySummary: {
+          ready: true,
+          moments: {
+            nodes:
+              number === 9010
+                ? [
+                    {
+                      occurredAt: new Date(Date.now() - 120000).toISOString(),
+                      landingPage: "https://shop.com/m/test",
+                      utmParameters: { source: "facebook", medium: "paid", content: "123456789" },
+                    },
+                  ]
+                : [],
+            pageInfo,
+          },
+        },
+      }))
+    : [];
   let checkoutMode = "normal";
   let eventCounter = 0;
   function send(res: ServerResponse, data: unknown, status = 200) {
@@ -432,7 +459,16 @@ async function main() {
             pageInfo,
           },
         };
-      } else if (q.includes("OffyOrders"))
+      } else if (q.includes("OffyOrderName"))
+        data = {
+          orders: {
+            nodes: shopOrders.filter((order) => v.query === `name:"${order.name}"`),
+            pageInfo,
+          },
+        };
+      else if (q.includes("OffyOrderSource"))
+        data = { order: shopOrders.find((order) => order.id === v.id) ?? null };
+      else if (q.includes("OffyOrders"))
         data = { orders: { nodes: [...orders.keys()].map((id) => ({ id })), pageInfo } };
       else if (q.includes("OffyOrder(")) data = { order: orders.get(v.id) ?? null };
       else if (q.includes("CollabsOrderName"))

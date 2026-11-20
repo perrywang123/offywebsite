@@ -31,21 +31,25 @@ export const sourceSchema = z
   })
   .strict();
 export type MetaSource = z.infer<typeof sourceSchema>;
-/** The documented Meta URL template, not arbitrary numeric UTM labels. */
+export const metaPaidSources = ["meta", "facebook", "instagram", "fb", "ig"];
+export const metaPaidMedia = ["paid_social", "paid"];
+export const metaIdPattern = /^\d{1,30}$/;
+/** Keep ads and campaign IDs as strings to preserve their full precision. */
 export function normalizeMetaSource(source: MetaSource): MetaSource {
   const result = { ...source };
-  if (
-    source.utm_source?.toLowerCase() === "meta" &&
-    source.utm_medium?.toLowerCase() === "paid_social"
-  ) {
-    for (const [id, utm] of [
-      ["campaign_id", "utm_campaign"],
-      ["ad_id", "utm_content"],
-      ["adset_id", "utm_term"],
-    ] as const) {
-      const value = source[utm];
-      if (!result[id] && value && /^\d{1,30}$/.test(value)) result[id] = value;
-    }
+  const metaPaid =
+    metaPaidSources.includes(source.utm_source?.toLowerCase() ?? "") &&
+    metaPaidMedia.includes(source.utm_medium?.toLowerCase() ?? "");
+  for (const [id, utm] of [
+    ["campaign_id", "utm_campaign"],
+    ["ad_id", "utm_content"],
+    ["adset_id", "utm_term"],
+  ] as const) {
+    const explicit = source[id],
+      value = source[utm];
+    if (typeof explicit === "string" && metaIdPattern.test(explicit)) continue;
+    if (metaPaid && typeof value === "string" && metaIdPattern.test(value)) result[id] = value;
+    else delete result[id];
   }
   return result;
 }

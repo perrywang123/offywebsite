@@ -40,6 +40,7 @@ export const metaOrderEvidence = sqliteTable(
     attemptId: text("attempt_id").notNull(),
     createdAt: integer("created_at").notNull(),
     updatedAt: integer("updated_at").notNull(),
+    paidAt: integer("paid_at"),
     checkedAt: integer("checked_at").notNull(),
     financialStatus: text("financial_status").notNull(),
     canceled: integer("canceled", { mode: "boolean" }).notNull(),
@@ -64,6 +65,7 @@ export const metaOrderSync = sqliteTable("meta_order_sync", {
   leaseUntil: integer("lease_until").notNull().default(0),
   lastSuccess: integer("last_success"),
   lastError: text("last_error"),
+  paymentScanStarted: integer("payment_scan_started", { mode: "boolean" }).notNull().default(false),
 });
 
 /**

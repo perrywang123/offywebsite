@@ -1,6 +1,6 @@
 # Offy 广告投放与看数：详细版
 
-2026-11-14。[简练版](meta-ads-sop.md)适合每日操作；本文保留设置、证据口径与维护步骤。本轮变更是否已上线见[可靠性验收记录](meta-reliability-validation.md)。
+更新于 2026-11-20。每日操作见[简练版](meta-ads-sop.md)。以往的可靠性验证见[验收记录](meta-reliability-validation.md)。
 
 ## 谁负责上报
 
@@ -12,7 +12,7 @@
 | 托管结账/成交             | Shopify 官方 Meta 集成           | 只读 Shopify 订单事实；实际 IC/Purchase 与去重看 Meta |
 | 广告归因、花费、ROAS      | Meta Ads Manager                 | 不由 Offy 或来源标签重算                              |
 
-选择来源不是声明 Meta 一定给该广告记功。来源标签在出现任何新的有效标签时整体更新，不混入旧 ad_id；URL 没有任何有效标签（例如只有空值或未替换模板）时保留原标签。后续无标签点击保留的旧来源只表示最后记录的有效标签，不证明该新点击属于旧广告。真实 Meta 点击的 fbc 独立更新并保留原始捕获时间，观察上限30天，不因再次浏览延长。仅对 `utm_source=meta&utm_medium=paid_social` 且值为纯数字的受控参数，兼容从 `utm_campaign/utm_content/utm_term` 读取缺失的 campaign/ad/adset ID；明确填写的 ID 优先，历史保留记录按相同规则查询，不改写原始数据。没有真实点击不构造点击 ID。许可拒绝或 GPC 时不记录营销观察；撤回会删除许可内营销及关联订单证据，不修改真实 Shopify 订单。未获许可前已离开的页面和来源不会回补。
+Offy 展示最后一次记录的有效来源标签。新标签整体更新，空值或未替换的模板沿用之前的标签。真实 Meta 点击的 fbc 独立更新，保留原始捕获时间，观察上限 30 天。广告 ID 优先使用明确填写的字段。对 `meta`、`facebook`、`instagram`、`fb`、`ig` 的 `paid_social` 或 `paid` 流量，后台可以从纯数字的 `utm_campaign`、`utm_content`、`utm_term` 识别缺失的系列、广告、广告组 ID。查询保留的历史记录时使用同一规则。许可拒绝或 GPC 时跳过营销观察。撤回许可后删除已保留的 Offy 营销及关联订单证据。
 
 内部访问带 `utm_source=offy_validation` 或 `utm_medium=internal_test` 时，新版本不初始化或发送 Pixel，不保存 CAPI 匹配载荷；Offy 仅保留许可内本地观察，后续无标签导航保留内测标记。已加载 Pixel 时先撤销本页发送许可。后台默认排除这些记录，旧待发送任务会被抑制；历史已发送事件保留事实，不能撤回 Meta。不要在测试窗口再打开带正式来源的落地页，否则会按新来源更新。
 
@@ -34,6 +34,8 @@ Offy 后台的折叠链接助手能复制这段参数并预览拼接结果。它
 
 **Events Manager**：看 Overview、Diagnostics、事件的 Browser/Server 去重与匹配质量。总览处理前事件数不是订单数。一次 AddToCart 的 event ID 应一致；单有同名事件或“Meeting best practices”不能证明两套不同编号的结账已去重。本次停止 Offy 自发 IC，只影响上线后的新代码；旧页面未重新加载时仍可能调用旧 Pixel，历史数据保留。
 
+看到 `Purchase` 去重警告时，用一笔正常成交的 Shopify 订单核对两路事件的名称、事件 ID 与去重结果。如果官方集成需要排查，保留数据集、购买时间和可见的事件 ID。 [Meta 去重规则](https://developers.facebook.com/documentation/ads-commerce/conversions-api/deduplicate-pixel-and-server-events)
+
 **Offy 广告诊断**：默认近7个上海日历日（最多保留30天/20,000条），排除明确标记的内部测试及 Shopify 测试订单。选择日期、全部/带广告ID/未记录ID流量、campaign_id/ad_id 后点击「应用筛选」，所有图表统一更新。事件类型、发送状态及漏斗阶段只筛下方明细，不改变上方统计。读取失败保留上次快照并提示；页面不会自动反复刷新。
 
 上方四个行为数字为各阶段独立去重的浏览器数，旁列保留事件次数，按完整匹配范围聚合，和每页30条明细无关。每日趋势可切换访问、商品浏览、加购、结账准备，并在浏览器数/事件次数间切换；点击/聚焦日期点或展开「查看每日数值」读取具体值。每日去重不能相加为周期去重。
@@ -46,7 +48,15 @@ Offy 后台的折叠链接助手能复制这段参数并预览拼接结果。它
 
 「采集与同步状态」的 CAPI 接收比例只统计 Offy 应发送的 AddToCart 任务，不把浏览器观察和 Shopify 官方事件算成发送失败；没有任务不显示100%。该比例与最终转化无关；花费、展示、点击、CPA、ROAS 和广告归因购买仍需查看 Meta 报表。
 
-Shopify 只读扫描由**管理后台的 KOL worker**执行，复用 Admin API 认证，主站不注入 Admin Client Secret。首次最多回看30天；每次最多25笔，分页间隔至少10秒，完成扫描后15分钟检查；失败5分钟后重试。只保存带本站签名结账编号且仍存在许可观察的订单，不猜历史关联。退款/取消更新覆盖原快照，不累加重复订单。金额按币种分组，订单总额含运税、退款单列，不能当广告收入或跨币种相加。明细最多50笔，汇总覆盖全部符合筛选的订单。
+### 按 Shopify 订单查广告
+
+打开 Offy 广告诊断，点击「查订单来源」，输入近 30 天的 Shopify 订单号。Offy 优先展示签名结账记录及其广告 ID。缺少 Offy 结账或广告 ID 时，后台会通过 Shopify Admin API 读取该单的销售渠道及访问记录。Shop 渠道订单能展示 Shopify 保存的广告 ID、来源与访问时间。只有点击标记、访问记录未就绪、存在多个广告 ID 或缺少证据时，页面会显示对应状态。后台按单读取，Shopify 访问记录不会写入 Offy 漏斗或订单列表。
+
+复制有证据的广告 ID，在 Meta Ads Manager 的「广告」层查看对应素材及汇总转化。Shopify 或 Offy 显示的广告 ID 代表实际记录到的来源参数。Shop Campaigns 活动使用 Shopify 销售渠道 → Shop → Advertising 查看活动级归因。 [Shopify 订单转化详情](https://help.shopify.com/en/manual/fulfillment/managing-orders/analytics/conversion-summary) · [Shop Campaigns 订单报告](https://help.shopify.com/en/manual/online-sales-channels/shop/shop-campaigns/manage)
+
+清除单号后，列表沿用顶部筛选，可分别按结账日期或付款日期查询，均为北京时间。付款时间取 Shopify 已付款订单最近一笔成功的 SALE 或 CAPTURE。缺少交易时间的订单仍可用结账日期或单号查找。每页展示 25 笔，金额汇总覆盖当前列表范围，按原币种分组。订单总额包含运费和税费，退款单列。
+
+Shopify 只读扫描由管理后台的 KOL worker 执行，复用 Admin API 认证。首次同步和付款时间功能升级后各扫描最近 30 天内的相关订单。每次最多读 25 笔，至少间隔 10 秒翻页，完成后每 15 分钟检查，失败后隔 5 分钟重试。仅保存带 Offy 签名结账编号且仍有许可记录的订单。退款或取消会更新既有记录。
 
 令牌缺失/权限不足时订单证据不可用，浏览、加购和结账继续。后台“CAPI 已接收”只说明 Meta 接受请求，不保证匹配广告。CAPI 永久错误停止，网络/429/5xx最多5次有限退避。未映射的商品仍可发金额事件，但不能宣称动态商品匹配完成。
 

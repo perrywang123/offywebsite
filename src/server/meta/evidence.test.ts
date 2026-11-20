@@ -1,10 +1,12 @@
 // @vitest-environment node
 import { describe, expect, it } from "vitest";
 import { randomBytes, randomUUID } from "node:crypto";
+import { eq } from "drizzle-orm";
 import { testDb } from "../kol/test-db";
 import { acceptEvent, listMetaEvents } from "./store";
 import { evidenceOverview, traceEvidence } from "./evidence";
-import { metaOrderEvidence } from "../db/schema";
+import { metaEvents, metaOrderEvidence } from "../db/schema";
+import { readMetaAnalytics } from "./analytics";
 describe("scoped marketing evidence", () => {
   const now = Date.parse("2026-11-12T06:00:00Z"),
     key = randomBytes(32);
@@ -84,5 +86,42 @@ describe("scoped marketing evidence", () => {
     expect(result.currencies).toHaveLength(2);
     expect(result.currencies.find((x) => x.currency === "USD")?.totalMinor).toBe(4590);
     expect(evidenceOverview(db, { includeTests: true }, now).orders).toHaveLength(3);
+  });
+  it("uses the same ID for retained Facebook paid traffic in filters and analytics", () => {
+    const db = testDb(),
+      id = randomUUID(),
+      ad = "120257887844680211",
+      campaign = "120257737901460211",
+      source = {
+        utm_source: "Facebook",
+        utm_medium: "paid",
+        utm_content: ad,
+        utm_campaign: campaign,
+        ad_id: "invalid",
+      };
+    acceptEvent(
+      db,
+      {
+        eventId: id,
+        visitorId: randomUUID(),
+        name: "PageView",
+        occurredAt: now,
+        pagePath: "/",
+        source,
+        data: {},
+        consent: true,
+      },
+      { key, origin: "https://isoffy.com", capi: false, now },
+    );
+    db.update(metaEvents)
+      .set({ sourceJson: JSON.stringify(source) })
+      .where(eq(metaEvents.id, id))
+      .run();
+    const filter = { adId: ad, campaignId: campaign };
+    expect(listMetaEvents(db, filter, now).rows[0]?.source.ad_id).toBe(ad);
+    expect(evidenceOverview(db, filter, now).events[0]?.withAdId).toBe(1);
+    expect(readMetaAnalytics(db, filter, now).analytics.ads).toContainEqual(
+      expect.objectContaining({ adId: ad }),
+    );
   });
 });

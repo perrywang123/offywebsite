@@ -145,7 +145,7 @@ Sources tagged `utm_source=offy_validation` or `utm_medium=internal_test`, case-
 
 ### Requirement: Consistent recorded source normalization
 
-New valid source labels SHALL replace the previous labels as a whole. Empty or invalid labels SHALL not erase the last valid labels. In the controlled `meta / paid_social` UTM template, missing campaign/ad/ad-set IDs MAY be derived from bounded numeric utm_campaign/content/term respectively; explicit IDs SHALL take precedence. Ingestion, historical read filters, source groups and evidence views SHALL use the same normalization without rewriting historical records. Saved labels SHALL be described as recorded source evidence, never as a verified association between a later unknown click and an ad or as Meta final attribution.
+New valid source labels SHALL replace the previous labels as a whole. Empty or invalid labels SHALL not erase the last valid labels. For `meta`, `facebook`, `instagram`, `fb` and `ig` with `paid_social` or `paid`, missing campaign, ad and ad-set IDs MAY be derived from numeric `utm_campaign`, `utm_content` and `utm_term` respectively. IDs SHALL have one to thirty digits and valid explicit IDs SHALL take precedence. Ingestion, historical read filters, source groups and evidence views SHALL use the same normalization without rewriting historical records. Saved labels SHALL be described as recorded source evidence. They SHALL NOT be represented as a verified association between a later unknown click and an ad or as final Meta attribution.
 
 #### Scenario: New click without source labels
 
@@ -154,5 +154,48 @@ New valid source labels SHALL replace the previous labels as a whole. Empty or i
 
 #### Scenario: Historical UTM-only record
 
-- **WHEN** a retained observation contains numeric Meta paid-social UTM values without explicit ID fields
-- **THEN** ad/campaign filters and grouped counts can find the same record and expose normalized IDs without inventing identity for unrelated or nonnumeric UTM values.
+- **WHEN** a retained observation contains numeric Meta paid UTM values without explicit ID fields
+- **THEN** ad and campaign filters and grouped counts find the same record and expose normalized IDs, and unrelated or nonnumeric UTM values do not generate an ID.
+
+### Requirement: Search Shopify orders by recorded advertising source
+
+The authenticated diagnostic workspace SHALL show each retained Shopify order matched by the signed checkout reference with its order number, recorded ad and campaign IDs when present, Meta click indicator, checkout time and Shopify payment time. Exact order-number search SHALL find matching evidence in the retained window. List filtering SHALL support either checkout or confirmed payment date in Asia/Shanghai. The workspace SHALL continue to exclude internal and Shopify test evidence by default. A click indicator alone SHALL NOT generate an ad ID. Orders with missing evidence SHALL NOT be classified as organic.
+
+#### Scenario: Checkout and payment on different days
+
+- **WHEN** a signed checkout and its order's confirmed payment fall on different calendar days in Asia/Shanghai
+- **THEN** the order is found by either matching day and time basis, and the row shows both times.
+
+#### Scenario: Unknown source or time
+
+- **WHEN** an order has no usable ad ID or Shopify supplies no confirmed payment timestamp
+- **THEN** the workspace shows the available click evidence and the missing field, and payment date filters do not substitute the order creation time.
+
+#### Scenario: Existing orders and repeated scans
+
+- **WHEN** the database upgrades or an order is re-read after a refund
+- **THEN** the existing worker resumes or starts a bounded one-time rescan of retained orders, obtains payment time from successful Shopify sales and captures, and retains one evidence row per order.
+
+### Requirement: Supplement exact order searches with Shopify visit evidence
+
+The authenticated Meta diagnostics order search SHALL use retained, signed Offy evidence first. When that evidence has no ad ID or no local order exists, an exact order-number search SHALL read the matching recent Shopify order and its recorded visitor journey using the existing order access. Period lists and funnel statistics SHALL remain based on local evidence. The lookup SHALL disclose the sales channel when provided, identify the source of the displayed ad ID, and distinguish missing data, conflicting IDs, an incomplete journey and an unavailable Shopify response. It SHALL exclude test orders by default and return only order facts and sanitized advertising evidence.
+
+#### Scenario: Shop order with a recorded ad ID
+
+- **WHEN** Shopify returns an exact recent Shop order with a complete visit history that identifies one Meta ad in paid traffic
+- **THEN** the order lookup displays that ID as Shopify visit evidence, with no invented Offy checkout time or change to the funnel totals.
+
+#### Scenario: Shop order without supporting evidence
+
+- **WHEN** Shopify returns an exact recent Shop order without a distinguishable ad ID
+- **THEN** the order lookup displays its sales channel and the available click evidence or unknown source, without assigning an ad or classifying the order as organic.
+
+#### Scenario: Shopify is unavailable or returns multiple ad IDs
+
+- **WHEN** the Shopify lookup fails, a visit history is incomplete, or it identifies multiple distinct paid Meta IDs
+- **THEN** any signed local evidence stays visible and the administrator sees the relevant lookup status without a newly assigned ad ID.
+
+#### Scenario: Orders with a local ad ID or a list request
+
+- **WHEN** an exact search has a locally recorded ad ID or the administrator views a date-based list
+- **THEN** the result is served from local evidence without a Shopify journey request.

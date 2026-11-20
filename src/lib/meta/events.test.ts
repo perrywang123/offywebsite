@@ -45,6 +45,22 @@ describe("Meta event boundaries", () => {
       cleanSource("?utm_source=meta&utm_medium=paid_social&utm_content=111&ad_id=444").ad_id,
     ).toBe("444");
   });
+  it.each(["facebook", "Instagram", "fb", "ig"])(
+    "recovers exact IDs from %s paid URLs and ignores invalid explicit placeholders",
+    (source) => {
+      expect(
+        cleanSource(
+          `?utm_source=${source}&utm_medium=paid&utm_content=120257887844680211&utm_campaign=120257737901460211&ad_id=unexpanded`,
+        ),
+      ).toMatchObject({
+        ad_id: "120257887844680211",
+        campaign_id: "120257737901460211",
+      });
+      expect(
+        cleanSource(`?utm_source=${source}&utm_medium=referral&utm_content=111&ad_id=invalid`),
+      ).not.toHaveProperty("ad_id");
+    },
+  );
   it("does not allow fake purchase, email or arbitrary event fields", () => {
     const event = {
       eventId: crypto.randomUUID(),

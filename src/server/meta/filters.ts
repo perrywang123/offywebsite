@@ -1,7 +1,7 @@
-import { and, eq, gte, lt, lte, sql } from "drizzle-orm";
+import { and, eq, gte, inArray, lt, lte, sql, type SQL } from "drizzle-orm";
 import { z } from "zod";
 import { metaEvents } from "../db/schema";
-import { eventNames } from "@/lib/meta/events";
+import { eventNames, metaIdPattern, metaPaidMedia, metaPaidSources } from "@/lib/meta/events";
 const DAY = 86400000;
 const date = z
   .string()
@@ -20,14 +20,8 @@ export const evidenceFilterSchema = z.object({
   page: z.coerce.number().int().min(1).max(10000).optional(),
   from: date.optional(),
   to: date.optional(),
-  campaignId: z
-    .string()
-    .regex(/^\d{1,30}$/)
-    .optional(),
-  adId: z
-    .string()
-    .regex(/^\d{1,30}$/)
-    .optional(),
+  campaignId: z.string().regex(metaIdPattern).optional(),
+  adId: z.string().regex(metaIdPattern).optional(),
   includeTests: z.preprocess((v) => v === true || v === "true", z.boolean()).optional(),
 });
 export type EvidenceFilter = z.infer<typeof evidenceFilterSchema>;
@@ -49,13 +43,16 @@ export function evidenceRange(filter: EvidenceFilter, now: number) {
 export const labelledTest = sql<boolean>`(lower(coalesce(json_extract(${metaEvents.sourceJson}, '$.utm_source'), '')) = 'offy_validation' OR lower(coalesce(json_extract(${metaEvents.sourceJson}, '$.utm_medium'), '')) = 'internal_test')`;
 /** SQL equivalent of normalizeMetaSource, including retained UTM-only records. */
 function recordedId(field: "ad_id" | "campaign_id", utm: "utm_content" | "utm_campaign") {
-  const explicit = sql`nullif(json_extract(${metaEvents.sourceJson}, ${"$." + field}), '')`;
+  const numericId = (value: SQL) =>
+    sql`typeof(${value}) = 'text' and length(${value}) between 1 and 30 and ${value} not glob '*[^0-9]*'`;
+  const explicit = sql`json_extract(${metaEvents.sourceJson}, ${"$." + field})`;
   const value = sql`json_extract(${metaEvents.sourceJson}, ${"$." + utm})`;
-  return sql<string | null>`coalesce(${explicit}, case
-    when lower(json_extract(${metaEvents.sourceJson}, '$.utm_source')) = 'meta'
-      and lower(json_extract(${metaEvents.sourceJson}, '$.utm_medium')) = 'paid_social'
-      and length(${value}) between 1 and 30 and ${value} not glob '*[^0-9]*'
-    then ${value} else null end)`;
+  const source = sql<string>`lower(json_extract(${metaEvents.sourceJson}, '$.utm_source'))`;
+  const medium = sql<string>`lower(json_extract(${metaEvents.sourceJson}, '$.utm_medium'))`;
+  return sql<string | null>`case
+    when ${numericId(explicit)} then ${explicit}
+    when ${inArray(source, metaPaidSources)} and ${inArray(medium, metaPaidMedia)} and ${numericId(value)}
+    then ${value} else null end`;
 }
 export const recordedAdId = recordedId("ad_id", "utm_content");
 export const recordedCampaignId = recordedId("campaign_id", "utm_campaign");

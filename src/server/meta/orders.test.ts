@@ -87,17 +87,30 @@ describe("consented read-only order evidence", () => {
     expect(db.select().from(metaOrderEvidence).all()).toHaveLength(0);
   });
   it("refreshes refunds/cancellations and refuses an older order snapshot", async () => {
-    const { db, order } = setup();
+    const { db, order: baseOrder } = setup();
+    const timestamp = new Date(now + 30000).toISOString();
+    const order = {
+      ...baseOrder,
+      transactions: [
+        { kind: "AUTHORIZATION", status: "SUCCESS", processedAt: baseOrder.createdAt },
+        { kind: "CAPTURE", status: "SUCCESS", processedAt: timestamp },
+        { kind: "SALE", status: "FAILURE", processedAt: baseOrder.createdAt },
+      ],
+    };
     const read = vi
       .fn()
       .mockResolvedValue({ nodes: [order], pageInfo: { hasNextPage: false, endCursor: null } });
-    await syncOrderEvidence(db, read, key, now);
+    await syncOrderEvidence(db, read, key, now + 30000);
     const updated = {
       ...order,
       updatedAt: new Date(now + 600000).toISOString(),
       cancelledAt: new Date(now + 600000).toISOString(),
       displayFinancialStatus: "REFUNDED",
       totalRefundedSet: order.totalPriceSet,
+      transactions: [
+        ...order.transactions,
+        { kind: "REFUND", status: "SUCCESS", processedAt: new Date(now + 600000).toISOString() },
+      ],
     };
     read.mockResolvedValue({ nodes: [updated], pageInfo: { hasNextPage: false, endCursor: null } });
     await syncOrderEvidence(db, read, key, now + 16 * 60000);
@@ -105,10 +118,64 @@ describe("consented read-only order evidence", () => {
       canceled: true,
       refundedMinor: 4590,
       financialStatus: "REFUNDED",
+      paidAt: now + 30000,
     });
     read.mockResolvedValue({ nodes: [order], pageInfo: { hasNextPage: false, endCursor: null } });
     await syncOrderEvidence(db, read, key, now + 32 * 60000);
     expect(db.select().from(metaOrderEvidence).get()?.refundedMinor).toBe(4590);
+  });
+  it.each([
+    undefined,
+    [{ kind: "AUTHORIZATION", status: "SUCCESS", processedAt: new Date(now).toISOString() }],
+    [{ kind: "SALE", status: "SUCCESS", processedAt: null }],
+    Array.from({ length: 20 }, () => ({
+      kind: "SALE",
+      status: "SUCCESS",
+      processedAt: new Date(now).toISOString(),
+    })),
+  ])("preserves order facts when the payment time is unavailable", async (transactions) => {
+    const { db, order } = setup();
+    await syncOrderEvidence(
+      db,
+      async () => ({
+        nodes: [{ ...order, transactions }],
+        pageInfo: { hasNextPage: false, endCursor: null },
+      }),
+      key,
+      now,
+    );
+    expect(db.select().from(metaOrderEvidence).get()).toMatchObject({
+      orderName: "#1234",
+      paidAt: null,
+    });
+  });
+  it("scans the retained window once after upgrading an existing worker state", async () => {
+    const { db, order } = setup();
+    db.insert(metaOrderSync)
+      .values({
+        id: 1,
+        since: new Date(now - 60000).toISOString(),
+        cursor: "old-cursor",
+        startedAt: now - 60000,
+        nextAt: now,
+        leaseUntil: now + 1000,
+      })
+      .run();
+    const read = vi.fn().mockResolvedValue({
+      nodes: [
+        {
+          ...order,
+          transactions: [{ kind: "SALE", status: "SUCCESS", processedAt: order.createdAt }],
+        },
+      ],
+      pageInfo: { hasNextPage: false, endCursor: null },
+    });
+    expect(await syncOrderEvidence(db, read, key, now)).toMatchObject({ state: "waiting" });
+    await syncOrderEvidence(db, read, key, now + 1000);
+    expect(read.mock.calls[0]).toEqual([new Date(now + 1000 - 30 * 86400000).toISOString(), null]);
+    expect(db.select().from(metaOrderEvidence).get()).toMatchObject({ paidAt: now });
+    await syncOrderEvidence(db, read, key, now + 16 * 60000);
+    expect(read.mock.calls[1]).toEqual([new Date(now + 1000 - 300000).toISOString(), null]);
   });
   it("continues bounded pages with the same lower date bound", async () => {
     const { db, order } = setup();
