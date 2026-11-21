@@ -21,6 +21,12 @@ Next服务端经Storefront GraphQL读取商品/系列/政策并创建Cart，浏�
 
 缓存与country字面量校验见 [架构](architecture.md)。Shopify返回的amount和currency一起使用，本站不自己换汇。结账country与页面同源；语言显式EN，避免使用店铺默认语言。
 
+## 商品买家秀
+
+1. 在 Shopify 的 **Content → Files** 上传已获授权的照片。添加能准确描述画面的英文替代文字。
+2. 在对应商品的 **Metafields → Buyer Photos** 添加图片，按展示顺序排列后保存。该字段是 `custom.buyer_photos`，类型为图片文件引用列表，开启 Storefront API 读取权限。 [Shopify 元字段引用](https://shopify.dev/docs/api/storefront/2026-07/objects/Metafield#field-Metafield.fields.references)
+3. 打开该商品的独立站详情页。「OFFY in the wild」最多显示前三张缩略图，箭头进入完整相册。移除商品中的图片引用即可撤下；清空列表会隐藏整个模块。图片字段读取失败也会省略该区域，商品数据仍由各自的 Shopify 查询提供。
+
 ## 结账与订单
 
 ShopifyPaymentProvider服务端解析变体/可售，Cart带buyerIdentity.countryCode、inContext语言和return_url attribute。Shopify托管结账完成后不会仅因该attribute自动回本站，需要商家侧配置；可选KOL模块已新增`/api/kol/webhook`和独立财务核对账本；真实店铺联调尚未完成。详见 [运行说明](kol-platform-operations.md)。

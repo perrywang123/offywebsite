@@ -160,6 +160,8 @@ vi.mock("@/lib/geo", () => ({
   pickCountry: () => "US",
 }));
 
+vi.mock("@/components/product/ProductBuyerPhotos", () => ({ ProductBuyerPhotos: () => null }));
+
 import ProductDetailPage, { generateMetadata } from "./page";
 
 beforeEach(() => {

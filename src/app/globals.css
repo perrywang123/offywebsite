@@ -157,6 +157,10 @@ html[lang="en"] {
   --tracking-22: 0.1em;
 }
 
+html:has(dialog[data-buyer-photo-dialog][open]) {
+  overflow: hidden;
+}
+
 html {
   scroll-behavior: smooth;
 }

@@ -23,6 +23,8 @@ import { StickyBuyBar } from "@/components/product/StickyBuyBar";
 import { Reveal } from "@/components/Reveal";
 import { JsonLd } from "@/components/seo/JsonLd";
 import { breadcrumbJsonLd, productJsonLd } from "@/lib/seo/jsonld";
+import { Suspense } from "react";
+import { ProductBuyerPhotos } from "@/components/product/ProductBuyerPhotos";
 
 export const dynamic = "force-dynamic";
 
@@ -264,11 +266,14 @@ export default async function ProductDetailPage({
           </div>
         </div>
 
+        <Suspense key={product.code} fallback={null}>
+          <ProductBuyerPhotos handle={product.code} country={country} productName={productName} />
+        </Suspense>
+
         {/* 相关 */}
         {siblings.length > 0 && (
           <section className="mt-10 md:mt-20">
             <Reveal className="mb-6">
-              <p className="kicker mb-2">{t("moreKicker")}</p>
               <h2 className="font-display text-2xl font-semibold tracking-tight">{t("related")}</h2>
             </Reveal>
             {/* 窄屏 3 列 → 2 列:3 列时每格只有 98.3px,商品名被砍到 14 个字符以内

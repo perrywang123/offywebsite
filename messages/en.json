@@ -148,7 +148,16 @@
     "description": "About this look",
     "outOfStock": "Sold out",
     "related": "More from this series",
-    "moreKicker": "More",
+    "buyerPhotos": {
+      "title": "OFFY in the wild",
+      "view": "View gallery",
+      "open": "Open photo {number} of {total}",
+      "photoAlt": "{productName} buyer photo {number}",
+      "enlarged": "Buyer photos",
+      "close": "Close photo gallery",
+      "previous": "Previous photo",
+      "next": "Next photo"
+    },
     "upcomingNotice": "Revealing soon",
     "shopBreadcrumb": "Shop",
     "dimension": {
