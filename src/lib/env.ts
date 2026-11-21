@@ -71,6 +71,7 @@ const envSchema = z.object({
   SHOPIFY_STOREFRONT_TOKEN: z.string().optional(),
   // Optional server-only Admin credentials; the application pair takes precedence.
   SHOPIFY_ADMIN_TOKEN: z.string().optional(),
+  SHOPIFY_GIFT_RULES_URL: z.url().optional(),
   SHOPIFY_ADMIN_CLIENT_ID: z.string().trim().optional(),
   SHOPIFY_ADMIN_CLIENT_SECRET: z.string().trim().optional(),
   SHOPIFY_API_VERSION: z.string().default("2026-07"),

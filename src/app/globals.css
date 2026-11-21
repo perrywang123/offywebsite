@@ -157,7 +157,38 @@ html[lang="en"] {
   --tracking-22: 0.1em;
 }
 
-html:has(dialog[data-buyer-photo-dialog][open]) {
+.pdp-disclosure > summary {
+  display: flex;
+  min-height: 48px;
+  cursor: pointer;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  padding-block: 0.75rem;
+  font-weight: 600;
+  list-style: none;
+}
+
+.pdp-disclosure > summary::-webkit-details-marker {
+  display: none;
+}
+
+.pdp-disclosure > summary::after {
+  content: "";
+  flex: none;
+  width: 0.48rem;
+  height: 0.48rem;
+  margin-inline-end: 0.25rem;
+  border-right: 1.5px solid currentColor;
+  border-bottom: 1.5px solid currentColor;
+  transform: translateY(-0.12rem) rotate(45deg);
+}
+
+.pdp-disclosure[open] > summary::after {
+  transform: translateY(0.12rem) rotate(225deg);
+}
+
+html:has(dialog[data-product-photo-dialog][open]) {
   overflow: hidden;
 }
 

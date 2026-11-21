@@ -148,6 +148,25 @@
     "description": "About this look",
     "outOfStock": "Sold out",
     "related": "More from this series",
+    "fullDescription": "Full description",
+    "styling": {
+      "outfit": "Outfit",
+      "attached": "Securely attached",
+      "glasses": "Glasses",
+      "unattached": "Unattached for DIY styling"
+    },
+    "detailPhotos": {
+      "title": "The little details",
+      "specifications": "Product specifications",
+      "gallery": "Product photos",
+      "enlarged": "Enlarged product photos",
+      "open": "Enlarge {alt}"
+    },
+    "gifts": {
+      "title": "Gifts with purchase",
+      "threshold": "{minimum, plural, one {Buy # OFFY} other {Buy # OFFYs}}",
+      "terms": "Add the qualifying items and the applicable gift to your bag. Shopify checkout confirms availability and which offers can be combined."
+    },
     "buyerPhotos": {
       "title": "OFFY in the wild",
       "view": "View gallery",

@@ -161,6 +161,8 @@ vi.mock("@/lib/geo", () => ({
 }));
 
 vi.mock("@/components/product/ProductBuyerPhotos", () => ({ ProductBuyerPhotos: () => null }));
+vi.mock("@/components/product/ProductDetailPhotos", () => ({ ProductDetailPhotos: () => null }));
+vi.mock("@/components/product/ProductGiftOffers", () => ({ ProductGiftOffers: () => null }));
 
 import ProductDetailPage, { generateMetadata } from "./page";
 
@@ -180,6 +182,38 @@ async function renderPdp(locale: "en" | "zh" = "en", code: string = CURRENT.code
 }
 
 describe("PDP · 同系列小图条已移除(诉求 4)", () => {
+  it("leads with the Shopify intro and puts the remaining description in a closed disclosure", async () => {
+    pdpState.product = {
+      ...CURRENT,
+      descriptionBlocks: {
+        en: [
+          { text: "A tiny pearl.", bold: true },
+          { text: "Hand-finished with a small bow.", bold: false },
+          {
+            text: "*Outfit is securely attached to OFFY. Glasses come unattached for DIY styling.",
+            bold: false,
+          },
+        ],
+        zh: [],
+      },
+    };
+    await renderPdp();
+    expect(screen.getByText("A tiny pearl.").closest("details")).toBeNull();
+    const details = screen.getByText("Full description").closest("details");
+    expect(details).not.toHaveAttribute("open");
+    expect(details).toHaveTextContent("Hand-finished with a small bow.");
+    expect(screen.getByText("Securely attached")).toBeVisible();
+    expect(screen.getByText("Unattached for DIY styling")).toBeVisible();
+    expect(screen.queryByText(/Outfit is securely attached to OFFY/)).toBeNull();
+  });
+
+  it("shows a single Shopify paragraph without a redundant disclosure or styling claims", async () => {
+    await renderPdp();
+    expect(screen.getByText("A tiny pearl.")).toBeVisible();
+    expect(screen.queryByText("Full description")).toBeNull();
+    expect(screen.queryByText("Securely attached")).toBeNull();
+  });
+
   it("图区里不再有 `.hscroll` 横滑条(那排带商品名的同系列小图)", async () => {
     const { container } = await renderPdp();
     expect(container.querySelectorAll("a.hscroll")).toHaveLength(0);

@@ -21,6 +21,15 @@ Next服务端经Storefront GraphQL读取商品/系列/政策并创建Cart，浏�
 
 缓存与country字面量校验见 [架构](architecture.md)。Shopify返回的amount和currency一起使用，本站不自己换汇。结账country与页面同源；语言显式EN，避免使用店铺默认语言。
 
+## 商品详情图与赠礼
+
+- 商品介绍取 Shopify 商品描述的第一段。其余内容在 **Full description** 中展开。服装与眼镜的两项提示只在原描述明确提供相应事实时展示。
+- 在 **Settings → Custom data → Products** 配置三个英文商品字段。**Detail Photos** 的键为 `custom.detail_photos`，类型为图片文件引用列表。**Size Guide** 和 **Materials Guide** 的键为 `custom.size_guide`、`custom.materials_guide`，类型为单张图片文件引用。开启 Storefront API 访问权限，然后在商品的 **Metafields** 中关联图片。对于已识别的原图库图片，只在该商品仍引用原图时按相应用途展示。
+- **Gifts with purchase** 默认展开。在 **Discounts** 中维护赠礼规则、数量、商品范围和生效时间。Offy 核验当前可用的自动买赠，按购买门槛排序。每档赠礼链接可用赠品的商品页，顾客可将参与商品和对应赠品一起加入购物袋。实际优惠及叠加由 Shopify 结账计算。 [Shopify 自动买赠说明](https://help.shopify.com/en/manual/discounts/discount-types/buy-x-get-y)
+- 在 **Content → Metaobjects** 中可建立 **Gift Tier**（`gift_tier`）。字段为 **Gift Name**（`gift_name`，单行文本）、**Gift Image**（`gift_image`，图片文件）、**Discount ID**（`discount_id`，单行文本，形如 `gid://shopify/DiscountAutomaticNode/123`）。再建立 **Gift Campaign**（`gift_campaign`），字段为 **Heading**（`heading`，单行文本）、**Terms**（`terms`，多行文本）、**Gift Tiers**（`gift_tiers`，引用 Gift Tier 的列表）。两个定义开启 Storefront API 读取权限。活动条目 Handle 使用 `offy-storefront-gifts` 并设为 **Active**。Offy 读取最多六档。 [Shopify Metaobjects 设置](https://help.shopify.com/en/manual/custom-data/metaobjects/building-a-metaobject)
+- 如果店铺尚未创建活动条目，Offy 读取已绑定的三条现有 Shopify 折扣。若只想隐藏展示，可保留 **Active** 活动条目并清空 **Gift Tiers**。若要结束结账优惠，在 **Discounts** 停用相应规则。
+- 赠礼规则读取使用 **Offy Admin** 应用的 `read_discounts` 与 `read_products`。后台服务核验购买范围和赠品，主站用顾客选择的市场核对赠品的可售状态。权限、赠品、适用范围或市场的验证失败时，页面省略受影响的赠礼。 [Shopify Admin 折扣 API](https://shopify.dev/docs/api/admin-graphql/2026-07/objects/DiscountAutomaticBxgy)
+
 ## 商品买家秀
 
 1. 在 Shopify 的 **Content → Files** 上传已获授权的照片。添加能准确描述画面的英文替代文字。

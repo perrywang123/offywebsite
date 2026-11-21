@@ -148,6 +148,25 @@
     "description": "关于这款形象",
     "outOfStock": "暂时售罄",
     "related": "同系列其他形象",
+    "fullDescription": "完整商品描述",
+    "styling": {
+      "outfit": "服装",
+      "attached": "已固定",
+      "glasses": "眼镜",
+      "unattached": "可自行搭配"
+    },
+    "detailPhotos": {
+      "title": "商品细节",
+      "specifications": "商品规格",
+      "gallery": "商品图片",
+      "enlarged": "放大的商品图片",
+      "open": "放大 {alt}"
+    },
+    "gifts": {
+      "title": "购买赠礼",
+      "threshold": "购买 {minimum} 个 OFFY",
+      "terms": "请将符合条件的商品和对应赠品一同加入购物袋。赠品可用情况及活动叠加规则以 Shopify 结账为准。"
+    },
     "buyerPhotos": {
       "title": "OFFY 买家秀",
       "view": "查看相册",

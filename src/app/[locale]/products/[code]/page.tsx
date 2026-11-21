@@ -25,6 +25,8 @@ import { JsonLd } from "@/components/seo/JsonLd";
 import { breadcrumbJsonLd, productJsonLd } from "@/lib/seo/jsonld";
 import { Suspense } from "react";
 import { ProductBuyerPhotos } from "@/components/product/ProductBuyerPhotos";
+import { ProductDetailPhotos } from "@/components/product/ProductDetailPhotos";
+import { ProductGiftOffers } from "@/components/product/ProductGiftOffers";
 
 export const dynamic = "force-dynamic";
 
@@ -105,6 +107,15 @@ export default async function ProductDetailPage({
     locale === "zh"
       ? (product.descriptionBlocks?.zh ?? product.descriptionBlocks?.en)
       : product.descriptionBlocks?.en;
+  const blocks = descriptionBlocks?.length
+    ? descriptionBlocks
+    : description
+      ? [{ text: description, bold: false }]
+      : [];
+  const stylingNote =
+    /^\*?\s*Outfit is securely attached to OFFY\. Glasses come unattached for DIY styling\.$/i;
+  const hasStylingFacts = blocks.some(({ text }) => stylingNote.test(text.trim()));
+  const [intro, ...fullDescription] = blocks.filter(({ text }) => !stylingNote.test(text.trim()));
   const siblings = relatedProducts.filter((p) => p.code !== product.code);
 
   // 结构化数据(第 2 批 SEO):Product+Offer 用本页渲染的同一份 product
@@ -177,94 +188,81 @@ export default async function ProductDetailPage({
             </div>
           </div>
 
-          {/* 信息区:按"标题/价格" → "营销文案" → "规格信息(情绪标签/尺寸,
-            用分隔线与上方文案区隔开)" → "行动按钮" 的节奏分组,
-            整体用 space-y 统一纵向间距,不再逐个元素各自零散设置 mt-*。 */}
-          <div className="min-w-0 space-y-8">
+          <div className="min-w-0 space-y-5 md:space-y-6">
             <div>
-              <p className="kicker mb-3">{seriesLabel}</p>
-              <h1 className="font-display text-4xl font-semibold tracking-tight">
-                {locale === "zh" ? product.name.zh : product.name.en}
-              </h1>
-              {product.isUpcoming ? (
-                <p className="text-brown-600 mt-3 text-sm font-medium tracking-[var(--tracking-14)] uppercase">
-                  {tHome("revealing")}
-                </p>
-              ) : (
-                <p className="font-display text-ink mt-3 text-2xl font-medium tabular-nums md:text-3xl">
-                  {formatPrice(product.priceCents, product.currency, locale)}
-                </p>
-              )}
-            </div>
-
-            {descriptionBlocks && descriptionBlocks.length > 0 ? (
-              <div className="space-y-3">
-                {descriptionBlocks.map((block, i) => (
-                  <p
-                    key={i}
-                    className={`text-ink text-sm leading-relaxed ${block.bold ? "font-bold" : ""}`}
-                  >
-                    {block.text}
+              {seriesLabel && <p className="kicker mb-2.5">{seriesLabel}</p>}
+              <div className="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-2">
+                <h1 className="font-display min-w-0 text-3xl font-semibold tracking-tight break-words md:text-4xl">
+                  {productName}
+                </h1>
+                {product.isUpcoming ? (
+                  <p className="text-brown-600 text-sm font-medium tracking-[var(--tracking-14)] uppercase">
+                    {tHome("revealing")}
                   </p>
-                ))}
-              </div>
-            ) : (
-              description && (
-                <div>
-                  <p className="text-ink-soft mb-2 text-sm font-medium">{t("description")}</p>
-                  <p className="text-ink text-sm leading-relaxed">{description}</p>
-                </div>
-              )
-            )}
-
-            {}
-            {product.dimensions && (
-              <div className="border-cream-line space-y-6 border-t pt-8">
-                {product.dimensions && (
-                  <div>
-                    <p className="text-ink-soft mb-2 text-sm font-medium">{t("dimensions")}</p>
-                    <dl className="divide-cream-line border-cream-line divide-y border-y text-sm">
-                      {(
-                        [
-                          ["dimension.height", product.dimensions.heightCm],
-                          ["dimension.length", product.dimensions.lengthCm],
-                          ["dimension.head", product.dimensions.headCm],
-                          ["dimension.arm", product.dimensions.armCm],
-                          ["dimension.leg", product.dimensions.legCm],
-                        ] as const
-                      ).map(([key, value]) => (
-                        <div key={key} className="flex justify-between py-3">
-                          <dt className="text-ink-muted">{t(key)}</dt>
-                          <dd className="text-ink font-medium tabular-nums">
-                            {value}
-                            {t("dimension.cm")}
-                          </dd>
-                        </div>
-                      ))}
-                    </dl>
-                  </div>
+                ) : (
+                  <p className="font-display text-ink text-xl font-medium tabular-nums md:text-2xl">
+                    {formatPrice(product.priceCents, product.currency, locale)}
+                  </p>
                 )}
               </div>
+            </div>
+
+            {intro && <p className="text-ink text-base leading-relaxed">{intro.text}</p>}
+
+            {product.isUpcoming ? (
+              <p className="bg-cream-deep text-ink-muted rounded-full px-6 py-3 text-center text-sm">
+                {t("upcomingNotice")}
+              </p>
+            ) : (
+              <div className="max-md:hidden">
+                <PurchaseActions
+                  code={product.code}
+                  isAvailable={product.isAvailable && Boolean(product.shopifyVariantId)}
+                  isUpcoming={product.isUpcoming}
+                />
+              </div>
             )}
 
-            <div>
-              {product.isUpcoming ? (
-                <p className="bg-cream-deep text-ink-muted rounded-full px-6 py-3 text-center text-sm">
-                  {t("upcomingNotice")}
-                </p>
-              ) : (
-                // 窄屏由吸底购买条接手(`max-md:hidden`),避免同屏两个"加入购物袋"
-                <div className="max-md:hidden">
-                  <PurchaseActions
-                    code={product.code}
-                    isAvailable={product.isAvailable && Boolean(product.shopifyVariantId)}
-                    isUpcoming={product.isUpcoming}
-                  />
+            {product.isAvailable && !product.isUpcoming && product.shopifyVariantId && (
+              <Suspense key={product.code + country} fallback={null}>
+                <ProductGiftOffers
+                  handle={product.code}
+                  country={country}
+                  variantId={product.shopifyVariantId}
+                />
+              </Suspense>
+            )}
+
+            {hasStylingFacts && (
+              <dl className="border-cream-line grid grid-cols-2 gap-3 border-t pt-4 text-sm">
+                <div>
+                  <dt className="font-medium">{t("styling.outfit")}</dt>
+                  <dd className="text-ink-muted mt-1">{t("styling.attached")}</dd>
                 </div>
-              )}
-            </div>
+                <div className="border-cream-line border-l pl-3">
+                  <dt className="font-medium">{t("styling.glasses")}</dt>
+                  <dd className="text-ink-muted mt-1">{t("styling.unattached")}</dd>
+                </div>
+              </dl>
+            )}
+            {fullDescription.length > 0 && (
+              <details className="pdp-disclosure border-cream-line border-t">
+                <summary>{t("fullDescription")}</summary>
+                <div className="text-ink space-y-3 pb-4 text-sm leading-relaxed">
+                  {fullDescription.map((block, index) => (
+                    <p key={index} className={block.bold ? "font-bold" : undefined}>
+                      {block.text}
+                    </p>
+                  ))}
+                </div>
+              </details>
+            )}
           </div>
         </div>
+
+        <Suspense key={product.code + country + "-media"} fallback={null}>
+          <ProductDetailPhotos handle={product.code} country={country} />
+        </Suspense>
 
         <Suspense key={product.code} fallback={null}>
           <ProductBuyerPhotos handle={product.code} country={country} productName={productName} />
