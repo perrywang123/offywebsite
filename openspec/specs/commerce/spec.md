@@ -218,37 +218,44 @@ The product detail page SHALL use the Shopify product metafield `custom.buyer_ph
 
 ### Requirement: Product overview and detail photography
 
-The product detail page SHALL surface the first Shopify description paragraph next to its product heading and purchase actions. When the remaining description contains content, the page SHALL render it in a native disclosure that starts open and can be collapsed. It SHALL show close-ups and original size and materials guides when the current product has verified Shopify media. Guide pictures SHALL retain their full aspect ratio and open in a dialog operable by touch and keyboard. The original Shopify gallery and series grid SHALL keep every previously accessible picture and product respectively.
+The product detail page SHALL show the product name, with its market price or upcoming status, after the original Shopify gallery on narrow screens. The series link SHALL remain in the breadcrumbs when a series page exists, and the heading area SHALL omit the repeated series label. The page SHALL group all available Shopify description paragraphs after the gift and styling information, with compact spacing and without a separate heading or disclosure control. Verified size and materials guides SHALL follow in the product information column, retain their full aspect ratio and open in a dialog operable by touch and keyboard. The separate close-up section SHALL be hidden while its design is under review. The original Shopify gallery and series grid SHALL keep every previously accessible picture and product respectively.
 
 #### Scenario: Shopify provides a longer product description
 
 - **WHEN** the product has an introduction and additional description content
-- **THEN** the page shows the introduction and expanded Full description on arrival with a control to collapse it
+- **THEN** the page shows each description paragraph once in its original order in one visible group
+- **AND** the group has no Full description title or collapse control
+
+#### Scenario: A product belongs to a series
+
+- **WHEN** the product belongs to a series with a collection page
+- **THEN** the breadcrumb links to the series and the product name has no duplicate series label above it
 
 #### Scenario: Details and guide images are available
 
-- **WHEN** the selected product has verified detail or guide media
-- **THEN** the page shows those images before the buyer photo and same-series sections, and guide contents are presented visually by the images
+- **WHEN** the selected product has verified close-ups and original size or materials guides
+- **THEN** the page shows the available guides directly below the description and before the buyer photo and same-series sections
+- **AND** The little details section is absent
 
 #### Scenario: Optional editorial media cannot be verified
 
-- **WHEN** the detail or guide sources are empty or unavailable
-- **THEN** the page omits the corresponding content and preserves the successfully loaded overview, original gallery and purchase actions
+- **WHEN** the guide sources are empty or unavailable, even if close-ups exist
+- **THEN** the supplementary photo section is omitted while the overview, original gallery and purchase actions remain usable
 
 ### Requirement: Verified product gift offers
 
-The product detail page SHALL present only selected active Shopify automatic buy-X-get-Y discounts with a verified quantity requirement, a qualifying current product or variant, an unrestricted audience and an available reward in the current Storefront market. The disclosure SHALL start open and be collapsible. An unavailable rule, unsupported condition, missing access or unavailable reward SHALL suppress its tier. The disclosure SHALL be omitted when no tier qualifies. Gift information SHALL be independent of checkout session creation and leave price, order and stacking decisions to Shopify.
+The product detail page SHALL present only selected active Shopify automatic buy-X-get-Y discounts with a verified quantity requirement, a qualifying current product or variant, an unrestricted audience and an available reward in the current Storefront market. The gift heading and contents SHALL appear together without a collapse control. An unavailable rule, unsupported condition, missing access or unavailable reward SHALL suppress its tier. The gift section SHALL be omitted when no tier qualifies. Gift information SHALL be independent of checkout session creation and leave price, order and stacking decisions to Shopify.
 
 #### Scenario: Current product qualifies for an active gift
 
 - **WHEN** the Shopify rule verifies the current product and the selected market has a matching available reward
-- **THEN** the product page shows the tier name, image, required quantity and gift note on arrival
+- **THEN** the product page shows the title, tier name, image, required quantity and gift note on arrival without a collapse control
 - **AND** each gift photo covers a 3:4 frame without side gutters
 
 #### Scenario: The English gift disclosure uses the default copy
 
 - **WHEN** the verified offers include a one-item threshold and the campaign has no custom terms
-- **THEN** the one-item tier shows `Buy Any OFFY` and the disclosure note reads `All eligible gifts are automatically included.`
+- **THEN** the one-item tier shows Buy Any OFFY and the gift note reads All eligible gifts are automatically included.
 - **AND** any higher tier displays its Shopify quantity
 
 #### Scenario: A gift is inactive or unverified

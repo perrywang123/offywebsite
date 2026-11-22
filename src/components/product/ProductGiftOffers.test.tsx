@@ -19,7 +19,7 @@ vi.mock("@/i18n/navigation", () => ({
   ),
 }));
 
-it("uses the English gift note and labels the one-item tier Buy Any OFFY", async () => {
+it("shows verified gifts under a static heading with the current English copy", async () => {
   vi.mocked(fetchProductGiftOffers).mockResolvedValue({
     tiers: [
       { minimum: 1, name: "Stickers", handle: "offy-sticker-sheet" },
@@ -36,11 +36,15 @@ it("uses the English gift note and labels the one-item tier Buy Any OFFY", async
     }),
   );
 
-  expect(screen.getByText("Buy Any OFFY")).toBeVisible();
-  expect(screen.getByText("Buy 3 OFFYs")).toBeVisible();
-  expect(screen.getByText("Buy 6 OFFYs")).toBeVisible();
-  expect(screen.getByText("All eligible gifts are automatically included.")).toBeVisible();
-  const sticker = screen.getByRole("link", { name: "Stickers Buy Any OFFY" });
+  const section = screen.getByRole("region", { name: "Gifts with purchase" });
+  const gifts = within(section);
+  expect(gifts.getByRole("heading", { name: "Gifts with purchase" })).toBeVisible();
+  expect(gifts.getByText("Buy Any OFFY")).toBeVisible();
+  expect(gifts.getByText("Buy 3 OFFYs")).toBeVisible();
+  expect(gifts.getByText("Buy 6 OFFYs")).toBeVisible();
+  expect(gifts.getByText("All eligible gifts are automatically included.")).toBeVisible();
+  const sticker = gifts.getByRole("link", { name: "Stickers Buy Any OFFY" });
+  expect(sticker.closest("details")).toBeNull();
   const photo = within(sticker).getByAltText("");
   expect(photo).toHaveClass("object-cover");
   expect(photo.parentElement).toHaveClass("aspect-[3/4]");

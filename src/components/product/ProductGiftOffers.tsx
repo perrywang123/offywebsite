@@ -17,8 +17,14 @@ export async function ProductGiftOffers({
 
   const t = await getTranslations("product.gifts");
   return (
-    <details open className="pdp-disclosure border-cream-line border-t" data-product-gifts>
-      <summary>{offers.title || t("title")}</summary>
+    <section
+      className="border-cream-line border-t pt-3"
+      aria-labelledby="product-gift-heading"
+      data-product-gifts
+    >
+      <h2 id="product-gift-heading" className="mb-3 font-semibold">
+        {offers.title || t("title")}
+      </h2>
       <ul className="grid grid-cols-3 gap-2.5 sm:gap-4">
         {offers.tiers.map((tier) => (
           <li key={tier.id} className="min-w-0">
@@ -45,6 +51,6 @@ export async function ProductGiftOffers({
         ))}
       </ul>
       <p className="text-ink-muted mt-3 text-xs leading-relaxed">{offers.terms || t("terms")}</p>
-    </details>
+    </section>
   );
 }

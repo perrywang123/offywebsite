@@ -115,7 +115,7 @@ export default async function ProductDetailPage({
   const stylingNote =
     /^\*?\s*Outfit is securely attached to OFFY\. Glasses come unattached for DIY styling\.$/i;
   const hasStylingFacts = blocks.some(({ text }) => stylingNote.test(text.trim()));
-  const [intro, ...fullDescription] = blocks.filter(({ text }) => !stylingNote.test(text.trim()));
+  const descriptionParagraphs = blocks.filter(({ text }) => !stylingNote.test(text.trim()));
   const siblings = relatedProducts.filter((p) => p.code !== product.code);
 
   // 结构化数据(第 2 批 SEO):Product+Offer 用本页渲染的同一份 product
@@ -189,25 +189,20 @@ export default async function ProductDetailPage({
           </div>
 
           <div className="min-w-0 space-y-5 md:space-y-6">
-            <div>
-              {seriesLabel && <p className="kicker mb-2.5">{seriesLabel}</p>}
-              <div className="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-2">
-                <h1 className="font-display min-w-0 text-3xl font-semibold tracking-tight break-words md:text-4xl">
-                  {productName}
-                </h1>
-                {product.isUpcoming ? (
-                  <p className="text-brown-600 text-sm font-medium tracking-[var(--tracking-14)] uppercase">
-                    {tHome("revealing")}
-                  </p>
-                ) : (
-                  <p className="font-display text-ink text-xl font-medium tabular-nums md:text-2xl">
-                    {formatPrice(product.priceCents, product.currency, locale)}
-                  </p>
-                )}
-              </div>
+            <div className="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-2">
+              <h1 className="font-display min-w-0 text-3xl font-semibold tracking-tight break-words md:text-4xl">
+                {productName}
+              </h1>
+              {product.isUpcoming ? (
+                <p className="text-brown-600 text-sm font-medium tracking-[var(--tracking-14)] uppercase">
+                  {tHome("revealing")}
+                </p>
+              ) : (
+                <p className="font-display text-ink text-xl font-medium tabular-nums md:text-2xl">
+                  {formatPrice(product.priceCents, product.currency, locale)}
+                </p>
+              )}
             </div>
-
-            {intro && <p className="text-ink text-base leading-relaxed">{intro.text}</p>}
 
             {product.isUpcoming ? (
               <p className="bg-cream-deep text-ink-muted rounded-full px-6 py-3 text-center text-sm">
@@ -245,24 +240,21 @@ export default async function ProductDetailPage({
                 </div>
               </dl>
             )}
-            {fullDescription.length > 0 && (
-              <details open className="pdp-disclosure border-cream-line border-t">
-                <summary>{t("fullDescription")}</summary>
-                <div className="text-ink space-y-3 pb-4 text-sm leading-relaxed">
-                  {fullDescription.map((block, index) => (
-                    <p key={index} className={block.bold ? "font-bold" : undefined}>
-                      {block.text}
-                    </p>
-                  ))}
-                </div>
-              </details>
+            {descriptionParagraphs.length > 0 && (
+              <div className="text-ink border-cream-line space-y-2 border-t pt-3 text-sm leading-relaxed md:text-base">
+                {descriptionParagraphs.map((block, index) => (
+                  <p key={index} className={block.bold ? "font-bold" : undefined}>
+                    {block.text}
+                  </p>
+                ))}
+              </div>
             )}
+
+            <Suspense key={product.code + country + "-media"} fallback={null}>
+              <ProductDetailPhotos handle={product.code} country={country} />
+            </Suspense>
           </div>
         </div>
-
-        <Suspense key={product.code + country + "-media"} fallback={null}>
-          <ProductDetailPhotos handle={product.code} country={country} />
-        </Suspense>
 
         <Suspense key={product.code} fallback={null}>
           <ProductBuyerPhotos handle={product.code} country={country} productName={productName} />

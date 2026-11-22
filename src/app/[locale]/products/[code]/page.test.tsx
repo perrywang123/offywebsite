@@ -161,7 +161,9 @@ vi.mock("@/lib/geo", () => ({
 }));
 
 vi.mock("@/components/product/ProductBuyerPhotos", () => ({ ProductBuyerPhotos: () => null }));
-vi.mock("@/components/product/ProductDetailPhotos", () => ({ ProductDetailPhotos: () => null }));
+vi.mock("@/components/product/ProductDetailPhotos", () => ({
+  ProductDetailPhotos: () => <section aria-label="Product specifications" />,
+}));
 vi.mock("@/components/product/ProductGiftOffers", () => ({ ProductGiftOffers: () => null }));
 
 import ProductDetailPage, { generateMetadata } from "./page";
@@ -182,7 +184,7 @@ async function renderPdp(locale: "en" | "zh" = "en", code: string = CURRENT.code
 }
 
 describe("PDP · 同系列小图条已移除(诉求 4)", () => {
-  it("shows the Shopify intro and the expanded remaining description on arrival", async () => {
+  it("presents the introduction and remaining description together without a disclosure", async () => {
     pdpState.product = {
       ...CURRENT,
       descriptionBlocks: {
@@ -198,10 +200,16 @@ describe("PDP · 同系列小图条已移除(诉求 4)", () => {
       },
     };
     await renderPdp();
-    expect(screen.getByText("A tiny pearl.").closest("details")).toBeNull();
-    const details = screen.getByText("Full description").closest("details");
-    expect(details).toHaveAttribute("open");
-    expect(screen.getByText("Hand-finished with a small bow.")).toBeVisible();
+    const introduction = screen.getByText("A tiny pearl.");
+    const description = screen.getByText("Hand-finished with a small bow.");
+    expect(introduction).toBeVisible();
+    expect(description).toBeVisible();
+    expect(introduction.nextElementSibling).toBe(description);
+    expect(introduction.closest("details")).toBeNull();
+    expect(description.parentElement?.nextElementSibling).toBe(
+      screen.getByRole("region", { name: "Product specifications" }),
+    );
+    expect(screen.queryByText("Full description")).toBeNull();
     expect(screen.getByText("Securely attached")).toBeVisible();
     expect(screen.getByText("Unattached for DIY styling")).toBeVisible();
     expect(screen.queryByText(/Outfit is securely attached to OFFY/)).toBeNull();
@@ -273,13 +281,12 @@ describe("PDP · 同系列小图条已移除(诉求 4)", () => {
     expect(screen.getByRole("heading", { level: 1, name: "LADY PEARL" })).toBeVisible();
   });
 
-  it("面包屑 / 加购按钮等其它入口未被误伤", async () => {
+  it("uses the series name in the breadcrumb without repeating it above the product name", async () => {
     await renderPdp();
     expect(screen.getByRole("heading", { level: 1, name: "LADY PEARL" })).toBeInTheDocument();
-    expect(screen.getByRole("link", { name: /Playful Life/ })).toHaveAttribute(
-      "href",
-      "/collections/playful-life",
-    );
+    const seriesLink = screen.getByRole("link", { name: "Playful Life" });
+    expect(seriesLink).toHaveAttribute("href", "/collections/playful-life");
+    expect(screen.getAllByText("Playful Life")).toEqual([seriesLink]);
   });
 });
 
@@ -288,7 +295,7 @@ describe("PDP · 同系列小图条已移除(诉求 4)", () => {
  * 它们只在 All Looks 出现、排在最后,series 用哨兵值 "merch"。
  *
  * 这里守两件事:
- *  ① 详情页的系列标签要显示 merch 的展示名,而不是原始 slug / 也不是公主系列;
+ *  ① 面包屑要显示 merch 的展示名,而不是原始 slug / 也不是公主系列;
  *  ② 「More from this series」只能拿到其它周边(数据层按 "merch" 查),并且
  *     面包屑不能给出 /collections/merch 这个 404 死链。
  */
@@ -318,7 +325,7 @@ describe("PDP · 周边商品(series = merch)", () => {
     pdpState.siblings = MERCH_SIBLINGS;
   });
 
-  it("系列标签显示 merch 的展示名,而不是裸 slug 或公主系列", async () => {
+  it("面包屑显示 merch 的展示名,而不是裸 slug 或公主系列", async () => {
     await renderPdp();
     expect(screen.getAllByText("Goods").length).toBeGreaterThan(0);
     expect(screen.queryByText("Princess Lady")).toBeNull();

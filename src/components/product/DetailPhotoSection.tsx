@@ -17,7 +17,7 @@ export function DetailPhotoSection({
   const photos = [...details, ...guides];
   return (
     <section
-      className="border-cream-line mt-10 space-y-6 border-t pt-6 md:mt-16 md:space-y-8 md:pt-8"
+      className="border-cream-line space-y-6 border-t pt-4 md:space-y-8 md:pt-5"
       aria-labelledby={details.length ? titleId : undefined}
       aria-label={details.length ? undefined : t("specifications")}
     >

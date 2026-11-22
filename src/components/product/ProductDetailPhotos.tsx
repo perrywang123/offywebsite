@@ -8,8 +8,7 @@ export async function ProductDetailPhotos({
   handle: string;
   country: string;
 }) {
-  const { details, guides } = await fetchProductDetailMedia(handle, country);
-  return details.length || guides.length ? (
-    <DetailPhotoSection details={details} guides={guides} />
-  ) : null;
+  const { guides } = await fetchProductDetailMedia(handle, country);
+  // Pause the separate close-up section while its layout is under review.
+  return guides.length ? <DetailPhotoSection details={[]} guides={guides} /> : null;
 }
