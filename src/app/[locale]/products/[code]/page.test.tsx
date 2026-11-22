@@ -182,7 +182,7 @@ async function renderPdp(locale: "en" | "zh" = "en", code: string = CURRENT.code
 }
 
 describe("PDP · 同系列小图条已移除(诉求 4)", () => {
-  it("leads with the Shopify intro and puts the remaining description in a closed disclosure", async () => {
+  it("shows the Shopify intro and the expanded remaining description on arrival", async () => {
     pdpState.product = {
       ...CURRENT,
       descriptionBlocks: {
@@ -200,8 +200,8 @@ describe("PDP · 同系列小图条已移除(诉求 4)", () => {
     await renderPdp();
     expect(screen.getByText("A tiny pearl.").closest("details")).toBeNull();
     const details = screen.getByText("Full description").closest("details");
-    expect(details).not.toHaveAttribute("open");
-    expect(details).toHaveTextContent("Hand-finished with a small bow.");
+    expect(details).toHaveAttribute("open");
+    expect(screen.getByText("Hand-finished with a small bow.")).toBeVisible();
     expect(screen.getByText("Securely attached")).toBeVisible();
     expect(screen.getByText("Unattached for DIY styling")).toBeVisible();
     expect(screen.queryByText(/Outfit is securely attached to OFFY/)).toBeNull();

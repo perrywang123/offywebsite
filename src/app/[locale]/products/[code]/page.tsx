@@ -246,7 +246,7 @@ export default async function ProductDetailPage({
               </dl>
             )}
             {fullDescription.length > 0 && (
-              <details className="pdp-disclosure border-cream-line border-t">
+              <details open className="pdp-disclosure border-cream-line border-t">
                 <summary>{t("fullDescription")}</summary>
                 <div className="text-ink space-y-3 pb-4 text-sm leading-relaxed">
                   {fullDescription.map((block, index) => (

@@ -27,13 +27,13 @@ export async function ProductGiftOffers({
               prefetch={false}
               className="group rounded-soft block focus-visible:outline-2 focus-visible:outline-offset-2"
             >
-              <div className="rounded-soft bg-paper relative mb-2 aspect-square overflow-hidden">
+              <div className="rounded-soft bg-paper relative mb-2 aspect-[3/4] overflow-hidden">
                 <Image
                   src={tier.url}
                   alt=""
                   fill
                   sizes="(max-width: 767px) 30vw, 15vw"
-                  className="object-contain"
+                  className="object-cover"
                 />
               </div>
               <p className="text-sm font-semibold break-words group-hover:underline">{tier.name}</p>
