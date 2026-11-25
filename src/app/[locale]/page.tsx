@@ -5,7 +5,10 @@ import Image from "next/image";
 import { getTranslations } from "next-intl/server";
 import { Link } from "@/i18n/navigation";
 import { teaserSeries, upcomingIps } from "@/lib/catalog";
-import { heroSlides, newsFeature, newsItems } from "@/lib/content";
+import { newsItems } from "@/lib/content";
+import { configuredHero, homeProductHandle } from "@/lib/home-content";
+import { getPublishedHomeContent } from "@/server/home-content/store";
+import { env } from "@/lib/env";
 import { headers } from "next/headers";
 import { getLiveProducts } from "@/server/catalog/live";
 import { getHomeLooks } from "@/server/catalog/home";
@@ -47,13 +50,31 @@ export default async function HomePage({ params }: { params: Promise<{ locale: s
   ]);
   const unavailable = looksResult.status === "unavailable" || allResult.status === "unavailable";
   const allProducts = allResult.status === "ready" ? allResult.data : [];
+  const content = getPublishedHomeContent();
+  const slides = configuredHero(content);
   // Shopify verifies market availability; NEWS photography stays editorial brand content.
-  const featureProduct = allProducts.find(
-    (p) => p.code === newsFeature.productCode && p.isAvailable,
+  const { feature, items } = content.latest;
+  const availableProducts = new Map(
+    allProducts.filter((p) => p.isAvailable).map((p) => [p.code, p]),
   );
-  const verifiedNews = newsItems.filter((item) =>
-    allProducts.some((p) => p.code === item.productCode && p.isAvailable),
-  );
+  const featureHandle = homeProductHandle(feature.href, env.SITE_URL);
+  const featureProduct = featureHandle ? availableProducts.get(featureHandle) : undefined;
+  const verifiedNews = items.flatMap((item, index) => {
+    const handle = homeProductHandle(item.href, env.SITE_URL);
+    if (handle && !availableProducts.has(handle)) return [];
+    const original = newsItems[index];
+    return [
+      {
+        id: original.id,
+        title: {
+          en: item.label,
+          zh: item.label === original.title.en ? original.title.zh : item.label,
+        },
+        image: item.image,
+        href: item.href,
+      },
+    ];
+  });
 
   return (
     <>
@@ -69,9 +90,11 @@ export default async function HomePage({ params }: { params: Promise<{ locale: s
           5 张头图素材的底边色差很大(hero-promo 底边 #f7f2ef 与 NEWS 的 #efefef 只差
           Δ8,hero-dressup 的 #4f4d50 差 Δ162),而每 5 秒切一次屏 —— 没有这条线,
           接缝会跟着轮播来回跳。此处**不要**在 NEWS 顶部加渐变(见下方注释)。 */}
-      <section className="border-cream-line relative overflow-hidden border-b">
-        <HeroCarousel slides={heroSlides} locale={locale} />
-      </section>
+      {slides.length > 0 && (
+        <section className="border-cream-line relative overflow-hidden border-b">
+          <HeroCarousel slides={slides} locale={locale} />
+        </section>
+      )}
 
       {unavailable && (
         <div className="container-site section-y">
@@ -92,7 +115,7 @@ export default async function HomePage({ params }: { params: Promise<{ locale: s
           今天靠"无层级压过 @layer utilities"才显示为 #efefef —— 谁把那条规则挪进
           @layer base,首页底色就整体变白。也不要写 `bg-background`:
           --background 定义在 :root 而非 @theme,Tailwind v4 不生成该工具类。 */}
-        {featureProduct && verifiedNews.length > 0 && (
+        {(!featureHandle || featureProduct) && verifiedNews.length > 0 && (
           <section className="relative overflow-hidden bg-[#efefef]">
             <div className="container-site section-y relative">
               {/* 标题区(最新资讯.psd 组「最新咨询·标题」):PSD 里是一行居中
@@ -108,17 +131,20 @@ export default async function HomePage({ params }: { params: Promise<{ locale: s
                   {t("newsTitle")}
                 </h2>
                 <Link
-                  href="/products"
+                  href={content.latest.browseHref}
                   className="link-line tap-target mt-5 text-[clamp(12px,1.11vw,24px)] tracking-[var(--tracking-10)] uppercase lg:min-h-0 lg:text-[clamp(11px,1.11vw,24px)]"
                 >
                   {t("browseAll")}
                 </Link>
               </Reveal>
               <NewsGrid
-                feature={newsFeature}
+                feature={feature}
                 items={verifiedNews}
                 texts={{
-                  featureAlt: locale === "zh" ? featureProduct.name.zh : featureProduct.name.en,
+                  featureAlt:
+                    feature.alt ||
+                    featureProduct?.name[locale === "zh" ? "zh" : "en"] ||
+                    t("newsTitle"),
                   cta: t("teaserCta"),
                   browseAll: t("browseAll"),
                 }}

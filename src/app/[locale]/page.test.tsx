@@ -2,6 +2,7 @@ import { render, screen, within } from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import type { Product } from "@/lib/catalog/types";
 import type { ShopifyListItem } from "@/server/shopify/catalog";
+import type { HomeContent } from "@/lib/home-content";
 import en from "../../../messages/en.json";
 
 /**
@@ -75,7 +76,13 @@ vi.mock("next/image", () => ({
 const homeState = vi.hoisted(() => ({
   regionals: [] as ShopifyListItem[],
   newsProducts: [] as Product[],
+  content: null as HomeContent | null,
 }));
+
+vi.mock("@/server/home-content/store", async () => {
+  const { defaultHomeContent } = await import("@/lib/home-content");
+  return { getPublishedHomeContent: () => homeState.content ?? defaultHomeContent() };
+});
 
 function liveProduct(item: ShopifyListItem, series: string, sortOrder: number): Product {
   return {
@@ -143,10 +150,12 @@ vi.mock("@/server/catalog/regional", () => ({
 }));
 
 import HomePage from "./page";
+import { defaultHomeContent } from "@/lib/home-content";
 
 afterEach(() => {
   homeState.regionals = [];
   homeState.newsProducts = [];
+  homeState.content = null;
 });
 
 async function renderHome(locale: "en" | "zh" = "en") {
@@ -218,6 +227,42 @@ describe("homepage NEWS editorial photographs", () => {
       expect(screen.queryByRole("heading", { name: en.home.newsTitle })).toBeNull();
     },
   );
+  it("renders uploaded banners and configured Latest links while withholding unverified products", async () => {
+    const content = defaultHomeContent();
+    homeState.content = content;
+    content.hero[0] = {
+      image: `/api/home-media/${"b".repeat(64)}`,
+      href: "/collections?drop=holiday",
+      alt: "Holiday campaign",
+      enabled: true,
+    };
+    content.hero[1].enabled = false;
+    content.latest.feature = {
+      image: "/assets/news/news-02.jpg",
+      href: "/about",
+      alt: "Offy story",
+    };
+    content.latest.items[0].href = "https://example.com/collaboration";
+    content.latest.items[1].href = "/products/unpublished?campaign=holiday";
+    content.latest.browseHref = "/collections";
+
+    const { container } = await renderHome();
+    const hero = screen.getByRole("img", { name: "Holiday campaign" });
+    expect(hero).toHaveAttribute("src", content.hero[0].image);
+    expect(hero.closest("a")).toHaveAttribute("href", "/collections?drop=holiday");
+    expect(container.querySelectorAll("[data-hero-slide]")).toHaveLength(4);
+    const news = screen.getByRole("heading", { name: en.home.newsTitle }).closest("section")!;
+    expect(within(news).getByRole("link", { name: en.home.browseAll })).toHaveAttribute(
+      "href",
+      "/collections",
+    );
+    expect(within(news).getByRole("img", { name: "Offy story" }).closest("a")).toHaveAttribute(
+      "href",
+      "/about",
+    );
+    expect(news.querySelector('a[href="https://example.com/collaboration"]')).toBeVisible();
+    expect(news.querySelector('a[href^="/products/unpublished"]')).toBeNull();
+  });
 });
 
 describe("首页 · 语义 H1", () => {

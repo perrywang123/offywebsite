@@ -4,7 +4,16 @@ export default async function AdminPage({ params }: { params: Promise<{ section?
     view = section[0] ?? "partners";
   if (
     section.length > 1 ||
-    !["collabs", "partners", "codes", "orders", "settlements", "checkouts", "meta"].includes(view)
+    ![
+      "collabs",
+      "partners",
+      "codes",
+      "orders",
+      "settlements",
+      "checkouts",
+      "meta",
+      "home-config",
+    ].includes(view)
   )
     notFound();
   // The shared layout owns the console; this leaf only validates direct URLs.

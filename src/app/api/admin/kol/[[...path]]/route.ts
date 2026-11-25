@@ -6,6 +6,8 @@ import { eq } from "drizzle-orm";
 import { env } from "@/lib/env";
 import { metaAdminGet } from "@/server/meta/admin";
 import { diagnosticAdminGet, diagnosticAdminPost } from "@/server/checkout-diagnostics/admin";
+import { loadHomeContent, publishHomeContent } from "@/server/home-content/store";
+import { homeImageResponse, storeHomeImage } from "@/server/home-content/media";
 import { getKolDb } from "@/server/kol/database";
 import { kolShopOrders } from "@/server/db/schema";
 import {
@@ -75,6 +77,11 @@ export async function GET(request: Request, context: Context) {
     if (path[0] === "checkouts") return diagnosticAdminGet(request, path);
     const db = getKolDb(),
       admin = requireAdmin(db, request.headers);
+    if (path[0] === "home-config") {
+      if (path.length === 1) return json(loadHomeContent(db));
+      if (path.length === 3 && path[1] === "media") return homeImageResponse(db, path[2], true);
+      return json({ error: "not_found" }, 404);
+    }
     if (path[0] === "meta") return await metaAdminGet(request, path);
     if (path[0] === "collabs") return collabsGet(db, path, request);
     if (path[0] === "state")
@@ -133,6 +140,11 @@ export async function POST(request: Request, context: Context) {
       return response;
     }
     const admin = requireAdmin(db, request.headers);
+    if (path[0] === "home-config") {
+      if (path.length === 1) return json(publishHomeContent(db, await request.json(), admin.id));
+      if (path.length === 2 && path[1] === "media") return json(await storeHomeImage(db, request));
+      return json({ error: "not_found" }, 404);
+    }
     if (path[0] === "logout") {
       logout(db, cookieToken(request.headers));
       audit(db, admin.id, "logout", admin.id, {});

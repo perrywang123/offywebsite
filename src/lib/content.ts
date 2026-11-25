@@ -31,6 +31,7 @@ export interface NewsItem {
 export const newsFeature = {
   image: "/assets/news/news-swan-queen.jpg",
   productCode: "swan-princess",
+  objectPosition: "15% 50%",
 };
 
 export const newsItems: NewsItem[] = [
@@ -101,6 +102,7 @@ export const newsItems: NewsItem[] = [
  */
 export interface HeroSlideData {
   image: string;
+  imageAlt?: string;
   bg: string;
   href?: string;
   /** 屏 1 专用:展示 is.offy 手写体字标 PNG + slogan。 */

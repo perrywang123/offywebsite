@@ -1,4 +1,17 @@
-import { index, integer, primaryKey, sqliteTable, text } from "drizzle-orm/sqlite-core";
+import { blob, index, integer, primaryKey, sqliteTable, text } from "drizzle-orm/sqlite-core";
+import type { HomeContent } from "@/lib/home-content";
+
+export const homepageContent = sqliteTable("homepage_content", {
+  id: integer("id").primaryKey(),
+  revision: integer("revision").notNull(),
+  content: text("content", { mode: "json" }).$type<HomeContent>().notNull(),
+});
+
+export const homepageImages = sqliteTable("homepage_images", {
+  id: text("id").primaryKey(),
+  bytes: blob("bytes", { mode: "buffer" }).notNull(),
+  published: integer("published", { mode: "boolean" }).notNull().default(false),
+});
 
 /** Marketing observations, never proof of Meta attribution. */
 export const metaEvents = sqliteTable(

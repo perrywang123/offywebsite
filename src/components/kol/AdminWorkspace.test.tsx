@@ -40,3 +40,9 @@ it("keeps unknown routes outside the console and still rejects them on the serve
     AdminPage({ params: Promise.resolve({ section: ["orders", "unknown"] }) }),
   ).rejects.toThrow("NEXT_NOT_FOUND");
 });
+it("hosts homepage configuration in the same guarded console", async () => {
+  route.pathname = "/admin/home-config";
+  const child = await AdminPage({ params: Promise.resolve({ section: ["home-config"] }) });
+  render(<AdminWorkspace>{child}</AdminWorkspace>);
+  expect(screen.getByRole("heading", { name: "home-config" })).toBeInTheDocument();
+});

@@ -8,7 +8,16 @@ import type { Campaign } from "@/server/kol/codes";
 import { decimal } from "@/server/kol/money";
 import { MetaDiagnostics } from "./MetaDiagnostics";
 import { CheckoutDiagnostics } from "./CheckoutDiagnostics";
-type View = "collabs" | "partners" | "codes" | "orders" | "settlements" | "checkouts" | "meta";
+import { HomeContentEditor } from "./HomeContentEditor";
+export type View =
+  | "collabs"
+  | "partners"
+  | "codes"
+  | "orders"
+  | "settlements"
+  | "checkouts"
+  | "meta"
+  | "home-config";
 type ConfirmationAction = { kind: string; id: string; title: string };
 type Filters = {
   query: string;
@@ -33,6 +42,7 @@ const nav = [
   ["settlements", "04", "月度结算"],
   ["checkouts", "05", "结账诊断"],
   ["meta", "06", "广告诊断"],
+  ["home-config", "07", "首页配置"],
 ] as const;
 const labels: Record<string, string> = {
   active: "合作中",
@@ -84,6 +94,10 @@ const errorLabels: Record<string, string> = {
   order_unavailable_or_scope: "订单读取失败，请检查订单权限（超过60天需历史权限）",
   cooperation_not_eligible: "合作已暂停或到期，不能发码",
   operation_failed: "操作未完成，请核对状态后重试",
+  homepage_changed: "另一窗口已发布新版本。重新读取最新配置后再修改。",
+  homepage_image_missing: "图片读取失败，请重新上传。",
+  homepage_image_invalid: "无法处理这张图片，请选择 JPG、PNG、WebP 或 AVIF。",
+  homepage_image_too_large: "图片过大，请缩小后重试。",
 };
 function errorLabel(reason: string) {
   if (/^shopify_admin_auth_http_\d+$/.test(reason))
@@ -141,11 +155,15 @@ function Badge({ status }: { status: string }) {
   );
 }
 async function api(path: string, body?: unknown, signal?: AbortSignal) {
+  const image = body instanceof Blob ? body : undefined;
   const response = await fetch(`/api/admin/kol/${path}`, {
     method: body === undefined ? "GET" : "POST",
     cache: "no-store",
-    headers: body === undefined ? {} : { "Content-Type": "application/json", "x-offy-csrf": "1" },
-    body: body === undefined ? undefined : JSON.stringify(body),
+    headers:
+      body === undefined
+        ? {}
+        : { "Content-Type": image?.type || "application/json", "x-offy-csrf": "1" },
+    body: image ?? (body === undefined ? undefined : JSON.stringify(body)),
     ...(signal ? { signal } : {}),
   });
   const data = await response.json().catch(() => ({ error: "operation_failed" }));
@@ -413,6 +431,9 @@ export function AdminConsole({ view }: { view: View }) {
     );
   const name = (id: string | null) => data.partners.find((p) => p.id === id)?.name ?? "—";
   const title = nav.find((n) => n[0] === view)!;
+  const isHomeConfig = view === "home-config";
+  const showCollabs =
+    data.accountingMode === "collabs" && !["checkouts", "meta", "home-config"].includes(view);
   const partners = data.partners.filter(
     (p) =>
       !query ||
@@ -483,7 +504,7 @@ export function AdminConsole({ view }: { view: View }) {
           {nav
             .filter(([key]) =>
               data.accountingMode === "collabs"
-                ? ["collabs", "checkouts", "meta"].includes(key)
+                ? ["collabs", "checkouts", "meta", "home-config"].includes(key)
                 : key !== "collabs",
             )
             .map(([key, num, label]) => (
@@ -510,16 +531,14 @@ export function AdminConsole({ view }: { view: View }) {
       <main className="admin-main">
         <header className="page-heading">
           <div>
-            <p className="eyebrow">
-              OFFY / COLLABORATIONS <span>{title[1]}</span>
-            </p>
-            <h1>
-              {data.accountingMode === "collabs" && view !== "checkouts" && view !== "meta"
-                ? "Collabs 核对"
-                : title[2]}
-            </h1>
+            {!isHomeConfig && (
+              <p className="eyebrow">
+                OFFY / COLLABORATIONS <span>{title[1]}</span>
+              </p>
+            )}
+            <h1>{showCollabs ? "Collabs 核对" : title[2]}</h1>
             <p className="muted">
-              {data.accountingMode === "collabs" && view !== "checkouts" && view !== "meta"
+              {showCollabs
                 ? "官方来源、报告快照和异常证据，在一处核对。"
                 : view === "partners"
                   ? "一位达人，一份清晰可核对的合作。"
@@ -531,27 +550,35 @@ export function AdminConsole({ view }: { view: View }) {
                         ? "查看站内漏斗、CAPI 接收状态与广告来源。"
                         : view === "checkouts"
                           ? "从一次点击，到 Shopify 响应，每一步都有据可查。"
-                          : "先核对，再锁单；线下付款，账内留痕。"}
+                          : isHomeConfig
+                            ? "管理首屏轮播、活动横幅和 The Latest from OFFY。"
+                            : "先核对，再锁单；线下付款，账内留痕。"}
             </p>
           </div>
           <div className="header-actions">
-            <button
-              className="connection-button"
-              onClick={() => {
-                setError("");
-                setShowHealth(true);
-                void loadConnection();
-              }}
-            >
-              {data.accountingMode === "collabs" ? "连接状态" : "连接与同步"}{" "}
-              <span aria-hidden>↗</span>
-            </button>
+            {isHomeConfig ? (
+              <a className="button" href={data.siteUrl} target="_blank" rel="noreferrer">
+                打开首页 <span aria-hidden>↗</span>
+              </a>
+            ) : (
+              <button
+                className="connection-button"
+                onClick={() => {
+                  setError("");
+                  setShowHealth(true);
+                  void loadConnection();
+                }}
+              >
+                {data.accountingMode === "collabs" ? "连接状态" : "连接与同步"}{" "}
+                <span aria-hidden>↗</span>
+              </button>
+            )}
             <button className="mobile-logout" onClick={() => void operate("logout", {}, "已退出")}>
               退出登录
             </button>
           </div>
         </header>
-        {data.health.shopifyAdminConfigured === false && (
+        {!isHomeConfig && data.health.shopifyAdminConfigured === false && (
           <p className="message" role="status">
             未配置 Shopify Admin{" "}
             {data.accountingMode === "collabs"
@@ -559,14 +586,19 @@ export function AdminConsole({ view }: { view: View }) {
               : "连接凭据（应用凭据或手动令牌），订单同步与优惠码功能暂不可用。本地合作记录和结账诊断可正常查看。"}
           </p>
         )}
-        {data.accountingMode === "collabs" && view !== "checkouts" && view !== "meta" && (
-          <CollabsWorkspace siteUrl={data.siteUrl} />
-        )}
+        {showCollabs && <CollabsWorkspace siteUrl={data.siteUrl} />}
         {view === "collabs" && data.accountingMode !== "collabs" && (
           <p className="message">尚未启用 Collabs 模式，原有合作记录继续保留。</p>
         )}
         {view === "checkouts" && <CheckoutDiagnostics />}
         {view === "meta" && <MetaDiagnostics />}
+        {isHomeConfig && (
+          <HomeContentEditor
+            siteUrl={data.siteUrl}
+            request={api}
+            onSessionExpired={expireSession}
+          />
+        )}
         {error && !editor && !detail && !codeMode && !settleForm && !action && !showHealth && (
           <div className="message error" role="alert">
             {error}
@@ -585,6 +617,7 @@ export function AdminConsole({ view }: { view: View }) {
         )}
         {view !== "checkouts" &&
           view !== "meta" &&
+          !isHomeConfig &&
           view !== "collabs" &&
           data.accountingMode !== "collabs" && (
             <div className={view === "orders" ? "toolbar orders-toolbar" : "toolbar"}>

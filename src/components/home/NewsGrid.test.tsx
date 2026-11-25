@@ -24,33 +24,35 @@ vi.mock("next/image", () => ({
 }));
 
 import { NewsGrid } from "./NewsGrid";
-import type { NewsItem } from "@/lib/content";
+import type { ComponentProps } from "react";
 
-const feature = { image: "/assets/news/news-01.jpg", productCode: "warm-biscuit" };
-const items: NewsItem[] = [
+type Cards = ComponentProps<typeof NewsGrid>["items"];
+
+const feature = { image: "/assets/news/news-01.jpg", href: "/products/warm-biscuit" };
+const items: Cards = [
   {
     id: "a",
     title: { zh: "日常犯可爱", en: "Everyday cute" },
     image: "/assets/news/news-04.jpg",
-    productCode: "bunny-hug",
+    href: "/products/bunny-hug",
   },
   {
     id: "b",
     title: { zh: "周末出门玩", en: "Weekend outing" },
     image: "/assets/news/news-03.jpg",
-    productCode: "ace",
+    href: "/products/ace",
   },
   {
     id: "c",
     title: { zh: "时尚潮流生活", en: "Fashion Lifestyle" },
     image: "/assets/news/news-08.jpg",
-    productCode: "wander",
+    href: "/products/wander",
   },
   {
     id: "d",
     title: { zh: "趣味潮流OFFY", en: "Playful trendy Offy" },
     image: "/assets/news/news-02.jpg",
-    productCode: "offy_redrush",
+    href: "/products/offy_redrush",
   },
 ];
 const texts = {
@@ -60,7 +62,7 @@ const texts = {
   browseAll: "逛全部系列",
 };
 
-describe("NewsGrid (editorial layout, data-driven: productCode + image + copy)", () => {
+describe("NewsGrid (editorial layout, data-driven: href + image + copy)", () => {
   it("can omit the headline while retaining an independently named image and card link", () => {
     render(
       <NewsGrid
@@ -84,7 +86,7 @@ describe("NewsGrid (editorial layout, data-driven: productCode + image + copy)",
     render(<NewsGrid feature={feature} items={items} texts={texts} locale="zh" />);
     expect(screen.getByText("仪式感生活")).toBeInTheDocument();
     expect(screen.getByText("查看详情")).toBeInTheDocument();
-    // 整张大卡(含图)是一个 Link,指向 feature.productCode 对应的商品详情页
+    // 整张大卡(含图)是一个 Link,指向 feature.href
     expect(screen.getByRole("link", { name: /仪式感生活/ })).toHaveAttribute(
       "href",
       "/products/warm-biscuit",
@@ -166,14 +168,14 @@ describe("NewsGrid (editorial layout, data-driven: productCode + image + copy)",
     expect(card.querySelector("figcaption")).toBeNull();
   });
 
-  it("changing only the data (productCode/image/copy) reflects immediately with no component changes needed", () => {
-    const customFeature = { image: "/assets/news/custom.jpg", productCode: "swan-princess" };
-    const customItems: NewsItem[] = [
+  it("changing only the data (href/image/copy) reflects immediately with no component changes needed", () => {
+    const customFeature = { image: "/assets/news/custom.jpg", href: "/products/swan-princess" };
+    const customItems: Cards = [
       {
         id: "x",
         title: { zh: "新文案", en: "New copy" },
         image: "/assets/news/custom-2.jpg",
-        productCode: "pink-mallow",
+        href: "/products/pink-mallow",
       },
     ];
     render(<NewsGrid feature={customFeature} items={customItems} texts={texts} locale="zh" />);

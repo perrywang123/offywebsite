@@ -63,6 +63,13 @@
 .fullPhoto {
   aspect-ratio: 3250 / 2041;
 }
+.trackWithIndicators .fullPhoto {
+  margin-bottom: var(--controls-height);
+}
+.fullPhoto img {
+  height: 100%;
+  object-fit: contain;
+}
 .copy {
   position: relative;
   display: flex;

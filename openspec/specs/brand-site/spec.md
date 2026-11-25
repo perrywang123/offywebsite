@@ -17,7 +17,7 @@ The routed locale set SHALL contain only en with as-needed prefixing. Public def
 
 ### Requirement: Homepage renders brand content
 
-The homepage SHALL render Hero → NEWS → Shop by Category (FEATURED, separate applicable REGIONAL EXCLUSIVE, then All Products circular thumbnails) → bag-charm teaser → collaboration → newsletter → upcoming IPs. The All Products roster SHALL enumerate the verified current-market non-merch catalog, independently of the six-item recommendation limit. The removed homepage Marquee SHALL NOT render; the Header promo bar SHALL remain. Collaboration SHALL link to /policies/contact, and active copy SHALL not use the retired playcoretoys.com contact. The original three series memberships, routes and ordering SHALL remain independent of homepage curation.
+The homepage SHALL render the enabled Hero → eligible NEWS → Shop by Category (FEATURED, separate applicable REGIONAL EXCLUSIVE, then All Products circular thumbnails) → bag-charm teaser → collaboration → newsletter → upcoming IPs. The All Products roster SHALL enumerate the verified current-market non-merch catalog, independently of the six-item recommendation limit. The removed homepage Marquee SHALL NOT render; the shared Header promo bar SHALL display the enabled announcements. Collaboration SHALL link to /policies/contact, and active copy SHALL not use the retired playcoretoys.com contact. The original three series memberships, routes and ordering SHALL remain independent of homepage curation.
 
 #### Scenario: Product and brand sections
 
@@ -31,7 +31,7 @@ The homepage SHALL render Hero → NEWS → Shop by Category (FEATURED, separate
 
 ### Requirement: Header behavior
 
-The Header SHALL be sticky with a solid light navigation background and black text, with rotating promo copy above it. Desktop navigation appears from 768px; mobile navigation opens below that breakpoint. Below 768px the white toolbar SHALL be a single compact row with a logo, country-code control, icon-only bag with count and menu; bag and menu hit areas SHALL remain at least 44px. The mobile drawer SHALL retain the four primary links and Shopify-supplied series links, display series without surrounding or per-row borders, and include only FAQ and Contact Us in Help & Support. The Shipping & returns policy-index link SHALL NOT appear in the mobile drawer. The drawer country control, footer and existing policy pages SHALL remain available. Desktop bag presentation SHALL retain its text capsule. ResizeObserver SHALL publish actual header height to --header-h for sticky category offsets.
+The Header SHALL be sticky with a solid light navigation background and black text, with enabled announcement copy above it, rotating when more than one message is enabled. Desktop navigation appears from 768px; mobile navigation opens below that breakpoint. Below 768px the white toolbar SHALL be a single compact row with a logo, country-code control, icon-only bag with count and menu; bag and menu hit areas SHALL remain at least 44px. The mobile drawer SHALL retain the four primary links and Shopify-supplied series links, display series without surrounding or per-row borders, and include only FAQ and Contact Us in Help & Support. The Shipping & returns policy-index link SHALL NOT appear in the mobile drawer. The drawer country control, footer and existing policy pages SHALL remain available. Desktop bag presentation SHALL retain its text capsule. ResizeObserver SHALL publish actual header height to --header-h for sticky category offsets.
 
 #### Scenario: Promo wraps
 
@@ -50,7 +50,7 @@ The Header SHALL be sticky with a solid light navigation background and black te
 
 ### Requirement: Hero carousel with landing links
 
-The Hero SHALL retain its five original photographs, live copy, full-slide destinations, shared content-driven stable height and bottom indicators. Detail CTA and arrow render flags SHALL remain disabled. A manual pause control SHALL NOT be added without a separate approved change. Horizontal touch and mouse/pen drags SHALL move adjacent slides with the contact, without cross-fading or replacing the image at release. Release SHALL settle to the next/previous slide or back to the current slide using distance and recent velocity. Predominantly vertical gestures SHALL remain page scrolling; multi-touch/pointer cancellation SHALL abandon navigation and release autoplay. A drag SHALL NOT activate the full-slide link, including when dragged away and returned. Normal taps and keyboard activation SHALL retain navigation. Manual movement at either end SHALL have a bounded response without skipping through the gallery. Autoplay SHALL pause during interaction, restart after release and remain disabled for reduced motion. Reduced motion SHALL avoid animated settling while preserving manual selection.
+The Hero SHALL use the five configured slots in their existing order, omitting disabled slots. Default photography, copy and destinations SHALL match the original carousel. Replacements SHALL support complete banner artwork with alternative text. The Hero SHALL retain shared content-driven stable height and bottom indicators when multiple slides are enabled. Detail CTA and arrow render flags SHALL remain disabled. A manual pause control SHALL NOT be added without a separate approved change. Horizontal touch and mouse/pen drags SHALL move adjacent slides with the contact, without cross-fading or replacing the image at release. Release SHALL settle to the next/previous slide or back to the current slide using distance and recent velocity. Predominantly vertical gestures SHALL remain page scrolling; multi-touch/pointer cancellation SHALL abandon navigation and release autoplay. A drag SHALL NOT activate the full-slide link, including when dragged away and returned. Normal taps and keyboard activation SHALL retain navigation. Manual movement at either end SHALL have a bounded response without skipping through the gallery. Autoplay SHALL pause during interaction, restart after release and remain disabled for reduced motion. Reduced motion SHALL avoid animated settling while preserving manual selection.
 
 #### Scenario: Follow the finger and settle
 
@@ -77,14 +77,20 @@ The Hero SHALL retain its five original photographs, live copy, full-slide desti
 - **WHEN** the carousel is idle without reduced motion
 - **THEN** it advances every five seconds; gestures pause/restart the timer, and reduced motion disables autoplay and animated settling
 
+#### Scenario: Complete banner artwork with pagination
+
+- **WHEN** at least two configured hero slides are enabled and a slide uses complete replacement artwork
+- **THEN** the artwork is proportionally contained and the indicators remain below its image frame with a reserved hit area
+- **AND** a single enabled slide has no indicator area
+
 ### Requirement: News module
 
-NEWS SHALL show The Latest from OFFY without News· or the retired NEW ARRIVALS badge. Product bindings, editorial copy and the five curated local editorial photographs SHALL remain site configuration. The feature SHALL use the owner-provided `news-swan-queen.jpg` photograph and link to `swan-princess`; the secondary cards SHALL use `news-04.jpg`, `news-03.jpg`, `news-08.jpg` and `news-02.jpg` in their configured order. The homepage feature SHALL omit the visible ROMANTICIZING EVERYDAY LIFE headline while retaining a horizontally centered, compact VIEW DETAILS capsule placed clear of the photograph’s Limited 60 artwork and meaningful alternative text from the verified product name. Shopify product images SHALL NOT replace these editorial assets or determine image availability. Cards SHALL still render only for Shopify-verified available products in the visitor market. Missing bindings SHALL be hidden rather than advertised as available products. Product prices, inventory, product-detail media and checkout SHALL remain Shopify-authoritative.
+NEWS SHALL show The Latest from OFFY without News· or the retired NEW ARRIVALS badge. Card images and destinations and the Browse All Series destination SHALL use published homepage settings. By default the feature uses the owner-provided `news-swan-queen.jpg` photograph and links to `swan-princess`; the secondary cards use `news-04.jpg`, `news-03.jpg`, `news-08.jpg` and `news-02.jpg` in that order. The homepage feature SHALL omit the visible ROMANTICIZING EVERYDAY LIFE headline while retaining a horizontally centered, compact VIEW DETAILS capsule placed clear of the photograph’s Limited 60 artwork and alternative text from the configuration or verified product name. Shopify product images SHALL NOT replace these editorial assets or determine image availability. Cards whose destinations are Offy product detail pages SHALL render only for Shopify-verified available products in the visitor market. The grid SHALL require an eligible feature and at least one eligible secondary card. Configured editorial destinations do not require a product binding. Product prices, inventory, product-detail media and checkout SHALL remain Shopify-authoritative.
 
 #### Scenario: News links
 
 - **WHEN** a verified card is activated
-- **THEN** it opens the configured Shopify product handle and the browse-all link stays outside the grid
+- **THEN** it opens the configured destination and the browse-all link stays outside the grid
 
 #### Scenario: Curated editorial images
 
@@ -93,12 +99,12 @@ NEWS SHALL show The Latest from OFFY without News· or the retired NEW ARRIVALS 
 
 #### Scenario: Swan Queen feature without headline
 
-- **WHEN** the homepage feature is verified as available in the visitor market
+- **WHEN** the default homepage feature is verified as available in the visitor market
 - **THEN** its provided SWAN QUEEN photograph and VIEW DETAILS link open `/products/swan-princess`, the old headline is absent, and the image alternative text identifies the verified product
 
 #### Scenario: Feature binding unavailable
 
-- **WHEN** `swan-princess` is missing or unavailable in the visitor market
+- **WHEN** the configured feature links to an Offy product that is missing or unavailable in the visitor market
 - **THEN** the homepage does not advertise the feature or substitute another product
 
 #### Scenario: Compact centered feature CTA
@@ -226,11 +232,11 @@ Unavailable commerce HTML SHALL be excluded from indexing and SHALL emit no Prod
 
 ### Requirement: Shared shipping announcement
 
-The shared Header shipping promotion SHALL read `OFFY GOES GLOBAL · WORLDWIDE SHIPPING FROM $15 USD` for all visitor markets. It SHALL replace the previous flat-rate country-list message while preserving the separate gift promotion, existing rotation, black background, white text and responsive wrapping.
+The default shared Header shipping promotion SHALL read `OFFY GOES GLOBAL · WORLDWIDE SHIPPING FROM $15 USD` for all visitor markets. It SHALL replace the previous flat-rate country-list message while preserving the separate gift promotion, existing rotation, black background, white text and responsive wrapping.
 
 #### Scenario: Shipping announcement is displayed
 
-- **WHEN** the Header rotation displays its shipping promotion on any public page
+- **WHEN** the Header rotation displays its default shipping promotion on any public page
 - **THEN** the approved FROM wording is shown without the former country list or MORE REGIONS COMING SOON claim
 
 ### Requirement: Shopify-curated homepage selection
@@ -273,7 +279,7 @@ Main looks and regional cards SHALL have disjoint product identities. Regional c
 
 ### Requirement: Desktop NEWS feature CTA proportions
 
-At the desktop NEWS grid breakpoint of 1024px, the feature VIEW DETAILS capsule SHALL grow proportionally with its card up to 320px wide, use 52–64px height and 18–24px text, remain horizontally centered and clear of the photograph's Limited artwork. Below this breakpoint it SHALL retain the existing 40% width, 176px cap, 40–48px height and 12–16px text. Existing editorial images, secondary card capsules, product binding and whole-card link SHALL remain unchanged.
+At the desktop NEWS grid breakpoint of 1024px, the feature VIEW DETAILS capsule SHALL grow proportionally with its card up to 320px wide, use 52–64px height and 18–24px text, remain horizontally centered and clear of the photograph's Limited artwork. Below this breakpoint it SHALL retain the existing 40% width, 176px cap, 40–48px height and 12–16px text. Secondary card capsules and whole-card links SHALL retain their original layout.
 
 #### Scenario: Desktop feature at 1440px
 
@@ -287,7 +293,7 @@ At the desktop NEWS grid breakpoint of 1024px, the feature VIEW DETAILS capsule 
 
 ### Requirement: Responsive brand slide clear space
 
-The homepage brand slide SHALL retain its approved original logo, English copy and full seven-character photographic row. Brand copy SHALL be larger and readable on narrow screens, with a distinct primary and secondary line. Text and photography SHALL occupy non-overlapping normal-flow regions. Wrapped or enlarged text SHALL expand the layout instead of covering the photographed characters. The carousel frame SHALL accommodate its contents without jumping between slides, and the other four slides SHALL preserve their existing copy and photographic proportions.
+The homepage brand slide SHALL retain its approved logo, English copy and full seven-character photographic row when it uses the original photograph. Brand copy SHALL be larger and readable on narrow screens, with a distinct primary and secondary line. Text and photography SHALL occupy non-overlapping normal-flow regions. Wrapped or enlarged text SHALL expand the layout instead of covering the photographed characters. The carousel frame SHALL accommodate its contents without jumping between slides, and the other four slots SHALL preserve their existing photographic proportions and copy by default.
 
 #### Scenario: Mobile text expands
 
@@ -301,12 +307,12 @@ The homepage brand slide SHALL retain its approved original logo, English copy a
 
 #### Scenario: Carousel changes slides
 
-- **WHEN** a shopper changes between any of the five slides
+- **WHEN** a shopper changes between enabled slides
 - **THEN** the frame height remains stable and existing swipe, link and indicator interactions remain available
 
 ### Requirement: Unclipped promo and series copy
 
-Promo and series slides SHALL retain their original English copy and complete photographed subjects. The promo SHALL allow its existing two semantic title segments to wrap onto additional lines without clipping. Mobile series subtitles SHALL remain readable, and all text SHALL occupy normal-flow space separate from photography. Each layout SHALL reserve space for the shared indicators. Enlarged text SHALL increase the common frame height rather than cover subjects or indicators.
+Promo and series slides SHALL retain their original English copy by default and show their complete photographed subjects. The promo SHALL allow its existing two semantic title segments to wrap onto additional lines without clipping. Mobile series subtitles SHALL remain readable, and all text SHALL occupy normal-flow space separate from photography. Each layout SHALL reserve space for the shared indicators. Enlarged text SHALL increase the common frame height rather than cover subjects or indicators.
 
 #### Scenario: Promo title wraps further
 
@@ -394,3 +400,33 @@ Home and product media rails SHALL retain a touch-owned gesture until that touch
 
 - **WHEN** another pointer loses capture, or the actual touch stream is canceled
 - **THEN** the unrelated pointer cannot cancel the active gesture, while a real touch cancellation returns to the original image and releases the interaction state
+
+### Requirement: Administrator-managed homepage content
+
+The guarded Offy admin SHALL expose 首页配置 in both accounting modes. The editor SHALL load the current published version or the current brand defaults. It SHALL configure image and destination per hero and Latest slot, enable or disable individual hero slides and announcements, and edit announcement text and the original promotion slide's copy. Links SHALL be storefront paths or HTTPS URLs. Uploaded raster images SHALL be previewable by the editor and persisted in the shared database. Authorized publishing SHALL atomically update the version and make its uploaded images publicly readable, rejecting stale edits. Published content SHALL be read by subsequent storefront requests. The settings apply to storefront presentation.
+
+#### Scenario: First use
+
+- **WHEN** an administrator opens the editor before any publish
+- **THEN** the existing five hero images and destinations, two announcement messages and five Latest images and destinations are prefilled
+
+#### Scenario: Save updates
+
+- **WHEN** an administrator uploads a banner, changes its destination and publishes
+- **THEN** the next storefront request uses the replacement image and destination, and the settings survive reloads
+
+#### Scenario: Preserve other changes and prior version
+
+- **WHEN** a second session tries to publish a stale version or submits invalid settings
+- **THEN** publishing is rejected and the current storefront version remains intact
+
+#### Scenario: Merchant access
+
+- **WHEN** a visitor requests the guarded editor or tries to write settings without the existing administrator session and mutation checks
+- **THEN** the request cannot read private editor state, upload media or publish configuration
+
+#### Scenario: Latest feature preview
+
+- **WHEN** an administrator previews the same feature image at mobile and desktop widths
+- **THEN** the thumbnail follows the 3:4 mobile crop and approximates the taller desktop two-row crop
+- **AND** it uses the storefront focal position for the original SWAN QUEEN feature image

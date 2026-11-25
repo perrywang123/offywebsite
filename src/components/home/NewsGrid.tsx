@@ -1,6 +1,6 @@
 import Image from "next/image";
 import { Link } from "@/i18n/navigation";
-import type { NewsItem } from "@/lib/content";
+import { newsFeature, type NewsItem } from "@/lib/content";
 import { Reveal } from "@/components/Reveal";
 
 export interface NewsGridTexts {
@@ -43,13 +43,11 @@ export function NewsGrid({
   texts,
   locale,
 }: {
-  /** `productCode` = Shopify handle;跳转目标按 /products/${productCode} 拼接。 */
-  feature: { image: string; productCode: string };
-  items: NewsItem[];
+  feature: { image: string; href: string };
+  items: (Omit<NewsItem, "productCode"> & { href: string })[];
   texts: NewsGridTexts;
   locale: string;
 }) {
-  const featureHref = `/products/${feature.productCode}`;
   return (
     <div>
       {/* PSD 比例:主卡 43% / 副卡区 57%(1324:1746) */}
@@ -57,7 +55,7 @@ export function NewsGrid({
         {/* ============ 左:大主卡(整张卡可点击,跳转到绑定的商品详情页) ============ */}
         <Reveal>
           <Link
-            href={featureHref}
+            href={feature.href}
             aria-label={`${texts.featureAlt} — ${texts.cta}`}
             className="group rounded-card bg-cream-deep relative block aspect-[3/4] overflow-hidden lg:aspect-auto lg:h-full lg:min-h-[32rem]"
             style={{ containerType: "inline-size" }}
@@ -67,7 +65,12 @@ export function NewsGrid({
               alt={texts.featureAlt}
               fill
               sizes="(max-width: 1024px) 100vw, 50vw"
-              className="ease-editorial object-cover object-[15%_center] transition-transform duration-500 group-hover:scale-105"
+              className="ease-editorial object-cover object-center transition-transform duration-500 group-hover:scale-105"
+              style={
+                feature.image === newsFeature.image
+                  ? { objectPosition: newsFeature.objectPosition }
+                  : undefined
+              }
             />
             {/* PSD:文案压在图片上方、居中(不是左下角),图片本身不加暗渐变。
                 窄屏文字框 14% → 8%:字号**不缩**(主卡大标题是设计定稿的 9.59cqw),
@@ -99,7 +102,7 @@ export function NewsGrid({
           {items.map((item, i) => (
             <Reveal key={item.id} delay={Math.min(i, 3) * 70}>
               <Link
-                href={`/products/${item.productCode}`}
+                href={item.href}
                 className="group rounded-card bg-cream-deep relative block aspect-[3/4] overflow-hidden"
                 style={{ containerType: "inline-size" }}
               >

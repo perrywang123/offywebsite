@@ -30,6 +30,7 @@ vi.mock("next/image", () => ({
 }));
 
 import { HeroCarousel, type HeroSlide } from "./HeroCarousel";
+import styles from "./HeroCarousel.module.css";
 
 const slides: HeroSlide[] = [
   {
@@ -120,6 +121,22 @@ function controlledClock() {
 }
 
 describe("HeroCarousel", () => {
+  it("reserves artwork space for the indicators only while multiple slides are enabled", () => {
+    const artwork = {
+      image: "/assets/hero/campaign.jpg",
+      imageAlt: "Campaign artwork",
+      bg: "#efefef",
+      href: "/products",
+    };
+    const { rerender } = render(<HeroCarousel slides={[artwork, slides[0]]} locale="en" />);
+    expect(screen.getByTestId("hero-track")).toHaveClass(styles.trackWithIndicators);
+    expect(screen.getByRole("tablist")).toBeInTheDocument();
+
+    rerender(<HeroCarousel slides={[artwork]} locale="en" />);
+    expect(screen.getByTestId("hero-track")).not.toHaveClass(styles.trackWithIndicators);
+    expect(screen.queryByRole("tablist")).toBeNull();
+  });
+
   it("不渲染「查看详情」胶囊(老板诉求 1:隐藏,逻辑保留在开关后)", () => {
     const { container } = render(<HeroCarousel slides={slides} locale="zh" />);
     expect(screen.queryAllByRole("link", { name: "heroDetailsCta", hidden: true })).toHaveLength(0);

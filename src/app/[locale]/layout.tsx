@@ -22,6 +22,7 @@ import { MetaTracking } from "@/components/marketing/MetaTracking";
 import { pageMetadata, searchCopy } from "@/lib/seo/metadata";
 import { metaConfig } from "@/server/meta/config";
 import { metaTestOrigin } from "@/server/meta/runtime";
+import { getPublishedHomeContent } from "@/server/home-content/store";
 import "../globals.css";
 
 export const dynamic = "force-dynamic";
@@ -79,6 +80,7 @@ export default async function LocaleLayout({
     (collabsMode() || meta.enabled) && env.SHOPIFY_ANALYTICS_SHOP_ID && env.SHOPIFY_STORE_DOMAIN;
   const destination = countryDecision(await headers());
   const country = destination.country;
+  const announcements = getPublishedHomeContent().announcements.filter((item) => item.enabled);
 
   return (
     <html lang={locale} suppressHydrationWarning>
@@ -121,7 +123,7 @@ export default async function LocaleLayout({
             }}
           >
             <CartProvider>
-              <Header series={series} />
+              <Header series={series} announcements={announcements} />
               <main>
                 <MarketContent>{children}</MarketContent>
               </main>

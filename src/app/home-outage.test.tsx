@@ -10,6 +10,9 @@ vi.mock("@/server/catalog/live", () => ({
   getLiveSeriesList: async () => [],
 }));
 vi.mock("@/server/catalog/home", () => ({ getHomeLooks: vi.fn() }));
+vi.mock("@/server/home-content/store", async () => ({
+  getPublishedHomeContent: (await import("@/lib/home-content")).defaultHomeContent,
+}));
 vi.mock("@/server/catalog/regional", () => ({ getRegionalProducts: async () => [] }));
 vi.mock("@/components/home/HeroCarousel", () => ({ HeroCarousel: () => <p>OFFY brand hero</p> }));
 vi.mock("@/i18n/navigation", () => ({

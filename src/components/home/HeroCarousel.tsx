@@ -36,6 +36,7 @@ export function HeroCarousel({
 }) {
   const t = useTranslations("home");
   const rail = useSwipeRail(slides.length);
+  const hasIndicators = slides.length > 1;
   const { active, goTo: go, reducedMotion, gestureActive, trackRef } = rail;
   useEffect(() => {
     if (reducedMotion || gestureActive || slides.length <= 1) return;
@@ -60,7 +61,14 @@ export function HeroCarousel({
 
   const picture = (s: HeroSlide, kind: string, priority = false) => (
     <div data-hero-photo className={`${styles.picture} ${kind}`}>
-      <Image src={s.image} alt="" width={3250} height={2041} sizes="100vw" priority={priority} />
+      <Image
+        src={s.image}
+        alt={s.imageAlt ?? ""}
+        width={3250}
+        height={2041}
+        sizes="100vw"
+        priority={priority}
+      />
     </div>
   );
 
@@ -119,9 +127,11 @@ export function HeroCarousel({
           <div className={`${styles.copy} ${styles.promoCopy}`}>
             {backdrop(s)}
             <div data-hero-copy className={styles.copyContent}>
-              <p className={styles.kicker}>
-                {locale === "zh" ? s.promo.kicker.zh : s.promo.kicker.en}
-              </p>
+              {(locale === "zh" ? s.promo.kicker.zh : s.promo.kicker.en) && (
+                <p className={styles.kicker}>
+                  {locale === "zh" ? s.promo.kicker.zh : s.promo.kicker.en}
+                </p>
+              )}
               <p className={styles.promoTitle}>
                 {lines.map((line, i) => (
                   <span key={i}>{line}</span>
@@ -162,10 +172,15 @@ export function HeroCarousel({
       style={{ touchAction: "pan-y pinch-zoom" }}
       {...rail.handlers}
     >
-      <div data-testid="hero-track" ref={trackRef} style={rail.trackStyle} className={styles.track}>
+      <div
+        data-testid="hero-track"
+        ref={trackRef}
+        style={rail.trackStyle}
+        className={`${styles.track} ${hasIndicators ? styles.trackWithIndicators : ""}`}
+      >
         {slides.map((s, i) => (
           <div
-            key={s.image}
+            key={i}
             data-hero-slide={i}
             aria-hidden={i !== active}
             inert={i !== active}
@@ -176,47 +191,49 @@ export function HeroCarousel({
           </div>
         ))}
       </div>
-      <div
-        className={`${styles.indicators} ${slides[active]?.wordmark || slides[active]?.dark ? styles.lightIndicators : ""}`}
-        role="tablist"
-        aria-label={t("heroSlidesLabel")}
-      >
-        {slides.map((s, i) => (
-          <button
-            type="button"
-            key={s.image}
-            role="tab"
-            aria-selected={i === active}
-            aria-label={t("heroGoToSlide", { n: i + 1 })}
-            onClick={(event) => {
-              event.stopPropagation();
-              go(i);
-            }}
-            className={styles.indicator}
-            style={{ left: `${11.82 + i * 12.74}%` }}
-          />
-        ))}
-        {SHOW_HERO_ARROWS && (
-          <div className={styles.arrows}>
-            {([-1, 1] as const).map((delta) => (
-              <button
-                type="button"
-                key={delta}
-                aria-label={t(delta < 0 ? "heroPrevSlide" : "heroNextSlide")}
-                onClick={() => go(active + delta)}
-                className="flex min-h-11 min-w-11 items-center justify-center"
-              >
-                {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img
-                  src={delta < 0 ? "/assets/hero/arrow-left.png" : "/assets/hero/arrow-right.png"}
-                  alt=""
-                  className="h-3 w-auto"
-                />
-              </button>
-            ))}
-          </div>
-        )}
-      </div>
+      {hasIndicators && (
+        <div
+          className={`${styles.indicators} ${slides[active]?.wordmark || slides[active]?.dark ? styles.lightIndicators : ""}`}
+          role="tablist"
+          aria-label={t("heroSlidesLabel")}
+        >
+          {slides.map((_, i) => (
+            <button
+              type="button"
+              key={i}
+              role="tab"
+              aria-selected={i === active}
+              aria-label={t("heroGoToSlide", { n: i + 1 })}
+              onClick={(event) => {
+                event.stopPropagation();
+                go(i);
+              }}
+              className={styles.indicator}
+              style={{ left: `${11.82 + i * 12.74}%` }}
+            />
+          ))}
+          {SHOW_HERO_ARROWS && (
+            <div className={styles.arrows}>
+              {([-1, 1] as const).map((delta) => (
+                <button
+                  type="button"
+                  key={delta}
+                  aria-label={t(delta < 0 ? "heroPrevSlide" : "heroNextSlide")}
+                  onClick={() => go(active + delta)}
+                  className="flex min-h-11 min-w-11 items-center justify-center"
+                >
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img
+                    src={delta < 0 ? "/assets/hero/arrow-left.png" : "/assets/hero/arrow-right.png"}
+                    alt=""
+                    className="h-3 w-auto"
+                  />
+                </button>
+              ))}
+            </div>
+          )}
+        </div>
+      )}
     </div>
   );
 }
