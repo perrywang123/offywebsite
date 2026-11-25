@@ -61,7 +61,8 @@ describe("launch countdown", () => {
   it("switches a compact linked-card badge to the waiting state without revalidating the route", () => {
     const { container } = render(countdown(cutoff - 2_000, "badge"));
     expect(screen.getByText("Coming soon")).toBeVisible();
-    expect(container.querySelector("time")).toHaveTextContent(/Nov 26.*UTC/);
+    expect(container.querySelector("time")).toHaveAttribute("datetime", "2026-11-26T00:00:00.000Z");
+    expect(container.querySelector("time")).toHaveTextContent(/Nov 25.*7:00\s*PM EST/);
     expect(screen.getByRole("timer")).toHaveTextContent("In 2s");
 
     act(() => vi.advanceTimersByTime(2_000));
@@ -83,13 +84,19 @@ describe("launch countdown", () => {
     expect(time()?.nextElementSibling).toBe(screen.getByRole("timer"));
   });
 
-  it("shows EDT when New York is observing daylight saving without changing the release instant", () => {
-    const summer = "2026-07-03T13:00:00-04:00";
-    const { container } = render(countdown(Date.parse(summer) - 60_000, "detail", summer));
-    expect(container.querySelector("time")).toHaveAttribute("datetime", "2026-07-03T17:00:00.000Z");
-    expect(container.querySelector("time")).toHaveTextContent(/Jul 3, 2026 · 1:00\s*PM EDT/);
-    expect(screen.getByRole("timer")).toHaveTextContent("In 1m 0s");
-  });
+  it.each(["detail", "badge"] as const)(
+    "shows the Shopify instant in EDT in the %s layout",
+    (variant) => {
+      const summer = "2026-07-03T13:00:00-04:00";
+      const { container } = render(countdown(Date.parse(summer) - 60_000, variant, summer));
+      expect(container.querySelector("time")).toHaveAttribute(
+        "datetime",
+        "2026-07-03T17:00:00.000Z",
+      );
+      expect(container.querySelector("time")).toHaveTextContent(/Jul 3.*1:00\s*PM EDT/);
+      expect(screen.getByRole("timer")).toHaveTextContent("In 1m 0s");
+    },
+  );
 
   it.each([null, "2026-11-26T00:00:00", "unannounced"])(
     "shows an unannounced date for %s without guessing a timezone",

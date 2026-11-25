@@ -73,7 +73,7 @@ function remainingLabel(
 type TimingProps = { releaseTime: number; remaining: number };
 
 function formatLaunchDate(releaseTime: number, locale: string, compact: boolean) {
-  const timeZone = compact ? "UTC" : "America/New_York";
+  const timeZone = "America/New_York";
   const calendar: Intl.DateTimeFormatOptions = { month: "short", day: "numeric", timeZone };
   const clock: Intl.DateTimeFormatOptions = {
     hour: "numeric",

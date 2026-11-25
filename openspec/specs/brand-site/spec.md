@@ -439,7 +439,8 @@ Operators SHALL be able to enable Coming Soon for the feature or any secondary c
 #### Scenario: Upcoming card
 
 - **WHEN** Coming Soon is enabled for a card and Shopify confirms its product is still awaiting release in the visitor's market
-- **THEN** the card shows Coming Soon and time remaining or an unannounced or waiting state, and the whole card links to the ordinary product details path
+- **THEN** the card shows Coming Soon, the known Shopify release date in America/New_York and time remaining, or an unannounced or waiting state
+- **AND** the whole card links to the ordinary product details path
 
 #### Scenario: Released card and ordinary cards
 

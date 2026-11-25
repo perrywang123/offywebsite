@@ -185,6 +185,7 @@ describe("homepage NEWS editorial photographs", () => {
     const section = screen.getByRole("heading", { name: en.home.newsTitle }).closest("section")!;
     const preview = section.querySelector('a[href="/products/unlisted-preview"]')!;
     expect(preview.querySelector("time")).toHaveAttribute("dateTime", releaseAt);
+    expect(preview.querySelector("time")).toHaveTextContent(/Nov 30.*1:00\s*PM EST/);
     expect(within(section).getAllByRole("img")).toHaveLength(5);
   });
 

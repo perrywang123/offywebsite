@@ -181,7 +181,7 @@ describe("NewsGrid (editorial layout, data-driven: href + image + copy)", () => 
     const mainLink = screen.getByRole("link", { name: "SNOW WHITE — View details" });
     expect(mainLink).toHaveAttribute("href", "/products/snow-white");
     expect(mainLink).toHaveAccessibleDescription(/coming soon/i);
-    expect(mainLink).toHaveAccessibleDescription(/Dec 18.*UTC/i);
+    expect(mainLink).toHaveAccessibleDescription(/Dec 18.*9:30\s*AM EST/i);
     expect(within(mainLink).getByRole("img")).toHaveAttribute("src", feature.image);
     expect(mainLink.querySelector("time")).toHaveAttribute("datetime", releaseAt);
 

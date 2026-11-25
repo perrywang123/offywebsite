@@ -278,8 +278,8 @@ The normal product route SHALL render the Shopify gallery and description of a s
 #### Scenario: The Shopify date and visible Eastern offset
 
 - **WHEN** Shopify supplies a valid release instant in UTC or with an explicit offset
-- **THEN** the detail page displays the same instant in EST or EDT as appropriate, without modifying that instant
-- **AND** homepage cards retain their existing display behavior
+- **THEN** both the homepage card and detail page display the release in EST or EDT as appropriate
+- **AND** both countdowns and machine-readable dates use the same Shopify instant
 
 #### Scenario: Countdown expires
 
