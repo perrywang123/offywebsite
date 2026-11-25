@@ -9,7 +9,7 @@ export interface NewsItem {
   image: string;
   /**
    * Shopify handle(= 商品详情页路由 code),点击卡片跳转到 /products/${productCode}。
-   * 当前首页会核验该 handle 在访客市场的可售状态；无对应可售商品时隐藏卡片。
+   * 运营在发布首页配置前核对跳转目的地。
    */
   productCode: string;
 }

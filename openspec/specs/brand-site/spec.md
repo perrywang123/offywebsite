@@ -17,7 +17,7 @@ The routed locale set SHALL contain only en with as-needed prefixing. Public def
 
 ### Requirement: Homepage renders brand content
 
-The homepage SHALL render the enabled Hero → eligible NEWS → Shop by Category (FEATURED, separate applicable REGIONAL EXCLUSIVE, then All Products circular thumbnails) → bag-charm teaser → collaboration → newsletter → upcoming IPs. The All Products roster SHALL enumerate the verified current-market non-merch catalog, independently of the six-item recommendation limit. The removed homepage Marquee SHALL NOT render; the shared Header promo bar SHALL display the enabled announcements. Collaboration SHALL link to /policies/contact, and active copy SHALL not use the retired playcoretoys.com contact. The original three series memberships, routes and ordering SHALL remain independent of homepage curation.
+The homepage SHALL render the enabled Hero → NEWS → Shop by Category (FEATURED, separate applicable REGIONAL EXCLUSIVE, then All Products circular thumbnails) → bag-charm teaser → collaboration → newsletter → upcoming IPs. The All Products roster SHALL enumerate the verified current-market non-merch catalog, independently of the six-item recommendation limit. The removed homepage Marquee SHALL NOT render; the shared Header promo bar SHALL display the enabled announcements. Collaboration SHALL link to /policies/contact, and active copy SHALL not use the retired playcoretoys.com contact. The original three series memberships, routes and ordering SHALL remain independent of homepage curation.
 
 #### Scenario: Product and brand sections
 
@@ -85,27 +85,28 @@ The Hero SHALL use the five configured slots in their existing order, omitting d
 
 ### Requirement: News module
 
-NEWS SHALL show The Latest from OFFY without News· or the retired NEW ARRIVALS badge. Card images and destinations and the Browse All Series destination SHALL use published homepage settings. By default the feature uses the owner-provided `news-swan-queen.jpg` photograph and links to `swan-princess`; the secondary cards use `news-04.jpg`, `news-03.jpg`, `news-08.jpg` and `news-02.jpg` in that order. The homepage feature SHALL omit the visible ROMANTICIZING EVERYDAY LIFE headline while retaining a horizontally centered, compact VIEW DETAILS capsule placed clear of the photograph’s Limited 60 artwork and alternative text from the configuration or verified product name. Shopify product images SHALL NOT replace these editorial assets or determine image availability. Cards whose destinations are Offy product detail pages SHALL render only for Shopify-verified available products in the visitor market. The grid SHALL require an eligible feature and at least one eligible secondary card. Configured editorial destinations do not require a product binding. Product prices, inventory, product-detail media and checkout SHALL remain Shopify-authoritative.
+NEWS SHALL show The Latest from OFFY without News· or the retired NEW ARRIVALS badge. The feature and all four secondary cards SHALL use the published images and destinations in their configured order. The Browse All Series destination SHALL use published homepage settings. By default the feature uses the owner-provided `news-swan-queen.jpg` photograph and links to `swan-princess`; the secondary cards use `news-04.jpg`, `news-03.jpg`, `news-08.jpg` and `news-02.jpg` in that order. The homepage feature SHALL omit the visible ROMANTICIZING EVERYDAY LIFE headline while retaining a horizontally centered, compact VIEW DETAILS capsule placed clear of the photograph's Limited 60 artwork. Feature alternative text SHALL prefer the configuration, then the Shopify product name if present, then the section title. Editorial cards SHALL render regardless of Shopify availability, missing products, or a catalog read failure. The editor SHALL ask operators to open the destinations and check that they are accessible before publishing. Product prices, inventory, product-detail media and checkout SHALL remain Shopify-authoritative.
 
 #### Scenario: News links
 
-- **WHEN** a verified card is activated
+- **WHEN** a card is activated
 - **THEN** it opens the configured destination and the browse-all link stays outside the grid
 
 #### Scenario: Curated editorial images
 
-- **WHEN** the five bound products are verified as available, regardless of changes or omissions in their Shopify primary images
-- **THEN** NEWS displays the five configured local editorial photographs in the existing layout and does not substitute Shopify product media
+- **WHEN** Shopify primary images change or are absent
+- **THEN** NEWS displays the five configured editorial photographs in the existing layout
 
 #### Scenario: Swan Queen feature without headline
 
-- **WHEN** the default homepage feature is verified as available in the visitor market
-- **THEN** its provided SWAN QUEEN photograph and VIEW DETAILS link open `/products/swan-princess`, the old headline is absent, and the image alternative text identifies the verified product
+- **WHEN** the default homepage feature is configured and its product name is available
+- **THEN** its provided SWAN QUEEN photograph and VIEW DETAILS link open `/products/swan-princess`, the old headline is absent, and the image alternative text identifies the product
 
 #### Scenario: Feature binding unavailable
 
-- **WHEN** the configured feature links to an Offy product that is missing or unavailable in the visitor market
-- **THEN** the homepage does not advertise the feature or substitute another product
+- **WHEN** the feature, ACE, or another linked product is missing or unavailable in the visitor's market, or the catalog cannot be read
+- **THEN** the configured feature and all four secondary cards remain visible with their configured links
+- **AND** Shopify product listings and checkout continue to use the live catalog
 
 #### Scenario: Compact centered feature CTA
 

@@ -194,13 +194,19 @@ describe("homepage NEWS editorial photographs", () => {
       );
     },
   );
-  it("still hides a card whose bound product is unavailable in the visitor market", async () => {
+  it("keeps the ACE card when its product is missing and another product is unavailable", async () => {
     setNewsProducts(true);
+    homeState.newsProducts = homeState.newsProducts.filter((product) => product.code !== "ace");
     homeState.newsProducts[1].isAvailable = false;
     await renderHome();
     const section = screen.getByRole("heading", { name: en.home.newsTitle }).closest("section")!;
-    expect(within(section).getAllByRole("img")).toHaveLength(4);
-    expect(section.querySelector('a[href="/products/bunny-hug"]')).toBeNull();
+    const renderedImages = within(section).getAllByRole("img");
+    expect(renderedImages.map((image) => image.getAttribute("src"))).toEqual(
+      images.map((file) => `/assets/news/${file}`),
+    );
+    expect(
+      within(section).getByRole("img", { name: "Weekend in Motion" }).closest("a"),
+    ).toHaveAttribute("href", "/products/ace");
   });
   it("uses the verified Swan Queen name as alternative text without the old visible headline", async () => {
     setNewsProducts(true);
@@ -215,7 +221,7 @@ describe("homepage NEWS editorial photographs", () => {
     expect(within(section).queryByRole("heading", { level: 3 })).toBeNull();
   });
   it.each(["missing", "unavailable"])(
-    "does not advertise a %s Swan Queen binding",
+    "keeps all five cards when the Swan Queen product is %s",
     async (state) => {
       setNewsProducts(true);
       if (state === "missing") homeState.newsProducts.shift();
@@ -224,10 +230,14 @@ describe("homepage NEWS editorial photographs", () => {
         liveProduct(item("warm-biscuit", "CARAMEL RÊVE"), "princess-lady", 10),
       );
       await renderHome();
-      expect(screen.queryByRole("heading", { name: en.home.newsTitle })).toBeNull();
+      const section = screen.getByRole("heading", { name: en.home.newsTitle }).closest("section")!;
+      const renderedImages = within(section).getAllByRole("img");
+      expect(renderedImages).toHaveLength(5);
+      expect(renderedImages[0]).toHaveAttribute("src", "/assets/news/news-swan-queen.jpg");
+      expect(renderedImages[0].closest("a")).toHaveAttribute("href", "/products/swan-princess");
     },
   );
-  it("renders uploaded banners and configured Latest links while withholding unverified products", async () => {
+  it("renders uploaded banners and every configured Latest link", async () => {
     const content = defaultHomeContent();
     homeState.content = content;
     content.hero[0] = {
@@ -261,7 +271,8 @@ describe("homepage NEWS editorial photographs", () => {
       "/about",
     );
     expect(news.querySelector('a[href="https://example.com/collaboration"]')).toBeVisible();
-    expect(news.querySelector('a[href^="/products/unpublished"]')).toBeNull();
+    expect(news.querySelector('a[href="/products/unpublished?campaign=holiday"]')).toBeVisible();
+    expect(within(news).getAllByRole("img")).toHaveLength(5);
   });
 });
 

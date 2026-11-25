@@ -1,4 +1,4 @@
-import { render, screen } from "@testing-library/react";
+import { render, screen, within } from "@testing-library/react";
 import { beforeEach, expect, it, vi } from "vitest";
 vi.mock("next/headers", () => ({ headers: async () => new Headers() }));
 vi.mock("next/navigation", () => ({ useRouter: () => ({ refresh: vi.fn() }) }));
@@ -26,7 +26,7 @@ import { getHomeLooks } from "@/server/catalog/home";
 import { testProduct } from "@/test/product";
 import Home from "./[locale]/page";
 beforeEach(() => vi.clearAllMocks());
-it("keeps independently verified NEWS and brand sections when recommendations fail", async () => {
+it("keeps NEWS and the verified roster when recommendations fail", async () => {
   vi.mocked(getLiveProducts).mockResolvedValue([
     testProduct("swan-princess"),
     testProduct("bunny-hug"),
@@ -44,6 +44,12 @@ it("replaces failed commerce with one panel and preserves editorial content", as
   const { container } = render(await Home({ params: Promise.resolve({ locale: "en" }) }));
   expect(container.querySelectorAll("[data-commerce-unavailable]")).toHaveLength(1);
   expect(screen.getByText("OFFY brand hero")).toBeInTheDocument();
+  const news = screen.getByRole("heading", { name: "newsTitle" }).closest("section")!;
+  expect(within(news).getAllByRole("link")).toHaveLength(6);
+  expect(within(news).getByRole("link", { name: /Weekend in Motion/ })).toHaveAttribute(
+    "href",
+    "/products/ace",
+  );
   expect(screen.getByText("collabTitle", { selector: "h2" })).toBeInTheDocument();
   expect(screen.queryByText("rosterTitle")).toBeNull();
 });

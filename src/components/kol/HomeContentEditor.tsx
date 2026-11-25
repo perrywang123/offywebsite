@@ -501,8 +501,8 @@ export function HomeContentEditor({
         {section === "latest" && (
           <>
             <p className="home-editor-help">
-              建议使用 3:4 的竖图。桌面两排动态卡旁的主图裁切更窄，主体和文字尽量放在中部。链接指向
-              OFFY 商品时，首页会核验访客所在市场的可售状态。
+              建议使用 3:4
+              的竖图。桌面两排动态卡旁的主图裁切更窄，主体和文字尽量放在中部。发布前请打开跳转链接，确认目标页可访问。
             </p>
             <div className="home-editor-browse">
               <Destination

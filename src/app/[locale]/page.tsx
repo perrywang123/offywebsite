@@ -52,28 +52,20 @@ export default async function HomePage({ params }: { params: Promise<{ locale: s
   const allProducts = allResult.status === "ready" ? allResult.data : [];
   const content = getPublishedHomeContent();
   const slides = configuredHero(content);
-  // Shopify verifies market availability; NEWS photography stays editorial brand content.
   const { feature, items } = content.latest;
-  const availableProducts = new Map(
-    allProducts.filter((p) => p.isAvailable).map((p) => [p.code, p]),
-  );
   const featureHandle = homeProductHandle(feature.href, env.SITE_URL);
-  const featureProduct = featureHandle ? availableProducts.get(featureHandle) : undefined;
-  const verifiedNews = items.flatMap((item, index) => {
-    const handle = homeProductHandle(item.href, env.SITE_URL);
-    if (handle && !availableProducts.has(handle)) return [];
+  const featureProduct = allProducts.find((product) => product.code === featureHandle);
+  const news = items.map((item, index) => {
     const original = newsItems[index];
-    return [
-      {
-        id: original.id,
-        title: {
-          en: item.label,
-          zh: item.label === original.title.en ? original.title.zh : item.label,
-        },
-        image: item.image,
-        href: item.href,
+    return {
+      id: original.id,
+      title: {
+        en: item.label,
+        zh: item.label === original.title.en ? original.title.zh : item.label,
       },
-    ];
+      image: item.image,
+      href: item.href,
+    };
   });
 
   return (
@@ -115,44 +107,42 @@ export default async function HomePage({ params }: { params: Promise<{ locale: s
           今天靠"无层级压过 @layer utilities"才显示为 #efefef —— 谁把那条规则挪进
           @layer base,首页底色就整体变白。也不要写 `bg-background`:
           --background 定义在 :root 而非 @theme,Tailwind v4 不生成该工具类。 */}
-        {(!featureHandle || featureProduct) && verifiedNews.length > 0 && (
-          <section className="relative overflow-hidden bg-[#efefef]">
-            <div className="container-site section-y relative">
-              {/* 标题区(最新资讯.psd 组「最新咨询·标题」):PSD 里是一行居中
+        <section className="relative overflow-hidden bg-[#efefef]">
+          <div className="container-site section-y relative">
+            {/* 标题区(最新资讯.psd 组「最新咨询·标题」):PSD 里是一行居中
               'NEWS·The Latest from OFFY'(80.8px=2.49vw,黑字,just=2 居中),
               其下居中 'Browse All Series'(36px=1.11vw)+ 一条与文字等宽的
               下划线(矩形「直线 1」)。原来「逛全部系列」在网格底部,现上移。
               字号下限抬到 30/12px(方案 §1.1 规则 1:所有 clamp 下限 = 档位值)。
               `lg:` 保留改动前的原值 —— 下限只影响窄屏,桌面端算式一字不变。 */}
-              <Reveal className="mb-12 text-center">
-                <h2 className="font-display text-[clamp(30px,2.49vw,54px)] leading-tight font-semibold tracking-tight uppercase lg:text-[clamp(20px,2.49vw,54px)]">
-                  {/* 老板 2026-10 要求:去掉 "News·" 前缀,标题只留 "The Latest from OFFY"。
+            <Reveal className="mb-12 text-center">
+              <h2 className="font-display text-[clamp(30px,2.49vw,54px)] leading-tight font-semibold tracking-tight uppercase lg:text-[clamp(20px,2.49vw,54px)]">
+                {/* 老板 2026-10 要求:去掉 "News·" 前缀,标题只留 "The Latest from OFFY"。
                 newsKicker 这个 i18n key 保留(两本字典 key 必须一致),只是不再渲染。 */}
-                  {t("newsTitle")}
-                </h2>
-                <Link
-                  href={content.latest.browseHref}
-                  className="link-line tap-target mt-5 text-[clamp(12px,1.11vw,24px)] tracking-[var(--tracking-10)] uppercase lg:min-h-0 lg:text-[clamp(11px,1.11vw,24px)]"
-                >
-                  {t("browseAll")}
-                </Link>
-              </Reveal>
-              <NewsGrid
-                feature={feature}
-                items={verifiedNews}
-                texts={{
-                  featureAlt:
-                    feature.alt ||
-                    featureProduct?.name[locale === "zh" ? "zh" : "en"] ||
-                    t("newsTitle"),
-                  cta: t("teaserCta"),
-                  browseAll: t("browseAll"),
-                }}
-                locale={locale}
-              />
-            </div>
-          </section>
-        )}
+                {t("newsTitle")}
+              </h2>
+              <Link
+                href={content.latest.browseHref}
+                className="link-line tap-target mt-5 text-[clamp(12px,1.11vw,24px)] tracking-[var(--tracking-10)] uppercase lg:min-h-0 lg:text-[clamp(11px,1.11vw,24px)]"
+              >
+                {t("browseAll")}
+              </Link>
+            </Reveal>
+            <NewsGrid
+              feature={feature}
+              items={news}
+              texts={{
+                featureAlt:
+                  feature.alt ||
+                  featureProduct?.name[locale === "zh" ? "zh" : "en"] ||
+                  t("newsTitle"),
+                cta: t("teaserCta"),
+                browseAll: t("browseAll"),
+              }}
+              locale={locale}
+            />
+          </div>
+        </section>
 
         {(looksResult.status === "ready" || allResult.status === "ready") && (
           <section id="looks" className="home-looks-section relative overflow-hidden bg-[#f7f7f9]">
