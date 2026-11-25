@@ -141,7 +141,8 @@ export async function POST(request: Request, context: Context) {
     }
     const admin = requireAdmin(db, request.headers);
     if (path[0] === "home-config") {
-      if (path.length === 1) return json(publishHomeContent(db, await request.json(), admin.id));
+      if (path.length === 1)
+        return json(await publishHomeContent(db, await request.json(), admin.id));
       if (path.length === 2 && path[1] === "media") return json(await storeHomeImage(db, request));
       return json({ error: "not_found" }, 404);
     }

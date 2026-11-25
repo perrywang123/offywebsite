@@ -1,5 +1,7 @@
-import { render, screen } from "@testing-library/react";
+import { render, screen, within } from "@testing-library/react";
+import { NextIntlClientProvider } from "next-intl";
 import { describe, expect, it, vi } from "vitest";
+import messages from "../../../messages/en.json";
 
 vi.mock("@/i18n/navigation", () => ({
   Link: ({
@@ -148,6 +150,50 @@ describe("NewsGrid (editorial layout, data-driven: href + image + copy)", () => 
     render(<NewsGrid feature={feature} items={items} texts={texts} locale="en" />);
     expect(screen.getByText("Weekend outing")).toBeInTheDocument();
     expect(screen.getByText("Fashion Lifestyle")).toBeInTheDocument();
+  });
+
+  it("keeps the full-card link and configured images for timed and undated previews", () => {
+    const serverNow = Date.UTC(2026, 11, 15);
+    const releaseAt = "2026-12-18T14:30:00.000Z";
+    const snowWhite = {
+      ...feature,
+      href: "/products/snow-white",
+      launch: { releaseAt, serverNow },
+    };
+    const merryOffy = {
+      ...items[0],
+      title: { en: "MERRY OFFY", zh: "MERRY OFFY" },
+      href: "/products/merry-offy",
+      launch: { releaseAt: null, serverNow },
+    };
+    render(
+      <NextIntlClientProvider locale="en" messages={messages} timeZone="UTC">
+        <NewsGrid
+          feature={snowWhite}
+          items={[merryOffy, ...items.slice(1)]}
+          texts={{ featureAlt: "SNOW WHITE", cta: "View details", browseAll: "Browse all" }}
+          locale="en"
+        />
+      </NextIntlClientProvider>,
+    );
+
+    expect(screen.getAllByRole("link")).toHaveLength(5);
+    const mainLink = screen.getByRole("link", { name: "SNOW WHITE — View details" });
+    expect(mainLink).toHaveAttribute("href", "/products/snow-white");
+    expect(mainLink).toHaveAccessibleDescription(/coming soon/i);
+    expect(mainLink).toHaveAccessibleDescription(/Dec 18.*UTC/i);
+    expect(within(mainLink).getByRole("img")).toHaveAttribute("src", feature.image);
+    expect(mainLink.querySelector("time")).toHaveAttribute("datetime", releaseAt);
+
+    const sideLink = screen.getByRole("link", { name: "MERRY OFFY — View details" });
+    expect(sideLink).toHaveAttribute("href", "/products/merry-offy");
+    expect(sideLink).toHaveAccessibleDescription(/release date to be announced/i);
+    expect(within(sideLink).getByRole("img")).toHaveAttribute("src", items[0].image);
+    expect(within(sideLink).queryByRole("button")).not.toBeInTheDocument();
+
+    expect(screen.getByRole("link", { name: /Weekend outing/ })).not.toHaveAttribute(
+      "aria-describedby",
+    );
   });
 
   it("no longer renders the browse-all CTA — per 最新资讯.psd it moved up under the section title", () => {

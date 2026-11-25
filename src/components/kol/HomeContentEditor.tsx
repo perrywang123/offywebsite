@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useState, type FormEvent, type ReactNode } from "react";
+import { useCallback, useEffect, useId, useState, type FormEvent, type ReactNode } from "react";
 import { newsFeature } from "@/lib/content";
 import {
   defaultHomeContent,
@@ -28,6 +28,12 @@ const heroLabels = [
   "Dress-up Series",
 ];
 const defaults = defaultHomeContent();
+const launchErrors = new Map([
+  ["homepage_launch_product_missing", "Shopify 中找不到预告商品，请核对商品链接。"],
+  ["homepage_launch_unavailable", "暂时无法核对 Shopify 商品和发售时间，请稍后重试。"],
+  ["homepage_launch_link_invalid", "请为 Coming Soon 卡片填写站内商品链接。"],
+  ["homepage_launch_not_configured", "Shopify 商品元字段 Coming soon 尚未开启，请开启后再发布。"],
+]);
 
 async function prepareImage(file: File) {
   if (file.size > 20 * 1024 * 1024) throw new Error("请选择 20 MB 以内的图片。");
@@ -65,6 +71,7 @@ function ImageFields({
   original,
   siteUrl,
   variant,
+  previewBadge,
   onChange,
   onUpload,
   children,
@@ -74,6 +81,7 @@ function ImageFields({
   original: string;
   siteUrl: string;
   variant?: "wide" | "feature";
+  previewBadge?: string;
   onChange: (image: string) => void;
   onUpload: (file: File) => void;
   children: ReactNode;
@@ -103,6 +111,11 @@ function ImageFields({
             />
           ) : (
             <span>{broken === preview && broken ? "图片加载失败" : "图片预览"}</span>
+          )}
+          {previewBadge && (
+            <span className="home-editor-preview-badge" aria-hidden="true">
+              {previewBadge}
+            </span>
           )}
         </div>
         <div className="home-editor-media-actions">
@@ -147,11 +160,13 @@ function Destination({
   onChange,
   optional,
   label = "跳转链接",
+  placeholder = "/products 或 https://…",
 }: {
   value: string;
   onChange: (value: string) => void;
   optional?: boolean;
   label?: string;
+  placeholder?: string;
 }) {
   return (
     <label>
@@ -159,7 +174,7 @@ function Destination({
       <input
         value={value}
         onChange={(event) => onChange(event.target.value)}
-        placeholder="/products 或 https://…"
+        placeholder={placeholder}
         maxLength={2048}
       />
     </label>
@@ -182,13 +197,20 @@ export function HomeContentEditor({
   const [error, setError] = useState("");
   const [conflict, setConflict] = useState(false);
   const [notice, setNotice] = useState("");
+  const launchHelpId = useId();
   const dirty = Boolean(draft && JSON.stringify(draft) !== JSON.stringify(published?.content));
 
   const fail = useCallback(
     (error: unknown) => {
       const status = (error as { status?: number }).status;
-      if (status === 401) onSessionExpired();
-      else setError(error instanceof Error ? error.message : "操作失败，请重试。");
+      if (status === 401) {
+        onSessionExpired();
+        return;
+      }
+      const reason = error instanceof Error ? error.message : "操作失败，请重试。";
+      const launchError = launchErrors.get(reason);
+      if (launchError) setSection("latest");
+      setError(launchError ?? reason);
     },
     [onSessionExpired],
   );
@@ -504,6 +526,11 @@ export function HomeContentEditor({
               建议使用 3:4
               的竖图。桌面两排动态卡旁的主图裁切更窄，主体和文字尽量放在中部。发布前请打开跳转链接，确认目标页可访问。
             </p>
+            <p className="home-editor-help" id={launchHelpId}>
+              在 Shopify 的商品元字段中开启 <strong lang="en">Coming soon</strong>，并按需填写{" "}
+              <strong lang="en">Release date</strong>。保存时核对
+              Shopify。日期留空时，前台显示发售时间待定。
+            </p>
             <div className="home-editor-browse">
               <Destination
                 label="Browse All Series 跳转链接"
@@ -527,6 +554,17 @@ export function HomeContentEditor({
                 <section className="home-editor-row" key={title} aria-label={title}>
                   <div className="home-editor-row-heading">
                     <h3>{title}</h3>
+                    <label className="checkbox">
+                      <input
+                        type="checkbox"
+                        checked={Boolean(card.comingSoon)}
+                        aria-describedby={launchHelpId}
+                        onChange={(event) =>
+                          update({ comingSoon: event.currentTarget.checked || undefined })
+                        }
+                      />
+                      Coming Soon
+                    </label>
                   </div>
                   <ImageFields
                     title={title}
@@ -534,10 +572,16 @@ export function HomeContentEditor({
                     original={original.image}
                     siteUrl={siteUrl}
                     variant={index === 0 ? "feature" : undefined}
+                    previewBadge={card.comingSoon ? "Coming Soon" : undefined}
                     onChange={(image) => update({ image })}
                     onUpload={(file) => void upload(file, (image) => update({ image }))}
                   >
-                    <Destination value={card.href} onChange={(href) => update({ href })} />
+                    <Destination
+                      value={card.href}
+                      onChange={(href) => update({ href })}
+                      label={card.comingSoon ? "站内商品链接" : undefined}
+                      placeholder={card.comingSoon ? "/products/product-handle" : undefined}
+                    />
                     {"alt" in card ? (
                       <label>
                         图片说明（选填）

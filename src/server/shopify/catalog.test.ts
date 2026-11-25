@@ -32,6 +32,23 @@ function mockFetch(json: unknown, ok = true): typeof fetch {
 }
 
 describe("listShopifyProducts", () => {
+  it("retains a Shopify release schedule in collection products", async () => {
+    const item = {
+      handle: "snow-white",
+      title: "SNOW WHITE",
+      featuredImage: null,
+      availableForSale: true,
+      comingSoon: { type: "boolean", value: "true" },
+      releaseDate: { type: "date_time", value: "2026-11-30T18:00:00Z" },
+      priceRange: { minVariantPrice: { amount: "43.90", currencyCode: "USD" } },
+    };
+    const f = mockFetch({ data: { collectionByHandle: { products: { nodes: [item] } } } });
+    expect(await fetchShopifyCollectionProducts("frontpage", "US", f)).toMatchObject([
+      { handle: "snow-white", releaseAt: "2026-11-30T18:00:00.000Z" },
+    ]);
+    expect(String(vi.mocked(f).mock.calls[0][1]?.body)).toContain("coming_soon");
+  });
+
   it("maps published products (handle/title/price/image/available)", async () => {
     const f = mockFetch({
       data: {

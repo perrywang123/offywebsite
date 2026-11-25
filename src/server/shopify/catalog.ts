@@ -1,5 +1,6 @@
 import { z } from "zod";
 import type { SearchSeo } from "../../lib/catalog/types";
+import { readReleaseDate, releaseFields, releaseShape } from "./product-release";
 import {
   CatalogUnavailableError,
   membershipSchema,
@@ -17,6 +18,7 @@ export interface ShopifyListItem {
   currency: string;
   image: string | null;
   available: boolean;
+  releaseAt?: string | null;
 }
 export interface ShopifyCollectionSummary {
   seo?: SearchSeo;
@@ -30,6 +32,7 @@ export interface ShopifyCollectionProductItem extends ShopifyListItem {
   createdAt: string | null;
 }
 const nodeSchema = z.object({
+  ...releaseShape,
   handle: z.string().min(1),
   title: z.string().min(1),
   availableForSale: z.boolean(),
@@ -50,11 +53,13 @@ const nodeSchema = z.object({
 const extendedSchema = nodeSchema.extend({
   createdAt: z.string().datetime().nullable().optional(),
 });
-const fields = `handle title availableForSale featuredImage { url } variants(first:1) { nodes { id sku availableForSale price { amount currencyCode } } }`;
+const fields = `handle title availableForSale featuredImage { url } variants(first:1) { nodes { id sku availableForSale price { amount currencyCode } } } ${releaseFields}`;
 const extra = `createdAt`;
 const pagination = `pageInfo { hasNextPage endCursor }`;
 function listItem(n: z.infer<typeof nodeSchema>): ShopifyListItem {
+  const releaseAt = readReleaseDate(n);
   return {
+    ...(releaseAt === undefined ? {} : { releaseAt }),
     handle: n.handle,
     title: n.title,
     ...money(n.variants.nodes[0].price),

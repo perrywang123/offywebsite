@@ -1,5 +1,5 @@
 // @vitest-environment node
-import { expect, it } from "vitest";
+import { expect, it, vi } from "vitest";
 import { readFileSync } from "node:fs";
 import en from "../../../messages/en.json";
 import { testDb } from "@/server/kol/test-db";
@@ -20,7 +20,7 @@ it("prefills the current hero, shared announcements and Latest without an existi
   expect(content.latest.items).toHaveLength(4);
 });
 
-it("persists a whole edit and rejects outdated and invalid writes", () => {
+it("persists a whole edit and rejects outdated and invalid writes", async () => {
   const db = testDb();
   const edit = loadHomeContent(db);
   edit.content.hero[0].href = "/collections?campaign=holiday#featured";
@@ -29,10 +29,10 @@ it("persists a whole edit and rejects outdated and invalid writes", () => {
     href: "https://example.com/holiday",
     enabled: true,
   };
-  const saved = publishHomeContent(db, edit, "admin-test");
+  const saved = await publishHomeContent(db, edit, "admin-test");
   expect(saved).toEqual({ ...edit, revision: 1 });
   expect(loadHomeContent(db)).toEqual(saved);
-  expect(() => publishHomeContent(db, edit, "admin-test")).toThrow("homepage_changed");
+  await expect(publishHomeContent(db, edit, "admin-test")).rejects.toThrow("homepage_changed");
   for (const href of [
     "javascript:alert(1)",
     "//example.com",
@@ -41,7 +41,7 @@ it("persists a whole edit and rejects outdated and invalid writes", () => {
   ]) {
     const invalid = structuredClone(saved);
     invalid.content.latest.feature.href = href;
-    expect(() => publishHomeContent(db, invalid, "admin-test")).toThrow();
+    await expect(publishHomeContent(db, invalid, "admin-test")).rejects.toThrow();
   }
   expect(loadHomeContent(db)).toEqual(saved);
 });
@@ -62,11 +62,13 @@ it("keeps staged images private until a valid publish and serves the persisted r
   const edit = loadHomeContent(db);
   edit.content.hero[0].image = upload.image;
   edit.content.latest.feature.image = `/api/home-media/${"a".repeat(64)}`;
-  expect(() => publishHomeContent(db, edit, "admin-test")).toThrow("homepage_image_missing");
+  await expect(publishHomeContent(db, edit, "admin-test")).rejects.toThrow(
+    "homepage_image_missing",
+  );
   expect(homeImageResponse(db, id).status).toBe(404);
   expect(loadHomeContent(db).revision).toBe(0);
   edit.content.latest.feature.image = upload.image;
-  publishHomeContent(db, edit, "admin-test");
+  await publishHomeContent(db, edit, "admin-test");
   const response = homeImageResponse(db, id);
   expect(response.status).toBe(200);
   expect(response.headers.get("content-type")).toBe("image/webp");
@@ -83,4 +85,63 @@ it("rejects oversized and invalid image payloads", async () => {
     "homepage_image_invalid",
   );
   await expect(upload(new Uint8Array(1024 * 1024))).rejects.toThrow("homepage_image_too_large");
+});
+
+it("verifies a new Shopify preview, saving only the card choice", async () => {
+  const db = testDb();
+  const edit = loadHomeContent(db);
+  Object.assign(edit.content.latest.items[0], {
+    href: "/products/snow-white",
+    comingSoon: true,
+  });
+  const read = vi.fn().mockResolvedValue({ releaseAt: "2099-11-30T12:00:00Z" });
+  const saved = await publishHomeContent(db, edit, "admin-test", read);
+  expect(read).toHaveBeenCalledExactlyOnceWith("snow-white");
+  expect(saved).toEqual({ ...edit, revision: 1 });
+
+  const changeBanner = structuredClone(saved);
+  changeBanner.content.hero[0].href = "/collections";
+  await expect(publishHomeContent(db, changeBanner, "admin-test", read)).resolves.toMatchObject({
+    revision: 2,
+  });
+  expect(read).toHaveBeenCalledTimes(1);
+});
+
+it("requires a verified Shopify preview and permits an unannounced launch date", async () => {
+  const db = testDb();
+  const edit = loadHomeContent(db);
+  Object.assign(edit.content.latest.feature, {
+    href: "/products/merry-offy",
+    comingSoon: true,
+  });
+  const read = vi
+    .fn()
+    .mockResolvedValueOnce(null)
+    .mockResolvedValueOnce({})
+    .mockResolvedValueOnce({ releaseAt: null });
+  await expect(publishHomeContent(db, edit, "admin-test", read)).rejects.toThrow(
+    "homepage_launch_product_missing",
+  );
+  expect(loadHomeContent(db).revision).toBe(0);
+  await expect(publishHomeContent(db, edit, "admin-test", read)).rejects.toThrow(
+    "homepage_launch_not_configured",
+  );
+  expect(loadHomeContent(db).revision).toBe(0);
+  const saved = await publishHomeContent(db, edit, "admin-test", read);
+  expect(saved).toEqual({ ...edit, revision: 1 });
+});
+
+it("rejects off-site preview targets before consulting Shopify", async () => {
+  const db = testDb();
+  const edit = loadHomeContent(db);
+  Object.assign(edit.content.latest.feature, {
+    href: "https://example.com/products/snow-white",
+    comingSoon: true,
+  });
+  const read = vi.fn();
+  await expect(publishHomeContent(db, edit, "admin-test", read)).rejects.toThrow(
+    "homepage_launch_link_invalid",
+  );
+  expect(read).not.toHaveBeenCalled();
+  expect(loadHomeContent(db).revision).toBe(0);
 });

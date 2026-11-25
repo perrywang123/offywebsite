@@ -64,6 +64,8 @@ export interface Product {
   featured: boolean;
   isAvailable: boolean;
   isUpcoming: boolean;
+  /** Planned release for a product with an active purchase gate. Null means unannounced. */
+  releaseAt?: string | null;
   isQuoteOnly: boolean;
   sortOrder: number;
   /** Optional badge rendered on the card, e.g. "区域限定" (regional exclusive). */

@@ -40,6 +40,7 @@ vi.mock("next-intl/server", async () => {
 
 vi.mock("next-intl", async (importOriginal) => ({
   ...(await importOriginal<typeof import("next-intl")>()),
+  useLocale: () => mockState.locale,
   useTranslations: () => (key: string) => key,
 }));
 
@@ -76,6 +77,7 @@ vi.mock("next/image", () => ({
 const homeState = vi.hoisted(() => ({
   regionals: [] as ShopifyListItem[],
   newsProducts: [] as Product[],
+  launches: new Map<string, Product>(),
   content: null as HomeContent | null,
 }));
 
@@ -124,6 +126,7 @@ const MERCH = [
 ];
 
 vi.mock("@/server/catalog/live", () => ({
+  getLiveProductByCode: async (handle: string) => homeState.launches.get(handle),
   getLiveNewLooksProducts: async () => [],
   getLiveProducts: async () => [
     DOLL,
@@ -155,6 +158,7 @@ import { defaultHomeContent } from "@/lib/home-content";
 afterEach(() => {
   homeState.regionals = [];
   homeState.newsProducts = [];
+  homeState.launches.clear();
   homeState.content = null;
 });
 
@@ -165,6 +169,25 @@ async function renderHome(locale: "en" | "zh" = "en") {
 }
 
 describe("homepage NEWS editorial photographs", () => {
+  it("shows the release from the Shopify product route even when the product is absent from listings", async () => {
+    const content = defaultHomeContent();
+    content.latest.items[0].href = "/products/unlisted-preview";
+    content.latest.items[0].comingSoon = true;
+    homeState.content = content;
+    const releaseAt = "2099-11-30T18:00:00.000Z";
+    homeState.launches.set("unlisted-preview", {
+      ...DOLL,
+      isAvailable: false,
+      isUpcoming: true,
+      releaseAt,
+    });
+    await renderHome();
+    const section = screen.getByRole("heading", { name: en.home.newsTitle }).closest("section")!;
+    const preview = section.querySelector('a[href="/products/unlisted-preview"]')!;
+    expect(preview.querySelector("time")).toHaveAttribute("dateTime", releaseAt);
+    expect(within(section).getAllByRole("img")).toHaveLength(5);
+  });
+
   const handles = ["swan-princess", "bunny-hug", "ace", "wander", "offy_redrush"];
   const images = [
     "news-swan-queen.jpg",

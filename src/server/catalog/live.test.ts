@@ -16,6 +16,7 @@ import {
   fetchShopifyProductsOutsideCollections,
 } from "../shopify/catalog";
 import { fetchProductData } from "../shopify/products";
+import { ShopifyPaymentProvider } from "../payments/shopify/provider";
 import {
   getLiveNewLooksProducts,
   getLiveProductByCode,
@@ -40,6 +41,55 @@ beforeEach(() => {
   mockedProductData.mockReset();
   // 默认:没有任何"不在系列里"的周边商品(各用例按需覆盖)
   mockedOutsideCollections.mockResolvedValue([]);
+});
+
+it("checks the Shopify launch before creating a cart, even for a variant that is already available", async () => {
+  const releaseAt = new Date(Date.now() + 3600_000).toISOString();
+  const facts = {
+    title: "SNOW WHITE",
+    available: true,
+    priceCents: 4390,
+    currency: "USD",
+    images: [],
+    collectionHandles: ["frontpage"],
+    variantId: "gid://shopify/ProductVariant/123",
+  };
+  mockedProductData.mockResolvedValue({ ...facts, releaseAt });
+  expect(await getLiveProductByCode("SNOW-WHITE", "US")).toMatchObject({
+    isAvailable: false,
+    isUpcoming: true,
+    releaseAt,
+  });
+  const createCart = vi.fn().mockResolvedValue({
+    id: "gid://shopify/Cart/test",
+    checkoutUrl: "https://shop.example.com/cart/test",
+  });
+  const provider = new ShopifyPaymentProvider({ createCart, configured: () => true });
+  const checkout = {
+    items: [{ code: "SNOW-WHITE", quantity: 1 }],
+    locale: "en" as const,
+    country: "US",
+  };
+  expect(await provider.createCheckout(checkout)).toMatchObject({
+    ok: false,
+    error: "unavailable_items",
+  });
+  expect(createCart).not.toHaveBeenCalled();
+
+  mockedProductData.mockResolvedValue({ ...facts, releaseAt: null });
+  expect(await provider.createCheckout(checkout)).toMatchObject({ ok: false });
+  const elapsed = "2000-01-01T00:00:00Z";
+  mockedProductData.mockResolvedValue({ ...facts, releaseAt: elapsed, available: false });
+  expect(await getLiveProductByCode("SNOW-WHITE", "US")).toMatchObject({
+    isAvailable: false,
+    isUpcoming: true,
+    releaseAt: elapsed,
+  });
+  expect(await provider.createCheckout(checkout)).toMatchObject({ ok: false });
+  expect(createCart).not.toHaveBeenCalled();
+  mockedProductData.mockResolvedValue({ ...facts, releaseAt: elapsed });
+  expect(await provider.createCheckout(checkout)).toMatchObject({ ok: true });
+  expect(createCart).toHaveBeenCalledTimes(1);
 });
 
 it("passes product SEO through without replacing the real name or commerce", async () => {

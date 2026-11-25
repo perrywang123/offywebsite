@@ -177,6 +177,18 @@
       "next": "Next photo"
     },
     "upcomingNotice": "Revealing soon",
+    "launch": {
+      "comingSoon": "Coming soon",
+      "opens": "Opens",
+      "daysRemaining": "In {days}d {hours}h",
+      "hoursRemaining": "In {hours}h {minutes}m",
+      "minutesRemaining": "In {minutes}m {seconds}s",
+      "secondsRemaining": "In {seconds}s",
+      "unannounced": "Release date to be announced",
+      "checking": "Checking availability…",
+      "unavailable": "Currently unavailable",
+      "retry": "Check availability"
+    },
     "shopBreadcrumb": "Shop",
     "dimension": {
       "height": "Height",

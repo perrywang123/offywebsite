@@ -177,6 +177,18 @@
       "next": "下一张"
     },
     "upcomingNotice": "即将揭晓，敬请期待",
+    "launch": {
+      "comingSoon": "即将开售",
+      "opens": "开售时间",
+      "daysRemaining": "{days} 天 {hours} 小时后开售",
+      "hoursRemaining": "{hours} 小时 {minutes} 分钟后开售",
+      "minutesRemaining": "{minutes} 分钟 {seconds} 秒后开售",
+      "secondsRemaining": "{seconds} 秒后开售",
+      "unannounced": "开售时间待公布",
+      "checking": "正在确认开售状态…",
+      "unavailable": "暂时无法购买",
+      "retry": "重新检查开售状态"
+    },
     "shopBreadcrumb": "商店",
     "dimension": {
       "height": "高度",

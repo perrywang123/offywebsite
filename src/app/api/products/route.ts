@@ -25,7 +25,7 @@ export async function GET(request: Request) {
     const [products, series] = await Promise.all([getLiveProducts(country), getLiveSeriesList()]);
     return NextResponse.json(
       {
-        products: products.map((p) => ({
+        products: products.filter((p) => !p.isUpcoming).map((p) => ({
           code: p.code,
           slug: p.slug,
           name: p.name,

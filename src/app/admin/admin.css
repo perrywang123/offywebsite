@@ -2961,6 +2961,7 @@ pre {
   align-items: start;
 }
 .home-editor-preview {
+  position: relative;
   display: grid;
   place-items: center;
   width: min(100%, 155px);
@@ -2988,6 +2989,20 @@ pre {
 }
 .home-editor-preview-wide img {
   object-fit: contain;
+}
+.home-editor-preview-badge {
+  position: absolute;
+  inset: 8px auto auto 8px;
+  max-width: calc(100% - 16px);
+  padding: 4px 8px;
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  background: var(--surface);
+  color: var(--ink);
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
 }
 .home-editor-media-actions {
   margin-top: 10px;

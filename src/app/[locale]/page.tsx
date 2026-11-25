@@ -6,11 +6,11 @@ import { getTranslations } from "next-intl/server";
 import { Link } from "@/i18n/navigation";
 import { teaserSeries, upcomingIps } from "@/lib/catalog";
 import { newsItems } from "@/lib/content";
-import { configuredHero, homeProductHandle } from "@/lib/home-content";
+import { configuredHero, homeLaunchHandle, homeProductHandle } from "@/lib/home-content";
 import { getPublishedHomeContent } from "@/server/home-content/store";
 import { env } from "@/lib/env";
 import { headers } from "next/headers";
-import { getLiveProducts } from "@/server/catalog/live";
+import { getLiveProductByCode, getLiveProducts } from "@/server/catalog/live";
 import { getHomeLooks } from "@/server/catalog/home";
 import { pickCountry } from "@/lib/geo";
 import { Reveal } from "@/components/Reveal";
@@ -43,18 +43,30 @@ export default async function HomePage({ params }: { params: Promise<{ locale: s
 
   // 注意:读 headers() 会让本页转为按请求渲染(dynamic)——这是 route A 的必要代价。
   const visitorCountry = pickCountry(await headers());
+  const content = getPublishedHomeContent();
+  const { feature, items } = content.latest;
+  const readLaunch = async (card: { href: string; comingSoon?: boolean }) => {
+    if (!card.comingSoon) return undefined;
+    const handle = homeLaunchHandle(card.href, env.SITE_URL);
+    if (!handle) return undefined;
+    const result = await catalogResult(getLiveProductByCode(handle, visitorCountry));
+    return result.status === "ready" ? result.data : undefined;
+  };
 
-  const [looksResult, allResult] = await Promise.all([
+  const [looksResult, allResult, [featureLaunch, ...itemLaunches]] = await Promise.all([
     catalogResult(getHomeLooks(visitorCountry)),
     catalogResult(getLiveProducts(visitorCountry)),
+    Promise.all([feature, ...items].map(readLaunch)),
   ]);
   const unavailable = looksResult.status === "unavailable" || allResult.status === "unavailable";
   const allProducts = allResult.status === "ready" ? allResult.data : [];
-  const content = getPublishedHomeContent();
   const slides = configuredHero(content);
-  const { feature, items } = content.latest;
+  const serverNow = Date.now();
+  const launchFor = (product: typeof featureLaunch) =>
+    product?.isUpcoming ? { releaseAt: product.releaseAt ?? null, serverNow } : undefined;
   const featureHandle = homeProductHandle(feature.href, env.SITE_URL);
-  const featureProduct = allProducts.find((product) => product.code === featureHandle);
+  const featureProduct =
+    featureLaunch ?? allProducts.find((product) => product.code === featureHandle);
   const news = items.map((item, index) => {
     const original = newsItems[index];
     return {
@@ -65,6 +77,7 @@ export default async function HomePage({ params }: { params: Promise<{ locale: s
       },
       image: item.image,
       href: item.href,
+      launch: launchFor(itemLaunches[index]),
     };
   });
 
@@ -129,7 +142,7 @@ export default async function HomePage({ params }: { params: Promise<{ locale: s
               </Link>
             </Reveal>
             <NewsGrid
-              feature={feature}
+              feature={{ ...feature, launch: launchFor(featureLaunch) }}
               items={news}
               texts={{
                 featureAlt:

@@ -26,6 +26,35 @@ function mockFetch(json: unknown, ok = true): typeof fetch {
 
 describe("fetchProductData", () => {
   it.each([
+    ["true", { type: "date_time", value: "2026-11-30T13:00:00-05:00" }, "2026-11-30T18:00:00.000Z"],
+    ["true", { type: "date_time", value: "2026-11-30T18:00:00" }, "2026-11-30T18:00:00.000Z"],
+    ["true", { type: "date_time", value: "2026-02-30T13:00:00Z" }, null],
+    ["true", null, null],
+    ["false", { type: "date_time", value: "2026-11-30T18:00:00Z" }, undefined],
+  ])(
+    "reads Shopify Coming soon=%s and validates its release date",
+    async (flag, releaseDate, expected) => {
+      const f = mockFetch({
+        data: {
+          product: {
+            title: "SNOW WHITE",
+            availableForSale: false,
+            comingSoon: { type: "boolean", value: flag },
+            releaseDate,
+            collections: { nodes: [] },
+            images: { nodes: [] },
+            variants: { nodes: [{ id: "v", price: { amount: "43.90", currencyCode: "USD" } }] },
+          },
+        },
+      });
+      expect((await fetchProductData("snow-white", f, "US"))?.releaseAt).toBe(expected);
+      const { query } = JSON.parse(vi.mocked(f).mock.calls[0][1]!.body as string);
+      expect(query).toMatch(/metafield\(namespace:\s*"custom",\s*key:\s*"coming_soon"\)/);
+      expect(query).toMatch(/metafield\(namespace:\s*"custom",\s*key:\s*"release_date"\)/);
+    },
+  );
+
+  it.each([
     { title: "SEO title", description: "SEO summary" },
     { title: null, description: null },
   ])("reads Shopify SEO independently of the commercial facts: %j", async (seo) => {

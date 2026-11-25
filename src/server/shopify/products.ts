@@ -1,6 +1,7 @@
 import { z } from "zod";
 import type { SearchSeo } from "../../lib/catalog/types";
 import { parseDescriptionHtml, type DescriptionBlock } from "../../lib/description-html";
+import { readReleaseDate, releaseFields, releaseShape } from "./product-release";
 import {
   membershipSchema,
   money,
@@ -20,12 +21,14 @@ export interface ShopifyProductData {
   currency: string;
   variantId: string | null;
   available: boolean;
+  releaseAt?: string | null;
   collectionHandles: string[];
   sku: string | null;
 }
 const productSchema = z.object({
   product: z
     .object({
+      ...releaseShape,
       title: z.string().min(1),
       seo: z.object({ title: z.string().nullish(), description: z.string().nullish() }).nullish(),
       description: z.string().optional(),
@@ -64,6 +67,7 @@ export async function fetchProductData(
     query ProductEnrich($handle:String!) @inContext(country: ${cc}) {
       product(handle:$handle) {
         title description descriptionHtml availableForSale seo { title description }
+        ${releaseFields}
         images(first:10) { nodes { url } }
         variants(first:1) { nodes { id sku availableForSale price { amount currencyCode } } }
         collections(first:250) { nodes { handle } pageInfo { hasNextPage endCursor } }
@@ -76,7 +80,9 @@ export async function fetchProductData(
   const p = data.product;
   if (p === null) return null;
   const variant = p.variants.nodes[0];
+  const releaseAt = readReleaseDate(p);
   return {
+    ...(releaseAt === undefined ? {} : { releaseAt }),
     ...(p.seo ? { seo: p.seo } : {}),
     title: p.title,
     description: p.description ?? "",

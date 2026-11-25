@@ -17,7 +17,7 @@ export async function GET(request: Request, { params }: { params: Promise<{ code
       );
     // 实时解析:供商品详情页之外的客户端场景(购物车抽屉)按 code 实时校验/渲染。
     const product = await getLiveProductByCode(code, country);
-    if (!product) {
+    if (!product || product.isUpcoming) {
       return NextResponse.json(
         { error: "product_not_found" },
         { status: 404, headers: { "Cache-Control": "no-store" } },

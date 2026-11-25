@@ -35,6 +35,9 @@ export function toLiveProduct(
     typeof item.available !== "boolean"
   )
     throw new CatalogUnavailableError();
+  const { releaseAt } = item;
+  const reachedRelease = typeof releaseAt === "string" && Date.parse(releaseAt) <= Date.now();
+  const upcoming = releaseAt !== undefined && (!reachedRelease || !item.available);
   return {
     code: item.handle,
     slug: item.handle,
@@ -47,8 +50,9 @@ export function toLiveProduct(
     images: item.images ?? (item.image ? [item.image] : []),
     emotionTags: { en: [], zh: [] },
     featured: false,
-    isAvailable: item.available,
-    isUpcoming: false,
+    isAvailable: item.available && !upcoming,
+    isUpcoming: upcoming,
+    ...(upcoming ? { releaseAt } : {}),
     isQuoteOnly: false,
     sortOrder,
     shopifyHandle: item.handle,
@@ -103,8 +107,9 @@ export const getLiveNewLooksProducts = cache(
               (b.createdAt ? Date.parse(b.createdAt) : 0) -
               (a.createdAt ? Date.parse(a.createdAt) : 0),
           )
-          .slice(0, perSeries)
-          .map((item, i) => toLiveProduct(item, slug, i * 10)),
+          .map((item, i) => toLiveProduct(item, slug, i * 10))
+          .filter((product) => product.isAvailable)
+          .slice(0, perSeries),
       ),
     );
     return [...new Map(groups.flat().map((p) => [p.code, p])).values()];

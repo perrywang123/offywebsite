@@ -27,6 +27,7 @@ import { Suspense } from "react";
 import { ProductBuyerPhotos } from "@/components/product/ProductBuyerPhotos";
 import { ProductDetailPhotos } from "@/components/product/ProductDetailPhotos";
 import { ProductGiftOffers } from "@/components/product/ProductGiftOffers";
+import { ProductLaunchCountdown } from "@/components/product/ProductLaunchCountdown";
 
 export const dynamic = "force-dynamic";
 
@@ -85,19 +86,23 @@ export default async function ProductDetailPage({
     );
   const product = result.data;
   if (!product) notFound();
+  const releaseAt = product.releaseAt ?? null;
+  const serverNow = Date.now();
+  const previewWithoutSeries = product.isUpcoming && product.series === "merch";
 
   const t = await getTranslations("product");
-  const tHome = await getTranslations("home");
   const tCommon = await getTranslations("common");
   const [seriesList, relatedProducts] = await Promise.all([
     getLiveSeriesList().catch(() => []),
-    getLiveProductsBySeries(product.series, country).catch(() => []),
+    previewWithoutSeries ? [] : getLiveProductsBySeries(product.series, country).catch(() => []),
   ]);
   const liveSeries = seriesList.find((s) => s.slug === product.series);
   // 系列展示名:真实系列用实时名(商家改 Shopify 标题即时生效);merch(贴纸/帆布包
   // 这类不属于任何系列的周边)**没有系列页**,名字取 lib/catalog/series.ts 里的
   // 哨兵展示名 —— 否则页面上会显示裸的 "merch"。
-  const seriesName = liveSeries?.name ?? (product.series === "merch" ? merchSeriesName : undefined);
+  const seriesName =
+    liveSeries?.name ??
+    (product.series === "merch" && !previewWithoutSeries ? merchSeriesName : undefined);
   const seriesLabel = seriesName ? (locale === "zh" ? seriesName.zh : seriesName.en) : "";
   // Shopify 单语言:zh 描述暂缺时回退英文原文(后续 Translate & Adapt 接管)
   const description =
@@ -135,16 +140,20 @@ export default async function ProductDetailPage({
 
   return (
     <>
-      <JsonLd data={productJsonLd({ product, locale, siteUrl: env.SITE_URL })} />
+      {!product.isUpcoming && (
+        <JsonLd data={productJsonLd({ product, locale, siteUrl: env.SITE_URL })} />
+      )}
       <JsonLd data={breadcrumbLd} />
-      <MetaProductView
-        product={{
-          code: product.code,
-          quantity: 1,
-          priceCents: product.priceCents,
-          currency: product.currency,
-        }}
-      />
+      {!product.isUpcoming && (
+        <MetaProductView
+          product={{
+            code: product.code,
+            quantity: 1,
+            priceCents: product.priceCents,
+            currency: product.currency,
+          }}
+        />
+      )}
       {/* 版心改 `.container-site`(16px / 8%),不再自带 `px-6`:两套边距会让
           PDP 的 logo 与标题左边缘对不齐(方案 #22)。纵向 py-12 → 窄屏 24px,
           md 起恢复 48px(≥1024px 与改动前一致)。 */}
@@ -154,14 +163,20 @@ export default async function ProductDetailPage({
           <Link href="/products" className="link-line tap-target--quiet">
             {t("shopBreadcrumb")}
           </Link>
-          <span aria-hidden>/</span>
-          {liveSeries ? (
-            <Link href={`/collections/${liveSeries.slug}`} className="link-line tap-target--quiet">
-              {seriesLabel}
-            </Link>
-          ) : (
-            // merch 商品没有系列页(/collections/merch 会 404),只显示名字不给链接
-            <span>{seriesLabel}</span>
+          {seriesLabel && (
+            <>
+              <span aria-hidden>/</span>
+              {liveSeries ? (
+                <Link
+                  href={`/collections/${liveSeries.slug}`}
+                  className="link-line tap-target--quiet"
+                >
+                  {seriesLabel}
+                </Link>
+              ) : (
+                <span>{seriesLabel}</span>
+              )}
+            </>
           )}
         </nav>
 
@@ -193,11 +208,7 @@ export default async function ProductDetailPage({
               <h1 className="font-display min-w-0 text-3xl font-semibold tracking-tight break-words md:text-4xl">
                 {productName}
               </h1>
-              {product.isUpcoming ? (
-                <p className="text-brown-600 text-sm font-medium tracking-[var(--tracking-14)] uppercase">
-                  {tHome("revealing")}
-                </p>
-              ) : (
+              {!product.isUpcoming && (
                 <p className="font-display text-ink text-xl font-medium tabular-nums md:text-2xl">
                   {formatPrice(product.priceCents, product.currency, locale)}
                 </p>
@@ -205,15 +216,17 @@ export default async function ProductDetailPage({
             </div>
 
             {product.isUpcoming ? (
-              <p className="bg-cream-deep text-ink-muted rounded-full px-6 py-3 text-center text-sm">
-                {t("upcomingNotice")}
-              </p>
+              <ProductLaunchCountdown
+                key={product.code}
+                releaseAt={releaseAt}
+                serverNow={serverNow}
+              />
             ) : (
               <div className="max-md:hidden">
                 <PurchaseActions
                   code={product.code}
                   isAvailable={product.isAvailable && Boolean(product.shopifyVariantId)}
-                  isUpcoming={product.isUpcoming}
+                  isUpcoming={false}
                 />
               </div>
             )}
@@ -296,14 +309,16 @@ export default async function ProductDetailPage({
           —— sticky + bottom:0 靠"自然位置在视口下方时上提贴住视口底"工作,
           若塞进信息区的列里,它的 containing block 只有那一列高,滚过半屏就失效。
           祖先链上不得有 overflow-hidden(方案 R3);`md:hidden` 保证桌面端不存在。 */}
-      <StickyBuyBar
-        code={product.code}
-        priceCents={product.priceCents}
-        currency={product.currency}
-        locale={locale}
-        isAvailable={product.isAvailable && Boolean(product.shopifyVariantId)}
-        isUpcoming={product.isUpcoming}
-      />
+      {!product.isUpcoming && (
+        <StickyBuyBar
+          code={product.code}
+          priceCents={product.priceCents}
+          currency={product.currency}
+          locale={locale}
+          isAvailable={product.isAvailable && Boolean(product.shopifyVariantId)}
+          isUpcoming={false}
+        />
+      )}
     </>
   );
 }

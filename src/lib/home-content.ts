@@ -1,6 +1,7 @@
 import { z } from "zod";
 import { common } from "../../messages/en.json";
 import { heroSlides, newsFeature, newsItems, type HeroSlideData } from "./content";
+import { getProductHandleAlias } from "./catalog";
 
 export const homeMediaPrefix = "/api/home-media/";
 export const homeMediaId = /^[a-f0-9]{64}$/;
@@ -49,6 +50,12 @@ const optionalHref = z
   .trim()
   .max(2048)
   .refine((value) => !value || isDestination(value), "请输入站内路径或 HTTPS 链接");
+const launchHandle = z.string().regex(/^[a-z0-9][a-z0-9_-]{0,199}$/);
+const latestCardFields = {
+  image,
+  href: requiredHref,
+  comingSoon: z.boolean().optional(),
+};
 const homeContentSchema = z
   .strictObject({
     hero: z
@@ -81,12 +88,11 @@ const homeContentSchema = z
       .length(common.promoMessages.length),
     latest: z.strictObject({
       browseHref: requiredHref.default("/products"),
-      feature: z.strictObject({ image, href: requiredHref, alt: z.string().trim().max(160) }),
+      feature: z.strictObject({ ...latestCardFields, alt: z.string().trim().max(160) }),
       items: z
         .array(
           z.strictObject({
-            image,
-            href: requiredHref,
+            ...latestCardFields,
             label: z.string().trim().min(1, "请填写按钮文案").max(48),
           }),
         )
@@ -171,4 +177,14 @@ export function homeProductHandle(href: string, siteUrl: string) {
   } catch {
     return match[1];
   }
+}
+
+export function homeLaunchHandle(href: string, siteUrl: string) {
+  const site = new URL(siteUrl);
+  const target = new URL(href, site);
+  if (target.protocol !== site.protocol || target.port !== site.port) return null;
+  const handle = homeProductHandle(href, siteUrl);
+  if (!handle) return null;
+  const canonical = getProductHandleAlias(handle) ?? handle;
+  return launchHandle.safeParse(canonical).success ? canonical : null;
 }

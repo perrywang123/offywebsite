@@ -1,8 +1,9 @@
-import { render, screen } from "@testing-library/react";
+import { fireEvent, render, screen } from "@testing-library/react";
 import { env } from "@/lib/env";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import type { Product, Series } from "@/lib/catalog/types";
 import en from "../../../../../messages/en.json";
+import zh from "../../../../../messages/zh.json";
 /**
  * PDP(商品详情页)· 老板优化诉求 4 的回归测试。
  *
@@ -25,10 +26,12 @@ const mockState = vi.hoisted(() => ({ locale: "en" as "en" | "zh" }));
  * 要了哪个系列 —— 这是"周边商品不要推荐公主系列公仔"的护栏。
  */
 const pdpState = vi.hoisted(() => ({
-  product: null as Product | null,
+  product: undefined as Product | null | undefined,
+  shopifyUnavailable: false,
   siblings: null as Product[] | null,
   requestedSeries: [] as string[],
 }));
+const router = vi.hoisted(() => ({ refresh: vi.fn() }));
 
 vi.mock("next-intl/server", async () => {
   const [{ createTranslator }, enModule, zhModule] = await Promise.all([
@@ -54,17 +57,26 @@ vi.mock("next-intl/server", async () => {
 // 客户端子组件(AddToCartButton / StickyBuyBar)用 useTranslations;
 // 上面 next-intl/server 的替身工厂又需要真的 createTranslator,所以这里只覆盖
 // useTranslations,其余原样放行。
-vi.mock("next-intl", async (importOriginal) => ({
-  ...(await importOriginal<typeof import("next-intl")>()),
-  useLocale: () => "en",
-  useTranslations: () => (key: string) => key,
-}));
+vi.mock("next-intl", async (importOriginal) => {
+  const original = await importOriginal<typeof import("next-intl")>();
+  return {
+    ...original,
+    useLocale: () => mockState.locale,
+    useTranslations: (namespace: keyof typeof en) =>
+      original.createTranslator({
+        locale: mockState.locale,
+        messages: mockState.locale === "zh" ? zh : en,
+        namespace,
+      }),
+  };
+});
 
 vi.mock("next/headers", () => ({
   headers: async () => new Headers(),
 }));
 
 vi.mock("next/navigation", () => ({
+  useRouter: () => router,
   notFound: () => {
     throw new Error("notFound()");
   },
@@ -148,12 +160,19 @@ const SERIES: Series[] = [
 ];
 
 vi.mock("@/server/catalog/live", () => ({
-  getLiveProductByCode: async () => pdpState.product ?? CURRENT,
+  getLiveProductByCode: async () => {
+    if (pdpState.shopifyUnavailable) throw new Error("Storefront unavailable");
+    return pdpState.product === null ? undefined : (pdpState.product ?? CURRENT);
+  },
   getLiveProductsBySeries: async (slug: string) => {
     pdpState.requestedSeries.push(slug);
     return pdpState.siblings ?? SIBLINGS;
   },
   getLiveSeriesList: async () => SERIES,
+}));
+
+vi.mock("@/components/marketing/MetaTracking", () => ({
+  MetaProductView: () => <div data-testid="meta-product-view" />,
 }));
 
 vi.mock("@/lib/geo", () => ({
@@ -173,8 +192,10 @@ beforeEach(() => {
 });
 
 afterEach(() => {
-  pdpState.product = null;
+  pdpState.product = undefined;
+  pdpState.shopifyUnavailable = false;
   pdpState.siblings = null;
+  router.refresh.mockReset();
 });
 
 async function renderPdp(locale: "en" | "zh" = "en", code: string = CURRENT.code) {
@@ -492,5 +513,121 @@ describe("PDP Shopify SEO metadata", () => {
       .find((x) => x["@type"] === "Product");
     expect(product.name).toBe(CURRENT.name.en);
     expect(product.offers).toMatchObject({ price: "49.90", priceCurrency: "USD" });
+  });
+});
+
+describe("scheduled product details", () => {
+  const releaseAt = "2090-11-26T08:00:00+08:00";
+  const pastReleaseAt = "2020-11-25T00:00:00Z";
+  const scheduled: Product = {
+    ...CURRENT,
+    code: "snow-white",
+    slug: "snow-white",
+    name: { en: "SNOW WHITE", zh: "SNOW WHITE" },
+    description: { en: "A winter look.", zh: "冬日造型。" },
+    images: ["/assets/p/snow-white-1.jpg", "/assets/p/snow-white-2.jpg"],
+    shopifyVariantId: "gid://shopify/ProductVariant/1",
+    isUpcoming: true,
+    isAvailable: false,
+    releaseAt,
+  };
+
+  it("shows Shopify gallery and product details while withholding purchase before release", async () => {
+    pdpState.product = { ...scheduled, isAvailable: true };
+
+    const { container } = await renderPdp("en", scheduled.code);
+
+    expect(screen.getByRole("heading", { name: scheduled.name.en })).toBeVisible();
+    expect(screen.getByText(scheduled.description.en)).toBeVisible();
+    expect(screen.getByRole("link", { name: "Playful Life" })).toBeVisible();
+    expect(screen.getByRole("region", { name: "Product specifications" })).toBeVisible();
+    expect(screen.getByAltText(scheduled.name.en)).toHaveAttribute("src", scheduled.images[0]);
+    fireEvent.click(screen.getByRole("button", { name: "SNOW WHITE 2" }));
+    expect(screen.getByAltText(scheduled.name.en)).toHaveAttribute("src", scheduled.images[1]);
+    expect(container.querySelector("time")).toHaveAttribute("datetime", "2090-11-26T00:00:00.000Z");
+    expect(screen.getByRole("timer")).toBeVisible();
+    expect(screen.queryByTestId("pdp-buybar")).toBeNull();
+    expect(screen.queryByRole("button", { name: /add to bag|buy now/i })).toBeNull();
+    expect(screen.queryByText("$49.90")).toBeNull();
+    expect(screen.queryByTestId("meta-product-view")).toBeNull();
+    expect(JSON.stringify(jsonLdBlocks(container))).not.toContain('"offers"');
+  });
+
+  it("keeps the gallery and shows a retry when Shopify has not made the product available at release", async () => {
+    pdpState.product = { ...scheduled, releaseAt: pastReleaseAt };
+
+    await renderPdp("en", scheduled.code);
+
+    expect(screen.getByRole("heading", { name: scheduled.name.en })).toBeVisible();
+    expect(screen.getByRole("status")).toHaveTextContent("Currently unavailable");
+    expect(screen.queryByRole("timer")).toBeNull();
+    expect(screen.queryByRole("button", { name: /add to bag|buy now/i })).toBeNull();
+    const retry = screen.getByRole("button", { name: "Check availability" });
+    expect(router.refresh).not.toHaveBeenCalled();
+    fireEvent.click(retry);
+    expect(router.refresh).toHaveBeenCalledOnce();
+  });
+
+  it("does not show merchandise as a same-series recommendation for an unassigned preview", async () => {
+    pdpState.product = { ...scheduled, series: "merch" };
+    pdpState.siblings = [{ ...CURRENT, code: "offy-tote", series: "merch" }];
+
+    await renderPdp("en", scheduled.code);
+
+    expect(screen.getByRole("heading", { name: scheduled.name.en })).toBeVisible();
+    expect(screen.queryByRole("heading", { name: "More from this series" })).toBeNull();
+    expect(screen.queryByText("Goods")).toBeNull();
+  });
+
+  it("switches to verified market commerce on the same route while preserving the selected image", async () => {
+    pdpState.product = { ...scheduled, releaseAt: pastReleaseAt };
+    const { container, rerender } = await renderPdp("en", scheduled.code);
+    fireEvent.click(screen.getByRole("button", { name: "SNOW WHITE 2" }));
+
+    pdpState.product = {
+      ...scheduled,
+      releaseAt: pastReleaseAt,
+      isUpcoming: false,
+      isAvailable: true,
+      currency: "GBP",
+      priceCents: 3790,
+    };
+    rerender(
+      await ProductDetailPage({ params: Promise.resolve({ locale: "en", code: scheduled.code }) }),
+    );
+
+    expect(screen.queryByRole("button", { name: "Check availability" })).toBeNull();
+    expect(screen.getByAltText(scheduled.name.en)).toHaveAttribute("src", scheduled.images[1]);
+    expect(screen.getAllByRole("button", { name: "Buy Now" })[0]).toBeEnabled();
+    expect(screen.getAllByText("£37.90")).toHaveLength(2);
+    expect(jsonLdOfType(container, "Product").offers).toMatchObject({
+      priceCurrency: "GBP",
+      availability: "https://schema.org/InStock",
+    });
+  });
+
+  it("keeps the product closed when Shopify's release date is unannounced", async () => {
+    pdpState.product = { ...scheduled, releaseAt: null };
+
+    const { container } = await renderPdp("en", scheduled.code);
+
+    expect(screen.getByText("Release date to be announced")).toBeVisible();
+    expect(container.querySelector("time")).toBeNull();
+    expect(screen.queryByRole("button", { name: /add to bag|buy now/i })).toBeNull();
+  });
+
+  it("returns the regular missing-product surface when the storefront confirms absence", async () => {
+    pdpState.product = null;
+
+    await expect(renderPdp("en", scheduled.code)).rejects.toThrow("notFound()");
+  });
+
+  it("offers a branded retry when the storefront cannot supply fresh product data", async () => {
+    pdpState.shopifyUnavailable = true;
+
+    await renderPdp("en", scheduled.code);
+
+    expect(screen.getByRole("heading", { name: "This look is taking a moment." })).toBeVisible();
+    expect(screen.getByRole("button", { name: "Try again" })).toBeVisible();
   });
 });
