@@ -13,6 +13,7 @@ import {
   getLiveSeriesList,
 } from "@/server/catalog/live";
 import { getProductHandleAlias, merchSeriesName } from "@/lib/catalog";
+import { presentScheduledProductCopy } from "@/lib/catalog/launch-copy";
 import { env } from "@/lib/env";
 import { pickCountry } from "@/lib/geo";
 import { formatPrice } from "@/lib/pricing";
@@ -127,6 +128,10 @@ export default async function ProductDetailPage({
   // (含访客市场币种),面包屑的每一级都走 publicPath + SITE_URL.
   // merch 没有系列页,面包屑里就不放系列这一级(不能伪造 /collections/merch).
   const productName = locale === "zh" ? product.name.zh : product.name.en;
+  const visibleCopy =
+    product.isUpcoming && releaseAt
+      ? presentScheduledProductCopy(productName, descriptionParagraphs)
+      : { name: productName, description: descriptionParagraphs };
   const seriesHref = liveSeries ? publicPath(locale, `/collections/${liveSeries.slug}`) : null;
   const breadcrumbLd = breadcrumbJsonLd(
     [
@@ -203,10 +208,12 @@ export default async function ProductDetailPage({
             </div>
           </div>
 
-          <div className="min-w-0 space-y-5 md:space-y-6">
+          <div
+            className={product.isUpcoming ? "min-w-0 space-y-4" : "min-w-0 space-y-5 md:space-y-6"}
+          >
             <div className="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-2">
               <h1 className="font-display min-w-0 text-3xl font-semibold tracking-tight break-words md:text-4xl">
-                {productName}
+                {visibleCopy.name}
               </h1>
               {!product.isUpcoming && (
                 <p className="font-display text-ink text-xl font-medium tabular-nums md:text-2xl">
@@ -253,9 +260,15 @@ export default async function ProductDetailPage({
                 </div>
               </dl>
             )}
-            {descriptionParagraphs.length > 0 && (
-              <div className="text-ink border-cream-line space-y-2 border-t pt-3 text-sm leading-relaxed md:text-base">
-                {descriptionParagraphs.map((block, index) => (
+            {visibleCopy.description.length > 0 && (
+              <div
+                className={
+                  product.isUpcoming
+                    ? "text-ink space-y-2 text-[15px] leading-relaxed md:text-base"
+                    : "text-ink border-cream-line space-y-2 border-t pt-3 text-sm leading-relaxed md:text-base"
+                }
+              >
+                {visibleCopy.description.map((block, index) => (
                   <p key={index} className={block.bold ? "font-bold" : undefined}>
                     {block.text}
                   </p>

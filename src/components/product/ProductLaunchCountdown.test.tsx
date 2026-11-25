@@ -34,13 +34,13 @@ beforeEach(() => {
 afterEach(() => vi.useRealTimers());
 
 describe("launch countdown", () => {
-  it("counts from server time, shows the exact time in UTC, and rechecks only once across midnight", () => {
+  it("counts from server time, displays the local EST date, and rechecks only once across midnight", () => {
     const { container, rerender } = render(countdown(cutoff - 2_000));
 
     expect(screen.getByText("Coming soon")).toBeVisible();
     const time = container.querySelector("time");
     expect(time).toHaveAttribute("datetime", "2026-11-26T00:00:00.000Z");
-    expect(time).toHaveTextContent(/Nov 26, 2026, 12:00\s*AM UTC/);
+    expect(time).toHaveTextContent(/Nov 25, 2026 · 7:00\s*PM EST/);
     expect(screen.getByRole("timer")).toHaveTextContent("In 2s");
     expect(router.refresh).not.toHaveBeenCalled();
 
@@ -70,17 +70,25 @@ describe("launch countdown", () => {
     expect(router.refresh).not.toHaveBeenCalled();
   });
 
-  it("leads with the opening time further out and leads with the countdown on release day", () => {
+  it("keeps the date beside the countdown as its precision increases on release day", () => {
     const hour = 3_600_000;
     const { container, rerender } = render(countdown(cutoff - 30 * hour));
-    const time = () => container.querySelector("time")?.parentElement;
+    const time = () => container.querySelector("time");
 
     expect(screen.getByRole("timer")).toHaveTextContent("In 1d 6h");
     expect(time()?.nextElementSibling).toBe(screen.getByRole("timer"));
 
     rerender(countdown(cutoff - 2 * hour));
     expect(screen.getByRole("timer")).toHaveTextContent("In 2h 0m");
-    expect(screen.getByRole("timer").nextElementSibling).toBe(time());
+    expect(time()?.nextElementSibling).toBe(screen.getByRole("timer"));
+  });
+
+  it("shows EDT when New York is observing daylight saving without changing the release instant", () => {
+    const summer = "2026-07-03T13:00:00-04:00";
+    const { container } = render(countdown(Date.parse(summer) - 60_000, "detail", summer));
+    expect(container.querySelector("time")).toHaveAttribute("datetime", "2026-07-03T17:00:00.000Z");
+    expect(container.querySelector("time")).toHaveTextContent(/Jul 3, 2026 · 1:00\s*PM EDT/);
+    expect(screen.getByRole("timer")).toHaveTextContent("In 1m 0s");
   });
 
   it.each([null, "2026-11-26T00:00:00", "unannounced"])(

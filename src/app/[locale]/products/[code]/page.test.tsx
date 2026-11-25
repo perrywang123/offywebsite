@@ -532,6 +532,25 @@ describe("scheduled product details", () => {
     releaseAt,
   };
 
+  const titledLaunch = {
+    ...scheduled,
+    name: { en: "SNOW WHITE — DROPS NOV 25 AT 7 PM ET", zh: "SNOW WHITE" },
+    descriptionBlocks: {
+      en: [
+        { text: "A winter look.", bold: false },
+        { text: "RELEASE DATE: NOVEMBER 25, 2090", bold: true },
+        { text: "7 PM ET / 4 PM PT / 12 AM GMT", bold: false },
+        { text: "Limited to 40 pieces worldwide", bold: true },
+        {
+          text: "Available for preview now. Orders open at the official release time.",
+          bold: false,
+        },
+        { text: "Release date: club launch details announced separately.", bold: false },
+      ],
+      zh: [],
+    },
+  };
+
   it("shows Shopify gallery and product details while withholding purchase before release", async () => {
     pdpState.product = { ...scheduled, isAvailable: true };
 
@@ -551,6 +570,40 @@ describe("scheduled product details", () => {
     expect(screen.queryByText("$49.90")).toBeNull();
     expect(screen.queryByTestId("meta-product-view")).toBeNull();
     expect(JSON.stringify(jsonLdBlocks(container))).not.toContain('"offers"');
+  });
+
+  it("shows the authoritative release once and preserves non-schedule Shopify copy", async () => {
+    pdpState.product = titledLaunch;
+    const { container } = await renderPdp("en", scheduled.code);
+
+    expect(screen.getByRole("heading", { name: "SNOW WHITE", level: 1 })).toBeVisible();
+    expect(container.querySelector("time")).toHaveTextContent(/Nov 25, 2090 · 7:00\s*PM EST/);
+    expect(screen.getByText("A winter look.")).toBeVisible();
+    expect(screen.getByText("Limited to 40 pieces worldwide")).toBeVisible();
+    expect(
+      screen.getByText("Release date: club launch details announced separately."),
+    ).toBeVisible();
+    expect(screen.queryByText("RELEASE DATE: NOVEMBER 25, 2090")).toBeNull();
+    expect(screen.queryByText("7 PM ET / 4 PM PT / 12 AM GMT")).toBeNull();
+    expect(screen.queryByText(/^Available for preview now\./)).toBeNull();
+  });
+
+  it("preserves the Shopify title and description for an ordinary product or an unannounced date", async () => {
+    pdpState.product = { ...titledLaunch, releaseAt: null };
+    const { rerender } = await renderPdp("en", scheduled.code);
+    expect(screen.getByRole("heading", { name: titledLaunch.name.en, level: 1 })).toBeVisible();
+    expect(screen.getByText("RELEASE DATE: NOVEMBER 25, 2090")).toBeVisible();
+    expect(screen.getByText("Release date to be announced")).toBeVisible();
+
+    pdpState.product = { ...titledLaunch, isUpcoming: false, isAvailable: true };
+    rerender(
+      await ProductDetailPage({ params: Promise.resolve({ locale: "en", code: scheduled.code }) }),
+    );
+    expect(screen.getByRole("heading", { name: titledLaunch.name.en, level: 1 })).toBeVisible();
+    expect(screen.getByText("RELEASE DATE: NOVEMBER 25, 2090")).toBeVisible();
+    expect(screen.getByText("7 PM ET / 4 PM PT / 12 AM GMT")).toBeVisible();
+    expect(screen.getAllByRole("button", { name: "Buy Now" }).length).toBeGreaterThan(0);
+    expect(screen.queryByRole("timer")).toBeNull();
   });
 
   it("keeps the gallery and shows a retry when Shopify has not made the product available at release", async () => {

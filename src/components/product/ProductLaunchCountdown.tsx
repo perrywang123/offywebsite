@@ -72,6 +72,26 @@ function remainingLabel(
 
 type TimingProps = { releaseTime: number; remaining: number };
 
+function formatLaunchDate(releaseTime: number, locale: string, compact: boolean) {
+  const timeZone = compact ? "UTC" : "America/New_York";
+  const calendar: Intl.DateTimeFormatOptions = { month: "short", day: "numeric", timeZone };
+  const clock: Intl.DateTimeFormatOptions = {
+    hour: "numeric",
+    minute: "2-digit",
+    second: releaseTime % minute !== 0 ? "2-digit" : undefined,
+    timeZone,
+    timeZoneName: "short",
+  };
+  if (compact)
+    return new Intl.DateTimeFormat(locale, { ...calendar, ...clock }).format(releaseTime);
+
+  const date = new Intl.DateTimeFormat(locale, { ...calendar, year: "numeric" }).format(
+    releaseTime,
+  );
+  const time = new Intl.DateTimeFormat(locale, clock).format(releaseTime);
+  return `${date} · ${time}`;
+}
+
 function LaunchTiming({ releaseTime, remaining, compact }: TimingProps & { compact?: boolean }) {
   const t = useTranslations("product.launch");
   const locale = useLocale();
@@ -79,31 +99,19 @@ function LaunchTiming({ releaseTime, remaining, compact }: TimingProps & { compa
   if (!Number.isFinite(releaseTime)) return <span className="block">{t("unannounced")}</span>;
   if (remaining <= 0) return <span className="block">{t("unavailable")}</span>;
 
-  const showSeconds = releaseTime % minute !== 0;
-  const date = new Intl.DateTimeFormat(locale, {
-    year: compact ? undefined : "numeric",
-    month: "short",
-    day: "numeric",
-    hour: "numeric",
-    minute: "2-digit",
-    second: showSeconds ? "2-digit" : undefined,
-    timeZone: "UTC",
-    timeZoneName: "short",
-  }).format(releaseTime);
-  const emphasizeCountdown = !compact && remaining <= day;
   const openingTime = (
-    <span className={emphasizeCountdown ? "text-ink-soft block text-sm" : "block"}>
-      {compact ? "" : `${t("opens")} `}
-      <time dateTime={new Date(releaseTime).toISOString()}>{date}</time>
-    </span>
+    <time
+      className={compact ? "block" : "text-sm leading-snug font-semibold sm:text-[15px]"}
+      dateTime={new Date(releaseTime).toISOString()}
+    >
+      {formatLaunchDate(releaseTime, locale, Boolean(compact))}
+    </time>
   );
   const countdown = (
     <span
       role="timer"
       aria-live="off"
-      className={
-        emphasizeCountdown ? "font-display block text-xl tabular-nums" : "block tabular-nums"
-      }
+      className={compact ? "block tabular-nums" : "font-display font-semibold tabular-nums"}
     >
       {remainingLabel(remaining, t)}
     </span>
@@ -116,12 +124,7 @@ function LaunchTiming({ releaseTime, remaining, compact }: TimingProps & { compa
       </>
     );
   }
-  return emphasizeCountdown ? (
-    <>
-      {countdown}
-      {openingTime}
-    </>
-  ) : (
+  return (
     <>
       {openingTime}
       {countdown}
@@ -144,9 +147,12 @@ function LaunchDetail({ releaseTime, remaining, serverNow }: TimingProps & { ser
   }, [expired, releaseTime, router, serverNow]);
 
   return (
-    <div className="border-cream-line bg-paper text-ink rounded-soft space-y-1 border px-4 py-3 sm:px-5">
+    <section
+      aria-label={expired ? t("unavailable") : t("comingSoon")}
+      className="border-cream-line text-ink border-y py-3"
+    >
       {expired ? (
-        <>
+        <div className="flex flex-wrap items-center justify-between gap-x-4 gap-y-1">
           <p className="text-sm font-medium" role="status">
             {pending ? t("checking") : t("unavailable")}
           </p>
@@ -158,16 +164,18 @@ function LaunchDetail({ releaseTime, remaining, serverNow }: TimingProps & { ser
           >
             {t("retry")}
           </button>
-        </>
+        </div>
       ) : (
         <>
-          <p className="text-ink-soft text-xs font-semibold tracking-wide uppercase">
+          <p className="w-fit rounded-[5px] bg-[#f4e2e5] px-2 py-0.5 text-[13px] font-semibold text-[#852833] capitalize">
             {t("comingSoon")}
           </p>
-          <LaunchTiming releaseTime={releaseTime} remaining={remaining} />
+          <div className="mt-1 flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1">
+            <LaunchTiming releaseTime={releaseTime} remaining={remaining} />
+          </div>
         </>
       )}
-    </div>
+    </section>
   );
 }
 
