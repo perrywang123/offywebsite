@@ -3,6 +3,50 @@ import { expect, it, vi } from "vitest";
 import { defaultHomeContent, type HomeContentVersion } from "@/lib/home-content";
 import { HomeContentEditor } from "./HomeContentEditor";
 
+it("adds, removes and publishes hero images while retaining their own settings", async () => {
+  const initial = { revision: 1, content: defaultHomeContent() };
+  const request = vi.fn(async (_path: string, body?: unknown) =>
+    body ? { ...(body as HomeContentVersion), revision: 2 } : initial,
+  );
+  render(
+    <HomeContentEditor siteUrl="https://offy.test" request={request} onSessionExpired={vi.fn()} />,
+  );
+  fireEvent.click(await screen.findByRole("button", { name: "新增轮播图" }));
+  const added = within(screen.getByRole("region", { name: "轮播图 6" }));
+  const save = screen.getByRole("button", { name: "保存并发布" });
+  fireEvent.click(save);
+  expect(screen.getByRole("alert")).toHaveTextContent(/首屏轮播.*6.*请上传图片/);
+  expect(request).toHaveBeenCalledTimes(1);
+  fireEvent.change(added.getByLabelText("图片地址"), {
+    target: { value: "/assets/hero/new-campaign.jpg" },
+  });
+  fireEvent.change(added.getByLabelText("图片说明"), { target: { value: "New campaign" } });
+  fireEvent.change(added.getByLabelText("跳转链接（选填）"), {
+    target: { value: "/about?campaign=new" },
+  });
+  fireEvent.click(screen.getByRole("button", { name: "删除品牌主图" }));
+  expect(screen.queryByRole("region", { name: "品牌主图" })).toBeNull();
+  expect(
+    within(screen.getByRole("region", { name: "促销主图" })).getByLabelText("活动标题"),
+  ).toHaveValue(initial.content.promotion.title);
+  expect(
+    within(screen.getByRole("region", { name: "轮播图 5" })).getByLabelText("图片说明"),
+  ).toHaveValue("New campaign");
+  expect(request).toHaveBeenCalledTimes(1);
+
+  fireEvent.click(save);
+  await screen.findByText("已发布，刷新首页即可查看。");
+  const sent = request.mock.calls[1][1] as HomeContentVersion;
+  expect(sent.content.hero.slice(0, 4)).toEqual(initial.content.hero.slice(1));
+  expect(sent.content.hero[4]).toMatchObject({
+    image: "/assets/hero/new-campaign.jpg",
+    alt: "New campaign",
+    href: "/about?campaign=new",
+    enabled: true,
+  });
+  expect(sent.content.latest).toEqual(initial.content.latest);
+});
+
 async function openLatestEditor(request: (path: string, body?: unknown) => Promise<unknown>) {
   render(
     <HomeContentEditor siteUrl="https://offy.test" request={request} onSessionExpired={vi.fn()} />,

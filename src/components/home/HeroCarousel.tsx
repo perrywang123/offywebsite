@@ -37,6 +37,7 @@ export function HeroCarousel({
   const t = useTranslations("home");
   const rail = useSwipeRail(slides.length);
   const hasIndicators = slides.length > 1;
+  const hasExtendedIndicators = slides.length > 5;
   const { active, goTo: go, reducedMotion, gestureActive, trackRef } = rail;
   useEffect(() => {
     if (reducedMotion || gestureActive || slides.length <= 1) return;
@@ -48,8 +49,7 @@ export function HeroCarousel({
     return () => clearInterval(id);
   }, [active, reducedMotion, gestureActive, slides.length, intervalMs, go]);
 
-  // Every original destination remains a full-slide link. A normal-flow link
-  // lets all five mounted panels contribute to the common grid height.
+  // A normal-flow link lets every panel contribute to the common grid height.
   const wrapScreenLink = (s: HeroSlide, node: React.ReactNode) =>
     s.href && !(s.title && SHOW_HERO_DETAILS_CTA) ? (
       <Link href={s.href} data-hero-link className={styles.slideLink}>
@@ -164,9 +164,9 @@ export function HeroCarousel({
 
   return (
     <div
-      className={`relative w-full overflow-hidden ${styles.carousel}`}
+      className={`relative w-full overflow-hidden ${styles.carousel} ${hasIndicators && !hasExtendedIndicators ? styles.overlayControls : ""}`}
       role="region"
-      aria-roledescription="carousel"
+      aria-roledescription={hasIndicators ? "carousel" : undefined}
       aria-label={t("heroRegionLabel")}
       ref={rail.viewportRef}
       style={{ touchAction: "pan-y pinch-zoom" }}
@@ -193,7 +193,7 @@ export function HeroCarousel({
       </div>
       {hasIndicators && (
         <div
-          className={`${styles.indicators} ${slides[active]?.wordmark || slides[active]?.dark ? styles.lightIndicators : ""}`}
+          className={`${styles.indicators} ${slides[active]?.wordmark || slides[active]?.dark ? styles.lightIndicators : ""} ${hasExtendedIndicators ? styles.extendedIndicators : ""}`}
           role="tablist"
           aria-label={t("heroSlidesLabel")}
         >
@@ -209,7 +209,7 @@ export function HeroCarousel({
                 go(i);
               }}
               className={styles.indicator}
-              style={{ left: `${11.82 + i * 12.74}%` }}
+              style={hasExtendedIndicators ? undefined : { left: `${11.82 + i * 12.74}%` }}
             />
           ))}
           {SHOW_HERO_ARROWS && (

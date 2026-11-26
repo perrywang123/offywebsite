@@ -265,6 +265,7 @@ describe("homepage NEWS editorial photographs", () => {
     const content = defaultHomeContent();
     homeState.content = content;
     content.hero[0] = {
+      ...content.hero[0],
       image: `/api/home-media/${"b".repeat(64)}`,
       href: "/collections?drop=holiday",
       alt: "Holiday campaign",
@@ -298,6 +299,29 @@ describe("homepage NEWS editorial photographs", () => {
     expect(news.querySelector('a[href="/products/unpublished?campaign=holiday"]')).toBeVisible();
     expect(within(news).getAllByRole("img")).toHaveLength(5);
   });
+});
+
+it.each([0, 1, 7])("renders a published hero with %s enabled banners", async (count) => {
+  const content = defaultHomeContent();
+  content.hero = [
+    ...Array.from({ length: count }, (_, index) => ({
+      id: `new-${index}`,
+      image: `/assets/hero/banner-${index}.jpg`,
+      href: `/about?banner=${index}`,
+      alt: `Banner ${index}`,
+      enabled: true,
+    })),
+    { ...content.hero[0], enabled: false },
+  ];
+  homeState.content = content;
+  const { container } = await renderHome();
+  const slides = [...container.querySelectorAll("[data-hero-slide]")];
+  expect(slides).toHaveLength(count);
+  expect(slides.map((slide) => slide.querySelector("a")?.getAttribute("href"))).toEqual(
+    Array.from({ length: count }, (_, index) => `/about?banner=${index}`),
+  );
+  expect(screen.queryAllByRole("tab")).toHaveLength(count > 1 ? count : 0);
+  expect(screen.getByRole("heading", { name: en.home.newsTitle })).toBeVisible();
 });
 
 describe("首页 · 语义 H1", () => {

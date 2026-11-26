@@ -2,6 +2,7 @@
 import { expect, it, vi } from "vitest";
 import { readFileSync } from "node:fs";
 import en from "../../../messages/en.json";
+import { configuredHero } from "@/lib/home-content";
 import { testDb } from "@/server/kol/test-db";
 import { loadHomeContent, publishHomeContent } from "./store";
 import { homeImageResponse, storeHomeImage } from "./media";
@@ -46,6 +47,62 @@ it("persists a whole edit and rejects outdated and invalid writes", async () => 
   expect(loadHomeContent(db)).toEqual(saved);
 });
 
+it("loads a legacy carousel and preserves preset layouts when its published length changes", async () => {
+  const db = testDb();
+  const { content } = loadHomeContent(db);
+  content.hero[2].href = "/collections/princess-lady?campaign=existing";
+  content.hero[3].image = "/assets/hero/replacement.jpg";
+  content.hero[3].alt = "Streetwear campaign";
+  content.promotion.title = "Holiday offer";
+  const legacy = {
+    ...content,
+    hero: content.hero.map(({ image, href, alt, enabled }) => ({ image, href, alt, enabled })),
+  };
+  db.$client
+    .prepare("INSERT INTO homepage_content (id, revision, content) VALUES (1, 2, ?)")
+    .run(JSON.stringify(legacy));
+  const edit = loadHomeContent(db);
+  expect(edit).toEqual({ revision: 2, content });
+
+  edit.content.hero.shift();
+  for (const number of [1, 2, 3]) {
+    edit.content.hero.push({
+      id: `campaign-${number}`,
+      image: `/assets/hero/campaign-${number}.jpg`,
+      href: `/about?campaign=${number}`,
+      alt: `Campaign ${number}`,
+      enabled: true,
+    });
+  }
+  const saved = await publishHomeContent(db, edit, "admin-test");
+  expect(loadHomeContent(db)).toEqual(saved);
+  const slides = configuredHero(saved.content);
+  expect(slides).toHaveLength(7);
+  expect(slides[0].promo?.text.en).toBe("Holiday offer");
+  expect(slides[1]).toMatchObject({
+    title: { en: "Princess Series" },
+    href: "/collections/princess-lady?campaign=existing",
+  });
+  expect(slides[2]).toMatchObject({ imageAlt: "Streetwear campaign" });
+  expect(slides[3]).toMatchObject({ dark: true });
+  expect(slides.at(-1)).toMatchObject({
+    image: "/assets/hero/campaign-3.jpg",
+    href: "/about?campaign=3",
+    imageAlt: "Campaign 3",
+  });
+
+  const duplicate = structuredClone(saved);
+  duplicate.content.hero.push(duplicate.content.hero[0]);
+  await expect(publishHomeContent(db, duplicate, "admin-test")).rejects.toThrow();
+  const cleared = await publishHomeContent(
+    db,
+    { ...saved, content: { ...saved.content, hero: [] } },
+    "admin-test",
+  );
+  expect(loadHomeContent(db)).toEqual(cleared);
+  expect(configuredHero(cleared.content)).toEqual([]);
+});
+
 it("keeps staged images private until a valid publish and serves the persisted raster", async () => {
   const db = testDb();
   const original = readFileSync("public/assets/brand/is-offy-logo.png");
@@ -60,7 +117,13 @@ it("keeps staged images private until a valid publish and serves the persisted r
   expect(homeImageResponse(db, id).status).toBe(404);
   expect(homeImageResponse(db, id, true).headers.get("cache-control")).toContain("no-store");
   const edit = loadHomeContent(db);
-  edit.content.hero[0].image = upload.image;
+  edit.content.hero.push({
+    id: "uploaded-banner",
+    image: upload.image,
+    href: "/about",
+    alt: "OFFY logo",
+    enabled: true,
+  });
   edit.content.latest.feature.image = `/api/home-media/${"a".repeat(64)}`;
   await expect(publishHomeContent(db, edit, "admin-test")).rejects.toThrow(
     "homepage_image_missing",
@@ -74,7 +137,7 @@ it("keeps staged images private until a valid publish and serves the persisted r
   expect(response.headers.get("content-type")).toBe("image/webp");
   expect(response.headers.get("x-content-type-options")).toBe("nosniff");
   expect((await response.arrayBuffer()).byteLength).toBeGreaterThan(30);
-  expect(loadHomeContent(db).content.hero[0].image).toBe(upload.image);
+  expect(loadHomeContent(db).content.hero[5].image).toBe(upload.image);
 });
 
 it("rejects oversized and invalid image payloads", async () => {

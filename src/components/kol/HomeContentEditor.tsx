@@ -1,9 +1,18 @@
 "use client";
 
-import { useCallback, useEffect, useId, useState, type FormEvent, type ReactNode } from "react";
+import {
+  useCallback,
+  useEffect,
+  useId,
+  useRef,
+  useState,
+  type FormEvent,
+  type ReactNode,
+} from "react";
 import { newsFeature } from "@/lib/content";
 import {
   defaultHomeContent,
+  getHeroPreset,
   homeContentVersionSchema,
   homeImageByteLimit,
   homeImageMaxEdge,
@@ -20,13 +29,13 @@ const sections = [
   ["latest", "The Latest from OFFY"],
 ] as const;
 type Section = (typeof sections)[number][0];
-const heroLabels = [
-  "品牌主图",
-  "促销主图",
-  "Princess Series",
-  "Streetwear Series",
-  "Dress-up Series",
-];
+const heroLabels = new Map([
+  ["brand", "品牌主图"],
+  ["promotion", "促销主图"],
+  ["princess", "Princess Series"],
+  ["streetwear", "Streetwear Series"],
+  ["dress-up", "Dress-up Series"],
+]);
 const defaults = defaultHomeContent();
 const launchErrors = new Map([
   ["homepage_launch_product_missing", "Shopify 中找不到预告商品，请核对商品链接。"],
@@ -78,7 +87,7 @@ function ImageFields({
 }: {
   title: string;
   image: string;
-  original: string;
+  original?: string;
   siteUrl: string;
   variant?: "wide" | "feature";
   previewBadge?: string;
@@ -132,7 +141,7 @@ function ImageFields({
               }}
             />
           </label>
-          {image !== original && (
+          {original && image !== original && (
             <button type="button" className="text-button" onClick={() => onChange(original)}>
               恢复原图
             </button>
@@ -198,6 +207,7 @@ export function HomeContentEditor({
   const [conflict, setConflict] = useState(false);
   const [notice, setNotice] = useState("");
   const launchHelpId = useId();
+  const newSlideFocus = useRef<string | null>(null);
   const dirty = Boolean(draft && JSON.stringify(draft) !== JSON.stringify(published?.content));
 
   const fail = useCallback(
@@ -394,33 +404,77 @@ export function HomeContentEditor({
         <legend>{sections.find(([key]) => key === section)?.[1]}</legend>
         {section === "hero" && (
           <>
-            <p className="home-editor-help">
-              建议上传约 16:10 的成品横图。替换后按整张图展示，原图保留原文字版式。
-            </p>
+            <div className="home-editor-hero-tools">
+              <p className="home-editor-help">
+                建议上传约 16:10 的成品横图。替换后按整张图展示，原图保留原文字版式。
+              </p>
+              <button
+                type="button"
+                onClick={() => {
+                  const id = crypto.randomUUID();
+                  newSlideFocus.current = id;
+                  edit((content) => {
+                    content.hero.push({ id, image: "", href: "", alt: "", enabled: true });
+                  });
+                }}
+              >
+                <span aria-hidden="true">+</span> 新增轮播图
+              </button>
+            </div>
+            {draft.hero.length === 0 && (
+              <p className="home-editor-help">暂无轮播图，发布后首页会隐藏此区域。</p>
+            )}
             {draft.hero.map((slide, index) => {
               const update = (value: Partial<typeof slide>) =>
                 edit((content) => {
-                  Object.assign(content.hero[index], value);
+                  const existing = content.hero.find((item) => item.id === slide.id);
+                  if (existing) Object.assign(existing, value);
                 });
-              const label = heroLabels[index];
-              const original = defaults.hero[index].image;
+              const label = heroLabels.get(slide.id) ?? `轮播图 ${index + 1}`;
+              const preset = getHeroPreset(slide.id);
+              const usesOriginal = slide.image === preset?.image;
               return (
-                <section className="home-editor-row" key={label} aria-label={label}>
+                <section
+                  className="home-editor-row"
+                  key={slide.id}
+                  aria-label={label}
+                  tabIndex={-1}
+                  ref={(node) => {
+                    if (node && newSlideFocus.current === slide.id) {
+                      newSlideFocus.current = null;
+                      node.focus();
+                    }
+                  }}
+                >
                   <div className="home-editor-row-heading">
                     <h3>{label}</h3>
-                    <label className="checkbox">
-                      <input
-                        type="checkbox"
-                        checked={slide.enabled}
-                        onChange={(event) => update({ enabled: event.target.checked })}
-                      />
-                      展示
-                    </label>
+                    <div className="home-editor-row-actions">
+                      <label className="checkbox">
+                        <input
+                          type="checkbox"
+                          checked={slide.enabled}
+                          onChange={(event) => update({ enabled: event.target.checked })}
+                        />
+                        展示
+                      </label>
+                      <button
+                        type="button"
+                        className="text-button"
+                        aria-label={`删除${label}`}
+                        onClick={() =>
+                          edit((content) => {
+                            content.hero = content.hero.filter((item) => item.id !== slide.id);
+                          })
+                        }
+                      >
+                        删除
+                      </button>
+                    </div>
                   </div>
                   <ImageFields
                     title={label}
                     image={slide.image}
-                    original={original}
+                    original={preset?.image}
                     siteUrl={siteUrl}
                     variant="wide"
                     onChange={(image) => update({ image })}
@@ -431,7 +485,7 @@ export function HomeContentEditor({
                       onChange={(href) => update({ href })}
                       optional
                     />
-                    {slide.image !== original && (
+                    {!usesOriginal && (
                       <label>
                         图片说明
                         <input
@@ -441,7 +495,7 @@ export function HomeContentEditor({
                         />
                       </label>
                     )}
-                    {index === 1 && slide.image === original && (
+                    {usesOriginal && preset?.promo && (
                       <>
                         <label>
                           活动引导语

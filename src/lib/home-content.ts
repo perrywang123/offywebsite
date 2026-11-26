@@ -56,18 +56,53 @@ const latestCardFields = {
   href: requiredHref,
   comingSoon: z.boolean().optional(),
 };
+
+// Published records originally identified these five presets by their array positions.
+const legacyHeroIds = ["brand", "promotion", "princess", "streetwear", "dress-up"];
+
+export function getHeroPreset(id: string) {
+  return heroSlides.find((slide) => slide.id === id);
+}
+
+const heroConfig = z
+  .array(
+    z.strictObject({
+      id: z
+        .string()
+        .min(1)
+        .max(64)
+        .regex(/^[a-z0-9-]+$/)
+        .optional(),
+      image,
+      href: optionalHref,
+      alt: z.string().trim().max(160),
+      enabled: z.boolean(),
+    }),
+  )
+  .transform((slides, context) => {
+    const legacy =
+      slides.length === legacyHeroIds.length && slides.every((slide) => slide.id === undefined);
+    const ids = new Set<string>();
+    const normalized = [];
+    for (const [index, slide] of slides.entries()) {
+      const id = legacy ? legacyHeroIds[index] : slide.id;
+      if (!id || ids.has(id)) {
+        context.addIssue({
+          code: "custom",
+          path: [index, "id"],
+          message: "轮播图配置无效，请重新读取后重试",
+        });
+        return z.NEVER;
+      }
+      ids.add(id);
+      normalized.push({ ...slide, id });
+    }
+    return normalized;
+  });
+
 const homeContentSchema = z
   .strictObject({
-    hero: z
-      .array(
-        z.strictObject({
-          image,
-          href: optionalHref,
-          alt: z.string().trim().max(160),
-          enabled: z.boolean(),
-        }),
-      )
-      .length(heroSlides.length),
+    hero: heroConfig,
     promotion: z.strictObject({
       kicker: z.string().trim().max(100),
       title: z.string().trim().max(160),
@@ -101,18 +136,23 @@ const homeContentSchema = z
   })
   .superRefine((content, context) => {
     content.hero.forEach((slide, index) => {
-      if (slide.enabled && slide.image !== heroSlides[index]?.image && !slide.alt) {
+      if (!slide.enabled) return;
+      const original = getHeroPreset(slide.id);
+      if (slide.image !== original?.image && !slide.alt) {
         context.addIssue({
           code: "custom",
           path: ["hero", index, "alt"],
           message: "请填写图片说明",
         });
       }
+      if (original?.promo && slide.image === original.image && !content.promotion.title) {
+        context.addIssue({
+          code: "custom",
+          path: ["promotion", "title"],
+          message: "请填写活动标题",
+        });
+      }
     });
-    const promo = content.hero[1];
-    if (promo?.enabled && promo.image === heroSlides[1].image && !content.promotion.title) {
-      context.addIssue({ code: "custom", path: ["promotion", "title"], message: "请填写活动标题" });
-    }
   });
 
 export const homeContentVersionSchema = z.strictObject({
@@ -124,9 +164,10 @@ export type HomeContent = z.infer<typeof homeContentSchema>;
 export type HomeContentVersion = z.infer<typeof homeContentVersionSchema>;
 
 export function defaultHomeContent(): HomeContent {
-  const promotion = heroSlides[1].promo!;
+  const promotion = getHeroPreset("promotion")!.promo!;
   return {
     hero: heroSlides.map((slide) => ({
+      id: slide.id,
       image: slide.image,
       href: slide.href ?? "",
       alt: slide.title?.en ?? slide.promo?.kicker.en ?? "is.offy designer plush art toys",
@@ -151,11 +192,11 @@ export function defaultHomeContent(): HomeContent {
 }
 
 export function configuredHero(content: HomeContent): HeroSlideData[] {
-  return heroSlides.flatMap<HeroSlideData>((original, index) => {
-    const slide = content.hero[index];
+  return content.hero.flatMap<HeroSlideData>((slide) => {
     if (!slide.enabled) return [];
     const href = slide.href || undefined;
-    if (slide.image !== original.image) {
+    const original = getHeroPreset(slide.id);
+    if (!original || slide.image !== original.image) {
       return [{ image: slide.image, imageAlt: slide.alt, bg: "#efefef", href }];
     }
     const promo = original.promo && {

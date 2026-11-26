@@ -2932,12 +2932,24 @@ pre {
   color: var(--muted);
   margin: 6px 0 14px;
 }
+.home-editor-hero-tools {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px 16px;
+  margin: 6px 0 14px;
+}
+.home-editor-hero-tools .home-editor-help {
+  margin: 0;
+}
 .home-editor-row {
   margin-bottom: 12px;
   padding: 16px 20px 20px;
   border-radius: 8px;
   border: 1px solid var(--line);
   background: var(--surface);
+  scroll-margin-top: 88px;
 }
 .home-editor-row-heading {
   display: flex;
@@ -2946,6 +2958,15 @@ pre {
   gap: 12px;
   min-height: 44px;
   margin-bottom: 10px;
+}
+.home-editor-row-actions {
+  display: flex;
+  flex: none;
+  align-items: center;
+  gap: 8px;
+}
+.home-editor-row-actions .text-button {
+  justify-content: center;
 }
 .home-editor .checkbox input {
   accent-color: var(--ink);

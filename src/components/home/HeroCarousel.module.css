@@ -1,6 +1,9 @@
 .carousel {
   container-type: inline-size;
   isolation: isolate;
+  --controls-height: 0px;
+}
+.overlayControls {
   --controls-height: clamp(44px, 6.4cqw, 100px);
 }
 .track {
@@ -212,7 +215,7 @@
   width: 100%;
   height: clamp(2px, 0.5cqw, 6px);
   background: currentColor;
-  opacity: 0.28;
+  opacity: var(--indicator-opacity, 0.28);
   transition: opacity 0.3s;
 }
 .indicator[aria-selected="true"]::before {
@@ -224,6 +227,21 @@
 .indicator:focus-visible {
   outline: 2px solid var(--color-ink, #1d1915);
   outline-offset: -2px;
+}
+.extendedIndicators {
+  display: flex;
+  height: auto;
+  flex-wrap: wrap;
+  justify-content: center;
+  column-gap: 6px;
+  padding-inline: 8px;
+  color: var(--color-ink, #1d1915);
+  background: #efefef;
+  --indicator-opacity: 0.48;
+}
+.extendedIndicators .indicator {
+  position: static;
+  width: clamp(44px, 8cqw, 112px);
 }
 .details {
   display: inline-flex;

@@ -123,8 +123,9 @@ export interface HeroSlideData {
   };
 }
 
-export const heroSlides: HeroSlideData[] = [
+export const heroSlides: (HeroSlideData & { id: string })[] = [
   {
+    id: "brand",
     image: "/assets/hero/hero-brand.jpg",
     bg: "#bcc2c6",
     wordmark: true,
@@ -138,6 +139,7 @@ export const heroSlides: HeroSlideData[] = [
     },
   },
   {
+    id: "promotion",
     image: "/assets/hero/hero-promo.jpg",
     bg: "#f7f2ef",
     href: "/products",
@@ -153,6 +155,7 @@ export const heroSlides: HeroSlideData[] = [
     },
   },
   {
+    id: "princess",
     image: "/assets/hero/hero-princess.jpg",
     bg: "#fefefe",
     href: "/collections/princess-lady",
@@ -160,6 +163,7 @@ export const heroSlides: HeroSlideData[] = [
     subtitle: { zh: "生活需要仪式感", en: "Romanticize the Everyday" },
   },
   {
+    id: "streetwear",
     image: "/assets/hero/hero-streetwear.jpg", // 运动/护目镜/球衣那组 = outdoor-sporty
     bg: "#fefefe", // 该图边缘色(白底棚拍)
     href: "/collections/outdoor-sporty",
@@ -168,6 +172,7 @@ export const heroSlides: HeroSlideData[] = [
     // 白底图 → 不设 dark:标题/副标题用 ink。`dark` 是**图的**属性,不是文案的属性。
   },
   {
+    id: "dress-up",
     image: "/assets/hero/hero-dressup.jpg", // 连衣裙/背带裤/深灰地面那组 = playful-life
     bg: "#d1c0b6", // 该图边缘色(浅米色墙)
     href: "/collections/playful-life",
