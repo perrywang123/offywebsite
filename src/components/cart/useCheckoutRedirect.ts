@@ -7,19 +7,21 @@ import { useLocale } from "next-intl";
 import { beginCheckoutAttempt, reportCheckoutObservation } from "./checkout-diagnostics-client";
 import { checkoutMarketingContext, metaCartData } from "@/components/marketing/runtime";
 import { rememberCheckoutIntent, type CheckoutIntent } from "@/lib/checkout-intent";
+import type { CheckoutItemFailure } from "@/server/payments/types";
 export interface CheckoutItemInput {
   code: string;
   quantity: number;
 }
 export interface CheckoutBlockedItem {
   code: string;
-  reason?: "unknown_items" | "unavailable_items";
+  reason?: CheckoutItemFailure["reason"];
 }
 export interface CheckoutRedirectState {
   destinationChanged: boolean;
   pending: boolean;
   failed: boolean;
   blocked: CheckoutBlockedItem[] | null;
+  clearBlocked: () => void;
   startCheckout: (items: CheckoutItemInput[]) => Promise<void>;
 }
 /** Fresh client verification + server-authoritative checkout. Failure stays on the current page. */
@@ -34,6 +36,7 @@ export function useCheckoutRedirect(
   const [pending, setPending] = useState(false),
     [failed, setFailed] = useState(false),
     [blocked, setBlocked] = useState<CheckoutBlockedItem[] | null>(null);
+  const clearBlocked = useCallback(() => setBlocked(null), []);
   const startCheckout = useCallback(
     async (items: CheckoutItemInput[]) => {
       if (inFlight.current || !items.length) return;
@@ -108,5 +111,5 @@ export function useCheckoutRedirect(
     },
     [locale, verify, market, intent],
   );
-  return { pending, failed, blocked, destinationChanged, startCheckout };
+  return { pending, failed, blocked, clearBlocked, destinationChanged, startCheckout };
 }

@@ -60,8 +60,10 @@ async function main() {
     }),
     pageInfo = { hasNextPage: false, endCursor: null };
   const product = {
+    id: "gid://shopify/Product/999",
     handle: "integration-sample",
     title: "OFFY Integration Sample",
+    tags: [],
     description: "Isolated mock Shopify product. No real purchase.",
     descriptionHtml: "<p>Isolated mock Shopify product. No real purchase.</p>",
     availableForSale: true,

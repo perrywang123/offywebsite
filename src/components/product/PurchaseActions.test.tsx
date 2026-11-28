@@ -9,14 +9,27 @@ const state = vi.hoisted(() => ({
   destinationChanged: false,
   startCheckout: vi.fn(),
   add: vi.fn(),
+  savedQuantity: 0,
 }));
 vi.mock("next-intl", () => ({ useTranslations: () => (key: string) => key }));
-vi.mock("@/components/cart/CartProvider", () => ({ useCart: () => ({ add: state.add }) }));
+vi.mock("@/components/cart/CartProvider", () => ({
+  useCart: () => ({
+    add: state.add,
+    catalog: {},
+    lines: state.savedQuantity ? [{ code: "current", quantity: state.savedQuantity }] : [],
+  }),
+}));
 vi.mock("@/components/cart/useCheckoutRedirect", () => ({ useCheckoutRedirect: () => state }));
 beforeEach(() => {
-  Object.assign(state, { pending: false, failed: false, blocked: null, destinationChanged: false });
+  Object.assign(state, {
+    pending: false,
+    failed: false,
+    blocked: null,
+    destinationChanged: false,
+    savedQuantity: 0,
+  });
   state.startCheckout.mockReset();
-  state.add.mockReset();
+  state.add.mockReset().mockReturnValue(true);
 });
 const props = { code: "current", isAvailable: true, isUpcoming: false };
 it("buys just the current unit, without adding to or opening the bag", () => {
@@ -30,6 +43,17 @@ it("keeps Add to Bag as its existing one-unit action", () => {
   fireEvent.click(screen.getByRole("button", { name: "addToBag" }));
   expect(state.add).toHaveBeenCalledWith("current", 1);
   expect(state.startCheckout).not.toHaveBeenCalled();
+});
+it("prevents a second limited unit in the bag while Buy Now still submits only one unit", () => {
+  state.savedQuantity = 1;
+  render(<PurchaseActions {...props} maxQuantityPerOrder={1} />);
+  const add = screen.getByRole("button", { name: "inBag" });
+  expect(add).toBeDisabled();
+  fireEvent.click(add);
+  expect(state.add).not.toHaveBeenCalled();
+
+  fireEvent.click(screen.getByRole("button", { name: "buyNow" }));
+  expect(state.startCheckout).toHaveBeenCalledWith([{ code: "current", quantity: 1 }]);
 });
 it("disables both buttons while redirect preparation is pending", () => {
   state.pending = true;

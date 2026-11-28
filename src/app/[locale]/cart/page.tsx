@@ -9,6 +9,7 @@ import { Link } from "@/i18n/navigation";
 import { cartTotal, formatPrice } from "@/lib/pricing";
 import { useCart, type CartCatalogEntry } from "@/components/cart/CartProvider";
 import { useCheckoutRedirect } from "@/components/cart/useCheckoutRedirect";
+import { BagCheckoutBlocked } from "@/components/cart/BagCheckoutBlocked";
 
 export default function CartPage() {
   // 否则本地完全没有记录的新商品(如本次新发现的 noir/wander/fable 等)
@@ -19,6 +20,14 @@ export default function CartPage() {
   const ta = useTranslations("common.actions");
   // 与购物袋抽屉保持同一条链路:直接去 Shopify 结算页,失败时原地重试。
   const checkout = useCheckoutRedirect(refresh);
+  const removeLine = (code: string) => {
+    checkout.clearBlocked();
+    remove(code);
+  };
+  const changeQuantity = (code: string, quantity: number) => {
+    checkout.clearBlocked();
+    setQty(code, quantity);
+  };
 
   const items = lines
     .map((line) => ({ line, product: catalog[line.code] }))
@@ -36,6 +45,10 @@ export default function CartPage() {
   );
 
   const missing = lines.filter((line) => !catalog[line.code]);
+  const overPurchaseLimit = items.some(
+    ({ line, product }) =>
+      product.maxQuantityPerOrder !== undefined && line.quantity > product.maxQuantityPerOrder,
+  );
   if (catalogStatus === "unavailable")
     return (
       <div className="container-site section-y">
@@ -74,7 +87,7 @@ export default function CartPage() {
               <UnavailableBagLine
                 key={line.code}
                 quantity={line.quantity}
-                onRemove={() => remove(line.code)}
+                onRemove={() => removeLine(line.code)}
               />
             ))}
             {items.map(({ line, product }) => (
@@ -97,6 +110,17 @@ export default function CartPage() {
                   <p className="text-ink-muted text-sm">
                     {formatPrice(product.priceCents, product.currency, locale)}
                   </p>
+                  {product.maxQuantityPerOrder !== undefined && (
+                    <p
+                      className={`mt-1 text-xs ${line.quantity > product.maxQuantityPerOrder ? "text-error" : "text-ink-soft"}`}
+                    >
+                      {t(
+                        line.quantity > product.maxQuantityPerOrder
+                          ? "orderLimitAdjust"
+                          : "orderLimit",
+                      )}
+                    </p>
+                  )}
                   {/* 与抽屉同一套值(方案 #34):步进器 36 → 44px,两个按钮之间
                       留 gap-1,Remove 用 .tap-target--quiet 拿到 44px 命中区
                       而不改变视觉行高。
@@ -108,7 +132,7 @@ export default function CartPage() {
                     <div className="border-sand flex items-center gap-1 rounded-full border">
                       <button
                         type="button"
-                        onClick={() => setQty(line.code, line.quantity - 1)}
+                        onClick={() => changeQuantity(line.code, line.quantity - 1)}
                         className="text-ink-soft h-11 w-11 lg:h-9 lg:w-9"
                       >
                         −
@@ -116,15 +140,19 @@ export default function CartPage() {
                       <span className="w-9 text-center text-sm">{line.quantity}</span>
                       <button
                         type="button"
-                        onClick={() => setQty(line.code, line.quantity + 1)}
-                        className="text-ink-soft h-11 w-11 lg:h-9 lg:w-9"
+                        onClick={() => changeQuantity(line.code, line.quantity + 1)}
+                        disabled={
+                          product.maxQuantityPerOrder !== undefined &&
+                          line.quantity >= product.maxQuantityPerOrder
+                        }
+                        className="text-ink-soft h-11 w-11 disabled:opacity-40 lg:h-9 lg:w-9"
                       >
                         +
                       </button>
                     </div>
                     <button
                       type="button"
-                      onClick={() => remove(line.code)}
+                      onClick={() => removeLine(line.code)}
                       className="tap-target--quiet text-ink-muted hover:text-ink px-2 text-xs underline"
                     >
                       {t("remove")}
@@ -173,20 +201,7 @@ export default function CartPage() {
             {/* 4xx:服务端点名买不了的商品 → 不跳转,留在原地指名并让顾客重试
                 (方案 P0-3 / R12:两个调用点都必须处理,否则这里会变成
                 "提示了但不跳转"的死界面)。 */}
-            {checkout.blocked && (
-              <p role="alert" className="text-error mb-3 text-xs">
-                {checkout.blocked.length > 0
-                  ? t("checkoutBlocked", {
-                      items: checkout.blocked
-                        .map((b) => {
-                          const p = catalog[b.code];
-                          return p ? (locale === "zh" ? p.name.zh : p.name.en) : b.code;
-                        })
-                        .join(", "),
-                    })
-                  : t("checkoutBlockedGeneric")}
-              </p>
-            )}
+            {checkout.blocked && <BagCheckoutBlocked items={checkout.blocked} catalog={catalog} />}
             {/* 直接建 Shopify cart 并整页跳转到其结算页;加载中禁用 + aria-busy 防连点。 */}
             <button
               type="button"
@@ -198,6 +213,7 @@ export default function CartPage() {
               disabled={
                 checkout.pending ||
                 missing.length > 0 ||
+                overPurchaseLimit ||
                 subtotal.mixed ||
                 items.some((x) => !x.product.available)
               }

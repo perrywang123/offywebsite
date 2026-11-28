@@ -220,6 +220,9 @@ export default async function ProductDetailPage({
                   {formatPrice(product.priceCents, product.currency, locale)}
                 </p>
               )}
+              {product.maxQuantityPerOrder !== undefined && (
+                <p className="text-ink-soft w-full text-sm">{tCommon("cart.orderLimit")}</p>
+              )}
             </div>
 
             {product.isUpcoming ? (
@@ -234,6 +237,7 @@ export default async function ProductDetailPage({
                   code={product.code}
                   isAvailable={product.isAvailable && Boolean(product.shopifyVariantId)}
                   isUpcoming={false}
+                  maxQuantityPerOrder={product.maxQuantityPerOrder}
                 />
               </div>
             )}
@@ -330,6 +334,7 @@ export default async function ProductDetailPage({
           locale={locale}
           isAvailable={product.isAvailable && Boolean(product.shopifyVariantId)}
           isUpcoming={false}
+          maxQuantityPerOrder={product.maxQuantityPerOrder}
         />
       )}
     </>

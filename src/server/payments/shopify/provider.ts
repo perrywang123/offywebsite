@@ -49,6 +49,7 @@ export class ShopifyPaymentProvider implements PaymentProvider {
     const lines: CartLineInput[] = [];
     const failures: CheckoutItemFailure[] = [];
     const resolved: unknown[] = [];
+    const totals = new Map<string, { quantity: number; codes: Set<string>; limit?: 1 }>();
     try {
       for (const item of input.items) {
         const product = await getLiveProductByCode(item.code, country ?? marketCountry());
@@ -61,6 +62,7 @@ export class ShopifyPaymentProvider implements PaymentProvider {
                 variantId: product.shopifyVariantId,
                 available: product.isAvailable,
                 quoteOnly: product.isQuoteOnly,
+                maxQuantityPerOrder: product.maxQuantityPerOrder,
                 unitPriceCents: product.priceCents,
                 currency: product.currency,
               }
@@ -77,6 +79,12 @@ export class ShopifyPaymentProvider implements PaymentProvider {
           failures.push({ code: item.code, reason: "unavailable_items" });
           continue;
         }
+        const productId = product.shopifyProductId ?? product.shopifyVariantId;
+        const total = totals.get(productId) ?? { quantity: 0, codes: new Set<string>() };
+        total.quantity += item.quantity;
+        total.codes.add(item.code);
+        total.limit ??= product.maxQuantityPerOrder;
+        totals.set(productId, total);
         lines.push({ merchandiseId: product.shopifyVariantId, quantity: item.quantity });
       }
     } catch {
@@ -91,6 +99,11 @@ export class ShopifyPaymentProvider implements PaymentProvider {
       });
       return { ok: false, status: 503, error: "catalog_unavailable" };
     }
+    for (const { quantity, codes, limit } of totals.values()) {
+      if (limit !== undefined && quantity > limit) {
+        for (const code of codes) failures.push({ code, reason: "purchase_limit_exceeded" });
+      }
+    }
     observeCheckout(input.diagnostics, {
       type: "catalog_checked",
       data: { country: country ?? marketCountry(), resolved, failures },
@@ -99,10 +112,10 @@ export class ShopifyPaymentProvider implements PaymentProvider {
       return {
         ok: false,
         status: 400,
-        // 只要有一件是"存在但买不了",就以它为主因;两者都有时并列在 items 里。
-        error: failures.some((f) => f.reason === "unavailable_items")
-          ? "unavailable_items"
-          : "unknown_items",
+        error:
+          failures.find((f) => f.reason === "unavailable_items")?.reason ??
+          failures.find((f) => f.reason === "purchase_limit_exceeded")?.reason ??
+          "unknown_items",
         items: failures,
       };
     }

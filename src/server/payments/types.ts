@@ -55,7 +55,7 @@ export type CheckoutRedirect =
 export interface CheckoutItemFailure {
   code: string;
   /** `unknown_items` = 商品不存在/没有可结算变体;`unavailable_items` = 已下架、售罄或仅有报价。 */
-  reason: "unknown_items" | "unavailable_items";
+  reason: "unknown_items" | "unavailable_items" | "purchase_limit_exceeded";
 }
 
 export type CreateCheckoutResult =

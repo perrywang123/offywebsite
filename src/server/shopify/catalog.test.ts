@@ -14,6 +14,7 @@ function mockFetch(json: unknown, ok = true): typeof fetch {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const n = value as Record<string, any>;
     if (n.handle && n.priceRange) {
+      n.tags ??= [];
       if (!n.variants?.nodes?.length)
         n.variants = { nodes: [{ id: `gid://shopify/ProductVariant/${n.handle}`, sku: null }] };
       for (const v of n.variants.nodes) {
@@ -36,6 +37,7 @@ describe("listShopifyProducts", () => {
     const item = {
       handle: "snow-white",
       title: "SNOW WHITE",
+      tags: ["limit-1-per-order"],
       featuredImage: null,
       availableForSale: true,
       comingSoon: { type: "boolean", value: "true" },
@@ -44,9 +46,10 @@ describe("listShopifyProducts", () => {
     };
     const f = mockFetch({ data: { collectionByHandle: { products: { nodes: [item] } } } });
     expect(await fetchShopifyCollectionProducts("frontpage", "US", f)).toMatchObject([
-      { handle: "snow-white", releaseAt: "2026-11-30T18:00:00.000Z" },
+      { handle: "snow-white", releaseAt: "2026-11-30T18:00:00.000Z", maxQuantityPerOrder: 1 },
     ]);
     expect(String(vi.mocked(f).mock.calls[0][1]?.body)).toContain("coming_soon");
+    expect(JSON.parse(String(vi.mocked(f).mock.calls[0][1]?.body)).query).toMatch(/\btags\b/);
   });
 
   it("maps published products (handle/title/price/image/available)", async () => {

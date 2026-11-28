@@ -35,6 +35,7 @@ export async function GET(request: Request, { params }: { params: Promise<{ code
           emotionTags: product.emotionTags,
           images: product.images,
           available: product.isAvailable,
+          maxQuantityPerOrder: product.maxQuantityPerOrder,
         },
       },
       { headers: { "Cache-Control": "no-store" } },

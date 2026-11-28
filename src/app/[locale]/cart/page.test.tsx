@@ -97,6 +97,26 @@ describe("/cart 页 · Checkout 直达 Shopify", () => {
     expect(screen.queryByRole("link", { name: "checkout" })).toBeNull();
   });
 
+  it("lets shoppers correct a saved limit violation before checking out", async () => {
+    const cart = cartWithItem();
+    const catalog = { noir: { ...cart.catalog.noir, maxQuantityPerOrder: 1 } };
+    mockUseCart.mockReturnValue({ ...cart, catalog });
+    const user = userEvent.setup();
+    const { rerender } = render(<CartPage />);
+
+    expect(screen.getByText("orderLimitAdjust")).toBeVisible();
+    expect(screen.getByRole("button", { name: "+" })).toBeDisabled();
+    expect(screen.getByRole("button", { name: "checkout" })).toBeDisabled();
+    await user.click(screen.getByRole("button", { name: "−" }));
+    expect(cart.setQty).toHaveBeenCalledWith("noir", 2);
+
+    mockUseCart.mockReturnValue({ ...cart, catalog, lines: [{ code: "noir", quantity: 1 }] });
+    rerender(<CartPage />);
+    expect(screen.getByText("orderLimit")).toBeVisible();
+    expect(screen.getByRole("button", { name: "+" })).toBeDisabled();
+    expect(screen.getByRole("button", { name: "checkout" })).toBeEnabled();
+  });
+
   it("点击后 POST /api/payments/checkout 并跳转到返回的 Shopify url", async () => {
     const fetchMock = vi.fn<(input: RequestInfo | URL, init?: RequestInit) => Promise<Response>>(
       async () =>

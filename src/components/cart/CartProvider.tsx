@@ -21,6 +21,7 @@ export interface CartCatalogEntry {
   priceCents: number;
   currency: string;
   available: boolean;
+  maxQuantityPerOrder?: 1;
 }
 export type CatalogStatus = "loading" | "ready" | "unavailable";
 interface CartContextValue {
@@ -31,7 +32,7 @@ interface CartContextValue {
   count: number;
   isOpen: boolean;
   mounted: boolean;
-  add: (code: string, qty?: number) => void;
+  add: (code: string, qty?: number, maxQuantityPerOrder?: 1) => boolean;
   remove: (code: string) => void;
   setQty: (code: string, qty: number) => void;
   open: () => void;
@@ -48,6 +49,7 @@ const itemSchema = z.object({
     amountCents: z.number().int().nonnegative().safe(),
   }),
   available: z.boolean(),
+  maxQuantityPerOrder: z.literal(1).optional(),
 });
 function entry(value: unknown): CartCatalogEntry {
   const p = itemSchema.parse(value);
@@ -58,6 +60,7 @@ function entry(value: unknown): CartCatalogEntry {
     priceCents: p.price.amountCents,
     currency: p.price.currency.toUpperCase(),
     available: p.available,
+    maxQuantityPerOrder: p.maxQuantityPerOrder,
   };
 }
 function savedLines(): CartState {
@@ -220,8 +223,10 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
       isOpen,
       mounted,
       refresh,
-      add: (code, qty = 1) => {
+      add: (code, qty = 1, maxQuantityPerOrder) => {
         const before = linesRef.current.find((i) => i.code === code)?.quantity ?? 0;
+        const limit = catalog[code]?.maxQuantityPerOrder ?? maxQuantityPerOrder;
+        if (limit !== undefined && before + qty > limit) return false;
         const next = addLine(linesRef.current, code, qty);
         updateLines(next);
         try {
@@ -231,10 +236,13 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
           /* marketing cannot block a successful cart update */
         }
         open();
+        return true;
       },
       remove: (code) => updateLines(removeLine(linesRef.current, code)),
       setQty: (code, qty) => {
         const before = linesRef.current.find((i) => i.code === code)?.quantity ?? 0;
+        const limit = catalog[code]?.maxQuantityPerOrder;
+        if (limit !== undefined && qty > limit && qty > before) return;
         const next = setQuantity(linesRef.current, code, qty);
         updateLines(next);
         try {

@@ -25,18 +25,21 @@ export async function GET(request: Request) {
     const [products, series] = await Promise.all([getLiveProducts(country), getLiveSeriesList()]);
     return NextResponse.json(
       {
-        products: products.filter((p) => !p.isUpcoming).map((p) => ({
-          code: p.code,
-          slug: p.slug,
-          name: p.name,
-          description: p.description,
-          price: { currency: p.currency.toLowerCase(), amountCents: p.priceCents },
-          series: p.series,
-          dimensions: p.dimensions,
-          emotionTags: p.emotionTags,
-          images: p.images,
-          available: p.isAvailable,
-        })),
+        products: products
+          .filter((p) => !p.isUpcoming)
+          .map((p) => ({
+            code: p.code,
+            slug: p.slug,
+            name: p.name,
+            description: p.description,
+            price: { currency: p.currency.toLowerCase(), amountCents: p.priceCents },
+            series: p.series,
+            dimensions: p.dimensions,
+            emotionTags: p.emotionTags,
+            images: p.images,
+            available: p.isAvailable,
+            maxQuantityPerOrder: p.maxQuantityPerOrder,
+          })),
         categories: series.map((s) => ({ code: s.slug, name: s.name })),
       },
       { headers: { "Cache-Control": "no-store" } },

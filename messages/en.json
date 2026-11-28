@@ -18,6 +18,7 @@
       "addToCart": "Add to Bag",
       "addToBag": "Add to Bag",
       "addedCheck": "Added ✓",
+      "inBag": "In your bag",
       "buyNow": "Buy Now",
       "checkout": "Checkout",
       "viewAll": "View All",
@@ -36,6 +37,8 @@
       "mixedCurrency": "Subtotal excludes items priced in another currency — checkout will use the final Shopify amount.",
       "total": "Total",
       "quantity": "Quantity",
+      "orderLimit": "Limit 1 per order.",
+      "orderLimitAdjust": "Limit 1 per order. Reduce the quantity to check out.",
       "remove": "Remove",
       "added": "Added to bag",
       "openAria": "Open bag",
@@ -43,6 +46,7 @@
       "checkoutRedirecting": "Redirecting to checkout…",
       "checkoutFallback": "We can’t open checkout right now. Your bag is saved. Please try again.",
       "checkoutBlocked": "These items can't be checked out right now: {items}. Remove them from your bag and try again.",
+      "checkoutPurchaseLimit": "Limit 1 per order for {items}. Reduce the quantity and try again.",
       "checkoutBlockedGeneric": "Some items in your bag can't be checked out right now. Please review your bag and try again."
     },
     "footer": {

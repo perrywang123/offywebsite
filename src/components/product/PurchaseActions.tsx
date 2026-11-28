@@ -9,10 +9,16 @@ export interface PurchaseActionsProps {
   code: string;
   isAvailable: boolean;
   isUpcoming: boolean;
+  maxQuantityPerOrder?: 1;
 }
 
 /** Same checkout path as the bag; the submitted list deliberately excludes saved bag lines. */
-export function PurchaseActions({ code, isAvailable, isUpcoming }: PurchaseActionsProps) {
+export function PurchaseActions({
+  code,
+  isAvailable,
+  isUpcoming,
+  maxQuantityPerOrder,
+}: PurchaseActionsProps) {
   const t = useTranslations("product");
   const ta = useTranslations("common.actions");
   const market = useOptionalMarket();
@@ -41,6 +47,7 @@ export function PurchaseActions({ code, isAvailable, isUpcoming }: PurchaseActio
       <div className="grid grid-cols-2 gap-2.5">
         <AddToCartButton
           code={code}
+          maxQuantityPerOrder={maxQuantityPerOrder}
           variant="outline"
           disabled={checkout.pending || !isAvailable}
           disabledLabel={ta("addToBag")}

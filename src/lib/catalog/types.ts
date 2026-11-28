@@ -66,10 +66,13 @@ export interface Product {
   isUpcoming: boolean;
   /** Planned release for a product with an active purchase gate. Null means unannounced. */
   releaseAt?: string | null;
+  /** Merchant-configured maximum per order, from the Shopify product tag. */
+  maxQuantityPerOrder?: 1;
   isQuoteOnly: boolean;
   sortOrder: number;
   /** Optional badge rendered on the card, e.g. "区域限定" (regional exclusive). */
   badge?: string;
+  shopifyProductId?: string;
   /** Shopify Storefront variant GID for hosted checkout, e.g. "gid://shopify/ProductVariant/123". */
   shopifyVariantId?: string;
 

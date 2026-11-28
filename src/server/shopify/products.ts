@@ -2,6 +2,7 @@ import { z } from "zod";
 import type { SearchSeo } from "../../lib/catalog/types";
 import { parseDescriptionHtml, type DescriptionBlock } from "../../lib/description-html";
 import { readReleaseDate, releaseFields, releaseShape } from "./product-release";
+import { readPurchaseLimit } from "./product-purchase-limit";
 import {
   membershipSchema,
   money,
@@ -13,6 +14,7 @@ import {
 
 export interface ShopifyProductData {
   seo?: SearchSeo;
+  productId: string;
   title: string;
   description: string;
   descriptionBlocks: DescriptionBlock[];
@@ -22,6 +24,7 @@ export interface ShopifyProductData {
   variantId: string | null;
   available: boolean;
   releaseAt?: string | null;
+  maxQuantityPerOrder?: 1;
   collectionHandles: string[];
   sku: string | null;
 }
@@ -29,6 +32,8 @@ const productSchema = z.object({
   product: z
     .object({
       ...releaseShape,
+      id: z.string().min(1),
+      tags: z.array(z.string()),
       title: z.string().min(1),
       seo: z.object({ title: z.string().nullish(), description: z.string().nullish() }).nullish(),
       description: z.string().optional(),
@@ -66,7 +71,7 @@ export async function fetchProductData(
       `
     query ProductEnrich($handle:String!) @inContext(country: ${cc}) {
       product(handle:$handle) {
-        title description descriptionHtml availableForSale seo { title description }
+        id tags title description descriptionHtml availableForSale seo { title description }
         ${releaseFields}
         images(first:10) { nodes { url } }
         variants(first:1) { nodes { id sku availableForSale price { amount currencyCode } } }
@@ -81,9 +86,12 @@ export async function fetchProductData(
   if (p === null) return null;
   const variant = p.variants.nodes[0];
   const releaseAt = readReleaseDate(p);
+  const maxQuantityPerOrder = readPurchaseLimit(p.tags);
   return {
     ...(releaseAt === undefined ? {} : { releaseAt }),
+    ...(maxQuantityPerOrder === undefined ? {} : { maxQuantityPerOrder }),
     ...(p.seo ? { seo: p.seo } : {}),
+    productId: p.id,
     title: p.title,
     description: p.description ?? "",
     descriptionBlocks: parseDescriptionHtml(p.descriptionHtml ?? ""),

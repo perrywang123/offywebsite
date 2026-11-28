@@ -18,6 +18,7 @@
       "addToCart": "加入购物车",
       "addToBag": "加入购物袋",
       "addedCheck": "已加入 ✓",
+      "inBag": "已在购物袋",
       "buyNow": "立即购买",
       "checkout": "去结算",
       "viewAll": "查看全部",
@@ -36,6 +37,8 @@
       "mixedCurrency": "小计未包含以其它币种计价的商品,最终金额以 Shopify 结账页为准。",
       "total": "合计",
       "quantity": "数量",
+      "orderLimit": "每单限购 1 件。",
+      "orderLimitAdjust": "每单限购 1 件，请减少数量后结算。",
       "remove": "移除",
       "added": "已加入购物袋",
       "openAria": "打开购物袋",
@@ -43,6 +46,7 @@
       "checkoutRedirecting": "正在前往结算…",
       "checkoutFallback": "暂时无法打开结算，购物袋已保留，请重试。",
       "checkoutBlocked": "这些商品目前无法结算：{items}。请先从购物袋移除，再重试。",
+      "checkoutPurchaseLimit": "{items} 每单限购 1 件，请减少数量后重试。",
       "checkoutBlockedGeneric": "购物袋里有商品目前无法结算，请检查购物袋后重试。"
     },
     "footer": {

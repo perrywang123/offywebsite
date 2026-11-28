@@ -53,6 +53,9 @@ export function toLiveProduct(
     isAvailable: item.available && !upcoming,
     isUpcoming: upcoming,
     ...(upcoming ? { releaseAt } : {}),
+    ...(item.maxQuantityPerOrder === undefined
+      ? {}
+      : { maxQuantityPerOrder: item.maxQuantityPerOrder }),
     isQuoteOnly: false,
     sortOrder,
     shopifyHandle: item.handle,
@@ -124,6 +127,7 @@ export const getLiveProductByCode = cache(
       MERCH_SERIES_SLUG;
     return {
       ...toLiveProduct({ ...data, handle: code, image: null }, series, 0),
+      shopifyProductId: data.productId,
       description: { en: data.description, zh: data.description },
       descriptionBlocks: { en: data.descriptionBlocks, zh: data.descriptionBlocks },
       ...(data.seo ? { seo: data.seo } : {}),

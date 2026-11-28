@@ -6,13 +6,19 @@ function mockFetch(json: unknown, ok = true): typeof fetch {
   const complete = (v: unknown): void => {
     if (!v || typeof v !== "object") return;
     const n = v as {
+      id?: string;
+      tags?: string[];
+      title?: string;
       nodes?: unknown[];
       pageInfo?: unknown;
       availableForSale?: boolean;
       variants?: { nodes: Array<{ availableForSale?: boolean }> };
     };
-    if (n.variants)
+    if (n.title && n.variants) {
+      n.id ??= "gid://shopify/Product/1";
+      n.tags ??= [];
       for (const variant of n.variants.nodes) variant.availableForSale ??= n.availableForSale;
+    }
     if (n.nodes) n.pageInfo = { hasNextPage: false, endCursor: null };
     Object.values(n).forEach((x) => (Array.isArray(x) ? x.forEach(complete) : complete(x)));
   };
@@ -25,6 +31,26 @@ function mockFetch(json: unknown, ok = true): typeof fetch {
 }
 
 describe("fetchProductData", () => {
+  it("reads the exact per-order limit tag and Shopify product ID", async () => {
+    const product = {
+      id: "gid://shopify/Product/1",
+      title: "MERRY OFFY",
+      availableForSale: true,
+      collections: { nodes: [] },
+      images: { nodes: [] },
+      variants: { nodes: [{ id: "v", price: { amount: "43.90", currencyCode: "USD" } }] },
+    };
+    const f = mockFetch({ data: { product: { ...product, tags: ["limit-1-per-order"] } } });
+    expect(await fetchProductData("merry-offy", f)).toMatchObject({
+      productId: "gid://shopify/Product/1",
+      maxQuantityPerOrder: 1,
+    });
+    expect(JSON.parse(String(vi.mocked(f).mock.calls[0][1]?.body)).query).toMatch(/\btags\b/);
+
+    const untagged = mockFetch({ data: { product: { ...product, tags: ["limited-edition"] } } });
+    expect((await fetchProductData("merry-offy", untagged))?.maxQuantityPerOrder).toBeUndefined();
+  });
+
   it.each([
     ["true", { type: "date_time", value: "2026-11-30T13:00:00-05:00" }, "2026-11-30T18:00:00.000Z"],
     ["true", { type: "date_time", value: "2026-11-30T18:00:00" }, "2026-11-30T18:00:00.000Z"],
@@ -117,6 +143,7 @@ describe("fetchProductData", () => {
 
     const data = await fetchProductData("offy_redrush", f);
     expect(data).toEqual({
+      productId: "gid://shopify/Product/1",
       title: "offy_redrush",
       description: "A cool sporty Offy.",
       descriptionBlocks: [

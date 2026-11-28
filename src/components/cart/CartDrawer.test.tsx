@@ -445,6 +445,35 @@ describe("CartDrawer · Checkout 直达 Shopify(不再先进 /checkout)", () => 
     );
   });
 
+  it("names the limited product and clears the checkout message when the quantity is edited", async () => {
+    vi.stubGlobal(
+      "fetch",
+      vi.fn(async () =>
+        Response.json(
+          {
+            error: "purchase_limit_exceeded",
+            items: [{ code: "noir", reason: "purchase_limit_exceeded" }],
+          },
+          { status: 400 },
+        ),
+      ),
+    );
+    const cart = cartWithItem();
+    mockUseCart.mockReturnValue(cart);
+    const user = userEvent.setup();
+    render(<CartDrawer />);
+
+    await user.click(screen.getByRole("button", { name: "checkout" }));
+    expect(await screen.findByRole("alert")).toHaveTextContent(
+      'checkoutPurchaseLimit:{"items":"诺尔"}',
+    );
+    expect(assign).not.toHaveBeenCalled();
+
+    await user.click(screen.getByRole("button", { name: "−" }));
+    expect(cart.setQty).toHaveBeenCalledWith("noir", 1);
+    expect(screen.queryByRole("alert")).toBeNull();
+  });
+
   it("4xx 且响应里没带 items 时渲染通用文案(仍然不跳转)", async () => {
     vi.stubGlobal(
       "fetch",

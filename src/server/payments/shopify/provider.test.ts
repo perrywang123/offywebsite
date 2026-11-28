@@ -57,6 +57,74 @@ describe("cartMutation (checkout market)", () => {
 });
 
 describe("ShopifyPaymentProvider.createCheckout", () => {
+  const limited = {
+    ...soldOut("merry-offy", "gid://shopify/ProductVariant/1"),
+    isAvailable: true,
+    shopifyProductId: "gid://shopify/Product/10801732452641",
+    maxQuantityPerOrder: 1 as const,
+  };
+
+  it.each([
+    { items: [{ code: "merry-offy", quantity: 2 }], codes: ["merry-offy"] },
+    {
+      items: [
+        { code: "merry-offy", quantity: 1 },
+        { code: "merry-offy", quantity: 1 },
+      ],
+      codes: ["merry-offy"],
+    },
+    {
+      items: [
+        { code: "merry-offy", quantity: 1 },
+        { code: "merry-offy-alternate", quantity: 1 },
+      ],
+      codes: ["merry-offy", "merry-offy-alternate"],
+    },
+  ])(
+    "blocks a combined product quantity above one before creating a cart: $items",
+    async ({ items, codes }) => {
+      for (const item of items) {
+        mockedProduct.mockResolvedValueOnce({
+          ...limited,
+          shopifyVariantId:
+            item.code === limited.code
+              ? limited.shopifyVariantId
+              : "gid://shopify/ProductVariant/2",
+        });
+      }
+      const createCart = vi.fn();
+      const provider = new ShopifyPaymentProvider({ createCart, configured: () => true });
+
+      await expect(provider.createCheckout({ items, locale: "en" })).resolves.toEqual({
+        ok: false,
+        status: 400,
+        error: "purchase_limit_exceeded",
+        items: codes.map((code) => ({ code, reason: "purchase_limit_exceeded" })),
+      });
+      expect(createCart).not.toHaveBeenCalled();
+    },
+  );
+
+  it("passes one limited unit and the original quantity of ordinary items to checkout", async () => {
+    mockedProduct.mockResolvedValueOnce(limited);
+    const createCart = vi.fn().mockResolvedValue({ checkoutUrl: "https://example.com/checkout" });
+    const provider = new ShopifyPaymentProvider({ createCart, configured: () => true });
+
+    await expect(
+      provider.createCheckout({
+        items: [
+          { code: "merry-offy", quantity: 1 },
+          { code: "offy_redrush", quantity: 2 },
+        ],
+        locale: "en",
+      }),
+    ).resolves.toMatchObject({ ok: true });
+    expect(createCart).toHaveBeenCalledWith([
+      { merchandiseId: limited.shopifyVariantId, quantity: 1 },
+      { merchandiseId: MOTARO_VARIANT, quantity: 2 },
+    ]);
+  });
+
   it("creates a Shopify cart and returns the checkoutUrl as a redirect", async () => {
     const createCart = vi.fn().mockResolvedValue({
       id: "gid://shopify/Cart/abc",

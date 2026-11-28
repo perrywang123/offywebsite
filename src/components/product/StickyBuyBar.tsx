@@ -28,6 +28,7 @@ export function StickyBuyBar({
   locale,
   isAvailable,
   isUpcoming,
+  maxQuantityPerOrder,
 }: {
   code: string;
   priceCents: number;
@@ -35,6 +36,7 @@ export function StickyBuyBar({
   locale: string;
   isAvailable: boolean;
   isUpcoming: boolean;
+  maxQuantityPerOrder?: 1;
 }) {
   const t = useTranslations("product");
   const price = formatPrice(priceCents, currency, locale);
@@ -59,7 +61,12 @@ export function StickyBuyBar({
                 1 OFFY · {currency}
               </p>
             </div>
-            <PurchaseActions code={code} isAvailable={isAvailable} isUpcoming={isUpcoming} />
+            <PurchaseActions
+              code={code}
+              isAvailable={isAvailable}
+              isUpcoming={isUpcoming}
+              maxQuantityPerOrder={maxQuantityPerOrder}
+            />
           </>
         )}
       </div>

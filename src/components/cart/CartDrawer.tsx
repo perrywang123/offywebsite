@@ -10,6 +10,7 @@ import { Link } from "@/i18n/navigation";
 import { cartTotal, formatPrice } from "@/lib/pricing";
 import { useCart, type CartCatalogEntry } from "./CartProvider";
 import { useCheckoutRedirect } from "./useCheckoutRedirect";
+import { BagCheckoutBlocked } from "./BagCheckoutBlocked";
 import { useScrollLock } from "@/hooks/useScrollLock";
 
 export function CartDrawer() {
@@ -33,6 +34,14 @@ export function CartDrawer() {
   // Checkout验证失败留在原地，购物袋内容保留。
 
   const checkout = useCheckoutRedirect(refresh);
+  const removeLine = (code: string) => {
+    checkout.clearBlocked();
+    remove(code);
+  };
+  const changeQuantity = (code: string, quantity: number) => {
+    checkout.clearBlocked();
+    setQty(code, quantity);
+  };
 
   // 打开时焦点移入抽屉(关闭按钮),Escape 关闭 —— WAI-ARIA Dialog 规范。
   useEffect(() => {
@@ -88,6 +97,10 @@ export function CartDrawer() {
   );
 
   const missing = lines.filter((line) => !catalog[line.code]);
+  const overPurchaseLimit = items.some(
+    ({ line, product }) =>
+      product.maxQuantityPerOrder !== undefined && line.quantity > product.maxQuantityPerOrder,
+  );
   if (!mounted) return null;
 
   return (
@@ -152,7 +165,7 @@ export function CartDrawer() {
                 <UnavailableBagLine
                   key={line.code}
                   quantity={line.quantity}
-                  onRemove={() => remove(line.code)}
+                  onRemove={() => removeLine(line.code)}
                 />
               ))}
               {items.map(({ line, product }) => (
@@ -177,13 +190,24 @@ export function CartDrawer() {
                     <p className="text-ink-muted text-sm tabular-nums">
                       {formatPrice(product.priceCents, product.currency, locale)}
                     </p>
-                    <div className="mt-auto flex items-center justify-between gap-2">
+                    {product.maxQuantityPerOrder !== undefined && (
+                      <p
+                        className={`mt-1 text-xs ${line.quantity > product.maxQuantityPerOrder ? "text-error" : "text-ink-soft"}`}
+                      >
+                        {t(
+                          line.quantity > product.maxQuantityPerOrder
+                            ? "orderLimitAdjust"
+                            : "orderLimit",
+                        )}
+                      </p>
+                    )}
+                    <div className="mt-auto flex flex-wrap items-center justify-between gap-2">
                       {/* 步进器 32 → 44px,并且两个按钮之间留 gap-1:原来 −/+ 相邻,
                           减数量时很容易误触到加数量(方案 #33/#20)。 */}
                       <div className="border-sand flex items-center gap-1 rounded-full border">
                         <button
                           type="button"
-                          onClick={() => setQty(line.code, line.quantity - 1)}
+                          onClick={() => changeQuantity(line.code, line.quantity - 1)}
                           className="text-ink-soft h-11 w-11"
                         >
                           −
@@ -191,15 +215,19 @@ export function CartDrawer() {
                         <span className="w-9 text-center text-sm">{line.quantity}</span>
                         <button
                           type="button"
-                          onClick={() => setQty(line.code, line.quantity + 1)}
-                          className="text-ink-soft h-11 w-11"
+                          onClick={() => changeQuantity(line.code, line.quantity + 1)}
+                          disabled={
+                            product.maxQuantityPerOrder !== undefined &&
+                            line.quantity >= product.maxQuantityPerOrder
+                          }
+                          className="text-ink-soft h-11 w-11 disabled:opacity-40"
                         >
                           +
                         </button>
                       </div>
                       <button
                         type="button"
-                        onClick={() => remove(line.code)}
+                        onClick={() => removeLine(line.code)}
                         className="link-line tap-target--quiet text-xs"
                       >
                         {t("remove")}
@@ -268,18 +296,7 @@ export function CartDrawer() {
                   下一步做什么,顾客把商品移除后可以原地重试(方案 P0-3)。
                   界面上永远不出现 invalid_items / checkout_failed 这类原始码。 */}
               {checkout.blocked && (
-                <p role="alert" className="text-error mb-3 text-xs">
-                  {checkout.blocked.length > 0
-                    ? t("checkoutBlocked", {
-                        items: checkout.blocked
-                          .map((b) => {
-                            const p = catalog[b.code];
-                            return p ? (locale === "zh" ? p.name.zh : p.name.en) : b.code;
-                          })
-                          .join(", "),
-                      })
-                    : t("checkoutBlockedGeneric")}
-                </p>
+                <BagCheckoutBlocked items={checkout.blocked} catalog={catalog} />
               )}
               {/* 这是一次"动作"(建 Shopify cart 后整页跳走),不是站内导航,
                   所以用 button;键盘可达性由原生 button 保证(Tab / Enter / Space)。
@@ -294,6 +311,7 @@ export function CartDrawer() {
                 disabled={
                   checkout.pending ||
                   missing.length > 0 ||
+                  overPurchaseLimit ||
                   subtotal.mixed ||
                   items.some((x) => !x.product.available)
                 }

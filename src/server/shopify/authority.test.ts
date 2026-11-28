@@ -5,6 +5,8 @@ import { listShopifyProducts, fetchShopifyCollections } from "./catalog";
 const response = (body: unknown, ok = true) =>
   vi.fn().mockResolvedValue({ ok, status: ok ? 200 : 401, json: async () => body }) as typeof fetch;
 const product = {
+  id: "gid://shopify/Product/1",
+  tags: [],
   title: "Live",
   availableForSale: true,
   images: { nodes: [] },
@@ -24,6 +26,7 @@ describe("Storefront response integrity", () => {
     {},
     { errors: [{ message: "denied" }], data: { product: null } },
     { data: { product: { ...product, availableForSale: undefined } } },
+    { data: { product: { ...product, tags: undefined } } },
     {
       data: {
         product: {
@@ -67,6 +70,7 @@ it("lists the exact variant price used at checkout, rather than a different vari
           {
             handle: "multi",
             title: "Multi",
+            tags: [],
             availableForSale: true,
             featuredImage: null,
             priceRange: { minVariantPrice: { amount: "1", currencyCode: "GBP" } },
